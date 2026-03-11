@@ -1,0 +1,6 @@
+# Backup archives — the zip is redundant since all files are tracked here
+*.zip
+
+# Windows system files
+Thumbs.db
+desktop.ini
