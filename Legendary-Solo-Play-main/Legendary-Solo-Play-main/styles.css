@@ -8829,26 +8829,11 @@ div.screws:nth-of-type(4) {
   text-transform: uppercase;
 }
 
-#game-mode-options label,
-#golden-solo-options label {
+#game-mode-options label {
   display: block;
   cursor: pointer;
   margin-bottom: 0.5vh;
   color: var(--popupText);
-}
-
-#golden-solo-options {
-  margin-top: 0.8vh;
-  padding-left: 1.5vh;
-  border-left: 2px solid var(--accent);
-}
-
-.qp-warning {
-  display: none;
-  color: #e8a020;
-  font-size: clamp(7pt, 1.4vh, 0.9em);
-  font-style: italic;
-  margin-left: 0.5vh;
 }
 
 @media (max-width: 500px) {

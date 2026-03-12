@@ -595,31 +595,6 @@ document.querySelectorAll(".scrollable-list").forEach(function (list) {
   });
 });
 
-// --- Golden Solo Mode: show/hide sub-options when game mode changes ---
-document.querySelectorAll('input[name="gameMode"]').forEach(function (radio) {
-  radio.addEventListener('change', function () {
-    const goldenOptions = document.getElementById('golden-solo-options');
-    if (this.value === 'golden') {
-      goldenOptions.style.display = 'block';
-    } else {
-      goldenOptions.style.display = 'none';
-      // hide Quick Play warnings when leaving Golden Solo
-      document.querySelectorAll('.qp-warning').forEach(w => w.style.display = 'none');
-    }
-  });
-});
-
-// --- Golden Solo: show/hide Quick Play incompatible scheme warnings ---
-document.querySelectorAll('input[name="goldenPlayMode"]').forEach(function (radio) {
-  radio.addEventListener('change', function () {
-    const warnings = document.querySelectorAll('.qp-warning');
-    if (this.value === 'quickplay') {
-      warnings.forEach(w => w.style.display = 'inline');
-    } else {
-      warnings.forEach(w => w.style.display = 'none');
-    }
-  });
-});
 // ----------------------------------------------------------------------
 
 let shieldDeck = [...shieldOfficers];
@@ -695,7 +670,6 @@ let finalBlowEnabled = false;
 let finalBlowDelivered = false;
 // --- Golden Solo Mode globals ---
 let gameMode = 'whatif';       // 'whatif' | 'golden'
-let goldenPlayMode = 'standard'; // 'standard' | 'quickplay'
 let goldenFirstRound = true;   // skip HQ rotation on round 1 of Golden Solo
 // --------------------------------
 let escapedVillainsCount = 0;
@@ -2374,10 +2348,9 @@ function randomizeHero() {
     return;
   }
 
-  // Randomly select heroes — Golden Solo overrides the count (5 Standard, 3 Quick Play)
+  // Randomly select heroes — Golden Solo always uses 5 heroes
   const _rh_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const _rh_goldenMode = document.querySelector('input[name="goldenPlayMode"]:checked')?.value || 'standard';
-  const _rh_count = (_rh_gameMode === 'golden') ? (_rh_goldenMode === 'quickplay' ? 3 : 5) : 3;
+  const _rh_count = (_rh_gameMode === 'golden') ? 5 : 3;
   const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random());
   const selectedCheckboxes = shuffledCheckboxes.slice(0, _rh_count);
 
@@ -2873,10 +2846,9 @@ function randomizeHeroWithRequirements(scheme) {
     return;
   }
 
-  // Randomly select the required number of heroes — Golden Solo overrides scheme count
+  // Randomly select the required number of heroes — Golden Solo always uses 5
   const _rhr_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const _rhr_goldenMode = document.querySelector('input[name="goldenPlayMode"]:checked')?.value || 'standard';
-  const _rhr_count = (_rhr_gameMode === 'golden') ? (_rhr_goldenMode === 'quickplay' ? 3 : 5) : scheme.requiredHeroes;
+  const _rhr_count = (_rhr_gameMode === 'golden') ? 5 : scheme.requiredHeroes;
   const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random());
   const selectedCheckboxes = shuffledCheckboxes.slice(0, _rhr_count);
 
@@ -2998,13 +2970,10 @@ function showConfirmChoicesPopup(
     villainFeedback += `<br><span class="error-spans">Please select ${villains.length - scheme.requiredVillains > 1 ? "fewer villain groups" : "one less villain group"}.</span>`;
   }
 
-  // Hero count validation — Golden Solo overrides the scheme's requiredHeroes.
+  // Hero count validation — Golden Solo always requires 5 heroes.
   // Read from DOM directly (gameMode global isn't set until startGame() runs).
   const _selectedGameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const _selectedGoldenMode = document.querySelector('input[name="goldenPlayMode"]:checked')?.value || 'standard';
-  const requiredHeroes = (_selectedGameMode === 'golden')
-    ? (_selectedGoldenMode === 'quickplay' ? 3 : 5)
-    : scheme.requiredHeroes;
+  const requiredHeroes = (_selectedGameMode === 'golden') ? 5 : scheme.requiredHeroes;
 
   if (heroes.length < requiredHeroes) {
     heroFeedback += `<br><span class="error-spans">Please select ${requiredHeroes - heroes.length > 1 ? "more heroes" : "another hero"}.</span>`;
@@ -3434,7 +3403,6 @@ async function onBeginGame(e) {
 
     // --- Golden Solo Mode: read game mode selection ---
     gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-    goldenPlayMode = document.querySelector('input[name="goldenPlayMode"]:checked')?.value || 'standard';
     if (gameMode === 'golden') finalBlowEnabled = true; // Final Showdown always on in Golden Solo
     // --------------------------------------------------
 
@@ -3879,54 +3847,71 @@ function generateVillainDeck(
 
   // For the villain deck, use only the henchman that wasn't used in the hero deck
   let villainDeckHenchmen = [...selectedHenchmen];
-  
-  const selectedSpecialHenchman = villainDeckHenchmen[Math.floor(Math.random() * villainDeckHenchmen.length)];
+
   let henchmenToPlaceOnTop = [];
 
-  villainDeckHenchmen.forEach((henchmanName) => {
-    const henchman = window.henchmen.find((h) => h.name === henchmanName);
-    if (henchman) {
-      if (henchmanName === selectedSpecialHenchman) {
-        // For the selected special henchman:
-        if (scheme.name === "Organized Crime Wave") {
-          // Add 8 copies with ambush effect and new image to the deck
-          for (let i = 0; i < 8; i++) {
-            deck.push({
-              ...henchman,
-              subtype: "Henchman",
-              ambushEffect: "organizedCrimeAmbush",
-              image: "Visual Assets/Other/organizedCrimeMaggiaGoons.webp",
-            });
-          }
-          // Add 2 copies with JUST the new image (no ambush) to the "on top" array
-          for (let i = 0; i < 2; i++) {
-            henchmenToPlaceOnTop.push({
-              ...henchman,
-              subtype: "Henchman",
-              image: "Visual Assets/Other/organizedCrimeMaggiaGoons.webp",
-            });
-          }
-        } else {
-          // Normal rules: add 2 normal copies to the deck
-          for (let i = 0; i < 2; i++) {
-            deck.push({ ...henchman, subtype: "Henchman" });
-          }
-          // Add 2 normal copies to the "on top" array
-          for (let i = 0; i < 2; i++) {
-            henchmenToPlaceOnTop.push({ ...henchman, subtype: "Henchman" });
-          }
-        }
-      } else {
-        // For the other henchmen:
-        // Add 10 copies to the deck
+  // Golden Solo: 2-player rules — add all 10 cards from the one henchmen group, shuffled in normally
+  if (gameMode === 'golden') {
+    villainDeckHenchmen.forEach((henchmanName) => {
+      const henchman = window.henchmen.find((h) => h.name === henchmanName);
+      if (henchman) {
         for (let i = 0; i < 10; i++) {
           deck.push({ ...henchman, subtype: "Henchman" });
         }
+      } else {
+        console.warn(`Henchman with name ${henchmanName} not found.`);
       }
-    } else {
-      console.warn(`Henchman with name ${henchmanName} not found.`);
-    }
-  });
+    });
+  } else {
+    // What If? Solo: special henchman split (2 shuffled in + 2 placed on top)
+    const selectedSpecialHenchman = villainDeckHenchmen[Math.floor(Math.random() * villainDeckHenchmen.length)];
+
+    villainDeckHenchmen.forEach((henchmanName) => {
+      const henchman = window.henchmen.find((h) => h.name === henchmanName);
+      if (henchman) {
+        if (henchmanName === selectedSpecialHenchman) {
+          // For the selected special henchman:
+          if (scheme.name === "Organized Crime Wave") {
+            // Add 8 copies with ambush effect and new image to the deck
+            for (let i = 0; i < 8; i++) {
+              deck.push({
+                ...henchman,
+                subtype: "Henchman",
+                ambushEffect: "organizedCrimeAmbush",
+                image: "Visual Assets/Other/organizedCrimeMaggiaGoons.webp",
+              });
+            }
+            // Add 2 copies with JUST the new image (no ambush) to the "on top" array
+            for (let i = 0; i < 2; i++) {
+              henchmenToPlaceOnTop.push({
+                ...henchman,
+                subtype: "Henchman",
+                image: "Visual Assets/Other/organizedCrimeMaggiaGoons.webp",
+              });
+            }
+          } else {
+            // Normal rules: add 2 normal copies to the deck
+            for (let i = 0; i < 2; i++) {
+              deck.push({ ...henchman, subtype: "Henchman" });
+            }
+            // Add 2 normal copies to the "on top" array
+            for (let i = 0; i < 2; i++) {
+              henchmenToPlaceOnTop.push({ ...henchman, subtype: "Henchman" });
+            }
+          }
+        } else {
+          // For the other henchmen:
+          // Add 10 copies to the deck
+          for (let i = 0; i < 10; i++) {
+            deck.push({ ...henchman, subtype: "Henchman" });
+          }
+        }
+      } else {
+        console.warn(`Henchman with name ${henchmanName} not found.`);
+      }
+    });
+
+  }
 
   if (
     scheme.name === "Secret Invasion of the Skrull Shapeshifters" &&
@@ -3982,7 +3967,9 @@ function generateVillainDeck(
   adjustWoundDeckForScheme(scheme);
 
   // Add bystanders, master strikes, and scheme twists
-  for (let i = 0; i < scheme.bystanderCount; i++) {
+  // Golden Solo uses 2-player default (2 bystanders) unless the scheme specifies more
+  const bystanderCount = (gameMode === 'golden') ? Math.max(2, scheme.bystanderCount) : scheme.bystanderCount;
+  for (let i = 0; i < bystanderCount; i++) {
     const bystander = bystanderDeck.splice(0, 1)[0];
     if (bystander) {
       deck.push(bystander);
