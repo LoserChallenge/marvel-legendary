@@ -37,14 +37,18 @@ Produce a prioritised report of all card effect functions across all card files 
 
 All files are at: `Legendary-Solo-Play-main/Legendary-Solo-Play-main/`
 
+### Note on script.js exclusion
+
+`script.js` is excluded because all scheme twist handlers and HQ refill calls in that file were individually reviewed during the Golden Solo implementation phase, and the one confirmed bug found there (`handlePlutoniumSchemeTwist` at line 5469) was already fixed. The six card files listed above were never reviewed for Golden Solo compatibility and are the focus of this audit.
+
 ### Golden Solo mechanics that could be affected
 
 | Mechanic | Description |
 |---|---|
 | Villain draw count | Golden Solo draws exactly 2 villain cards per round (or 1 if a bystander is spent). Any card effect that calls `drawVillainCard()` directly re-runs the full round machinery. |
-| HQ rotation | When a hero is recruited or KO'd, the new card fills the rightmost slot and all cards slide left. Effects that use fill-in-place HQ refill bypass this. |
+| HQ rotation | When a hero is recruited or KO'd, the new card fills the rightmost slot and all cards slide left. Effects that use fill-in-place HQ refill (e.g. `hq[i] = heroDeck.pop()`) bypass this. |
 | Bystander spend mechanic | At round start, the player may spend a bystander from the victory pile to reduce villain draws to 1. Effects that remove bystanders from the victory pile mid-round could interfere. |
-| "Other player" targeting | Effects targeting "each other player" should apply to the top card of the hero deck in Golden Solo (KO it or cycle to bottom). Effects that assume a human second player will silently do nothing or error. |
+| "Other player" targeting | Effects targeting "each other player" should apply to the top card of the hero deck in Golden Solo (KO it or cycle to bottom). Effects that assume a human second player will silently do nothing or behave incorrectly. |
 | Player count scaling | Effects that scale with number of players (e.g. "draw a card for each other player") will produce wrong results in Golden Solo's effective 1-player context. |
 | First-turn behaviour | Golden Solo skips HQ rotation on round 1 via `goldenFirstRound`. Effects that check `isFirstTurn` may conflict if they assume What If? Solo's turn-1 villain draw count of 3. |
 
@@ -58,10 +62,11 @@ Grep all 6 files for the following keyword groups to produce a map of suspect fu
 
 | Category | Search patterns |
 |---|---|
-| Villain draw calls | `drawVillainCard`, `processVillainCard`, `villainDeck.pop`, `villainDrawCount` |
-| HQ manipulation | `refillHQ`, `addToHQ`, `fillHQ`, `hqSlot`, `heroHQ`, `goldenRefillHQ` |
+| Villain draw calls | `drawVillainCard`, `processVillainCard`, `villainDeck.pop`, `villainDrawCount`, `villainDeck.push`, `villainDeck.unshift`, `villainDeck.splice` |
+| HQ manipulation | `refillHQ`, `addToHQ`, `fillHQ`, `hqSlot`, `heroHQ`, `goldenRefillHQ`, `heroDeck.pop`, `hq[` |
 | Bystander interactions | `bystander`, `victoryPile`, `rescuedBystander` |
-| "Other player" targeting | `otherPlayer`, `other player`, `eachOther`, `each other player` |
+| "Other player" targeting (identifiers) | `otherPlayer`, `eachOther` |
+| "Other player" targeting (card text strings) | `"other player"`, `"each player"`, `"each other player"` — search string literals and trace back to containing function |
 | Player count scaling | `playerCount`, `numPlayers`, `players.length` |
 | Game mode awareness | `gameMode` (to identify effects already handling Golden Solo) |
 | First-turn assumptions | `isFirstTurn`, `firstTurn` |
@@ -74,7 +79,7 @@ For each flagged function, read the full function body and classify into one of 
 
 | Severity | Definition |
 |---|---|
-| **Confirmed Break** | Provably wrong in Golden Solo from code alone — bad behaviour is guaranteed regardless of game state |
+| **Confirmed Break** | Provably wrong in Golden Solo from code alone — if the function is reached during normal play, bad behaviour is guaranteed. Severity is assessed assuming the function fires; game-state conditions for reaching it are not considered. |
 | **Possible Conflict** | Suspicious code that may break depending on game state or card sequence — requires playtesting or human judgement to confirm |
 | **Flagged / Probably Fine** | Matched a search pattern but appears safe on inspection — included for completeness |
 
@@ -113,7 +118,7 @@ Structure:
 
 ## Out of Scope
 
-- `script.js` — already reviewed during Golden Solo implementation
+- `script.js` — all relevant handlers reviewed during Golden Solo implementation (see note above)
 - Any changes to card effect code — report only, no fixes
 - What If? Solo regressions — audit focuses on Golden Solo conflicts only
 - New expansion content — only files listed in scope
