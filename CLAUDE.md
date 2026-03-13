@@ -51,9 +51,9 @@ Add **Golden Solo Mode** to the existing Legendary Solo Play web app. The mode w
 ## Golden Solo Rules Summary
 
 **Setup:**
-- Villain deck: standard 2-player rules
+- Villain deck: standard 2-player rules (2 bystanders default, 10-card henchmen group shuffled in)
 - Hero deck: remove each hero's unique high card → shuffle remaining → deal 10 into small stack → add unique cards back into large stack and shuffle → place 10-card stack on top
-- Two sub-modes: **Standard** (5 heroes) and **Quick Play** (3 heroes)
+- Always 5 heroes (no sub-modes)
 - HQ starts with 5 heroes populated normally
 
 **Each Round:**
@@ -74,21 +74,15 @@ Card effects targeting "each other player" apply to the top card of the hero dec
 - Lose: Scheme triggers
 - Ultimate Victory (optional): After 4th defeat, trigger Final Showdown — player's 6-card total (recruit + attack combined) must equal or exceed Mastermind's strength + 4
 
-**Quick Play — Schemes Not Recommended:**
-- Super Hero Civil War
-- Secret Invasion of the Skrull Shapeshifters
-- Save Humanity
-
 ## Success Criteria
 
 - What If? Solo plays exactly as before — no regressions
-- Golden Solo is selectable on the setup screen
-- Standard and Quick Play sub-options appear when Golden Solo is selected
+- Golden Solo is selectable on the setup screen (always 5 heroes)
 - HQ rotation works correctly each round
 - 2 villain cards drawn per round in Golden Solo
 - Bystander discard option presented each round
 - Final Showdown triggered and resolved correctly after 4th Mastermind defeat
-- Quick Play incompatible schemes are flagged in the UI
+- Villain deck built to 2-player rules (2 bystanders, 10-card henchmen group)
 
 ## Automations Set Up
 
@@ -110,14 +104,13 @@ All 7 phases of Golden Solo Mode have been implemented as of 2026-03-09.
 
 **Phase 1 — Setup Screen UI** (`index.html`)
 - Added "Golden Solo" radio button alongside "What If? Solo" on the setup screen
-- Sub-options panel (Standard / Quick Play) appears only when Golden Solo is selected
-- Quick Play incompatible scheme warnings (`⚠ Not recommended for Quick Play`) added inline to: Secret Invasion of the Skrull Shapeshifters, Superhero Civil War, Save Humanity
+- Golden Solo is always 5 heroes — no sub-mode selector was built
 - Bystander discard popup HTML added (`#golden-bystander-popup`)
 
 **Phase 2 — Game Mode Globals & Setup Reading** (`script.js`)
-- `gameMode` global (`'whatif'` | `'golden'`) and `goldenPlayMode` (`'standard'` | `'quickplay'`) declared
+- `gameMode` global (`'whatif'` | `'golden'`) declared
 - `goldenFirstRound` flag to skip HQ rotation on round 1
-- Setup reads the radio selections and sets hero count: 5 for Standard, 3 for Quick Play
+- Hero count hardwired to 5 for Golden Solo throughout (Confirm Choices, Randomize Heroes, Randomize All)
 - Final Showdown always enabled when Golden Solo is active
 
 **Phase 3 — Hero Deck Restructuring** (`script.js` ~line 3769)
@@ -151,7 +144,7 @@ All 7 phases of Golden Solo Mode have been implemented as of 2026-03-09.
 
 | File | Changes |
 |------|---------|
-| `index.html` | Setup UI, sub-options, scheme warnings, bystander popup |
+| `index.html` | Setup UI (Golden Solo radio button), bystander popup |
 | `script.js` | All game logic — ~15 new/modified functions and sections |
 | `styles.css` | Game Mode section position raised to clear Final Blow panel |
 
@@ -163,6 +156,7 @@ All 7 phases of Golden Solo Mode have been implemented as of 2026-03-09.
 | Confirm Choices showed scheme's hero count (e.g. 3) instead of Golden Solo count (5) | Validation at `script.js` ~line 2996 now reads game mode from DOM instead of stale `gameMode` global |
 | RANDOMIZE HEROES always picked 3 regardless of Golden Solo mode | `randomizeHero()` ~line 2379 now reads DOM for Golden Solo hero count |
 | RANDOMIZE ALL picked scheme's hero count instead of Golden Solo count | `randomizeHeroWithRequirements()` ~line 2875 now reads DOM for Golden Solo hero count |
+| Plutonium Scheme Twist caused 6+ villain cards drawn per round in Golden Solo | `handlePlutoniumSchemeTwist` at `script.js:5469` called `drawVillainCard()` (full round machinery) instead of `processVillainCard()` (single draw) — fixed 2026-03-12 |
 
 ### Testing Status
 
@@ -172,23 +166,100 @@ All 7 phases of Golden Solo Mode have been implemented as of 2026-03-09.
 
 **Passed:**
 - [x] Game Mode section visible and clickable
-- [x] Golden Solo sub-options (Standard / Quick Play) show/hide correctly
-- [x] Confirm Choices shows correct hero count for Golden Solo Standard (5) and Quick Play (3)
-- [x] RANDOMIZE HEROES respects Golden Solo hero count
-- [x] RANDOMIZE ALL respects Golden Solo hero count
+- [x] Confirm Choices shows correct hero count (5) for Golden Solo
+- [x] RANDOMIZE HEROES picks 5 heroes for Golden Solo
+- [x] RANDOMIZE ALL picks 5 heroes for Golden Solo
 - [x] Hero deck restructuring console message appears on game start
-- [x] HQ starts with 5 heroes (Standard)
+- [x] HQ starts with 5 heroes
 - [x] Round 1: no HQ rotation
 - [x] Round 2+: HQ rotates (1 card added right, 1 removed left)
 - [x] 2 villain cards drawn per round in Golden Solo
 - [x] Recruiting a hero rotates HQ (not fill-in-place)
 - [x] What If? Solo regression: villain draw count unchanged (1/round after turn 1)
+- [x] Villain deck bystander count: 2 by default, scheme special counts respected (code verified)
+- [x] Villain deck henchmen: all 10 cards shuffled in for Golden Solo (code verified)
 
-**Still to test:**
+**Still to test in-game:**
+- [ ] Villain deck bystander count confirmed in actual play (default 2, or scheme override)
+- [ ] Villain deck henchmen count confirmed in actual play (10 cards)
 - [ ] Bystander discard popup appears when bystanders in victory pile
 - [ ] Spending bystander reduces villain draws to 1 that round
 - [ ] Villain KO of HQ card rotates HQ
 - [ ] 4th Mastermind defeat triggers Final Showdown button label
 - [ ] Final Showdown pass: combined recruit+attack ≥ strength+4 → Ultimate Victory
 - [ ] Final Showdown fail: points too low → no victory
-- [ ] Quick Play warning schemes flagged correctly (⚠ visible only in Quick Play sub-mode)
+
+---
+
+## Compatibility Audit (2026-03-12)
+
+A full compatibility audit was conducted across all 6 card files. Full report: `docs/golden-solo-compatibility-report.md`. Design spec: `docs/superpowers/specs/2026-03-12-golden-solo-compatibility-audit-design.md`.
+
+### Key Architectural Finding
+
+**`enterCityNotDraw = true` does NOT suppress the Golden Solo block.** Many card effect functions set this flag before calling `drawVillainCard()` intending to signal "city entry only." However, the flag only bypasses the Reality Gem check (`script.js:4668`). The entire Golden Solo block — HQ rotation, bystander popup, 2-card draw loop — runs unconditionally whenever `gameMode === 'golden'`. Every `drawVillainCard()` call in every card file triggers a full Golden Solo round regardless of this flag.
+
+### `cardAbilitiesSidekicks.js` — Clean
+
+Zero hits across all search patterns. No changes needed.
+
+### Fix Type 1: Replace `drawVillainCard()` → `processVillainCard()` (28 call sites)
+
+All mid-turn card effects that play a villain card must call `processVillainCard()` (single draw, no round machinery) instead of `drawVillainCard()` (full round: HQ rotation + bystander popup + 2-card draw loop).
+
+| File | Function | Line(s) |
+|---|---|---|
+| `cardAbilities.js` | `EmmaFrostVoluntaryVillainForAttack` | 1594 |
+| `cardAbilities.js` | `handleMystiqueEscape` | 14750 |
+| `cardAbilities.js` | `extraVillainDraw` | 14798 |
+| `cardAbilities.js` | `bankRobbery` | 16840 |
+| `cardAbilities.js` | `drawMultipleVillainCards` | 16852 |
+| `cardAbilities.js` | `heroSkrulled` | 17015 |
+| `cardAbilitiesDarkCity.js` | `electroAmbush` | 8255 |
+| `cardAbilitiesDarkCity.js` | `eggheadAmbush` | 8282 |
+| `cardAbilitiesDarkCity.js` | `reignfireEscape` | 9893 |
+| `cardAbilitiesDarkCity.js` | `kingpinCriminalEmpire` | 12899, 12908, 12922 |
+| `cardAbilitiesDarkCity.js` | `stryfeSwiftVengeance` | 12977 |
+| `cardAbilitiesDarkCity.js` | `stryfeFuriousWrath` | 13472 |
+| `cardAbilitiesDarkCity.js` | `kingpinMobWar` | 14639, 14888 |
+| `cardAbilitiesDarkCity.js` | `apocalypseHorsemenAreDrawingNearer` | 14922, 15165 |
+| `cardAbilitiesDarkCity.js` | `organizedCrimeAmbush` | 15968 |
+| `cardAbilitiesDarkCity.js` | `KOCapturedHeroes` | 16634 |
+| `expansionFantasticFour.js` | `moleManMasterOfMonsters` | 2642 |
+| `expansionGuardiansOfTheGalaxy.js` | `forgeTheInfinityGauntletSingle` | 1157, 1172 |
+| `expansionGuardiansOfTheGalaxy.js` | `forgeTheInfinityGauntletBoth` | 1443, 1461 |
+| `expansionGuardiansOfTheGalaxy.js` | `timeGemAmbush` | 3711 |
+| `expansionPaintTheTownRed.js` | `spliceHumansWithSpiderDNATwist` | 666, 682, 931 |
+| `expansionPaintTheTownRed.js` | `mysterioMistsOfDeception` | 5560 |
+
+### Fix Type 2: Replace fill-in-place HQ write → `goldenRefillHQ()` (5 functions)
+
+When `gameMode === 'golden'`, any `hq[i] = heroDeck.pop()` direct assignment must be replaced with `goldenRefillHQ(i)` to preserve rotation.
+
+| File | Function | Line(s) |
+|---|---|---|
+| `cardAbilities.js` | `heroSkrulled` | 17008 |
+| `cardAbilities.js` | `KOAllHeroesInHQ` | 16952 |
+| `cardAbilitiesDarkCity.js` | `KOAllHQBystanders` | 15993–15994 |
+| `expansionFantasticFour.js` | `morgAmbush` | 3258 |
+| `expansionPaintTheTownRed.js` | `koHeroKraven` | 1710 |
+
+### Fix Type 3: Async bugs (affect all modes, found during audit)
+
+| File | Function | Issue |
+|---|---|---|
+| `cardAbilities.js` | `handleMystiqueEscape` | `.then()` chained on a boolean — `resolve()` never called, function hangs in all modes |
+| `cardAbilitiesDarkCity.js` | `reignfireEscape` | Same async chain bug |
+
+### "Other Player" Effects — Decision: Keep Silent Skip
+
+Four hero superpower abilities that reference "each other player" are currently silenced with a "does not apply in solo play" message. **Agreed approach: keep the silent skip for Golden Solo too.** The Golden Solo "other player" rule (apply to top of hero deck) is designed for villain/scheme effects that punish players, not for hero superpower bonuses. Applying these to the hero deck would mean the player penalises their own hero deck for playing a hero card.
+
+One exception: `mephistoThePriceOfFailure` currently logs "in Solo Play, 'each other player' refers to you" — this is What If? Solo wording and should be updated to the standard "does not apply in solo play" message for Golden Solo consistency.
+
+| File | Function | Current behaviour | Action |
+|---|---|---|---|
+| `cardAbilities.js` | `Gambit2ndTopCardDiscardOrPutBack` | Silent no-op | Keep as-is |
+| `cardAbilities.js` | `HawkeyeDontDrawOrDiscard` | Silent no-op | Keep as-is |
+| `cardAbilitiesDarkCity.js` | `punisherHostileInterrogation` | Silent no-op | Keep as-is |
+| `cardAbilitiesDarkCity.js` | `mephistoThePriceOfFailure` | Applies What If? Solo "you are the other player" logic | Update log message only |
