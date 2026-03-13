@@ -33,7 +33,7 @@ All rules come from the Golden Solo Ruleset PDF (summarized here as implementati
 
 * Villain deck uses standard 2-player rules  
 * Hero deck: remove each hero's unique high card, shuffle remaining cards, deal 10 into a small stack, add unique cards back into the large stack and shuffle, place the 10-card stack on top  
-* Two play modes within Golden Solo: **Standard** (5 heroes) and **Quick Play** (3 heroes)  
+* Golden Solo is always 5 heroes — no sub-modes
 * HQ is populated normally with 5 heroes at the start
 
 **Each round (turn structure):**
@@ -54,18 +54,13 @@ All rules come from the Golden Solo Ruleset PDF (summarized here as implementati
 * Lose: Scheme triggers  
 * Ultimate Victory (optional): After the 4th defeat, trigger Final Showdown — player's 6-card total (recruit \+ attack combined) must equal or exceed Mastermind's strength \+ 4
 
-**Schemes not recommended for Quick Play:**
-
-* Super Hero Civil War  
-* Secret Invasion of the Skrull Shapeshifters  
-* Save Humanity
 
 ## **Problem Types Involved**
 
 * **Mode-switching logic** — the app needs to know which ruleset is active and adjust behavior accordingly throughout a game session  
 * **Turn structure changes** — draw sequence and villain card count differ from the existing mode  
 * **HQ behavior change** — rotation logic replaces the current fill-in-place refill  
-* **New setup flow** — hero deck construction is different; setup screen needs a Standard vs Quick Play sub-option when Golden Solo is selected
+* **New setup flow** — hero deck construction is different; Golden Solo always uses 5 heroes
 
 ## **Relevant Claude Code Capabilities**
 
@@ -80,14 +75,17 @@ All rules come from the Golden Solo Ruleset PDF (summarized here as implementati
 
 ## **Success Criteria**
 
-* Existing What If? Solo mode plays exactly as before — no regressions  
-* Golden Solo mode is selectable on the setup screen  
-* Standard (5 hero) and Quick Play (3 hero) sub-options appear when Golden Solo is selected  
-* HQ rotation works correctly each round  
-* 2 villain cards are drawn per round in Golden Solo  
-* Bystander discard option is presented each round  
-* Final Showdown is triggered and resolved correctly after the 4th Mastermind defeat  
-* Schemes not recommended for Quick Play are flagged or noted in the UI
+* Existing What If? Solo mode plays exactly as before — no regressions
+* Golden Solo mode is selectable on the setup screen (always 5 heroes)
+* HQ rotation works correctly each round
+* 2 villain cards are drawn per round in Golden Solo
+* Bystander discard option is presented each round
+* Final Showdown is triggered and resolved correctly after the 4th Mastermind defeat
+
+## **Project Status**
+
+* Golden Solo Mode fully implemented (all 7 phases complete as of 2026-03-09)
+* A full Golden Solo compatibility audit was completed on 2026-03-12 across all 6 card files — 32 confirmed fixes identified (28× `drawVillainCard()` → `processVillainCard()` replacements, 4× fill-in-place HQ writes, 2× async bugs). Full report: `docs/golden-solo-compatibility-report.md`. Fixes not yet implemented.
 
 ## **Notes for Claude Code**
 
