@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"function moleManMasterOfMonsters\\\\|function forgeTheInfinityGauntletSingle\\\\|function forgeTheInfinityGauntletBoth\\\\|function timeGemAmbush\\\\|function spliceHumansWithSpiderDNATwist\\\\|function mysterioMistsOfDeception\" \"/d/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/expansion\"*.js)",
+      "Bash(grep -n \"function morgAmbush\\\\|function koHeroKraven\" \"/d/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/expansion\"*.js)",
+      "Bash(grep \"in Solo Play, ''each other player'' refers to you\" \"/d/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/cardAbilitiesDarkCity.js\")",
+      "Bash(grep -c \"drawVillainCard\\(\\)\" \"/d/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main\"/*.js)",
+      "Bash(grep -v \":0$\")",
+      "Bash(grep -c \"drawVillainCard\\(\\)\" *.js)"
+    ]
+  },
   "allowedTools": [
     "Bash(git status)",
     "Bash(git status *)",

@@ -1154,7 +1154,7 @@ async function forgeTheInfinityGauntletSingle() {
             chosenGem.attack = chosenGem.originalAttack;
             villainDeck.push(chosenGem);
             enterCityNotDraw = true;
-            await drawVillainCard();
+            await processVillainCard();
             enterCityNotDraw = false;
             onscreenConsole.log(`${chosenGem.name} enters the city from your control!`);
           }
@@ -1169,7 +1169,7 @@ async function forgeTheInfinityGauntletSingle() {
             chosenGem.attack = chosenGem.originalAttack;
             villainDeck.push(chosenGem);
             enterCityNotDraw = true;
-            await drawVillainCard();
+            await processVillainCard();
             enterCityNotDraw = false;
             onscreenConsole.log(`${chosenGem.name} enters the city from your discard pile!`);
           }
@@ -1440,7 +1440,7 @@ return new Promise((resolve) => {
             chosenCard.attack = chosenCard.originalAttack;
             villainDeck.push(chosenCard);
             enterCityNotDraw = true;
-            await drawVillainCard();
+            await processVillainCard();
             enterCityNotDraw = false;
             
           } else {
@@ -1458,7 +1458,7 @@ return new Promise((resolve) => {
             chosenCard.attack = chosenCard.originalAttack;
             villainDeck.push(chosenCard);
             enterCityNotDraw = true;
-            await drawVillainCard();
+            await processVillainCard();
             enterCityNotDraw = false;
           } else {
             console.error("Selected card not found in played cards");
@@ -3708,7 +3708,7 @@ playSFX("shards");
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 
-await drawVillainCard();
+await processVillainCard();
 
 }
 

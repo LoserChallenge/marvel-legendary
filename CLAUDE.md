@@ -1,4 +1,4 @@
-# Marvel Legendary — Golden Solo Mode Project
+# Marvel Legendary — Solo Play Web App
 
 ## About the User
 
@@ -12,11 +12,11 @@
 
 ## Project Goal
 
-Add **Golden Solo Mode** to the existing Legendary Solo Play web app. The mode will be selectable alongside the existing **What If? Solo** mode on the setup screen. What If? Solo must remain completely unchanged.
+Enhance the existing Legendary Solo Play web app. Golden Solo Mode is complete. Active work: UI/setup screen improvements, then full expansion content additions.
 
 ## Project Location
 
-- Working directory: `D:\AI\Claude Code\marvel-legendary`
+- Working directory: `D:\Games\Digital\Marvel Legendary\Claude Code\marvel-legendary`
 - Source files (extracted): `Legendary-Solo-Play-main\Legendary-Solo-Play-main\`
 
 ## Source Files
@@ -35,18 +35,38 @@ Add **Golden Solo Mode** to the existing Legendary Solo Play web app. The mode w
 | `expansionPaintTheTownRed.js` | 5,582 | Paint the Town Red expansion |
 | `updatesContent.js` | 475 | Patch notes |
 
+## How to Run
+
+Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in a browser. No server, build step, or install needed.
+
 ## Platform & Constraints
 
 - Windows 11, VS Code
 - Static HTML/JS/CSS — no server, no build step, opens directly in a browser
 - No package.json / no npm
 - User is on Claude Pro — no API usage
+- `node` is not on the PATH available to the Bash tool — manual `node --check` will fail; rely on the hook runner instead
 
 ## Out of Scope
 
 - Any changes to What If? Solo behavior
 - Two Handed mode
-- New expansion card data
+
+## Reference Files
+
+- `revisions-additions.md` — prioritised list of planned UI/setup screen changes
+- `card-directory.pdf` — full card list for all expansions with faction symbols
+- `rules/` — PDF rulesheets for all expansions (attach to chat to read; file-path reading requires pdftoppm which is not installed)
+
+## Planned Work (in order)
+
+1. **UI/Setup Screen improvements** — full phased plan at `C:\Users\Paul\.claude\plans\composed-tinkering-avalanche.md`; use `revision-tracker` subagent at session start to check current status
+   - Phase 1: ✅ Complete — on branch `phase-1-ui-revisions` (awaiting merge to master)
+   - Phase 2: Welcome screen rewrite, RULES button, villain/mastermind pairing check
+   - Phase 3: Live selection summary panel
+2. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
+   - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
+   - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
 
 ## Golden Solo Rules Summary
 
@@ -86,8 +106,15 @@ Card effects targeting "each other player" apply to the top card of the hero dec
 
 ## Automations Set Up
 
+- **Git worktrees**: `.worktrees/` directory is gitignored; feature branches live at `.worktrees/<branch-name>`
 - **Subagent**: `.claude/agents/codebase-navigator.md` — for targeted code searches without flooding context
 - **Hook**: `.claude/hookify.block-asset-edits.local.md` — blocks any edits to `Visual Assets/` or `Audio Assets/`
+- **Hook**: `.claude/settings.json` — JS syntax check (`node --check`) runs automatically after every `.js` file edit
+- **Hook**: `.claude/settings.json` — anti-pattern guard: blocks `drawVillainCard()` calls in `expansion*.js` and `cardAbilities*.js` files (use `processVillainCard()` instead)
+- **Subagent**: `.claude/agents/audit-tracker.md` — scans card files for remaining compatibility fixes; use at start of any fix session
+- **Subagent**: `.claude/agents/revision-tracker.md` — scans HTML/JS for UI revision progress; use at start of any UI revision session
+- **Skill**: `.claude/skills/golden-solo-fixer/SKILL.md` — step-by-step guide for executing compatibility audit fixes; invoke with `/golden-solo-fixer`
+- **Skill**: `.claude/skills/new-expansion/SKILL.md` — step-by-step guide for adding a new expansion (file structure, card data, Golden Solo compatibility rules); invoke with `/new-expansion`
 
 ## Workflow Preferences
 
@@ -157,6 +184,7 @@ All 7 phases of Golden Solo Mode have been implemented as of 2026-03-09.
 | RANDOMIZE HEROES always picked 3 regardless of Golden Solo mode | `randomizeHero()` ~line 2379 now reads DOM for Golden Solo hero count |
 | RANDOMIZE ALL picked scheme's hero count instead of Golden Solo count | `randomizeHeroWithRequirements()` ~line 2875 now reads DOM for Golden Solo hero count |
 | Plutonium Scheme Twist caused 6+ villain cards drawn per round in Golden Solo | `handlePlutoniumSchemeTwist` at `script.js:5469` called `drawVillainCard()` (full round machinery) instead of `processVillainCard()` (single draw) — fixed 2026-03-12 |
+| 36 card-effect functions called `drawVillainCard()` mid-turn, triggering full Golden Solo rounds | All 22 Type 1 call sites replaced with `processVillainCard()`; 5 HQ fill-in-place assignments replaced with `goldenRefillHQ()` conditionals; 2 async chain bugs fixed; 1 log message updated — applied 2026-03-26 |
 
 ### Testing Status
 
@@ -188,78 +216,16 @@ All 7 phases of Golden Solo Mode have been implemented as of 2026-03-09.
 - [ ] 4th Mastermind defeat triggers Final Showdown button label
 - [ ] Final Showdown pass: combined recruit+attack ≥ strength+4 → Ultimate Victory
 - [ ] Final Showdown fail: points too low → no victory
+- [ ] Card effects that draw extra villain cards (Emma Frost, Electro, Kingpin, Forge, etc.) draw single cards only — not full Golden Solo rounds
+- [ ] KO effects on HQ cards (Skrull, Kraven, Morg) rotate HQ correctly rather than fill-in-place
+- [ ] Mystique and Reignfire escape effects resolve correctly (no hang)
 
 ---
 
-## Compatibility Audit (2026-03-12)
+## Compatibility Audit (2026-03-12) — Complete
 
-A full compatibility audit was conducted across all 6 card files. Full report: `docs/golden-solo-compatibility-report.md`. Design spec: `docs/superpowers/specs/2026-03-12-golden-solo-compatibility-audit-design.md`.
+All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-report.md`.
 
-### Key Architectural Finding
+**Key architectural rule:** `enterCityNotDraw = true` does NOT suppress the Golden Solo block. Mid-turn card effects must call `processVillainCard()` (single draw) not `drawVillainCard()` (full round). Any new expansion card that draws a villain card mid-turn must follow this same pattern.
 
-**`enterCityNotDraw = true` does NOT suppress the Golden Solo block.** Many card effect functions set this flag before calling `drawVillainCard()` intending to signal "city entry only." However, the flag only bypasses the Reality Gem check (`script.js:4668`). The entire Golden Solo block — HQ rotation, bystander popup, 2-card draw loop — runs unconditionally whenever `gameMode === 'golden'`. Every `drawVillainCard()` call in every card file triggers a full Golden Solo round regardless of this flag.
-
-### `cardAbilitiesSidekicks.js` — Clean
-
-Zero hits across all search patterns. No changes needed.
-
-### Fix Type 1: Replace `drawVillainCard()` → `processVillainCard()` (28 call sites)
-
-All mid-turn card effects that play a villain card must call `processVillainCard()` (single draw, no round machinery) instead of `drawVillainCard()` (full round: HQ rotation + bystander popup + 2-card draw loop).
-
-| File | Function | Line(s) |
-|---|---|---|
-| `cardAbilities.js` | `EmmaFrostVoluntaryVillainForAttack` | 1594 |
-| `cardAbilities.js` | `handleMystiqueEscape` | 14750 |
-| `cardAbilities.js` | `extraVillainDraw` | 14798 |
-| `cardAbilities.js` | `bankRobbery` | 16840 |
-| `cardAbilities.js` | `drawMultipleVillainCards` | 16852 |
-| `cardAbilities.js` | `heroSkrulled` | 17015 |
-| `cardAbilitiesDarkCity.js` | `electroAmbush` | 8255 |
-| `cardAbilitiesDarkCity.js` | `eggheadAmbush` | 8282 |
-| `cardAbilitiesDarkCity.js` | `reignfireEscape` | 9893 |
-| `cardAbilitiesDarkCity.js` | `kingpinCriminalEmpire` | 12899, 12908, 12922 |
-| `cardAbilitiesDarkCity.js` | `stryfeSwiftVengeance` | 12977 |
-| `cardAbilitiesDarkCity.js` | `stryfeFuriousWrath` | 13472 |
-| `cardAbilitiesDarkCity.js` | `kingpinMobWar` | 14639, 14888 |
-| `cardAbilitiesDarkCity.js` | `apocalypseHorsemenAreDrawingNearer` | 14922, 15165 |
-| `cardAbilitiesDarkCity.js` | `organizedCrimeAmbush` | 15968 |
-| `cardAbilitiesDarkCity.js` | `KOCapturedHeroes` | 16634 |
-| `expansionFantasticFour.js` | `moleManMasterOfMonsters` | 2642 |
-| `expansionGuardiansOfTheGalaxy.js` | `forgeTheInfinityGauntletSingle` | 1157, 1172 |
-| `expansionGuardiansOfTheGalaxy.js` | `forgeTheInfinityGauntletBoth` | 1443, 1461 |
-| `expansionGuardiansOfTheGalaxy.js` | `timeGemAmbush` | 3711 |
-| `expansionPaintTheTownRed.js` | `spliceHumansWithSpiderDNATwist` | 666, 682, 931 |
-| `expansionPaintTheTownRed.js` | `mysterioMistsOfDeception` | 5560 |
-
-### Fix Type 2: Replace fill-in-place HQ write → `goldenRefillHQ()` (5 functions)
-
-When `gameMode === 'golden'`, any `hq[i] = heroDeck.pop()` direct assignment must be replaced with `goldenRefillHQ(i)` to preserve rotation.
-
-| File | Function | Line(s) |
-|---|---|---|
-| `cardAbilities.js` | `heroSkrulled` | 17008 |
-| `cardAbilities.js` | `KOAllHeroesInHQ` | 16952 |
-| `cardAbilitiesDarkCity.js` | `KOAllHQBystanders` | 15993–15994 |
-| `expansionFantasticFour.js` | `morgAmbush` | 3258 |
-| `expansionPaintTheTownRed.js` | `koHeroKraven` | 1710 |
-
-### Fix Type 3: Async bugs (affect all modes, found during audit)
-
-| File | Function | Issue |
-|---|---|---|
-| `cardAbilities.js` | `handleMystiqueEscape` | `.then()` chained on a boolean — `resolve()` never called, function hangs in all modes |
-| `cardAbilitiesDarkCity.js` | `reignfireEscape` | Same async chain bug |
-
-### "Other Player" Effects — Decision: Keep Silent Skip
-
-Four hero superpower abilities that reference "each other player" are currently silenced with a "does not apply in solo play" message. **Agreed approach: keep the silent skip for Golden Solo too.** The Golden Solo "other player" rule (apply to top of hero deck) is designed for villain/scheme effects that punish players, not for hero superpower bonuses. Applying these to the hero deck would mean the player penalises their own hero deck for playing a hero card.
-
-One exception: `mephistoThePriceOfFailure` currently logs "in Solo Play, 'each other player' refers to you" — this is What If? Solo wording and should be updated to the standard "does not apply in solo play" message for Golden Solo consistency.
-
-| File | Function | Current behaviour | Action |
-|---|---|---|---|
-| `cardAbilities.js` | `Gambit2ndTopCardDiscardOrPutBack` | Silent no-op | Keep as-is |
-| `cardAbilities.js` | `HawkeyeDontDrawOrDiscard` | Silent no-op | Keep as-is |
-| `cardAbilitiesDarkCity.js` | `punisherHostileInterrogation` | Silent no-op | Keep as-is |
-| `cardAbilitiesDarkCity.js` | `mephistoThePriceOfFailure` | Applies What If? Solo "you are the other player" logic | Update log message only |
+**"Other Player" effects:** Keep the existing silent skip for Golden Solo — do not apply hero superpower bonuses to the hero deck. New expansion cards with "each other player" wording should follow the same approach.

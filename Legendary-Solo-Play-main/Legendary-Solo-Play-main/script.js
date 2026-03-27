@@ -5466,7 +5466,9 @@ async function handlePlutoniumSchemeTwist(villainCard) {
     }
 
     // **Force a new villain draw here** (before resolving the twist)
-    await drawVillainCard(); // If this is another twist, it will recursively process
+    // Golden Solo fix: call processVillainCard() directly instead of drawVillainCard()
+    // to avoid re-triggering the full round machinery (HQ rotation, bystander prompt, 2-card loop).
+    await processVillainCard();
   } catch (error) {
     console.error("Error in twist effect:", error);
   }

@@ -663,7 +663,7 @@ async function spliceHumansWithSpiderDNATwist() {
 
   if (sinisterSixInVP.length === 0) {
     onscreenConsole.log("No Sinister Six Villains available in Victory Pile. A Villain card is still drawn.");
-    await drawVillainCard();
+    await processVillainCard();
     return false;
   }
 
@@ -679,7 +679,7 @@ async function spliceHumansWithSpiderDNATwist() {
       );
       victoryPile.splice(index, 1);
       villainDeck.push(sinisterVillain);
-      await drawVillainCard(); // Trigger villain card draw
+      await processVillainCard(); // Trigger villain card draw
       return true;
     }
     return false;
@@ -928,7 +928,7 @@ async function spliceHumansWithSpiderDNATwist() {
 
           updateGameBoard();
           closeCardChoicePopup();
-          await drawVillainCard(); // Trigger villain card draw
+          await processVillainCard(); // Trigger villain card draw
         }
 
         resolve(true);
@@ -1707,7 +1707,11 @@ function koHeroKraven(hero) {
   koPile.push(hero);
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
-  hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
+  if (gameMode === 'golden') {
+    goldenRefillHQ(heroIndex);
+  } else {
+    hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
+  }
 
   // Check if the HQ space is empty after drawing
   if (!hq[heroIndex]) {
@@ -5556,9 +5560,7 @@ async function mysterioMistsOfDeception() {
         // Add to top of deck first
         villainDeck.push(strike);
         // Then draw it properly
-        enterCityNotDraw = true;
-        await drawVillainCard();
-        enterCityNotDraw = false;
+        await processVillainCard();
       }
     }
 

@@ -2638,9 +2638,7 @@ async function moleManMasterOfMonsters() {
     for (const villain of subterraneaVillains) {
       // Place on top (end) of deck, then draw normally
       villainDeck.push(villain);
-      enterCityNotDraw = true;
-      await drawVillainCard(); // this should consume from the top
-      enterCityNotDraw = false;
+      await processVillainCard(); // this should consume from the top
     }
   }
 
@@ -3255,7 +3253,11 @@ function morgAmbush() {
   // Now fill any empty HQ slots with new heroes from top of deck
   for (let i = 0; i < 5; i++) {
     if (hq[i] === null && heroDeck.length > 0) {
-      hq[i] = heroDeck.pop();
+      if (gameMode === 'golden') {
+        goldenRefillHQ(i);
+      } else {
+        hq[i] = heroDeck.pop();
+      }
     }
   }
 

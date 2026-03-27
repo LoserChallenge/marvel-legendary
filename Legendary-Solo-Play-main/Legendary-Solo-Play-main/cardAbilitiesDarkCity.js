@@ -8252,7 +8252,7 @@ function electroAmbush() {
     onscreenConsole.log(
       `You revealed a <span class="console-highlights">Scheme Twist</span>. It will now be played.`,
     );
-    drawVillainCard();
+    processVillainCard();
   } else {
     onscreenConsole.log(
       `You revealed <span class="console-highlights">${topCardOfVillainDeck.name}</span>. It is not a Scheme Twist and does not need to be played.`,
@@ -8279,7 +8279,7 @@ function eggheadAmbush() {
     onscreenConsole.log(
       `You revealed <span class="console-highlights">${topCardOfVillainDeck.name}</span>. It will now be played.`,
     );
-    drawVillainCard();
+    processVillainCard();
   } else {
     onscreenConsole.log(
       `You revealed <span class="console-highlights">${topCardOfVillainDeck.name}</span>. It is not a Villain and does not need to be played.`,
@@ -9888,16 +9888,7 @@ function reignfireEscape() {
         `Escape! <span class="console-highlights">Reignfire</span> has transformed into a Master Strike.`,
       );
 
-      // Draw the top card of the villain deck
-      enterCityNotDraw = true;
-      drawVillainCard();
-      enterCityNotDraw = false
-        .then(() => {
-          resolve(); // Resolve the promise after the card is drawn
-        })
-        .catch((error) => {
-          reject(error); // Reject the promise if drawing the card fails
-        });
+      processVillainCard().then(() => resolve()).catch(reject);
     } else {
       console.log("Reignfire was not found in the Escape Pile.");
       resolve(); // Resolve immediately if Reignfire is not found
@@ -12895,18 +12886,14 @@ async function kingpinCriminalEmpire() {
         villainDeck.push(...revealedCards.reverse());
         onscreenConsole.log(`Three Villains revealed. Playing them now.`);
         for (let i = 0; i < 3; i++) {
-          enterCityNotDraw = true;
-          await drawVillainCard();
-          enterCityNotDraw = false;
+          await processVillainCard();
           await new Promise((resolve) => setTimeout(resolve, 100)); // Ensure UI updates
         }
       } else if (villains.length === 2) {
         villainDeck.push(...villains.reverse());
         onscreenConsole.log(`Two Villains revealed. Playing them now.`);
         for (let i = 0; i < 2; i++) {
-          enterCityNotDraw = true;
-          await drawVillainCard();
-          enterCityNotDraw = false;
+          await processVillainCard();
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
         if (nonVillains.length > 0) {
@@ -12918,9 +12905,7 @@ async function kingpinCriminalEmpire() {
         onscreenConsole.log(
           `One Villain revealed. It will be played now. The other revealed cards will be shuffled and returned to the top of the Villain deck.`,
         );
-        enterCityNotDraw = true;
-        await drawVillainCard();
-        enterCityNotDraw = false;
+        await processVillainCard();
         shuffleArray(nonVillains);
         villainDeck.push(...nonVillains);
       } else {
@@ -12973,9 +12958,7 @@ function stryfeSwiftVengeance() {
     `A Wound from the Wound Stack is becoming a Master Strike to take effect immediately.`,
   );
   villainDeck.push(topWound);
-  enterCityNotDraw = true;
-  drawVillainCard();
-  enterCityNotDraw = false;
+  processVillainCard();
 }
 
 function mephistoThePriceOfFailure() {
@@ -12985,7 +12968,7 @@ function mephistoThePriceOfFailure() {
     );
   } else {
     onscreenConsole.log(
-      `In Solo Play, "each other player" refers to you and you just gained <span class="console-highlights">The Price of Failure</span> to your Victory Pile. No Wound gained.`,
+      `<span class="console-highlights">The Price of Failure</span>: "each other player" does not apply in solo play. No Wound gained.`,
     );
   }
 }
@@ -13468,9 +13451,7 @@ async function stryfeFuriousWrath() {
 
     // Play each Master Strike
     for (let i = 0; i < masterStrikes.length; i++) {
-      enterCityNotDraw = true;
-      await drawVillainCard();
-      enterCityNotDraw = false;
+      await processVillainCard();
     }
   } else {
     onscreenConsole.log("No Master Strikes were revealed.");
@@ -14636,7 +14617,7 @@ async function kingpinMobWar() {
       );
       victoryPile.splice(index, 1);
       villainDeck.push(henchman);
-      await drawVillainCard(); // Trigger villain card draw
+      await processVillainCard(); // Trigger villain card draw
       return true;
     }
     return false;
@@ -14885,7 +14866,7 @@ async function kingpinMobWar() {
 
           updateGameBoard();
           closeCardChoicePopup();
-          await drawVillainCard(); // Trigger villain card draw
+          await processVillainCard(); // Trigger villain card draw
         }
 
         resolve(true);
@@ -14919,7 +14900,7 @@ async function apocalypseHorsemenAreDrawingNearer() {
       );
       victoryPile.splice(index, 1);
       villainDeck.push(horsemen);
-      await drawVillainCard(); // Trigger villain card draw
+      await processVillainCard(); // Trigger villain card draw
       return true;
     }
     return false;
@@ -15162,7 +15143,7 @@ async function apocalypseHorsemenAreDrawingNearer() {
           villainDeck.push(selectedCard);
           updateGameBoard();
           closeCardChoicePopup();
-          await drawVillainCard(); // Trigger villain card draw
+          await processVillainCard(); // Trigger villain card draw
 
           resolve(true);
         } else {
@@ -15965,7 +15946,7 @@ async function organizedCrimeAmbush() {
   onscreenConsole.log(
     `Ambush! <span class="console-highlights">Maggia Goons</span> forces you to play another card from the Villain deck.`,
   );
-  await drawVillainCard();
+  await processVillainCard();
 }
 
 async function KOAllHQBystanders() {
@@ -15990,8 +15971,13 @@ async function KOAllHQBystanders() {
     koPile.push(koedBystander);
 
     // Draw new card from hero deck (if available)
-    const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-    hq[index] = newCard;
+    let newCard;
+    if (gameMode === 'golden') {
+      newCard = goldenRefillHQ(index);
+    } else {
+      newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+      hq[index] = newCard;
+    }
 
     // Log the changes
     if (koedBystander && newCard) {
@@ -16631,7 +16617,7 @@ async function KOCapturedHeroes() {
   onscreenConsole.log(
     `All Heroes captured by enemies have been KO'd. Now playing another card from the Villain Deck...`,
   );
-  await drawVillainCard();
+  await processVillainCard();
 
   updateGameBoard(); // Refresh UI
 }

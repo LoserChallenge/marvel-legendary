@@ -1591,7 +1591,7 @@ function EmmaFrostVoluntaryVillainForAttack() {
           `Extra Villain card played. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
         );
         closeInfoChoicePopup();
-        await drawVillainCard();
+        await processVillainCard();
         totalAttackPoints += 2;
         cumulativeAttackPoints += 2;
         updateGameBoard();
@@ -14745,16 +14745,7 @@ function handleMystiqueEscape() {
       onscreenConsole.log(
         `Escape! <span class="console-highlights">Mystique</span> has transformed into a Scheme Twist.`,
       );
-      enterCityNotDraw = true;
-      // Draw the top card of the villain deck
-      drawVillainCard();
-      enterCityNotDraw = false
-        .then(() => {
-          resolve(); // Resolve the promise after the card is drawn
-        })
-        .catch((error) => {
-          reject(error); // Reject the promise if drawing the card fails
-        });
+      processVillainCard().then(() => resolve()).catch(reject);
     } else {
       console.log("Mystique was not found in the Escape Pile.");
       resolve(); // Resolve immediately if Mystique is not found
@@ -14795,7 +14786,7 @@ async function extraVillainDraw() {
     `Ambush! <span class="console-highlights">${city[sewersIndex].name}</span> forces you to play the top card of the Villain Deck.`,
   );
 
-  await drawVillainCard();
+  await processVillainCard();
 }
 
 function chooseHeroesToKOFromDiscardPile() {
@@ -16837,7 +16828,7 @@ async function bankRobbery() {
   })
     .then(() => {
       // Draw the next villain card after everything is done
-      drawVillainCard();
+      processVillainCard();
     })
     .catch((error) => {
       // Handle any errors that occurred
@@ -16849,7 +16840,7 @@ function drawMultipleVillainCards(count) {
   let promiseChain = Promise.resolve();
 
   for (let i = 0; i < count; i++) {
-    promiseChain = promiseChain.then(() => drawVillainCard());
+    promiseChain = promiseChain.then(() => processVillainCard());
   }
 
   return promiseChain;
@@ -16949,7 +16940,11 @@ async function KOAllHeroesInHQ() {
 
   for (let i = 0; i < 5; i++) {
     if (!hq[i] && heroDeck.length > 0) {
-      hq[i] = heroDeck.pop();
+      if (gameMode === 'golden') {
+        goldenRefillHQ(i);
+      } else {
+        hq[i] = heroDeck.pop();
+      }
     }
   }
 
@@ -17005,15 +17000,17 @@ function heroSkrulled(hero) {
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
   const heroIndex = hq.indexOf(hero);
-  hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
+  if (gameMode === 'golden') {
+    goldenRefillHQ(heroIndex);
+  } else {
+    hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
+  }
 
   // Check if the HQ space is empty after drawing
   if (!hq[heroIndex]) {
     showHeroDeckEmptyPopup();
   }
-enterCityNotDraw = true;
-  drawVillainCard();
-  enterCityNotDraw = false;
+  processVillainCard();
 
   // Attach an overlay to the villain
   hero.overlayText = `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SKRULL</span>`;
