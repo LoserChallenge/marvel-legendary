@@ -47,6 +47,10 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 - User is on Claude Pro — no API usage
 - `node` is not on the PATH available to the Bash tool — manual `node --check` will fail; rely on the hook runner instead
 
+## JS/HTML Pairing Rule
+
+When removing an HTML element, always grep `script.js` for matching `getElementById()` calls at the top level. Null references at the top of `script.js` crash ALL subsequent listener registration silently (e.g., removing `#donate-call-to-action` from HTML broke the Welcome popup close button because `script.js` crashed before registering its listener).
+
 ## Out of Scope
 
 - Any changes to What If? Solo behavior
@@ -61,8 +65,8 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 ## Planned Work (in order)
 
 1. **UI/Setup Screen improvements** — full phased plan at `C:\Users\Paul\.claude\plans\composed-tinkering-avalanche.md`; use `revision-tracker` subagent at session start to check current status
-   - Phase 1: ✅ Complete — on branch `phase-1-ui-revisions` (awaiting merge to master)
-   - Phase 2: Welcome screen rewrite, RULES button, villain/mastermind pairing check
+   - Phase 1: ✅ Complete — merged to master (2026-03-27)
+   - Phase 2: 2a ✅ Welcome screen rewrite complete — 2b RULES button, 2c pairing (deferred) remaining
    - Phase 3: Live selection summary panel
 2. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
