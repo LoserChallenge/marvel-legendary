@@ -2259,9 +2259,11 @@ h2 {
   transform: scale(1.3);
 }
 
-.how-to-play-section {
+.how-to-play-section h3 {
   text-align: center;
-  font-size: 110%;
+  text-transform: uppercase;
+  font-size: calc(0.8vh + 0.8vw);
+  font-weight: bold;
 }
 
 #popup-tabs {
