@@ -774,22 +774,6 @@ function filterDeckByExpansions(deck, expansions) {
   return deck.filter((card) => expansions.includes(card.expansion));
 }
 
-document.querySelectorAll(".tab-button").forEach((button) => {
-  button.addEventListener("click", function () {
-    const tab = this.getAttribute("data-tab");
-
-    document
-      .querySelectorAll(".tab-button")
-      .forEach((btn) => btn.classList.remove("active"));
-    this.classList.add("active");
-
-    document.querySelectorAll(".tab-content").forEach((content) => {
-      content.classList.remove("active");
-    });
-    document.getElementById(tab).classList.add("active");
-  });
-});
-
 document.querySelectorAll(".settings-tab-button").forEach((button) => {
   button.addEventListener("click", function () {
     const tab = this.getAttribute("data-tab");
@@ -3466,63 +3450,6 @@ async function onBeginGame(e) {
   blackout.classList.remove("show");
 
   if (e?.currentTarget) e.currentTarget.disabled = false;
-}
-
-document.getElementById("start-expansion").addEventListener("click", () => {
-  const expansionPopup = document.getElementById("expansion-popup-container");
-  const expansionBackground = document.getElementById(
-    "background-for-expansion-popup",
-  );
-
-  expansionPopup.classList.add("hidden");
-  expansionBackground.classList.add("hidden");
-  document.getElementById("intro-popup-container").style.display = "flex";
-  expansionPopup.style.display = "none";
-
-  // Optional: Remove the element from DOM after fade completes
-  setTimeout(() => {
-    expansionPopup.style.display = "none";
-    expansionBackground.style.display = "none";
-  }, 1000); // Match this timeout with your transition duration
-});
-
-document.getElementById("skip-button").addEventListener("click", () => {
-  skipSplash();
-});
-
-function skipSplash() {
-  const expansionPopup = document.getElementById("expansion-popup-container");
-  const expansionBackground = document.getElementById(
-    "background-for-expansion-popup",
-  );
-
-  expansionPopup.classList.add("hidden");
-  expansionBackground.classList.add("hidden");
-  document.getElementById("intro-popup-container").style.display = "none";
-  expansionPopup.style.display = "none";
-
-  // Optional: Remove the element from DOM after fade completes
-  setTimeout(() => {
-    expansionPopup.style.display = "none";
-    expansionBackground.style.display = "none";
-  }, 1000); // Match this timeout with your transition duration
-}
-
-function skipSplashAndIntro() {
-  const expansionPopup = document.getElementById("expansion-popup-container");
-  const expansionBackground = document.getElementById(
-    "background-for-expansion-popup",
-  );
-
-  expansionPopup.classList.add("hidden");
-  expansionBackground.classList.add("hidden");
-  expansionPopup.style.display = "none";
-
-  // Optional: Remove the element from DOM after fade completes
-  setTimeout(() => {
-    expansionPopup.style.display = "none";
-    expansionBackground.style.display = "none";
-  }, 1000); // Match this timeout with your transition duration
 }
 
 document.getElementById("start-game").addEventListener("click", () => {
