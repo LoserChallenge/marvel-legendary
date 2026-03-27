@@ -18,42 +18,14 @@
 
   <div style="display:none;">//10.02.26 20:45</div>
 
-  <div id="background-for-expansion-popup"><canvas id="mycanvas"></canvas></div>
-
-  <div id="expansion-popup-container">
-    <div id="skip-button">SKIP</div>
-    <div class="splash-container">
-      <div class="splash-content circular" id="splashContent">
-        <div class="splash-text" id="splashText">
-          <h2 class="splash-title-legendary">LEGENDARY</h2>
-          <h2 class="splash-title-expansion">GUARDIANS OF THE GALAXY</h2>
-          <p class="splash-description">The cosmos are in chaos. Intergalactic war looms and ancient powers rise.</p>
-            <p class="splash-description">Thanos threatens annhilation while the Supreme Intelligence of the Kree plots with cold logic.</p>
-          <p class="splash-description">Assemble your team, acquire Shards and harness the power of the Infinity Gems in order to survive.</p>
-          <p class="splash-description">The galaxy's fate isn't written in the stars; it's forged by your crew.</p>
-          <button id="start-expansion">I AM GROOT!</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div id="intro-popup-container" style="display: none;">
+  <div id="intro-popup-container" style="display: flex;">
     <div id="intro-popup">
       <div id="intro-popup-header">
         <h2>Welcome to Marvel Legendary</h2>
         <span id="intro-popup-close-button"><b>✕</b></span>
       </div>
-      <div id="popup-tabs">
-        <button class="tab-button active" id="left-tab" data-tab="intro">Intro</button>
-        <button class="tab-button" id="right-tab" data-tab="updates"><span class="pulsing-glow-updates">Updates</span></button>
-      </div>
       <div id="intro-popup-content">
         <div id="intro" class="tab-content active">
-          <h3 class="pulsing-glow-text">
-            <strong>Guardians of the Galaxy <img src="Visual Assets/Icons/Guardians of the Galaxy.svg" alt="Guardians of the Galaxy Icon" class="popup-card-icons"> -</strong> Please see the <i>Updates</i> tab for Expansion patch notes.
-          </h3>
-          <button id="theme-switch" style="width: 50%;" class="pulsing-glow-button">TRY THE NEW THEME!</button>
-          <p>Get ready to dive into the <strong>Marvel Legendary</strong> universe in this fan-made digital adaptation of the classic deck-building game! Assemble a team of heroes, take down powerful villains, and stop the mastermind’s nefarious schemes—all in <strong>solo mode</strong>, optimised with the latest <i>"What If...?"</i> variations to the Advanced Solo rules.</p>
-
           <h3>🎮 How to Play</h3>
           <p>If you're new to <em>Marvel Legendary</em>, be sure to check out the official rules <a href="https://theupperdeckco.wpenginepowered.com/wp-content/uploads/2024/05/Legendary_Rules-Core_Set.pdf" style="color:#00a6ed;" target="_blank">here</a> to learn the basics.</p>
           <p>This version of the game includes a console log and pop-ups that will guide you through card effects.</p>
@@ -75,20 +47,7 @@
             <li>✅ Any effect that targets "each other player" applies to you instead.</li>
           </ul>
 
-          <h3 style="color: var(--popupText)">💖 Support the Project</h3>
-          <p>This project is a passion-driven endeavor, and every bit of support helps keep development going. If you're enjoying this <strong>free</strong> digital version, please consider <strong>donating</strong> to help bring more heroes, villains, and expansions to life!</p>
-
-          <p style="text-align: center;">➡️ <a href="https://www.paypal.me/benjaminb21" target="_blank" class="donate-button"><strong>SUPPORT FUTURE EXPANSIONS</strong></a> ⬅️</p>
-
-          <p><i>This project is provided free of charge as a passion project for fans. Any donations collected are solely to cover hosting and development costs and are not for profit.</i></p>
-
           <p><strong>🛑 Disclaimer:</strong> <i>This project is an unofficial, fan-made adaptation and is not affiliated with, endorsed by, or approved by Upper Deck Entertainment, Marvel, or any other rights holders associated with Marvel Legendary. All rights to the original game, including its mechanics, characters, and artwork, belong to their respective owners.</i></p>
-
-          <p>📧 For any bugs, issues, feedback, or suggestions, please email us at legendarysoloplay@gmail.com - We appreciate your input!</p>
-
-          <p>🚀 Thank you for playing, and may your deck always be legendary!</p>
-        </div>
-        <div id="updates" class="tab-content">
         </div>
       </div>
     </div>
@@ -100,7 +59,6 @@
         <img id="settingsCogImage" src="Visual Assets/Icons/settingsCog_theme-core.svg" alt="Settings Icon" class="settingsCog">
       </div>
     </div>
-    <div id="newsletter-form"><button style="text-align: center;"><a href="https://legendary-solo-play.kit.com/9263389eba" target="_blank" class="donate-button" style="color: var(--buttonText); text-decoration: none;">✉  <strong>KEEP UPDATED</strong>  ✉</a></button></div>
     <div class="overall-filter">
       <div id="overallsetlist" class="dropdown-check-list" tabindex="100">
         <span class="anchor">OVERALL SET</span>
@@ -574,15 +532,12 @@
           <span class="slider round"></span>
         </label>
       </div>
-      <br>
-      <label for="final-blow-checkbox">Marvel Legendary Solo Play rules only require you to defeat the Mastermind's four tactic cards in order to win. If Final Blow is enabled, you need to defeat the Mastermind's four tactics and then attack one final time in order to secure victory.</label>
     </div>
     <div class="startup-centered-buttons">
       <button id="randomize-all2">RANDOMIZE ALL</button>
       <button id="load-last-setup-2">LOAD LAST SETUP</button>
       <button id="start-game2">START GAME</button>
     </div>
-    <button id="donate-call-to-action">DONATE TO SUPPORT FUTURE EXPANSIONS</button>
   </div>
 
   <div id="confirm-start-up-choices" style="display:none;">
@@ -847,7 +802,7 @@
         <div class="scroll-gradient"></div>
       </div>
     </div>
-    <div style="display:flex; gap:1vw;"><button id="donate-call-to-action-in-game" class="side-panel-bottom-buttons">DONATE</button><button id="console-log-export" class="side-panel-bottom-buttons">EXPORT ▼</button></div>
+    <div style="display:flex; gap:1vw;"><button id="console-log-export" class="side-panel-bottom-buttons">EXPORT ▼</button></div>
   </div>
 
   <!-- Pop-up for recruiting S.H.I.E.L.D. Officer -->
