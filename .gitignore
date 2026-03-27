@@ -4,3 +4,6 @@
 # Windows system files
 Thumbs.db
 desktop.ini
+
+# Git worktrees
+.worktrees/
