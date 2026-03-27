@@ -37,68 +37,6 @@ window.addEventListener("load", async () => {
   }, remaining);
 });
 
-document
-  .getElementById("donate-call-to-action")
-  .addEventListener("click", () => {
-    window.open("https://www.paypal.me/benjaminb21", "_blank", "noopener");
-  });
-
-document
-  .getElementById("donate-call-to-action-in-game")
-  .addEventListener("click", () => {
-    window.open("https://www.paypal.me/benjaminb21", "_blank", "noopener");
-  });
-
-document.getElementById("theme-switch").addEventListener("click", () => {
-  const body = document.body;
-  
-  // Change THEME to Guardians
-  const themeButtons = document.querySelectorAll(".theme-button");
-  
-  // Remove selected class from all theme buttons
-  themeButtons.forEach((btn) => btn.classList.remove("selected"));
-  
-  // Add selected class to Guardians theme button
-  themeButtons.forEach((button) => {
-    if (button.getAttribute("data-theme") === "theme-guardians") {
-      button.classList.add("selected");
-    }
-  });
-  
-  // Update body class to apply Guardians theme
-  body.className = "theme-guardians";
-  updateThemeImages("theme-guardians");
-  
-  // Save theme preference
-  localStorage.setItem("selectedTheme", "theme-guardians");
-  
-  // Change FONT to Guardians
-  const ALL_FONT_CLASSES = [
-    "font-Core",
-    "font-DarkCity",
-    "font-FantasticFour",
-    "font-PaintTheTownRed",
-    "font-Guardians"
-  ];
-  
-  // Remove all known font classes, add Guardians
-  body.classList.remove(...ALL_FONT_CLASSES);
-  body.classList.add("font-Guardians");
-  
-  // Update CSS variables for Guardians
-  updateFontVariables("Guardians");
-  
-  // Save font preference
-  localStorage.setItem("selectedFont", "Guardians");
-  
-  // Update font selector if it exists
-  const fontSelector = document.getElementById("font-selector");
-  if (fontSelector) {
-    fontSelector.value = "Guardians";
-  }
-  
-  console.log("Theme and font changed to: Guardians");
-});
 
 // Custom on-screen log function
 const onscreenConsole = {
