@@ -68,7 +68,7 @@ Full mastermind data:
 | Galactus | `"Heralds of Galactus"` | `"villain"` |
 | Mole Man | `"Subterranea"` | `"villain"` |
 | Thanos | `"Infinity Gems"` | `"villain"` |
-| Supreme Intelligence | `"Kree Starforce"` | `"villain"` |
+| The Supreme Intelligence of the Kree | `"Kree Starforce"` | `"villain"` |
 | Carnage | `"Maximum Carnage"` | `"villain"` |
 | Mysterio | `"Sinister Six"` | `"villain"` |
 
