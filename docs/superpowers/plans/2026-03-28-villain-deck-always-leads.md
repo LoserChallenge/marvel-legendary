@@ -448,7 +448,7 @@ const _mastermind = getSelectedMastermind() || {};
 const req = getEffectiveSetupRequirements(scheme, _mastermind, _gameMode);
 ```
 
-- [ ] **Step 3: Replace `scheme.specificHenchmenRequirement` check**
+- [ ] **Step 2: Replace `scheme.specificHenchmenRequirement` check**
 
 Find:
 
@@ -470,15 +470,15 @@ if (req.specificHenchmenRequirement) {
 
 Also replace `scheme.requiredHenchmen` references inside this block with `scheme.requiredHenchmen` unchanged — henchmen count is not overridden by the helper, only the specific group requirement.
 
-- [ ] **Step 4: Verify syntax check passes**
+- [ ] **Step 3: Verify syntax check passes**
 
-- [ ] **Step 5: Manual browser verification — Randomize All + Dr. Doom**
+- [ ] **Step 4: Manual browser verification — Randomize All + Dr. Doom**
 
 With Golden Solo + Dr. Doom selected, click RANDOMIZE ALL. Confirm Doombot Legion is always selected as the henchmen group.
 
 With Golden Solo + any other mastermind, click RANDOMIZE ALL. Confirm henchmen selection is random (unchanged).
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add Legendary-Solo-Play-main/Legendary-Solo-Play-main/script.js
