@@ -87,11 +87,13 @@ Returns:
 ```js
 {
   requiredVillains: 2,
-  specificVillainRequirement: ["Four Horsemen"],  // array of locked group names
+  specificVillainRequirement: ["Four Horsemen"],  // always an array (empty if none)
   requiredHenchmen: 1,
-  specificHenchmenRequirement: null               // or "Doombot Legion" for Dr. Doom
+  specificHenchmenRequirement: null               // string | null ("Doombot Legion" for Dr. Doom)
 }
 ```
+
+Note: `specificVillainRequirement` is always returned as an array. `specificHenchmenRequirement` is returned as a string or null. Existing validation code uses `Array.isArray()` to normalise henchmen requirements — callers must wrap `specificHenchmenRequirement` in an array before passing to that existing logic, or normalise inside the helper.
 
 **Logic:**
 
@@ -117,13 +119,26 @@ const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.valu
 const req = getEffectiveSetupRequirements(scheme, mastermind, _gameMode);
 ```
 
-1. **`showConfirmChoicesPopup`** — villain count validation, error messages, and "X Villain groups required" display line all use `req` values. Mastermind is already available at this call site.
+**Important:** The call to `showConfirmChoicesPopup` at line 3514 passes a stub object `{ name: selectedMastermind }` — not a full mastermind object. `getEffectiveSetupRequirements` needs `mastermind.alwaysLeads` and `mastermind.alwaysLeadsType`, so `showConfirmChoicesPopup` must look up the full mastermind object from the `masterminds` array internally before calling the helper:
 
-2. **`randomizeVillainWithRequirements`** — uses `req.specificVillainRequirement` to lock required slots first, then fills remaining free slots randomly from the filtered pool.
+```js
+const fullMastermind = masterminds.find(m => m.name === mastermind.name) || mastermind;
+```
 
-3. **`randomizeVillain`** (standalone button) — currently hardcoded to pick 1. In Golden Solo, uses effective `requiredVillains` count (2) and locks the Always Leads slot. Needs mastermind to be read from the DOM at call time.
+Similarly, `randomizeVillainWithRequirements` and `randomizeVillain` have no mastermind argument. Both must read the selected mastermind name from the DOM and look it up from the `masterminds` array:
 
-4. **`updateSummaryPanel`** — villain count display compares selected count against `req.requiredVillains` instead of `scheme.requiredVillains`.
+```js
+const _mastermindName = document.querySelector('#mastermind-section input[type="radio"]:checked')?.value;
+const _mastermind = masterminds.find(m => m.name === _mastermindName) || {};
+```
+
+1. **`showConfirmChoicesPopup`** — villain count validation, error messages, and "X Villain groups required" display line all use `req` values. Looks up full mastermind internally as described above.
+
+2. **`randomizeVillainWithRequirements`** — uses `req.specificVillainRequirement` to lock required slots first, then fills remaining free slots randomly from the filtered pool. Reads mastermind from DOM internally.
+
+3. **`randomizeVillain`** (standalone button) — currently hardcoded to pick 1. In Golden Solo, always performs a full replacement: picks 2 groups total, with the Always Leads slot locked first and one additional free-choice slot randomised. Reads mastermind from DOM internally. This mirrors the behaviour of call sites 2 and 4 (full replacement each time).
+
+4. **`updateSummaryPanel`** — villain count display compares selected count against `req.requiredVillains` instead of `scheme.requiredVillains`. Reads mastermind from DOM internally.
 
 ---
 
@@ -138,16 +153,20 @@ Around line 4349, the block that sets `window.alwaysLeadsVillain`:
 
 ### Section 5 — Apocalypse +2 attack generalised pattern (`script.js`)
 
-Inside `generateVillainDeck`, after villain cards are assembled, add:
+The +2 attack for Apocalypse is **already partially implemented** via `attackFromMastermind` in `updateVillainAttackValues` and `updateHQVillainAttackValues`. Both functions currently check `mastermind.name === "Apocalypse" && villain.alwaysLeads === true` and set `villain.attackFromMastermind = 2`.
+
+This section **replaces** those hardcoded name checks with a generalised data-driven check:
 
 ```
 if mastermind.alwaysLeadsBonus exists
-  AND mastermind.alwaysLeads group is present in the selected villain deck
-→ for each card in that group: apply bonus (e.g. card.attack += alwaysLeadsBonus.attack)
+  AND villain.alwaysLeads === true
+→ villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack
 ```
 
-For Apocalypse: each Four Horsemen villain card gets `attack += 2`.
-Works in both game modes.
+The `villain.alwaysLeads` flag is set during villain deck generation when a card belongs to `window.alwaysLeadsVillain` — so after Section 4's fix, this flag will correctly identify Four Horsemen cards when Apocalypse is mastermind in both game modes.
+
+This change touches two functions: `updateVillainAttackValues` and `updateHQVillainAttackValues`. The hardcoded `mastermind.name === "Apocalypse"` check in each is replaced with the generalised `alwaysLeadsBonus` check.
+
 Future masterminds with group bonuses: add `alwaysLeadsBonus` to their data entry only — no code change required.
 
 ---
