@@ -88,12 +88,11 @@ Returns:
 {
   requiredVillains: 2,
   specificVillainRequirement: ["Four Horsemen"],  // always an array (empty if none)
-  requiredHenchmen: 1,
   specificHenchmenRequirement: null               // string | null ("Doombot Legion" for Dr. Doom)
 }
 ```
 
-Note: `specificVillainRequirement` is always returned as an array. `specificHenchmenRequirement` is returned as a string or null. Existing validation code uses `Array.isArray()` to normalise henchmen requirements — callers must wrap `specificHenchmenRequirement` in an array before passing to that existing logic, or normalise inside the helper.
+Note: `requiredHenchmen` is intentionally omitted from the return shape — henchmen count is not overridden in Golden Solo, so call sites continue to read `scheme.requiredHenchmen` directly. `specificVillainRequirement` is always returned as an array. `specificHenchmenRequirement` is returned as a string or null; callers must wrap it in an array before passing to existing validation logic that uses `Array.isArray()`. The fallback `{}` case (no mastermind selected) means `alwaysLeads` and `alwaysLeadsType` will be undefined — the helper must guard against this and treat it as no Always Leads requirement.
 
 **Logic:**
 
@@ -179,7 +178,7 @@ Note: the tactic text updates for Apocalypse, Mole Man, and Red Skull inside `ge
 | File | Changes |
 |---|---|
 | `cardDatabase.js` | Add `alwaysLeads`, `alwaysLeadsType`, and (where applicable) `alwaysLeadsBonus` to all 15 mastermind objects |
-| `script.js` | New `getEffectiveSetupRequirements` helper; update 4 setup screen callers; update `alwaysLeadsVillain` assignment; add `alwaysLeadsBonus` application in `generateVillainDeck` |
+| `script.js` | New `getEffectiveSetupRequirements` helper; update 4 setup screen callers; update `alwaysLeadsVillain` assignment; replace hardcoded `mastermind.name === "Apocalypse"` check with generalised `alwaysLeadsBonus` check in `updateVillainAttackValues` and `updateHQVillainAttackValues` |
 
 ---
 
