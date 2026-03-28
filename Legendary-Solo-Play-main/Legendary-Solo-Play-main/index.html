@@ -94,11 +94,6 @@
         </ul>
       </div>
     </div>
-    <div class="startup-centered-buttons">
-      <button id="randomize-all">RANDOMIZE ALL</button>
-      <button id="load-last-setup-1">LOAD LAST SETUP</button>
-      <button id="start-game">START GAME</button>
-    </div>
     <div id="all-selected-filters" class="selected-filters"></div>
     <div class="section" id="scheme-section">
       <div class="section-bar-image">
@@ -539,27 +534,58 @@
 
     </div>
 
-    <div id="game-mode-section">
-      <h2>GAME MODE</h2>
-      <div id="game-mode-options">
-        <label><input type="radio" name="gameMode" id="mode-whatif" value="whatif" checked> What If? Solo</label>
-        <label><input type="radio" name="gameMode" id="mode-golden" value="golden"> Golden Solo</label>
+    <!-- Selection Summary Panel (fixed bottom of setup screen) -->
+    <div id="summary-panel">
+      <div class="summary-left-group">
+        <div class="summary-item" id="summary-scheme">
+          <span class="summary-label">SCHEME</span>
+          <span class="summary-value" id="summary-scheme-value">None</span>
+        </div>
+        <div class="summary-item" id="summary-villains">
+          <span class="summary-label">VILLAINS</span>
+          <span class="summary-value" id="summary-villains-value">None</span>
+          <span class="summary-count" id="summary-villains-count"></span>
+        </div>
+        <div class="summary-item summary-heroes-item" id="summary-heroes">
+          <span class="summary-label">HEROES</span>
+          <span class="summary-value" id="summary-heroes-value">None</span>
+          <span class="summary-count" id="summary-heroes-count"></span>
+        </div>
       </div>
-    </div>
-
-    <div id="final-blow-section" class="section">
-      <h2>FINAL BLOW</h2>
-      <div id="finalBlowToggle">
-        <label class="switch">
-          <input type="checkbox" id="final-blow-checkbox">
-          <span class="slider round"></span>
-        </label>
+      <div class="summary-mid-group">
+        <div class="summary-item" id="summary-mastermind">
+          <span class="summary-label">MASTERMIND</span>
+          <span class="summary-value" id="summary-mastermind-value">None</span>
+        </div>
+        <div class="summary-item" id="summary-henchmen">
+          <span class="summary-label">HENCHMEN</span>
+          <span class="summary-value" id="summary-henchmen-value">None</span>
+          <span class="summary-count" id="summary-henchmen-count"></span>
+        </div>
       </div>
-    </div>
-    <div class="startup-centered-buttons">
-      <button id="randomize-all2">RANDOMIZE ALL</button>
-      <button id="load-last-setup-2">LOAD LAST SETUP</button>
-      <button id="start-game2">START GAME</button>
+      <div class="summary-mode-group">
+        <div class="summary-item summary-control" id="summary-final-blow">
+          <span class="summary-label">FINAL BLOW</span>
+          <div id="finalBlowToggle">
+            <label class="switch">
+              <input type="checkbox" id="final-blow-checkbox">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+        <div class="summary-item summary-control" id="summary-game-mode">
+          <span class="summary-label">GAME MODE</span>
+          <div id="game-mode-options">
+            <label><input type="radio" name="gameMode" id="mode-whatif" value="whatif" checked> What If?</label>
+            <label><input type="radio" name="gameMode" id="mode-golden" value="golden"> Golden Solo</label>
+          </div>
+        </div>
+      </div>
+      <div class="summary-buttons">
+        <button id="randomize-all2" class="start-up-buttons">RANDOMIZE ALL</button>
+        <button id="load-last-setup-2" class="start-up-buttons">LOAD LAST SETUP</button>
+        <button id="start-game2" class="start-up-buttons">START GAME</button>
+      </div>
     </div>
   </div>
 

@@ -13,15 +13,12 @@ window.addEventListener("load", async () => {
   const minDisplayMs = 2000; // how long to show at least
   const start = performance.now();
 
-  const load1 = document.getElementById("load-last-setup-1");
   const load2 = document.getElementById("load-last-setup-2");
   const saved = localStorage.getItem("legendaryGameSetup");
 
   if (!saved) {
-    load1.disabled = true;
     load2.disabled = true;
   } else {
-    load1.disabled = false;
     load2.disabled = false;
   }
 
@@ -1961,7 +1958,8 @@ function randomizeScheme() {
   }
 
   updateSchemeImage(selectedRadioButton.value);
-  
+  updateSummaryPanel();
+
   // Return the selected scheme value
   return selectedRadioButton.value;
 }
@@ -2004,6 +2002,7 @@ function randomizeMastermind() {
   }
 
   updateMastermindImage(selectedRadioButton.value);
+  updateSummaryPanel();
 }
 
 // Function to randomize villain selection
@@ -2067,6 +2066,7 @@ function randomizeVillain() {
 
   // Update face-down cards for the selected villains (if applicable)
   updateVillainFaceDownCards();
+  updateSummaryPanel();
 }
 
 // Function to update villain image based on selected villain checkbox
@@ -2212,6 +2212,7 @@ function randomizeHenchmen() {
 
   // Update face-down cards for the selected henchmen (if applicable)
   updateHenchmenFaceDownCards();
+  updateSummaryPanel();
 }
 
 function randomizeHero() {
@@ -2308,6 +2309,7 @@ function randomizeHero() {
 
   // Update face-down cards for the selected heroes (if applicable)
   updateHeroFaceDownCards();
+  updateSummaryPanel();
 }
 
 // Function to update hero image based on selected hero checkbox
@@ -2423,13 +2425,103 @@ document.getElementById("randomize-heroes").addEventListener("click", () => {
   randomizeHero();
 });
 
-document.getElementById("randomize-all").addEventListener("click", () => {
-  randomizeAll();
-});
-
 document.getElementById("randomize-all2").addEventListener("click", () => {
   randomizeAll();
 });
+
+function updateSummaryPanel() {
+  // --- Scheme ---
+  const schemeRadio = document.querySelector('#scheme-selection input[type="radio"]:checked');
+  const schemeName = schemeRadio ? schemeRadio.value : null;
+  document.getElementById('summary-scheme-value').textContent = schemeName || 'None';
+
+  // Look up scheme object for requirements
+  const scheme = schemeName ? schemes.find(s => s.name === schemeName) : null;
+
+  // --- Mastermind ---
+  const mastermindRadio = document.querySelector('#mastermind-selection input[type="radio"]:checked');
+  const mastermindName = mastermindRadio ? mastermindRadio.value : null;
+  document.getElementById('summary-mastermind-value').textContent = mastermindName || 'None';
+
+  // --- Game Mode ---
+  const gameModeValue = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+
+  // --- Villains ---
+  const selectedVillains = Array.from(
+    document.querySelectorAll('#villain-selection input[type="checkbox"]:checked')
+  ).map(cb => cb.value);
+
+  const villainsValueEl = document.getElementById('summary-villains-value');
+  const villainsCountEl = document.getElementById('summary-villains-count');
+
+  if (selectedVillains.length === 0) {
+    villainsValueEl.textContent = 'None';
+  } else {
+    villainsValueEl.textContent = selectedVillains.join(', ');
+  }
+
+  const requiredVillains = scheme ? scheme.requiredVillains : null;
+  villainsCountEl.textContent = `(${selectedVillains.length}/${requiredVillains !== null && requiredVillains !== undefined ? requiredVillains : '?'})`;
+  villainsCountEl.className = 'summary-count ' + getCountColorClass(selectedVillains.length, requiredVillains ?? null);
+
+  // --- Henchmen ---
+  const selectedHenchmen = Array.from(
+    document.querySelectorAll('#henchmen-selection input[type="checkbox"]:checked')
+  ).map(cb => cb.value);
+
+  const henchmenValueEl = document.getElementById('summary-henchmen-value');
+  const henchmenCountEl = document.getElementById('summary-henchmen-count');
+
+  if (selectedHenchmen.length === 0) {
+    henchmenValueEl.textContent = 'None';
+  } else {
+    henchmenValueEl.textContent = selectedHenchmen.join(', ');
+  }
+
+  const requiredHenchmen = scheme ? scheme.requiredHenchmen : null;
+  henchmenCountEl.textContent = `(${selectedHenchmen.length}/${requiredHenchmen !== null && requiredHenchmen !== undefined ? requiredHenchmen : '?'})`;
+  henchmenCountEl.className = 'summary-count ' + getCountColorClass(selectedHenchmen.length, requiredHenchmen ?? null);
+
+  // --- Heroes ---
+  const selectedHeroes = Array.from(
+    document.querySelectorAll('#hero-selection input[type="checkbox"]:checked')
+  ).map(cb => cb.value);
+
+  const heroesValueEl = document.getElementById('summary-heroes-value');
+  const heroesCountEl = document.getElementById('summary-heroes-count');
+
+  if (selectedHeroes.length === 0) {
+    heroesValueEl.textContent = 'None';
+  } else {
+    heroesValueEl.textContent = selectedHeroes.join(', ');
+  }
+
+  const requiredHeroes = (gameModeValue === 'golden') ? 5 : (scheme ? (scheme.requiredHeroes ?? null) : null);
+  heroesCountEl.textContent = `(${selectedHeroes.length}/${requiredHeroes !== null ? requiredHeroes : '?'})`;
+  heroesCountEl.className = 'summary-count ' + getCountColorClass(selectedHeroes.length, requiredHeroes);
+}
+
+function getCountColorClass(selected, required) {
+  if (required === null) return 'count-grey';
+  if (selected === 0) return 'count-grey';
+  if (selected === required) return 'count-green';
+  if (selected < required) return 'count-amber';
+  return 'count-red'; // selected > required
+}
+
+// --- Summary Panel: live update listeners ---
+document.getElementById('scheme-selection').addEventListener('change', updateSummaryPanel);
+document.getElementById('mastermind-selection').addEventListener('change', updateSummaryPanel);
+document.getElementById('villain-selection').addEventListener('change', updateSummaryPanel);
+document.getElementById('henchmen-selection').addEventListener('change', updateSummaryPanel);
+document.getElementById('hero-selection').addEventListener('change', updateSummaryPanel);
+document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
+  radio.addEventListener('change', updateSummaryPanel);
+});
+
+// Show summary panel on setup screen load
+document.getElementById('summary-panel').classList.add('visible');
+updateSummaryPanel();
 
 function randomizeAll() {
   // Step 1: Randomize the scheme first
@@ -2596,6 +2688,7 @@ function randomizeVillainWithRequirements(scheme) {
 
   // Update face-down cards for the selected villains
   updateVillainFaceDownCards();
+  updateSummaryPanel();
 }
 
 function randomizeHenchmenWithRequirements(scheme) {
@@ -2713,6 +2806,7 @@ function randomizeHenchmenWithRequirements(scheme) {
 
   // Update face-down cards for the selected henchmen
   updateHenchmenFaceDownCards();
+  updateSummaryPanel();
 }
 
 function randomizeHeroWithRequirements(scheme) {
@@ -2803,6 +2897,7 @@ function randomizeHeroWithRequirements(scheme) {
 
   // Update face-down cards for the selected heroes
   updateHeroFaceDownCards();
+  updateSummaryPanel();
 }
 
 function formatList(items) {
@@ -3008,6 +3103,7 @@ function loadLastGameSetup() {
 
     // UPDATE IMAGES AND SCROLL - ADD THIS PART!
     updateAllImagesAndScroll(gameSettings);
+    updateSummaryPanel();
 
     console.log("Last game setup loaded successfully!");
   } catch (error) {
@@ -3223,10 +3319,6 @@ function restoreCheckboxes(sectionSelector, values) {
 }
 
 document
-  .getElementById("load-last-setup-1")
-  .addEventListener("click", loadLastGameSetup);
-
-document
   .getElementById("load-last-setup-2")
   .addEventListener("click", loadLastGameSetup);
 
@@ -3360,6 +3452,7 @@ async function onBeginGame(e) {
 
     // Swap UI
     document.getElementById("home-screen").style.display = "none";
+    document.getElementById("summary-panel").classList.remove("visible");
     document.getElementById("game-board").style.display = "block";
     document.getElementById("expand-side-panel").style.display = "block";
     document.getElementById("side-panel").style.display = "flex";
@@ -3389,43 +3482,6 @@ async function onBeginGame(e) {
 
   if (e?.currentTarget) e.currentTarget.disabled = false;
 }
-
-document.getElementById("start-game").addEventListener("click", () => {
-  const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const selectedMastermind = document.querySelector(
-    "#mastermind-section input[type=radio]:checked",
-  ).value;
-  const selectedVillains = Array.from(
-    document.querySelectorAll(
-      "#villain-selection input[type=checkbox]:checked",
-    ),
-  ).map((cb) => cb.value);
-  const selectedHenchmen = Array.from(
-    document.querySelectorAll(
-      "#henchmen-selection input[type=checkbox]:checked",
-    ),
-  ).map((cb) => cb.value);
-  const selectedHeroes = Array.from(
-    document.querySelectorAll("#hero-selection input[type=checkbox]:checked"),
-  ).map((cb) => cb.value);
-
-  finalBlowEnabled = document.getElementById("final-blow-checkbox").checked;
-
-  const selectedScheme = schemes.find(
-    (scheme) => scheme.name === selectedSchemeName,
-  );
-
-  // Show the confirmation popup with the selected values
-  showConfirmChoicesPopup(
-    selectedScheme,
-    { name: selectedMastermind },
-    selectedVillains,
-    selectedHenchmen,
-    selectedHeroes,
-  );
-});
 
 document.getElementById("start-game2").addEventListener("click", () => {
   const selectedSchemeName = document.querySelector(
