@@ -45,7 +45,8 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 - Static HTML/JS/CSS — no server, no build step, opens directly in a browser
 - No package.json / no npm
 - User is on Claude Pro — no API usage
-- `node` is not on the PATH available to the Bash tool — manual `node --check` will fail; rely on the hook runner instead
+- `node` is installed at `C:\Program Files\nodejs\node.exe` but not on the Bash tool's PATH — manual `node --check` will fail; rely on the hook runner instead
+- When running Node `-e` scripts, use relative paths from the working directory — absolute Windows paths with backslashes get mangled by double-escaping
 
 ## JS/HTML Pairing Rule
 
@@ -64,10 +65,10 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 
 ## Planned Work (in order)
 
-1. **UI/Setup Screen improvements** — full phased plan at `C:\Users\Paul\.claude\plans\composed-tinkering-avalanche.md`; use `revision-tracker` subagent at session start to check current status
-   - Phase 1: ✅ Complete — merged to master (2026-03-27)
-   - Phase 2: 2a ✅ Welcome screen rewrite complete — 2b RULES button, 2c pairing (deferred) remaining
-   - Phase 3: Live selection summary panel
+1. **UI/Setup Screen improvements** ✅ Complete — merged to master (2026-03-28)
+   - Phase 1: ✅ Merged to master (2026-03-27)
+   - Phase 2: ✅ Welcome screen rewrite complete (2a); RULES button and pairing to be addressed during expansion work
+   - Phase 3: ✅ Live selection summary panel — all 7 tasks + CSS redesign complete, merged to master (2026-03-28)
 2. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
    - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
@@ -122,6 +123,7 @@ Card effects targeting "each other player" apply to the top card of the hero dec
 
 ## Workflow Preferences
 
+- When a plan or prior discussion specifies worktrees/branch isolation, follow that approach — confirm with user if deviating
 - Always read and understand code before proposing changes
 - Propose a plan and get approval before editing any files
 - Use the `codebase-navigator` subagent for searching large files

@@ -1270,20 +1270,6 @@ h2 {
   margin-bottom: 1vh;
 }
 
-.startup-centered-buttons {
-  display: block;
-  justify-content: center;
-  margin-top: 2vh;
-  width: 15vw;
-  margin-bottom: 1vh;
-  position: fixed;
-  right: 2vh;
-  bottom: 1vh;
-}
-
-#randomize-all,
-#load-last-setup-1,
-#start-game,
 #randomize-all2,
 #load-last-setup-2,
 #start-game2 {
@@ -1320,18 +1306,6 @@ h2 {
   color: #f4f1f1;
 }
 
-#final-blow-section {
-  display: block;
-  font-family: "Roboto Condensed", sans-serif;
-  font-size: clamp(8pt, 1.7vh, 1.5em);
-  font-weight: 400;
-  font-style: normal;
-  position: fixed;
-  right: 2vh;
-  width: 15vw;
-  bottom: 23vh;
-}
-
 .banner-settings-icon {
   position: fixed;
   top: 2vh;
@@ -1346,19 +1320,6 @@ h2 {
 
 @media (max-width: 500px) {
   /* Adjust breakpoint as needed */
-  .startup-centered-buttons {
-    display: block;
-    margin: 2vh auto 0;
-    justify-content: center;
-    margin-top: 2vh;
-    width: 50%;
-    margin-bottom: 1vh;
-    position: inherit;
-  }
-
-  #randomize-all,
-  #load-last-setup-1,
-  #start-game,
   #randomize-all2,
   #load-last-setup-2,
   #start-game2 {
@@ -1373,17 +1334,6 @@ h2 {
     margin-right: auto;
     position: inherit;
     height: 5vh;
-  }
-
-  #final-blow-section {
-    display: block;
-    font-family: "Roboto Condensed", sans-serif;
-    font-size: clamp(8pt, 1.7vh, 1.5em);
-    font-weight: 400;
-    font-style: normal;
-    padding: 0 2vw 2vh 2vw;
-    position: inherit;
-    width: 50%;
   }
 
   .banner-settings-icon {
@@ -1408,9 +1358,7 @@ h2 {
   }
 }
 
-#start-game,
 #start-game2,
-#load-last-setup-1,
 #load-last-setup-2 {
   margin-top: 10px;
 }
@@ -2262,7 +2210,7 @@ h2 {
 .how-to-play-section h3 {
   text-align: center;
   text-transform: uppercase;
-  font-size: calc(0.8vh + 0.8vw);
+  font-size: calc(1.2vh + 1.2vw);
   font-weight: bold;
 }
 
@@ -8534,42 +8482,6 @@ div.screws:nth-of-type(4) {
    GOLDEN SOLO MODE — Setup Screen
    ============================================= */
 
-#game-mode-section {
-  display: block;
-  font-family: "Roboto Condensed", sans-serif;
-  font-size: clamp(8pt, 1.7vh, 1.5em);
-  font-weight: 400;
-  font-style: normal;
-  position: fixed;
-  right: 2vh;
-  width: 15vw;
-  bottom: 62vh;
-}
-
-#game-mode-section h2 {
-  font-family: "Roboto Condensed", sans-serif;
-  font-size: clamp(8pt, 1.7vh, 1.2em);
-  font-weight: 700;
-  color: var(--accent);
-  margin: 0 0 0.8vh 0;
-  text-transform: uppercase;
-}
-
-#game-mode-options label {
-  display: block;
-  cursor: pointer;
-  margin-bottom: 0.5vh;
-  color: var(--popupText);
-}
-
-@media (max-width: 500px) {
-  #game-mode-section {
-    position: inherit;
-    width: 100%;
-    margin-bottom: 1vh;
-  }
-}
-
 /* =============================================
    GOLDEN SOLO MODE — Bystander Discard Popup
    ============================================= */
@@ -8629,4 +8541,243 @@ div.screws:nth-of-type(4) {
   position: absolute;
   width: 100%;
 }
+
+/* ===== Selection Summary Panel ===== */
+
+#summary-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #18222c;
+  border-top: 2px solid var(--accent);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+  height: 100px;
+  display: none;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-rows: 1fr;
+  align-items: stretch;
+  padding: 0;
+  font-family: "Roboto Condensed", sans-serif;
+  box-sizing: border-box;
+}
+
+#summary-panel.visible {
+  display: grid;
+}
+
+/* Content zone base — each group is a self-contained sector */
+.summary-left-group,
+.summary-mid-group,
+.summary-mode-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 28px;
+  border-right: 1px solid rgba(253, 183, 22, 0.1);
+}
+
+.summary-left-group {
+  grid-column: 1;
+}
+
+.summary-mid-group {
+  grid-column: 2;
+}
+
+.summary-mode-group {
+  grid-column: 3;
+}
+
+#summary-panel .summary-buttons {
+  grid-column: 4;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  padding: 0 22px 0 18px;
+  justify-content: center;
+}
+
+.summary-item {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Labels: small, muted-gold tracker style */
+.summary-label {
+  color: rgba(253, 183, 22, 0.55) !important;
+  font-weight: 700 !important;
+  font-size: 9px !important;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  font-family: "Roboto Condensed", sans-serif;
+  flex-shrink: 0;
+}
+
+/* Values: prominent, white */
+.summary-value {
+  color: var(--popupText) !important;
+  font-size: 15px !important;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: "Roboto Condensed", sans-serif;
+}
+
+.summary-count {
+  font-size: 14px !important;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.count-grey   { color: #888888 !important; }
+.count-amber  { color: #f0ad4e !important; }
+.count-green  { color: #5cb85c !important; }
+.count-red    { color: #d9534f !important; }
+
+#summary-panel #game-mode-options {
+  display: flex;
+  gap: 10px;
+}
+
+#summary-panel #game-mode-options label {
+  color: var(--popupText);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+/* Toggle scaled to sit inline with values */
+#summary-panel .switch {
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+#summary-panel .slider:before {
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+}
+
+#summary-panel input:checked + .slider:before {
+  transform: translateX(16px);
+}
+
+.summary-buttons {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 8px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* Button base — override global width:100% and sizing */
+#summary-panel .summary-buttons button {
+  width: auto !important;
+  height: 34px !important;
+  margin: 0 !important;
+  padding: 0 15px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  flex-shrink: 0;
+  border-radius: 3px !important;
+}
+
+/* Secondary buttons — ghost outline style */
+#summary-panel #randomize-all2,
+#summary-panel #load-last-setup-2 {
+  background-color: transparent !important;
+  border: 1.5px solid rgba(253, 183, 22, 0.35) !important;
+  color: rgba(253, 183, 22, 0.75) !important;
+}
+
+#summary-panel #randomize-all2:hover,
+#summary-panel #load-last-setup-2:hover {
+  background-color: rgba(253, 183, 22, 0.1) !important;
+  border-color: rgba(253, 183, 22, 0.7) !important;
+  color: var(--accent) !important;
+}
+
+/* Primary button — solid gold */
+#summary-panel #start-game2 {
+  background-color: var(--accent) !important;
+  color: #18222c !important;
+  border: none !important;
+}
+
+#summary-panel #start-game2:hover {
+  background-color: var(--hoverAccent) !important;
+}
+
+#home-screen {
+  padding-bottom: 100px;
+}
+
+@media (max-width: 700px) {
+  #summary-panel.visible {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    padding: 10px;
+  }
+
+  .summary-left-group,
+  .summary-mid-group,
+  .summary-mode-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: center;
+    margin-left: 0;
+    padding: 4px 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(253, 183, 22, 0.1);
+  }
+
+  .summary-buttons {
+    margin-left: 0;
+    flex-wrap: wrap;
+    padding: 6px 0 0;
+  }
+
+  #summary-panel {
+    padding: 8px 10px;
+  }
+
+  .summary-label {
+    font-size: 9px !important;
+  }
+
+  .summary-value,
+  .summary-count {
+    font-size: 13px !important;
+  }
+
+  #summary-panel #game-mode-options label,
+  #summary-panel .summary-buttons button {
+    font-size: 12px !important;
+  }
 }
