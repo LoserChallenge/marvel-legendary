@@ -138,7 +138,7 @@ const _mastermind = masterminds.find(m => m.name === _mastermindName) || {};
 
 3. **`randomizeVillain`** (standalone button) — currently hardcoded to pick 1. In Golden Solo, always performs a full replacement: picks 2 groups total, with the Always Leads slot locked first and one additional free-choice slot randomised. Reads mastermind from DOM internally. This mirrors the behaviour of call sites 2 and 4 (full replacement each time).
 
-4. **`updateSummaryPanel`** — villain count display compares selected count against `req.requiredVillains` instead of `scheme.requiredVillains`. Reads mastermind from DOM internally.
+4. **`updateSummaryPanel`** — uses `req.requiredVillains` only for the villain count display (the green/amber/red count indicator). It does not display henchmen locking or locked-slot indicators — those are out of scope for this spec. Reads mastermind from DOM internally.
 
 ---
 
@@ -147,7 +147,8 @@ const _mastermind = masterminds.find(m => m.name === _mastermindName) || {};
 Around line 4349, the block that sets `window.alwaysLeadsVillain`:
 
 - **Golden Solo:** set directly from `mastermind.alwaysLeads` (remove random pick logic for this path)
-- **What If? Solo:** keep existing logic unchanged (1 villain group → that group; already correct)
+- **What If? Solo, 1 villain group:** keep existing logic unchanged — that one group is already set as `alwaysLeadsVillain`
+- **What If? Solo, 2+ villain groups** (e.g. Kree-Skrull War): keep existing random pick logic unchanged — this path is not affected by this spec
 
 ---
 
@@ -168,6 +169,8 @@ The `villain.alwaysLeads` flag is set during villain deck generation when a card
 This change touches two functions: `updateVillainAttackValues` and `updateHQVillainAttackValues`. The hardcoded `mastermind.name === "Apocalypse"` check in each is replaced with the generalised `alwaysLeadsBonus` check.
 
 Future masterminds with group bonuses: add `alwaysLeadsBonus` to their data entry only — no code change required.
+
+Note: the tactic text updates for Apocalypse, Mole Man, and Red Skull inside `generateVillainDeck` (lines ~3717–3757) remain mastermind-name-specific and are not changed by this spec. They continue to work correctly because `alwaysLeadsText` is set from `window.alwaysLeadsVillain` during deck generation, which after Section 4's fix will always be the correct group name.
 
 ---
 
