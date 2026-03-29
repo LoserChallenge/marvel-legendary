@@ -2007,6 +2007,12 @@ function randomizeMastermind() {
 
 // Function to randomize villain selection
 function randomizeVillain() {
+  const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const _mastermind = getSelectedMastermind() || {};
+  const _schemeName = document.querySelector('#scheme-selection input[type="radio"]:checked')?.value;
+  const _scheme = schemes.find(s => s.name === _schemeName) || { requiredVillains: 1 };
+  const req = getEffectiveSetupRequirements(_scheme, _mastermind, _gameMode);
+
   // Clear all current checkbox selections before randomizing
   const villainCheckboxes = document.querySelectorAll(
     '#villain-selection input[type="checkbox"]',
@@ -2034,32 +2040,43 @@ function randomizeVillain() {
     return;
   }
 
-  // Randomly select 1 villain from the filtered list
-  const randomIndex = Math.floor(Math.random() * filteredCheckboxes.length);
-  const selectedCheckbox = filteredCheckboxes[randomIndex];
-  selectedCheckbox.checked = true;
-
   // Clear the previously selected villain groups
   selectedVillainGroups = [];
 
-  // Add the selected villain group
-  const villainGroup = villains.find(
-    (villainGroup) => villainGroup.name === selectedCheckbox.value,
-  );
-  selectedVillainGroups.push(villainGroup); // Add selected villain group to the array
+  // Lock required villain groups first (Always Leads in Golden Solo)
+  const lockedCheckboxes = req.specificVillainRequirement
+    .map(name => filteredCheckboxes.find(cb => cb.value === name) ||
+                 Array.from(villainCheckboxes).find(cb => cb.value === name))
+    .filter(Boolean);
+
+  lockedCheckboxes.forEach(cb => {
+    cb.checked = true;
+    const group = villains.find(g => g.name === cb.value);
+    if (group) selectedVillainGroups.push(group);
+  });
+
+  // Fill remaining slots randomly from filtered pool (excluding already-locked)
+  const remainingSlots = Math.max(0, req.requiredVillains - selectedVillainGroups.length);
+  const available = filteredCheckboxes.filter(cb => !lockedCheckboxes.includes(cb));
+  const shuffled = [...available].sort(() => 0.5 - Math.random());
+  shuffled.slice(0, remainingSlots).forEach(cb => {
+    cb.checked = true;
+    const group = villains.find(g => g.name === cb.value);
+    if (group) selectedVillainGroups.push(group);
+  });
 
   // Set the image to the first villain in the list
   currentVillainGroupIndex = 0;
   currentVillainIndex = 0;
   displayCurrentVillainImage();
 
-  // Scroll to the selected villain checkbox
+  // Scroll to the first selected villain checkbox
+  const firstSelected = Array.from(villainCheckboxes).find(cb => cb.checked);
   const villainContainer = document.querySelector(
     "#villain-section .scrollable-list",
   );
-  if (villainContainer) {
-    const villainPosition =
-      selectedCheckbox.offsetTop - villainContainer.offsetTop;
+  if (villainContainer && firstSelected) {
+    const villainPosition = firstSelected.offsetTop - villainContainer.offsetTop;
     villainContainer.scrollTop =
       villainPosition - villainContainer.clientHeight / 2;
   }
