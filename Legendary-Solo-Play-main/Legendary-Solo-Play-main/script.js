@@ -2463,6 +2463,9 @@ function updateSummaryPanel() {
   // --- Game Mode ---
   const gameModeValue = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
 
+  const _mastermind = masterminds.find(m => m.name === mastermindName) || {};
+  const req = scheme ? getEffectiveSetupRequirements(scheme, _mastermind, gameModeValue) : null;
+
   // --- Villains ---
   const selectedVillains = Array.from(
     document.querySelectorAll('#villain-selection input[type="checkbox"]:checked')
@@ -2477,7 +2480,7 @@ function updateSummaryPanel() {
     villainsValueEl.textContent = selectedVillains.join(', ');
   }
 
-  const requiredVillains = scheme ? scheme.requiredVillains : null;
+  const requiredVillains = req ? req.requiredVillains : null;
   villainsCountEl.textContent = `(${selectedVillains.length}/${requiredVillains !== null && requiredVillains !== undefined ? requiredVillains : '?'})`;
   villainsCountEl.className = 'summary-count ' + getCountColorClass(selectedVillains.length, requiredVillains ?? null);
 
