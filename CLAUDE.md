@@ -75,7 +75,7 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
    - Phase 1: ✅ Merged to master (2026-03-27)
    - Phase 2: ✅ Welcome screen rewrite complete (2a); RULES button and pairing to be addressed during expansion work
    - Phase 3: ✅ Live selection summary panel — all 7 tasks + CSS redesign complete, merged to master (2026-03-28)
-2. **Villain deck rules fix (Golden Solo)** — spec and plan written (2026-03-28), ready to implement; see `docs/superpowers/specs/2026-03-28-villain-deck-always-leads-design.md` and `docs/superpowers/plans/2026-03-28-villain-deck-always-leads.md`
+2. **Villain deck rules fix (Golden Solo)** — in progress (Tasks 1–4 of 10 complete, 2026-03-29); branch: `feature/villain-always-leads`; next: Task 5 (`randomizeHenchmenWithRequirements`); see `docs/superpowers/plans/2026-03-28-villain-deck-always-leads.md`
 3. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
    - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk

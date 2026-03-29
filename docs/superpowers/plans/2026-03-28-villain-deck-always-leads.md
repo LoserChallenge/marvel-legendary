@@ -2,6 +2,24 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+## Session Progress
+
+| Task | Status | Session |
+|---|---|---|
+| Task 1: mastermind data fields (`cardDatabase.js`) | ✅ Complete | 2026-03-29 |
+| Task 2: `getEffectiveSetupRequirements` helper | ✅ Complete | 2026-03-29 |
+| Task 3: `showConfirmChoicesPopup` | ✅ Complete | 2026-03-29 |
+| Task 4: `randomizeVillainWithRequirements` | ✅ Complete | 2026-03-29 |
+| Task 5: `randomizeHenchmenWithRequirements` | ⏳ Next session | — |
+| Task 6: standalone `randomizeVillain` | ⏳ Pending | — |
+| Task 7: `updateSummaryPanel` | ⏳ Pending | — |
+| Task 8: `alwaysLeadsVillain` game-start assignment | ⏳ Pending | — |
+| Task 9: generalise attack bonus | ⏳ Pending | — |
+| Task 10: integration testing + CLAUDE.md | ⏳ Pending | — |
+
+**Branch:** `feature/villain-always-leads` (worktree at `.worktrees/villain-always-leads`)
+**Next session:** Start at Task 5.
+
 **Goal:** Fix Golden Solo villain deck setup to enforce 2 villain groups with one locked to the mastermind's Always Leads group, and generalise Apocalypse's +2 attack bonus to a data-driven pattern.
 
 **Architecture:** Add `alwaysLeads`/`alwaysLeadsType`/`alwaysLeadsBonus` fields to mastermind data, then introduce a single `getEffectiveSetupRequirements()` helper that all setup-screen functions call instead of reading `scheme.requiredVillains` directly. Game-start `alwaysLeadsVillain` assignment and the attack-bonus calculation are updated separately.
