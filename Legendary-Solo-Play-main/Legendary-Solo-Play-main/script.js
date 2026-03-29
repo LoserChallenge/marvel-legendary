@@ -2993,12 +2993,14 @@ function showConfirmChoicesPopup(
   let specificVillainRequirementMet = true;
   let specificHenchmenRequirementMet = true;
 
+  // Golden Solo: resolve effective villain/henchmen requirements
+  const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const _fullMastermind = masterminds.find(m => m.name === mastermind.name) || mastermind;
+  const req = getEffectiveSetupRequirements(scheme, _fullMastermind, _gameMode);
+
   // Check specific villain requirement (now handling arrays)
-  if (scheme.specificVillainRequirement) {
-    // Convert to array if it's a single string
-    const requiredVillains = Array.isArray(scheme.specificVillainRequirement)
-      ? scheme.specificVillainRequirement
-      : [scheme.specificVillainRequirement];
+  if (req.specificVillainRequirement.length > 0) {
+    const requiredVillains = req.specificVillainRequirement;
 
     // Check if all required villains are present
     const normalizedRequiredVillains = requiredVillains.map(v => v.trim().toLowerCase());
@@ -3020,11 +3022,11 @@ function showConfirmChoicesPopup(
   }
 
   // Check specific henchmen requirement (also updated to handle arrays)
-  if (scheme.specificHenchmenRequirement) {
+  if (req.specificHenchmenRequirement) {
     // Convert to array if it's a single string
-    const requiredHenchmen = Array.isArray(scheme.specificHenchmenRequirement)
-      ? scheme.specificHenchmenRequirement
-      : [scheme.specificHenchmenRequirement];
+    const requiredHenchmen = Array.isArray(req.specificHenchmenRequirement)
+      ? req.specificHenchmenRequirement
+      : [req.specificHenchmenRequirement];
 
     const normalizedRequiredHenchmen = requiredHenchmen.map(h => h.trim().toLowerCase());
     const normalizedSelectedHenchmen = henchmen.map(h => h.trim().toLowerCase());
@@ -3045,10 +3047,10 @@ function showConfirmChoicesPopup(
   }
 
   // Villain count validation
-  if (villains.length < scheme.requiredVillains) {
-    villainFeedback += `<br><span class="error-spans">Please select ${scheme.requiredVillains - villains.length > 1 ? "more villain groups" : "another villain group"}.</span>`;
-  } else if (villains.length > scheme.requiredVillains) {
-    villainFeedback += `<br><span class="error-spans">Please select ${villains.length - scheme.requiredVillains > 1 ? "fewer villain groups" : "one less villain group"}.</span>`;
+  if (villains.length < req.requiredVillains) {
+    villainFeedback += `<br><span class="error-spans">Please select ${req.requiredVillains - villains.length > 1 ? "more villain groups" : "another villain group"}.</span>`;
+  } else if (villains.length > req.requiredVillains) {
+    villainFeedback += `<br><span class="error-spans">Please select ${villains.length - req.requiredVillains > 1 ? "fewer villain groups" : "one less villain group"}.</span>`;
   }
 
   // Hero count validation — Golden Solo always requires 5 heroes.
@@ -3079,7 +3081,7 @@ function showConfirmChoicesPopup(
   const formattedHeroes = `<span class="bold-spans">${formatList(heroes)}.</span>`;
 
   document.getElementById("required-villains-count").innerHTML =
-    `<span class="bold-spans">${scheme.requiredVillains} Villain ${villainGroupText}.</span>`;
+    `<span class="bold-spans">${req.requiredVillains} Villain ${villainGroupText}.</span>`;
   document.getElementById("villains-list").innerHTML =
     formattedVillains + villainFeedback;
 
@@ -3097,7 +3099,7 @@ function showConfirmChoicesPopup(
     formattedHeroes + heroFeedback;
 
   const villainsCorrect =
-    villains.length === scheme.requiredVillains &&
+    villains.length === req.requiredVillains &&
     specificVillainRequirementMet;
   const henchmenCorrect =
     henchmen.length === scheme.requiredHenchmen &&
