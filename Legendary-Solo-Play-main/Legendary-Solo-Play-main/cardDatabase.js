@@ -675,6 +675,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/DrDoom_5.webp",
       },
     ],
+    alwaysLeads: "Doombot Legion",
+    alwaysLeadsType: "henchmen",
   },
   {
     id: 2,
@@ -731,6 +733,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/Loki_5.webp",
       },
     ],
+    alwaysLeads: "Enemies of Asgard",
+    alwaysLeadsType: "villain",
   },
   {
     id: 3,
@@ -790,6 +794,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/RedSkull_5.webp",
       },
     ],
+    alwaysLeads: "HYDRA",
+    alwaysLeadsType: "villain",
   },
   {
     id: 4,
@@ -851,6 +857,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/Magneto_5.webp",
       },
     ],
+    alwaysLeads: "Brotherhood",
+    alwaysLeadsType: "villain",
   },
   {
     id: 5,
@@ -916,6 +924,9 @@ const masterminds = [
           "Visual Assets/Masterminds/DarkCity_Apocalypse_TheEndOfAllThings.webp",
       },
     ],
+    alwaysLeads: "Four Horsemen",
+    alwaysLeadsType: "villain",
+    alwaysLeadsBonus: { attack: 2 },
   },
   {
     id: 6,
@@ -976,6 +987,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/DarkCity_Kingpin_MobWar.webp",
       },
     ],
+    alwaysLeads: "Streets of New York",
+    alwaysLeadsType: "villain",
   },
   {
     id: 7,
@@ -1039,6 +1052,8 @@ const masterminds = [
           "Visual Assets/Masterminds/DarkCity_Mephisto_ThePriceOfFailure.webp",
       },
     ],
+    alwaysLeads: "Underworld",
+    alwaysLeadsType: "villain",
   },
   {
     id: 8,
@@ -1098,6 +1113,8 @@ const masterminds = [
           "Visual Assets/Masterminds/DarkCity_MrSinister_TelepathicManipulation.webp",
       },
     ],
+    alwaysLeads: "Marauders",
+    alwaysLeadsType: "villain",
   },
   {
     id: 9,
@@ -1158,6 +1175,8 @@ const masterminds = [
           "Visual Assets/Masterminds/DarkCity_Stryfe_TideOfRetribution.webp",
       },
     ],
+    alwaysLeads: "Mutant Liberation Front",
+    alwaysLeadsType: "villain",
   },
   {
     id: 10,
@@ -1221,6 +1240,8 @@ const masterminds = [
           "Visual Assets/Masterminds/FantasticFour_Galactus_SunderTheEarth.webp",
       },
     ],
+    alwaysLeads: "Heralds of Galactus",
+    alwaysLeadsType: "villain",
   },
   {
     id: 11,
@@ -1285,6 +1306,8 @@ const masterminds = [
           "Visual Assets/Masterminds/FantasticFour_MoleMan_UndergroundRiches.webp",
       },
     ],
+    alwaysLeads: "Subterranea",
+    alwaysLeadsType: "villain",
   },
   {
     id: 12,
@@ -1345,6 +1368,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/PtTR_Carnage_OmNomNom.webp",
       },
     ],
+    alwaysLeads: "Maximum Carnage",
+    alwaysLeadsType: "villain",
   },
   {
     id: 13,
@@ -1401,6 +1426,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/PtTR_Mysterio_MistsOfDeception.webp",
       },
     ],
+    alwaysLeads: "Sinister Six",
+    alwaysLeadsType: "villain",
   },
   {
     id: 14,
@@ -1457,6 +1484,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/GotG_SupremeIntelligenceOfTheKree_GuideKreeEvolution.webp",
       },
     ],
+    alwaysLeads: "Kree Starforce",
+    alwaysLeadsType: "villain",
   },
   {
     id: 15,
@@ -1514,6 +1543,8 @@ const masterminds = [
         image: "Visual Assets/Masterminds/GotG_Thanos_TheMadTitan.webp",
       },
     ],
+    alwaysLeads: "Infinity Gems",
+    alwaysLeadsType: "villain",
   }
 ];
 
