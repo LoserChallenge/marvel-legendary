@@ -75,7 +75,7 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
    - Phase 1: ✅ Merged to master (2026-03-27)
    - Phase 2: ✅ Welcome screen rewrite complete (2a); RULES button and pairing to be addressed during expansion work
    - Phase 3: ✅ Live selection summary panel — all 7 tasks + CSS redesign complete, merged to master (2026-03-28)
-2. **Villain deck rules fix (Golden Solo)** — in progress (Tasks 1–4 of 10 complete, 2026-03-29); branch: `feature/villain-always-leads`; next: Task 5 (`randomizeHenchmenWithRequirements`); see `docs/superpowers/plans/2026-03-28-villain-deck-always-leads.md`
+2. **Villain deck rules fix (Golden Solo)** — all 10 tasks complete (2026-03-29); branch `feature/villain-always-leads` kept separate pending expansion strategy discussion; see `docs/superpowers/plans/2026-03-28-villain-deck-always-leads.md`
 3. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
    - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
@@ -245,64 +245,11 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 
 ---
 
-## Planned Rules Fix — Villain Deck (Golden Solo) + Always Leads
+## Known Issues / Deferred
 
-**Scope:** Two related changes, implement together next session.
+### Scheme vs game mode villain count conflict
 
-### Change 1 — Golden Solo default: 2 villain groups (one must be mastermind's Always Leads)
-
-Currently: villain group count is driven entirely by `scheme.requiredVillains`. Golden Solo has no override.
-
-Required behaviour:
-- Golden Solo default = **2 villain groups** (not scheme default)
-- One of those 2 must be the mastermind's **Always Leads** group (auto-required, not free choice)
-- The second is the player's free choice
-- Schemes that explicitly require more/different villain groups (e.g. Kree-Skrull War) still override the default — scheme requirements always win
-- What If? Solo: no change — Always Leads is disregarded, scheme's `requiredVillains` applies as before
-
-### Change 2 — Apocalypse + Four Horsemen: +2 attack (both game modes)
-
-Currently: the `alwaysLeads` flag is randomly assigned from selected groups. It does not check whether the mastermind's actual Always Leads group is in the deck.
-
-Required behaviour:
-- When Apocalypse is the mastermind AND Four Horsemen are in the villain deck, Four Horsemen cards get **+2 attack** — in BOTH What If? Solo and Golden Solo
-- This must reference Apocalypse's actual Always Leads (Four Horsemen), not a randomly assigned group
-- No other mastermind currently has this "bonus to Always Leads group" mechanic — but the architecture should support it cleanly for future expansions
-
-### Always Leads Data (read from card images 2026-03-28)
-
-Add `alwaysLeads` field to each mastermind object in `cardDatabase.js`:
-
-| Mastermind | `alwaysLeads` | Type | Expansion |
-|---|---|---|---|
-| Magneto | `"Brotherhood"` | Villain group | Core |
-| Loki | `"Enemies of Asgard"` | Villain group | Core |
-| Red Skull | `"HYDRA"` | Villain group | Core |
-| Dr. Doom | `"Doombot Legion"` | **Henchmen group** | Core |
-| Apocalypse | `"Four Horsemen"` | Villain group | Dark City |
-| Kingpin | `"Streets of New York"` | Villain group | Dark City |
-| Mephisto | `"Underworld"` | Villain group | Dark City |
-| Mr. Sinister | `"Marauders"` | Villain group | Dark City |
-| Stryfe | `"Mutant Liberation Front"` | Villain group | Dark City |
-| Galactus | `"Heralds of Galactus"` | Villain group | FF |
-| Mole Man | `"Subterranea"` | Villain group | FF |
-| Thanos | `"Infinity Gems"` | Villain group | GotG |
-| Supreme Intelligence | `"Kree Starforce"` | Villain group | GotG |
-| Carnage | `"Maximum Carnage"` | Villain group | PtTR |
-| Mysterio | `"Sinister Six"` | Villain group | PtTR |
-
-### Edge Cases to Handle
-
-**Dr. Doom — Always Leads a Henchmen group:**
-- Doombot Legion is a henchmen group, not a villain group
-- In Golden Solo with Dr. Doom: both villain group slots are free choices (the henchmen requirement is already satisfied by the standard single henchmen group)
-- Need an `alwaysLeadsType: "henchmen"` flag (or similar) so the setup logic knows not to require a villain group for Dr. Doom
-- Check expansion masterminds as they're added — other henchmen-leading masterminds may exist
-
-**Emissaries of Evil (Dark City):**
-- No mastermind has Always Leads: Emissaries of Evil — this group has no dedicated mastermind
-- Treat as a freely selectable villain group (no change needed)
-
-**Doombot Legion:**
-- Fully in the app as a henchmen group — card data in `cardDatabase.js`, fight effects in `cardAbilities.js`, henchmen checkbox in `index.html`
-- Dr. Doom's henchmen lock to Doombot Legion is implementable (plan is written)
+**Symptom:** Kree-Skrull War enforces 2 required villain groups in What If? Solo (both Kree Starforce and Skrulls), even though What If? is normally a 1-villain-group mode.
+**Root cause:** `getEffectiveSetupRequirements` returns the scheme's `specificVillainRequirement` array unchanged in What If? mode. Kree-Skrull War has 2 specific requirements, so both are enforced.
+**Open question:** For schemes requiring 2 villain groups, should What If? Solo honour the scheme's count or always cap at 1? Needs rules clarification before fixing.
+**Status:** Deferred.
