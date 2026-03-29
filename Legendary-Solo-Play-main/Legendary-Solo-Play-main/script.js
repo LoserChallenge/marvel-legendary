@@ -9478,8 +9478,8 @@ function updateVillainAttackValues(villain, i) {
 
   //Attack From Mastermind Effects
 
-  if (mastermind.name === "Apocalypse" && villain.alwaysLeads === true) {
-    villain.attackFromMastermind = 2;
+  if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
+    villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack || 0;
   }
 
   //Attack From Scheme Effects
@@ -9693,8 +9693,8 @@ function updateHQVillainAttackValues(villain) {
 
   //Attack From Mastermind Effects
 
-  if (mastermind.name === "Apocalypse" && villain.alwaysLeads === true) {
-    villain.attackFromMastermind = 2;
+  if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
+    villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack || 0;
   }
 
   //Attack From Scheme Effects
