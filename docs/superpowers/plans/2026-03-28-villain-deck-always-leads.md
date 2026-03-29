@@ -1,5 +1,8 @@
 # Villain Deck Always Leads & Golden Solo Rules Fix — Implementation Plan
 
+> **Status: ✅ Complete — all 10 tasks done, merged to master 2026-03-29.**
+> **Deferred issue:** Kree-Skrull War scheme enforces 2 villain groups in What If? Solo — needs rules clarification before fixing. See CLAUDE.md "Known Issues" section.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Fix Golden Solo villain deck setup to enforce 2 villain groups with one locked to the mastermind's Always Leads group, and generalise Apocalypse's +2 attack bonus to a data-driven pattern.
