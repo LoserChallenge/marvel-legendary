@@ -4449,8 +4449,17 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
     // Store the alwaysLeads villain name for later use
     window.alwaysLeadsVillain = selectedVillainName;
   } else if (villains.length > 1) {
-    const randomIndex = Math.floor(Math.random() * villains.length);
-    const selectedVillainName = villains[randomIndex];
+    let selectedVillainName;
+
+    if (gameMode === 'golden' && mastermind.alwaysLeads && mastermind.alwaysLeadsType === 'villain') {
+      // Golden Solo: always use the mastermind's correct Always Leads group
+      selectedVillainName = mastermind.alwaysLeads;
+    } else {
+      // What If? with multiple villain groups (e.g. Kree-Skrull War): random pick unchanged
+      const randomIndex = Math.floor(Math.random() * villains.length);
+      selectedVillainName = villains[randomIndex];
+    }
+
     console.log(
       `The Mastermind always leads ${selectedVillainName} in this game.`,
     );
