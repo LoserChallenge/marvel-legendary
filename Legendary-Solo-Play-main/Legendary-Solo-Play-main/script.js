@@ -2906,6 +2906,70 @@ function formatList(items) {
   return items.slice(0, -1).join(", ") + " and " + items[items.length - 1];
 }
 
+/**
+ * Returns the effective villain/henchmen setup requirements for the current
+ * game mode + mastermind + scheme combination.
+ *
+ * What If? Solo: returns scheme values unchanged.
+ * Golden Solo: overrides to 2 villain groups; locks one slot to mastermind's
+ *   alwaysLeads group (if a villain group); locks henchmen slot if alwaysLeads
+ *   is a henchmen group (Dr. Doom → Doombot Legion).
+ *
+ * @param {Object} scheme      - scheme object from cardDatabase
+ * @param {Object} mastermind  - full mastermind object (must have alwaysLeads/alwaysLeadsType)
+ * @param {string} gameMode    - 'whatif' | 'golden'
+ * @returns {{ requiredVillains, specificVillainRequirement, specificHenchmenRequirement }}
+ */
+function getEffectiveSetupRequirements(scheme, mastermind, gameMode) {
+  // Normalise scheme's specific villain requirement to an array (may be string, array, or absent)
+  const schemeLockedVillains = scheme.specificVillainRequirement
+    ? (Array.isArray(scheme.specificVillainRequirement)
+        ? scheme.specificVillainRequirement
+        : [scheme.specificVillainRequirement])
+    : [];
+
+  // What If? Solo — return scheme values unchanged
+  if (gameMode !== 'golden') {
+    return {
+      requiredVillains: scheme.requiredVillains,
+      specificVillainRequirement: schemeLockedVillains,
+      specificHenchmenRequirement: scheme.specificHenchmenRequirement || null,
+    };
+  }
+
+  // Golden Solo
+  const goldenRequiredVillains = 2;
+  const lockedVillains = [...schemeLockedVillains];
+
+  // Add mastermind's Always Leads if it's a villain group and there's a free slot
+  if (
+    mastermind &&
+    mastermind.alwaysLeadsType === 'villain' &&
+    mastermind.alwaysLeads &&
+    lockedVillains.length < goldenRequiredVillains &&
+    !lockedVillains.map(v => v.toLowerCase()).includes(mastermind.alwaysLeads.toLowerCase())
+  ) {
+    lockedVillains.push(mastermind.alwaysLeads);
+  }
+
+  // If scheme over-specifies (more locked slots than goldenRequiredVillains), respect that
+  const effectiveRequiredVillains = Math.max(goldenRequiredVillains, lockedVillains.length);
+
+  // Henchmen: lock to mastermind's Always Leads if it's a henchmen group (e.g. Dr. Doom)
+  const specificHenchmenRequirement =
+    mastermind &&
+    mastermind.alwaysLeadsType === 'henchmen' &&
+    mastermind.alwaysLeads
+      ? mastermind.alwaysLeads
+      : (scheme.specificHenchmenRequirement || null);
+
+  return {
+    requiredVillains: effectiveRequiredVillains,
+    specificVillainRequirement: lockedVillains,
+    specificHenchmenRequirement,
+  };
+}
+
 function showConfirmChoicesPopup(
   scheme,
   mastermind,
