@@ -76,7 +76,11 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
    - Phase 2: ✅ Welcome screen rewrite complete (2a); RULES button and pairing to be addressed during expansion work
    - Phase 3: ✅ Live selection summary panel — all 7 tasks + CSS redesign complete, merged to master (2026-03-28)
 2. **Villain deck rules fix (Golden Solo)** — all 10 tasks complete (2026-03-29); branch `feature/villain-always-leads` kept separate pending expansion strategy discussion; see `docs/superpowers/plans/2026-03-28-villain-deck-always-leads.md`
-3. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
+3. **Card Effect Auditor system** — design approved (2026-03-29); spec at `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; pending implementation plan
+   - Three components: Card Effect Taxonomy, Card Effects Reference (text extracted from card images + code), Card Effect Auditor subagent
+   - Audits four layers: card text accuracy, Golden Solo compatibility, cross-card interactions, keyword/mechanic consistency
+   - Must be built before starting expansion work so new cards are audited as they're added
+4. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
    - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
 
@@ -127,6 +131,9 @@ Card effects targeting "each other player" apply to the top card of the hero dec
 - **Subagent**: `.claude/agents/revision-tracker.md` — scans HTML/JS for UI revision progress; use at start of any UI revision session
 - **Skill**: `.claude/skills/golden-solo-fixer/SKILL.md` — step-by-step guide for executing compatibility audit fixes; invoke with `/golden-solo-fixer`
 - **Skill**: `.claude/skills/new-expansion/SKILL.md` — step-by-step guide for adding a new expansion (file structure, card data, Golden Solo compatibility rules); invoke with `/new-expansion`
+- **Reference**: `docs/card-effect-taxonomy.md` — living catalog of all card trigger/condition types (pending creation)
+- **Reference**: `docs/card-effects-reference.md` — extracted effect text for every card, source of truth for audits (pending creation)
+- **Subagent**: `.claude/agents/card-effect-auditor.md` — compares card effect text against code implementations, flags mismatches (pending creation)
 
 ## Workflow Preferences
 
