@@ -2562,6 +2562,10 @@ function randomizeAll() {
 }
 
 function randomizeVillainWithRequirements(scheme) {
+  const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const _mastermind = getSelectedMastermind() || {};
+  const req = getEffectiveSetupRequirements(scheme, _mastermind, _gameMode);
+
   // Clear all current checkbox selections before randomizing
   const villainCheckboxes = document.querySelectorAll(
     '#villain-selection input[type="checkbox"]'
@@ -2580,12 +2584,9 @@ function randomizeVillainWithRequirements(scheme) {
   let requiredCheckboxes = [];
   let availableCheckboxes = [];
   
-  // If the scheme has specific villain requirements, handle them first
-  if (scheme.specificVillainRequirement) {
-    // Convert to array if it's a single string
-    const requiredVillains = Array.isArray(scheme.specificVillainRequirement)
-      ? scheme.specificVillainRequirement
-      : [scheme.specificVillainRequirement];
+  // If there are specific villain requirements (scheme or Always Leads lock), handle them first
+  if (req.specificVillainRequirement.length > 0) {
+    const requiredVillains = req.specificVillainRequirement;
     
     // Find all required villains (from ALL villains, not filtered)
     requiredCheckboxes = requiredVillains
@@ -2637,7 +2638,7 @@ function randomizeVillainWithRequirements(scheme) {
 
   // Determine how many more villains we need
   const selectedCount = selectedVillainGroups.length;
-  const remainingSlots = Math.max(0, scheme.requiredVillains - selectedCount);
+  const remainingSlots = Math.max(0, req.requiredVillains - selectedCount);
 
   // Select remaining villains from available pool
   if (remainingSlots > 0 && availableCheckboxes.length > 0) {
