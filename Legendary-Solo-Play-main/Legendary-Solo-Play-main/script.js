@@ -2693,6 +2693,10 @@ function randomizeVillainWithRequirements(scheme) {
 }
 
 function randomizeHenchmenWithRequirements(scheme) {
+  const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const _mastermind = getSelectedMastermind() || {};
+  const req = getEffectiveSetupRequirements(scheme, _mastermind, _gameMode);
+
   // Clear all current checkbox selections before randomizing
   const henchmenCheckboxes = document.querySelectorAll(
     '#henchmen-selection input[type="checkbox"]',
@@ -2723,10 +2727,10 @@ function randomizeHenchmenWithRequirements(scheme) {
   // Clear the previously selected henchmen groups
   selectedHenchmenGroups = [];
 
-  // If the scheme has a specific henchmen requirement, ensure it's included
-  if (scheme.specificHenchmenRequirement) {
+  // If the scheme (or mastermind in Golden Solo) has a specific henchmen requirement, ensure it's included
+  if (req.specificHenchmenRequirement) {
     const requiredHenchmen = filteredCheckboxes.find(
-      (checkbox) => checkbox.value === scheme.specificHenchmenRequirement,
+      (checkbox) => checkbox.value === req.specificHenchmenRequirement,
     );
     if (requiredHenchmen) {
       // Select the required henchmen
@@ -2760,7 +2764,7 @@ function randomizeHenchmenWithRequirements(scheme) {
       }
     } else {
       console.error(
-        `Required henchmen "${scheme.specificHenchmenRequirement}" not found in the filtered list.`,
+        `Required henchmen "${req.specificHenchmenRequirement}" not found in the filtered list.`,
       );
     }
   } else {
