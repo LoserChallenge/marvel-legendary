@@ -623,12 +623,11 @@ async function risingWatersTwist() {
       // Remove from HQ and replace with new card
       const hqIndex = hq.indexOf(hero);
       if (hqIndex !== -1) {
-        hq[hqIndex] = null;
-
         let newCard;
         if (gameMode === 'golden') {
           newCard = goldenRefillHQ(hqIndex);
         } else {
+          hq[hqIndex] = null;
           newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
           hq[hqIndex] = newCard;
         }
@@ -650,8 +649,7 @@ async function risingWatersTwist() {
 
       updateGameBoard();
 
-      if (!hq[hqIndex] && heroDeck.length === 0) {
-        // Use hqIndex instead of index
+      if (!newCard && heroDeck.length === 0) {
         showDrawPopup();
       }
     }

@@ -16994,11 +16994,11 @@ async function highestCostHeroSkrulled() {
 
   // If there's only one hero with the highest cost, capture it automatically
   if (highestCostHeroes.length === 1) {
-    heroSkrulled(highestCostHeroes[0]);
+    await heroSkrulled(highestCostHeroes[0]);
   } else if (highestCostHeroes.length > 1) {
     // If there are multiple heroes with the same highest cost, prompt the player to choose
     const selectedHero = await showHeroSelectionSkrullPopup(highestCostHeroes);
-    heroSkrulled(selectedHero);
+    await heroSkrulled(selectedHero);
   } else {
     console.log("No heroes available in HQ.");
   }
