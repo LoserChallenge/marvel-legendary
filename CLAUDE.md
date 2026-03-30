@@ -75,7 +75,7 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
    - Phase 1: ✅ Merged to master (2026-03-27)
    - Phase 2: ✅ Welcome screen rewrite complete (2a); RULES button and pairing to be addressed during expansion work
    - Phase 3: ✅ Live selection summary panel — all 7 tasks + CSS redesign complete, merged to master (2026-03-28)
-2. **Villain deck rules fix (Golden Solo)** — all 10 tasks complete (2026-03-29); branch `feature/villain-always-leads` kept separate pending expansion strategy discussion; see `docs/superpowers/plans/2026-03-28-villain-deck-always-leads.md`
+2. **Villain deck rules fix (Golden Solo)** ✅ Complete — merged to master (2026-03-30)
 3. **Card Effect Auditor system** — design approved (2026-03-29); spec at `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; pending implementation plan
    - Three components: Card Effect Taxonomy, Card Effects Reference (text extracted from card images + code), Card Effect Auditor subagent
    - Audits four layers: card text accuracy, Golden Solo compatibility, cross-card interactions, keyword/mechanic consistency
@@ -254,9 +254,12 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 
 ## Known Issues / Deferred
 
-### Scheme vs game mode villain count conflict
+### Scheme vs Game Mode villain count conflict
 
-**Symptom:** Kree-Skrull War enforces 2 required villain groups in What If? Solo (both Kree Starforce and Skrulls), even though What If? is normally a 1-villain-group mode.
-**Root cause:** `getEffectiveSetupRequirements` returns the scheme's `specificVillainRequirement` array unchanged in What If? mode. Kree-Skrull War has 2 specific requirements, so both are enforced.
-**Open question:** For schemes requiring 2 villain groups, should What If? Solo honour the scheme's count or always cap at 1? Needs rules clarification before fixing.
-**Status:** Deferred.
+**Symptom:** The Kree-Skrull War scheme enforces both Kree Starforce and Skrulls as required villain groups in What If? Solo, even though What If? Solo is normally a 1-villain-group mode.
+
+**Root cause:** `getEffectiveSetupRequirements` returns the scheme's `specificVillainRequirement` array unchanged in What If? mode. Kree-Skrull War has 2 specific requirements, so both are enforced regardless of game mode.
+
+**The open question:** For schemes that explicitly require 2 villain groups (Kree-Skrull War), should What If? Solo honour the scheme's count (2) or always cap at 1? This is a rules interpretation question that needs a deliberate decision before fixing.
+
+**Status:** Deferred — needs rules clarification before implementation.

@@ -2007,6 +2007,12 @@ function randomizeMastermind() {
 
 // Function to randomize villain selection
 function randomizeVillain() {
+  const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const _mastermind = getSelectedMastermind() || {};
+  const _schemeName = document.querySelector('#scheme-selection input[type="radio"]:checked')?.value;
+  const _scheme = schemes.find(s => s.name === _schemeName) || { requiredVillains: 1 };
+  const req = getEffectiveSetupRequirements(_scheme, _mastermind, _gameMode);
+
   // Clear all current checkbox selections before randomizing
   const villainCheckboxes = document.querySelectorAll(
     '#villain-selection input[type="checkbox"]',
@@ -2034,32 +2040,43 @@ function randomizeVillain() {
     return;
   }
 
-  // Randomly select 1 villain from the filtered list
-  const randomIndex = Math.floor(Math.random() * filteredCheckboxes.length);
-  const selectedCheckbox = filteredCheckboxes[randomIndex];
-  selectedCheckbox.checked = true;
-
   // Clear the previously selected villain groups
   selectedVillainGroups = [];
 
-  // Add the selected villain group
-  const villainGroup = villains.find(
-    (villainGroup) => villainGroup.name === selectedCheckbox.value,
-  );
-  selectedVillainGroups.push(villainGroup); // Add selected villain group to the array
+  // Lock required villain groups first (Always Leads in Golden Solo)
+  const lockedCheckboxes = req.specificVillainRequirement
+    .map(name => filteredCheckboxes.find(cb => cb.value === name) ||
+                 Array.from(villainCheckboxes).find(cb => cb.value === name))
+    .filter(Boolean);
+
+  lockedCheckboxes.forEach(cb => {
+    cb.checked = true;
+    const group = villains.find(g => g.name === cb.value);
+    if (group) selectedVillainGroups.push(group);
+  });
+
+  // Fill remaining slots randomly from filtered pool (excluding already-locked)
+  const remainingSlots = Math.max(0, req.requiredVillains - selectedVillainGroups.length);
+  const available = filteredCheckboxes.filter(cb => !lockedCheckboxes.includes(cb));
+  const shuffled = [...available].sort(() => 0.5 - Math.random());
+  shuffled.slice(0, remainingSlots).forEach(cb => {
+    cb.checked = true;
+    const group = villains.find(g => g.name === cb.value);
+    if (group) selectedVillainGroups.push(group);
+  });
 
   // Set the image to the first villain in the list
   currentVillainGroupIndex = 0;
   currentVillainIndex = 0;
   displayCurrentVillainImage();
 
-  // Scroll to the selected villain checkbox
+  // Scroll to the first selected villain checkbox
+  const firstSelected = Array.from(villainCheckboxes).find(cb => cb.checked);
   const villainContainer = document.querySelector(
     "#villain-section .scrollable-list",
   );
-  if (villainContainer) {
-    const villainPosition =
-      selectedCheckbox.offsetTop - villainContainer.offsetTop;
+  if (villainContainer && firstSelected) {
+    const villainPosition = firstSelected.offsetTop - villainContainer.offsetTop;
     villainContainer.scrollTop =
       villainPosition - villainContainer.clientHeight / 2;
   }
@@ -2446,6 +2463,9 @@ function updateSummaryPanel() {
   // --- Game Mode ---
   const gameModeValue = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
 
+  const _mastermind = masterminds.find(m => m.name === mastermindName) || {};
+  const req = scheme ? getEffectiveSetupRequirements(scheme, _mastermind, gameModeValue) : null;
+
   // --- Villains ---
   const selectedVillains = Array.from(
     document.querySelectorAll('#villain-selection input[type="checkbox"]:checked')
@@ -2460,7 +2480,7 @@ function updateSummaryPanel() {
     villainsValueEl.textContent = selectedVillains.join(', ');
   }
 
-  const requiredVillains = scheme ? scheme.requiredVillains : null;
+  const requiredVillains = req ? req.requiredVillains : null;
   villainsCountEl.textContent = `(${selectedVillains.length}/${requiredVillains !== null && requiredVillains !== undefined ? requiredVillains : '?'})`;
   villainsCountEl.className = 'summary-count ' + getCountColorClass(selectedVillains.length, requiredVillains ?? null);
 
@@ -2562,6 +2582,10 @@ function randomizeAll() {
 }
 
 function randomizeVillainWithRequirements(scheme) {
+  const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const _mastermind = getSelectedMastermind() || {};
+  const req = getEffectiveSetupRequirements(scheme, _mastermind, _gameMode);
+
   // Clear all current checkbox selections before randomizing
   const villainCheckboxes = document.querySelectorAll(
     '#villain-selection input[type="checkbox"]'
@@ -2580,12 +2604,9 @@ function randomizeVillainWithRequirements(scheme) {
   let requiredCheckboxes = [];
   let availableCheckboxes = [];
   
-  // If the scheme has specific villain requirements, handle them first
-  if (scheme.specificVillainRequirement) {
-    // Convert to array if it's a single string
-    const requiredVillains = Array.isArray(scheme.specificVillainRequirement)
-      ? scheme.specificVillainRequirement
-      : [scheme.specificVillainRequirement];
+  // If there are specific villain requirements (scheme or Always Leads lock), handle them first
+  if (req.specificVillainRequirement.length > 0) {
+    const requiredVillains = req.specificVillainRequirement;
     
     // Find all required villains (from ALL villains, not filtered)
     requiredCheckboxes = requiredVillains
@@ -2637,7 +2658,7 @@ function randomizeVillainWithRequirements(scheme) {
 
   // Determine how many more villains we need
   const selectedCount = selectedVillainGroups.length;
-  const remainingSlots = Math.max(0, scheme.requiredVillains - selectedCount);
+  const remainingSlots = Math.max(0, req.requiredVillains - selectedCount);
 
   // Select remaining villains from available pool
   if (remainingSlots > 0 && availableCheckboxes.length > 0) {
@@ -2692,6 +2713,10 @@ function randomizeVillainWithRequirements(scheme) {
 }
 
 function randomizeHenchmenWithRequirements(scheme) {
+  const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const _mastermind = getSelectedMastermind() || {};
+  const req = getEffectiveSetupRequirements(scheme, _mastermind, _gameMode);
+
   // Clear all current checkbox selections before randomizing
   const henchmenCheckboxes = document.querySelectorAll(
     '#henchmen-selection input[type="checkbox"]',
@@ -2722,10 +2747,10 @@ function randomizeHenchmenWithRequirements(scheme) {
   // Clear the previously selected henchmen groups
   selectedHenchmenGroups = [];
 
-  // If the scheme has a specific henchmen requirement, ensure it's included
-  if (scheme.specificHenchmenRequirement) {
+  // If the scheme (or mastermind in Golden Solo) has a specific henchmen requirement, ensure it's included
+  if (req.specificHenchmenRequirement) {
     const requiredHenchmen = filteredCheckboxes.find(
-      (checkbox) => checkbox.value === scheme.specificHenchmenRequirement,
+      (checkbox) => checkbox.value === req.specificHenchmenRequirement,
     );
     if (requiredHenchmen) {
       // Select the required henchmen
@@ -2759,7 +2784,7 @@ function randomizeHenchmenWithRequirements(scheme) {
       }
     } else {
       console.error(
-        `Required henchmen "${scheme.specificHenchmenRequirement}" not found in the filtered list.`,
+        `Required henchmen "${req.specificHenchmenRequirement}" not found in the filtered list.`,
       );
     }
   } else {
@@ -2906,6 +2931,70 @@ function formatList(items) {
   return items.slice(0, -1).join(", ") + " and " + items[items.length - 1];
 }
 
+/**
+ * Returns the effective villain/henchmen setup requirements for the current
+ * game mode + mastermind + scheme combination.
+ *
+ * What If? Solo: returns scheme values unchanged.
+ * Golden Solo: overrides to 2 villain groups; locks one slot to mastermind's
+ *   alwaysLeads group (if a villain group); locks henchmen slot if alwaysLeads
+ *   is a henchmen group (Dr. Doom → Doombot Legion).
+ *
+ * @param {Object} scheme      - scheme object from cardDatabase
+ * @param {Object} mastermind  - full mastermind object (must have alwaysLeads/alwaysLeadsType)
+ * @param {string} gameMode    - 'whatif' | 'golden'
+ * @returns {{ requiredVillains, specificVillainRequirement, specificHenchmenRequirement }}
+ */
+function getEffectiveSetupRequirements(scheme, mastermind, gameMode) {
+  // Normalise scheme's specific villain requirement to an array (may be string, array, or absent)
+  const schemeLockedVillains = scheme.specificVillainRequirement
+    ? (Array.isArray(scheme.specificVillainRequirement)
+        ? scheme.specificVillainRequirement
+        : [scheme.specificVillainRequirement])
+    : [];
+
+  // What If? Solo — return scheme values unchanged
+  if (gameMode !== 'golden') {
+    return {
+      requiredVillains: scheme.requiredVillains,
+      specificVillainRequirement: schemeLockedVillains,
+      specificHenchmenRequirement: scheme.specificHenchmenRequirement || null,
+    };
+  }
+
+  // Golden Solo
+  const goldenRequiredVillains = 2;
+  const lockedVillains = [...schemeLockedVillains];
+
+  // Add mastermind's Always Leads if it's a villain group and there's a free slot
+  if (
+    mastermind &&
+    mastermind.alwaysLeadsType === 'villain' &&
+    mastermind.alwaysLeads &&
+    lockedVillains.length < goldenRequiredVillains &&
+    !lockedVillains.map(v => v.toLowerCase()).includes(mastermind.alwaysLeads.toLowerCase())
+  ) {
+    lockedVillains.push(mastermind.alwaysLeads);
+  }
+
+  // If scheme over-specifies (more locked slots than goldenRequiredVillains), respect that
+  const effectiveRequiredVillains = Math.max(goldenRequiredVillains, lockedVillains.length);
+
+  // Henchmen: lock to mastermind's Always Leads if it's a henchmen group (e.g. Dr. Doom)
+  const specificHenchmenRequirement =
+    mastermind &&
+    mastermind.alwaysLeadsType === 'henchmen' &&
+    mastermind.alwaysLeads
+      ? mastermind.alwaysLeads
+      : (scheme.specificHenchmenRequirement || null);
+
+  return {
+    requiredVillains: effectiveRequiredVillains,
+    specificVillainRequirement: lockedVillains,
+    specificHenchmenRequirement,
+  };
+}
+
 function showConfirmChoicesPopup(
   scheme,
   mastermind,
@@ -2929,12 +3018,14 @@ function showConfirmChoicesPopup(
   let specificVillainRequirementMet = true;
   let specificHenchmenRequirementMet = true;
 
+  // Golden Solo: resolve effective villain/henchmen requirements
+  const _gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const _fullMastermind = masterminds.find(m => m.name === mastermind.name) || mastermind;
+  const req = getEffectiveSetupRequirements(scheme, _fullMastermind, _gameMode);
+
   // Check specific villain requirement (now handling arrays)
-  if (scheme.specificVillainRequirement) {
-    // Convert to array if it's a single string
-    const requiredVillains = Array.isArray(scheme.specificVillainRequirement)
-      ? scheme.specificVillainRequirement
-      : [scheme.specificVillainRequirement];
+  if (req.specificVillainRequirement.length > 0) {
+    const requiredVillains = req.specificVillainRequirement;
 
     // Check if all required villains are present
     const normalizedRequiredVillains = requiredVillains.map(v => v.trim().toLowerCase());
@@ -2956,11 +3047,11 @@ function showConfirmChoicesPopup(
   }
 
   // Check specific henchmen requirement (also updated to handle arrays)
-  if (scheme.specificHenchmenRequirement) {
+  if (req.specificHenchmenRequirement) {
     // Convert to array if it's a single string
-    const requiredHenchmen = Array.isArray(scheme.specificHenchmenRequirement)
-      ? scheme.specificHenchmenRequirement
-      : [scheme.specificHenchmenRequirement];
+    const requiredHenchmen = Array.isArray(req.specificHenchmenRequirement)
+      ? req.specificHenchmenRequirement
+      : [req.specificHenchmenRequirement];
 
     const normalizedRequiredHenchmen = requiredHenchmen.map(h => h.trim().toLowerCase());
     const normalizedSelectedHenchmen = henchmen.map(h => h.trim().toLowerCase());
@@ -2981,10 +3072,10 @@ function showConfirmChoicesPopup(
   }
 
   // Villain count validation
-  if (villains.length < scheme.requiredVillains) {
-    villainFeedback += `<br><span class="error-spans">Please select ${scheme.requiredVillains - villains.length > 1 ? "more villain groups" : "another villain group"}.</span>`;
-  } else if (villains.length > scheme.requiredVillains) {
-    villainFeedback += `<br><span class="error-spans">Please select ${villains.length - scheme.requiredVillains > 1 ? "fewer villain groups" : "one less villain group"}.</span>`;
+  if (villains.length < req.requiredVillains) {
+    villainFeedback += `<br><span class="error-spans">Please select ${req.requiredVillains - villains.length > 1 ? "more villain groups" : "another villain group"}.</span>`;
+  } else if (villains.length > req.requiredVillains) {
+    villainFeedback += `<br><span class="error-spans">Please select ${villains.length - req.requiredVillains > 1 ? "fewer villain groups" : "one less villain group"}.</span>`;
   }
 
   // Hero count validation — Golden Solo always requires 5 heroes.
@@ -3015,7 +3106,7 @@ function showConfirmChoicesPopup(
   const formattedHeroes = `<span class="bold-spans">${formatList(heroes)}.</span>`;
 
   document.getElementById("required-villains-count").innerHTML =
-    `<span class="bold-spans">${scheme.requiredVillains} Villain ${villainGroupText}.</span>`;
+    `<span class="bold-spans">${req.requiredVillains} Villain ${villainGroupText}.</span>`;
   document.getElementById("villains-list").innerHTML =
     formattedVillains + villainFeedback;
 
@@ -3033,7 +3124,7 @@ function showConfirmChoicesPopup(
     formattedHeroes + heroFeedback;
 
   const villainsCorrect =
-    villains.length === scheme.requiredVillains &&
+    villains.length === req.requiredVillains &&
     specificVillainRequirementMet;
   const henchmenCorrect =
     henchmen.length === scheme.requiredHenchmen &&
@@ -4358,8 +4449,17 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
     // Store the alwaysLeads villain name for later use
     window.alwaysLeadsVillain = selectedVillainName;
   } else if (villains.length > 1) {
-    const randomIndex = Math.floor(Math.random() * villains.length);
-    const selectedVillainName = villains[randomIndex];
+    let selectedVillainName;
+
+    if (gameMode === 'golden' && mastermind.alwaysLeads && mastermind.alwaysLeadsType === 'villain') {
+      // Golden Solo: always use the mastermind's correct Always Leads group
+      selectedVillainName = mastermind.alwaysLeads;
+    } else {
+      // What If? with multiple villain groups (e.g. Kree-Skrull War): random pick unchanged
+      const randomIndex = Math.floor(Math.random() * villains.length);
+      selectedVillainName = villains[randomIndex];
+    }
+
     console.log(
       `The Mastermind always leads ${selectedVillainName} in this game.`,
     );
@@ -9378,8 +9478,8 @@ function updateVillainAttackValues(villain, i) {
 
   //Attack From Mastermind Effects
 
-  if (mastermind.name === "Apocalypse" && villain.alwaysLeads === true) {
-    villain.attackFromMastermind = 2;
+  if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
+    villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack || 0;
   }
 
   //Attack From Scheme Effects
@@ -9593,8 +9693,8 @@ function updateHQVillainAttackValues(villain) {
 
   //Attack From Mastermind Effects
 
-  if (mastermind.name === "Apocalypse" && villain.alwaysLeads === true) {
-    villain.attackFromMastermind = 2;
+  if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
+    villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack || 0;
   }
 
   //Attack From Scheme Effects
