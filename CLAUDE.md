@@ -52,6 +52,10 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 
 When removing an HTML element, always grep `script.js` for matching `getElementById()` calls at the top level. Null references at the top of `script.js` crash ALL subsequent listener registration silently (e.g., removing `#donate-call-to-action` from HTML broke the Welcome popup close button because `script.js` crashed before registering its listener).
 
+## Async Gotchas
+
+- When making a card ability function `async`, grep for ALL its call sites and add `await` there too — callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (this was missed for `heroSkrulled` callers in health check phase 2 and caught by code review).
+
 ## Mastermind Code Gotchas
 
 - Mastermind names in `cardDatabase.js` must be matched exactly — `"The Supreme Intelligence of the Kree"` not `"Supreme Intelligence"`. Wrong names silently return `undefined` from `masterminds.find()`.
@@ -77,13 +81,7 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
    - Phase 3: ✅ Live selection summary panel — all 7 tasks + CSS redesign complete, merged to master (2026-03-28)
 2. **Villain deck rules fix (Golden Solo)** ✅ Complete — merged to master (2026-03-30)
 3. **Health check cleanup** ✅ Phase 1 complete — merged to master (2026-03-30)
-4. **Health check cleanup Phase 2** — full-project audit findings at `docs/health-check-report-2026-03-30.md`; 5 Critical, 6 Medium, 10 Low issues found. Fix before expansions.
-   - C1: `drawVillainCardsSequential` calls `drawVillainCard` in HYDRA fight-effects (script.js ~L11299, 12434, 12866, 13196)
-   - C2: `drawVillainCard()` not awaited in `endTurn`/`initGame` (script.js ~L10865, 4543)
-   - C3: 3 bare HQ fill-in-place bugs in expansion files (FF risingWatersTwist, cosmicRaysRecruit; PTTR dailyBugleVillainToHQ)
-   - C4: Duplicate `id="popup"` block in HTML (~L902, 919) — dead legacy popup
-   - C5: Duplicate `id="sidekick-section"` (~L391, 395) — missed in prior ID fix pass
-   - M1–M6: async fire-and-forget bugs, stale index after splice, global state reset, z-index fragility
+4. **Health check cleanup Phase 2** ✅ Complete — merged to master (2026-03-30); 10 Low items deferred (see Known Issues)
 5. **Card Effect Auditor system** — design approved (2026-03-29); spec at `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; pending implementation plan
    - Three components: Card Effect Taxonomy, Card Effects Reference (text extracted from card images + code), Card Effect Auditor subagent
    - Audits four layers: card text accuracy, Golden Solo compatibility, cross-card interactions, keyword/mechanic consistency
@@ -261,6 +259,28 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 ---
 
 ## Known Issues / Deferred
+
+### Low-priority health check items (L1–L10)
+
+10 low-priority items from the full audit at `docs/health-check-report-2026-03-30.md`. Fix opportunistically during expansion work:
+
+| # | File | Issue |
+|---|------|-------|
+| L1 | `expansionPaintTheTownRed.js` ~L1730 | Dead `koHero()` function — never called; also contains bare HQ fill bug |
+| L2 | `cardAbilities.js` ~L16855 | Dead `drawMultipleVillainCards()` — never called |
+| L3 | `cardAbilitiesDarkCity.js` ~L15963 | `KOAllHQBystanders` missing `return` after no-bystander guard |
+| L4 | `cardAbilities.js` ~L16962 | `KOAllHeroesInHQ` missing `showHeroDeckEmptyPopup()` in What If? path |
+| L5 | `script.js` ~L651 | `enterCityNotDraw` flag declared but never set to `true` — dead |
+| L6 | `expansionFantasticFour.js` ~L3232 | `morgAmbush` iterates `i < 5` hardcoded instead of `i < hq.length` |
+| L7 | `expansionGuardiansOfTheGalaxy.js` ~L2411 | Thanos tactic popup shows "each other player" text that never fires in solo |
+| L8 | `cardDatabase.js` ~L520 | Splice Humans scheme has `specificVillainRequirement` declared twice |
+| L9 | `styles.css` ~L8556 | `#summary-panel` hard-coded `height: 100px` — could overflow on small screens |
+| L10 | `index.html` ~L137 | X-Cutioner's Song hero radio inputs share `name="hero"` with main hero checkboxes |
+
+### Tech debt — low priority
+
+- **`refillHQSlot` helper** — the `if (gameMode === 'golden') { goldenRefillHQ(index) } else { hq[index] = heroDeck.pop() }` pattern appears ~22 times across 5 files. Consolidate into a shared helper in `script.js` near `goldenRefillHQ`.
+- **Magic string `'golden'`** — `gameMode === 'golden'` repeated throughout; no constant defined. Low urgency.
 
 ### Scheme vs Game Mode villain count conflict
 
