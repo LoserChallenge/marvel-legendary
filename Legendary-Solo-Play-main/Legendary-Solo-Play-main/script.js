@@ -6124,20 +6124,24 @@ function returnHeroToDeck(hqIndex) {
     // Bottom = front; drawing uses pop() from end (top)
     heroDeck.unshift(hero);
 
-    // Draw new top card (end of array)
-    const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-    hq[hqIndex] = newCard;
-
-    if (newCard) {
-      onscreenConsole.log(
-        `<span class="console-highlights">${newCard.name}</span> has entered the HQ.`,
-      );
+    if (gameMode === 'golden') {
+      goldenRefillHQ(hqIndex);
     } else {
-      onscreenConsole.log(`HQ Update: No new card available.`);
-    }
+      // Draw new top card (end of array)
+      const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+      hq[hqIndex] = newCard;
 
-    addHRToTopWithInnerHTML();
-    updateGameBoard();
+      if (newCard) {
+        onscreenConsole.log(
+          `<span class="console-highlights">${newCard.name}</span> has entered the HQ.`,
+        );
+      } else {
+        onscreenConsole.log(`HQ Update: No new card available.`);
+      }
+
+      addHRToTopWithInnerHTML();
+      updateGameBoard();
+    }
   }
 }
 

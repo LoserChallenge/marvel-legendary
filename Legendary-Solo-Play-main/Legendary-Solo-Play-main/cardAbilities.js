@@ -15172,15 +15172,19 @@ async function AmbushRightHeroSkrull() {
   }
 
   // Replace the rightmost HQ space with the top card from the hero deck, if available
-  hq[hqIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
+  if (gameMode === 'golden') {
+    goldenRefillHQ(hqIndex);
+  } else {
+    hq[hqIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
 
-  // Check if the HQ space is empty after drawing
-  if (!hq[hqIndex]) {
-    showHeroDeckEmptyPopup();
+    // Check if the HQ space is empty after drawing
+    if (!hq[hqIndex]) {
+      showHeroDeckEmptyPopup();
+    }
+
+    // Update the game board to reflect the changes
+    updateGameBoard();
   }
-
-  // Update the game board to reflect the changes
-  updateGameBoard();
 }
 
 async function highestCostHeroSkrullQueen() {
@@ -15233,11 +15237,15 @@ function captureHeroBySkrullQueen(hero) {
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
   const heroIndex = hq.indexOf(hero);
-  hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
+  if (gameMode === 'golden') {
+    goldenRefillHQ(heroIndex);
+  } else {
+    hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
 
-  // Check if the HQ space is empty after drawing
-  if (!hq[heroIndex]) {
-    showHeroDeckEmptyPopup();
+    // Check if the HQ space is empty after drawing
+    if (!hq[heroIndex]) {
+      showHeroDeckEmptyPopup();
+    }
   }
 
   // Attach an overlay to the villain
