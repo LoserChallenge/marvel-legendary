@@ -7,3 +7,9 @@ desktop.ini
 
 # Git worktrees
 .worktrees/
+
+# Rules PDFs — large files, stored locally only
+rules/
+
+# Superpowers plugin cache
+.superpowers/

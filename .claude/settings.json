@@ -1,0 +1,56 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch",
+      "Bash(source *)",
+      "Bash(export *)",
+      "Bash(curl *)",
+      "Bash(jq *)",
+      "Bash(cat *)",
+      "Bash(ls*)",
+      "Bash(grep *)",
+      "Bash(echo *)",
+      "Bash(which *)",
+      "Bash(wc *)",
+      "Bash(file *)",
+      "Bash(pwd*)",
+      "Bash(mkdir *)",
+      "Bash(touch *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(find *)",
+      "Bash(sort *)",
+      "Bash(tree*)",
+      "Bash(diff *)",
+      "Bash(node *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const f=(JSON.parse(d).tool_input||{}).file_path||'';if(!f.endsWith('.js'))return;const r=require('child_process').spawnSync('node',['--check',f],{encoding:'utf8'});if(r.status!==0){console.error('SYNTAX ERROR in '+f);console.error(r.stderr||'');process.exit(1);}else{console.log('Syntax OK: '+f);}}catch(e){}});\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const f=(JSON.parse(d).tool_input||{}).file_path||'';const b=require('path').basename(f);if(!/^(expansion|cardAbilities).*\\.js$/.test(b))return;const lines=require('fs').readFileSync(f,'utf8').split('\\n');const hits=[];lines.forEach((l,i)=>{const t=l.trim();if(t.startsWith('//')||t.startsWith('*'))return;if(l.includes('drawVillainCard()'))hits.push((i+1)+': '+t);});if(hits.length){console.error('ANTI-PATTERN: drawVillainCard() found in '+b+' - use processVillainCard() instead.');console.error(hits.join('\\n'));process.exit(1);}}catch(e){}});\""
+          }
+        ]
+      }
+    ]
+  }
+}
