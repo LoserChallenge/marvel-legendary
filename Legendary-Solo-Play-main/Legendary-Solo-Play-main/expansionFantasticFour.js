@@ -627,7 +627,6 @@ async function risingWatersTwist() {
         if (gameMode === 'golden') {
           newCard = goldenRefillHQ(hqIndex);
         } else {
-          hq[hqIndex] = null;
           newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
           hq[hqIndex] = newCard;
         }
