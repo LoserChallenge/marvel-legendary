@@ -15172,19 +15172,27 @@ async function AmbushRightHeroSkrull() {
   }
 
   // Replace the rightmost HQ space with the top card from the hero deck, if available
+  let newCard;
   if (gameMode === 'golden') {
-    goldenRefillHQ(hqIndex);
+    newCard = goldenRefillHQ(hqIndex);
   } else {
     hq[hqIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
+    newCard = hq[hqIndex];
 
     // Check if the HQ space is empty after drawing
     if (!hq[hqIndex]) {
       showHeroDeckEmptyPopup();
     }
-
-    // Update the game board to reflect the changes
-    updateGameBoard();
   }
+
+  if (newCard) {
+    onscreenConsole.log(
+      `<span class="console-highlights">${newCard.name}</span> has entered the HQ.`,
+    );
+  }
+
+  // Update the game board to reflect the changes
+  updateGameBoard();
 }
 
 async function highestCostHeroSkrullQueen() {
