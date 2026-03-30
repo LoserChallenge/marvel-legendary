@@ -6124,9 +6124,14 @@ function returnHeroToDeck(hqIndex) {
     // Bottom = front; drawing uses pop() from end (top)
     heroDeck.unshift(hero);
 
-    // Draw new top card (end of array)
-    const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-    hq[hqIndex] = newCard;
+    let newCard;
+    if (gameMode === 'golden') {
+      newCard = goldenRefillHQ(hqIndex);
+    } else {
+      // Draw new top card (end of array)
+      newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+      hq[hqIndex] = newCard;
+    }
 
     if (newCard) {
       onscreenConsole.log(
