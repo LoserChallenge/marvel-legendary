@@ -8237,7 +8237,7 @@ function rhinoEscape() {
   drawWound();
 }
 
-function electroAmbush() {
+async function electroAmbush() {
   onscreenConsole.log(
     `Ambush! <span class="console-highlights">Electro</span> makes you reveal the top card of the Villain deck.`,
   );
@@ -8252,7 +8252,7 @@ function electroAmbush() {
     onscreenConsole.log(
       `You revealed a <span class="console-highlights">Scheme Twist</span>. It will now be played.`,
     );
-    processVillainCard();
+    await processVillainCard();
   } else {
     onscreenConsole.log(
       `You revealed <span class="console-highlights">${topCardOfVillainDeck.name}</span>. It is not a Scheme Twist and does not need to be played.`,
@@ -8263,7 +8263,7 @@ function electroAmbush() {
   }
 }
 
-function eggheadAmbush() {
+async function eggheadAmbush() {
   onscreenConsole.log(
     `Ambush! <span class="console-highlights">Egghead</span> makes you reveal the top card of the Villain deck.`,
   );
@@ -8279,7 +8279,7 @@ function eggheadAmbush() {
     onscreenConsole.log(
       `You revealed <span class="console-highlights">${topCardOfVillainDeck.name}</span>. It will now be played.`,
     );
-    processVillainCard();
+    await processVillainCard();
   } else {
     onscreenConsole.log(
       `You revealed <span class="console-highlights">${topCardOfVillainDeck.name}</span>. It is not a Villain and does not need to be played.`,
@@ -15964,8 +15964,8 @@ async function KOAllHQBystanders() {
     onscreenConsole.log("No Bystanders found in HQ.");
   }
 
-  // Process each bystander position
-  for (const index of bystanderIndices) {
+  // Process in reverse order so Golden Solo splices don't shift unprocessed indices
+  for (const index of bystanderIndices.reverse()) {
     // KO the bystander (add to KO pile if needed)
     const koedBystander = hq[index];
     koPile.push(koedBystander);

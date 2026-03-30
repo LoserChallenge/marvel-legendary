@@ -272,8 +272,13 @@ async function dailyBugleVillainToHQ(selectedHQIndex) {
 
   if (villainsInCity.length === 0) {
     onscreenConsole.log(`No Villains invade at this time!`);
-      const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-      hq[selectedHQIndex] = newCard;
+      let newCard;
+      if (gameMode === 'golden') {
+        newCard = goldenRefillHQ(selectedHQIndex);
+      } else {
+        newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+        hq[selectedHQIndex] = newCard;
+      }
 
       if (newCard) {
       onscreenConsole.log(

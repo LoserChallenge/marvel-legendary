@@ -76,12 +76,19 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
    - Phase 2: ✅ Welcome screen rewrite complete (2a); RULES button and pairing to be addressed during expansion work
    - Phase 3: ✅ Live selection summary panel — all 7 tasks + CSS redesign complete, merged to master (2026-03-28)
 2. **Villain deck rules fix (Golden Solo)** ✅ Complete — merged to master (2026-03-30)
-3. **Health check cleanup** ✅ Complete — merged to master (2026-03-30)
-4. **Card Effect Auditor system** — design approved (2026-03-29); spec at `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; pending implementation plan
+3. **Health check cleanup** ✅ Phase 1 complete — merged to master (2026-03-30)
+4. **Health check cleanup Phase 2** — full-project audit findings at `docs/health-check-report-2026-03-30.md`; 5 Critical, 6 Medium, 10 Low issues found. Fix before expansions.
+   - C1: `drawVillainCardsSequential` calls `drawVillainCard` in HYDRA fight-effects (script.js ~L11299, 12434, 12866, 13196)
+   - C2: `drawVillainCard()` not awaited in `endTurn`/`initGame` (script.js ~L10865, 4543)
+   - C3: 3 bare HQ fill-in-place bugs in expansion files (FF risingWatersTwist, cosmicRaysRecruit; PTTR dailyBugleVillainToHQ)
+   - C4: Duplicate `id="popup"` block in HTML (~L902, 919) — dead legacy popup
+   - C5: Duplicate `id="sidekick-section"` (~L391, 395) — missed in prior ID fix pass
+   - M1–M6: async fire-and-forget bugs, stale index after splice, global state reset, z-index fragility
+5. **Card Effect Auditor system** — design approved (2026-03-29); spec at `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; pending implementation plan
    - Three components: Card Effect Taxonomy, Card Effects Reference (text extracted from card images + code), Card Effect Auditor subagent
    - Audits four layers: card text accuracy, Golden Solo compatibility, cross-card interactions, keyword/mechanic consistency
    - Must be built before starting expansion work so new cards are audited as they're added
-5. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
+6. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
    - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
 

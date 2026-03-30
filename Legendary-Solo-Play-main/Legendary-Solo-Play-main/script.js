@@ -4390,6 +4390,8 @@ function initializeDemonGoblinDeck() {
 
 async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   goldenFirstRound = true; // reset for new game
+  isFirstTurn = true;
+  finalBlowDelivered = false;
   console.log("Initializing game with:");
   console.log("Heroes:", heroes);
   console.log("Villains:", villains);
@@ -4540,7 +4542,7 @@ if (scheme.name === "Splice Humans with Spider DNA") {
 
   // Update the game board and draw the first villain card
   updateGameBoard();
-  drawVillainCard();
+  await drawVillainCard();
 
   // Hide the confirm selection popup (if this is where you want to close it)
   document.getElementById("confirm-start-up-choices").style.display = "none";
@@ -10862,7 +10864,7 @@ if (card.temporaryTeleport === true) {
 
   healingPossible = true;
   updateGameBoard();
-  drawVillainCard();
+  await drawVillainCard();
   nextTurnsDraw = 6;
   cardsToBeDrawnNextTurn = [];
   delayEndGame = false;
@@ -11298,7 +11300,7 @@ function animateDefeatFromRect(imgSrc, rect) {
 // ---------------------------------
 async function drawVillainCardsSequential(count) {
   for (let i = 0; i < count; i++) {
-    await drawVillainCard();
+    await processVillainCard();
   }
 }
 
@@ -13834,7 +13836,11 @@ function koHeroInHQ(index) {
       onscreenConsole.log(
         `<span class="console-highlights">${hero.name}</span> has been KO'd during a Helicarrier explosion. This HQ space has been Destroyed.`,
       );
-      hq[index] = null; // Ensure the slot is empty
+      if (gameMode === 'golden') {
+        hq.splice(index, 1); // Golden Solo: remove the slot entirely to avoid null holes
+      } else {
+        hq[index] = null; // Normal: mark slot as permanently destroyed
+      }
     }
   } else {
     // Normal KO handling

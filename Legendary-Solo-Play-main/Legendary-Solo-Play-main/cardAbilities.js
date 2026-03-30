@@ -17004,7 +17004,7 @@ async function highestCostHeroSkrulled() {
   }
 }
 
-function heroSkrulled(hero) {
+async function heroSkrulled(hero) {
   hero.skrulled = true;
   hero.originalAttack = hero.attack;
   hero.attack = 0;
@@ -17020,13 +17020,13 @@ function heroSkrulled(hero) {
     goldenRefillHQ(heroIndex);
   } else {
     hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
-  }
 
-  // Check if the HQ space is empty after drawing
-  if (!hq[heroIndex]) {
-    showHeroDeckEmptyPopup();
+    // Check if the HQ space is empty after drawing
+    if (!hq[heroIndex]) {
+      showHeroDeckEmptyPopup();
+    }
   }
-  processVillainCard();
+  await processVillainCard();
 
   // Attach an overlay to the villain
   hero.overlayText = `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SKRULL</span>`;

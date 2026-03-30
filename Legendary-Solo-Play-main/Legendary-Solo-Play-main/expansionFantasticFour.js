@@ -625,8 +625,13 @@ async function risingWatersTwist() {
       if (hqIndex !== -1) {
         hq[hqIndex] = null;
 
-        const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-        hq[hqIndex] = newCard; // Use hqIndex instead of index
+        let newCard;
+        if (gameMode === 'golden') {
+          newCard = goldenRefillHQ(hqIndex);
+        } else {
+          newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+          hq[hqIndex] = newCard;
+        }
 
         if (newCard) {
           // Log the KO
@@ -1275,8 +1280,13 @@ async function cosmicRaysRecruit(maxCost) {
         const hero = hq[selectedHQIndex];
 
         // Remove from HQ and replace with new card from deck
-        const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-        hq[selectedHQIndex] = newCard;
+        let newCard;
+        if (gameMode === 'golden') {
+          newCard = goldenRefillHQ(selectedHQIndex);
+        } else {
+          newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+          hq[selectedHQIndex] = newCard;
+        }
 
         if (newCard) {
           onscreenConsole.log(
