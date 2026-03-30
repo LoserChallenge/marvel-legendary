@@ -76,11 +76,14 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
    - Phase 2: ✅ Welcome screen rewrite complete (2a); RULES button and pairing to be addressed during expansion work
    - Phase 3: ✅ Live selection summary panel — all 7 tasks + CSS redesign complete, merged to master (2026-03-28)
 2. **Villain deck rules fix (Golden Solo)** ✅ Complete — merged to master (2026-03-30)
-3. **Card Effect Auditor system** — design approved (2026-03-29); spec at `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; pending implementation plan
+3. **Health check cleanup** — plan at `docs/superpowers/plans/2026-03-30-health-check-cleanup.md`; 2 tasks pending
+   - Task 1: Fix 3 HQ fill-in-place bugs outside original audit scope (`returnHeroToDeck` in script.js ~L6129; `AmbushRightHeroSkrull` in cardAbilities.js ~L15113; `captureHeroBySkrullQueen` in cardAbilities.js ~L15211)
+   - Task 2: Fix duplicate HTML IDs in 5 setup sections (scheme, mastermind, villain, henchmen, hero — inner scrollable divs share ID with outer container)
+4. **Card Effect Auditor system** — design approved (2026-03-29); spec at `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; pending implementation plan
    - Three components: Card Effect Taxonomy, Card Effects Reference (text extracted from card images + code), Card Effect Auditor subagent
    - Audits four layers: card text accuracy, Golden Solo compatibility, cross-card interactions, keyword/mechanic consistency
    - Must be built before starting expansion work so new cards are audited as they're added
-4. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
+5. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
    - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
 
