@@ -8556,12 +8556,13 @@ div.screws:nth-of-type(4) {
   height: auto;
   min-height: 80px;
   display: none;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   grid-template-rows: auto auto;
   align-items: stretch;
   padding: 8px 0;
   font-family: "Roboto Condensed", sans-serif;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 #summary-panel.visible {
@@ -8583,11 +8584,13 @@ div.screws:nth-of-type(4) {
 .summary-left-group {
   grid-column: 1;
   grid-row: 1 / 3;
+  min-width: 0;
 }
 
 .summary-mid-group {
   grid-column: 2;
   grid-row: 1 / 3;
+  min-width: 0;
 }
 
 /* Right zone top row: Final Blow + Game Mode side by side */
