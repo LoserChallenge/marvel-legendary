@@ -9,55 +9,55 @@
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Diving Catch | [Strength] | X-Men | 4 | 2 [Recruit] | When a card effect causes you to discard this card, rescue a Bystander and draw two cards. |
+| High-Speed Chase | [Covert] | X-Men | 3 | 0 | Draw two cards, then discard a card. |
+| Drop Off A Friend | [Instinct] | X-Men | 5 | 2+ [Attack] | You may discard a card. You get +[Attack] equal to that card's cost. |
+| Strength of Spirit | [Strength] | X-Men | 7 | 4 [Attack] | Discard any number of cards. Draw that many cards. |
 
 ### Bishop
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Absorb Energies | [Covert] | X-Men | 3 | 0+ [Attack], 2 [Recruit] | Whenever a card you own is KO'd this turn, you get +2 [Attack]. |
+| Whatever the Cost | [Ranged] | X-Men | 2 | 0 | Draw a card. [Covert]: You may KO a card from your hand or discard pile. |
+| Concussive Blast | [Ranged] | X-Men | 5 | 3+ [Attack] | [Ranged][Ranged]: You get +3 [Attack]. |
+| Firepower from the Future | [Tech] | X-Men | 7 | 4+ [Attack] | Reveal the top card of your deck. You get +[Attack] equal to its cost. You may KO any number of your cards. |
 
 ### Blade
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Stalk the Prey | [Covert] | Marvel Knights | 3 | 2 [Attack] | You may move a Villain to an adjacent city space. If another Villain is already there, swap them. |
+| Night Hunter | [Strength] | Marvel Knights | 4 | 0+ [Attack], 2 [Recruit] | Whenever you defeat a Villain in the Sewers or Rooftops this turn, you get +2 [Attack]. |
+| Nowhere To Hide | [Tech] | Marvel Knights | 6 | 3 [Attack] | Whenever you defeat a Villain in the Sewers or Rooftops this turn, draw two cards. |
+| Vampiric Surge | [Instinct] | Marvel Knights | 7 | 0+ [Attack] | You get +1 [Attack] for each Villain in your Victory Pile. |
 
 ### Cable
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Strike at the Heart of Evil | [Ranged] | X-Force | 4 | 2+ [Attack] | You get +1 [Attack] only when fighting a Mastermind. |
+| Disaster Survivalist | [Tech] | X-Force | 3 | 2 [Recruit] | When a Master Strike is played, you may discard this card. If you do, draw three extra cards at the end of this turn. |
+| Rapid Response Force | [Covert] | X-Force | 6 | 3+ [Attack] | **Teleport.** KO one of each other [Tech] Hero you played this turn. +1 [Attack] for each card KO'd this way. |
+| Army of One | [Ranged] | X-Force | 8 | 5+ [Attack] | KO any number of cards from your hand and discard pile. +1 [Attack] for each card KO'd this way. |
 
 ### Colossus
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Draw Their Fire | [Strength] | X-Force | 1 | 3 [Attack] | You gain a Wound. |
+| Invulnerability | [Strength] | X-Force | 3 | 2 [Recruit] | If you would gain a Wound, you may discard this card instead. If you do, draw two cards. |
+| Silent Statue | [Covert] | X-Force | 6 | 4+ [Attack] | [Strength]: You get +2 [Attack]. |
+| Russian Heavy Tank | [Strength] | X-Force | 8 | 6 [Attack] | If another player would gain a Wound, you may discard this card to gain that Wound instead and draw a card. |
 
 ### Daredevil
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Backflip | [Strength] | Marvel Knights | 3 | 2 [Recruit] | When you play Backflip, the next Hero you recruit this turn goes on top of your deck. |
+| Radar Sense | [Instinct] | Marvel Knights | 4 | 2+ [Attack] | Choose a number, then reveal the top card of your deck. If the card is that cost, you get +2 [Attack]. |
+| Blind Justice | [Covert] | Marvel Knights | 6 | 4 [Attack] | Choose a number, then reveal the top card of your deck. If the card is that cost, draw it. |
+| The Man Without Fear | [Instinct] | Marvel Knights | 8 | 7 [Attack] | Choose a number, then reveal the top card of your deck. If the card is that cost, KO it and rescue three Bystanders. |
 
 ### Domino
 
