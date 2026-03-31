@@ -39,6 +39,12 @@ Enhance the existing Legendary Solo Play web app. Golden Solo Mode is complete. 
 
 Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in a browser. No server, build step, or install needed.
 
+## Deployment
+
+- Game is hosted on GitHub Pages at: `https://LoserChallenge.github.io/marvel-legendary/`
+- Push to `master` branch deploys automatically (~1 min delay; hard refresh `Ctrl+Shift+R` to bust cache)
+- Rules PDFs (105MB) are gitignored — local only
+
 ## Platform & Constraints
 
 - Windows 11, VS Code
@@ -51,6 +57,16 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 ## JS/HTML Pairing Rule
 
 When removing an HTML element, always grep `script.js` for matching `getElementById()` calls at the top level. Null references at the top of `script.js` crash ALL subsequent listener registration silently (e.g., removing `#donate-call-to-action` from HTML broke the Welcome popup close button because `script.js` crashed before registering its listener).
+
+## GitHub Pages / HTTP Serving Gotchas
+
+- Browsers on `https://` treat uncaught JS errors more strictly than `file://` — errors that silently fail locally can crash the loading screen on GitHub Pages
+- `initCosmicBackground()` and `initSplash()` in `expansionGuardiansOfTheGalaxy.js` assume DOM elements that don't exist — both have null guards added; any future expansion splash code must do the same
+- `drawVillainCard()` must NOT be called inside `initGame()` — it shows a popup requiring player input, causing a deadlock while the loading screen is still visible. It is called in `onBeginGame()` after the loader hides (~line 3571)
+
+## CSS Grid Overflow Gotcha
+
+- Grid columns using `1fr` do not shrink below content size by default — use `minmax(0, 1fr)` and `min-width: 0` on children when text must truncate rather than push other columns off-screen
 
 ## Async Gotchas
 
@@ -274,13 +290,14 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 | L6 | `expansionFantasticFour.js` ~L3232 | `morgAmbush` iterates `i < 5` hardcoded instead of `i < hq.length` |
 | L7 | `expansionGuardiansOfTheGalaxy.js` ~L2411 | Thanos tactic popup shows "each other player" text that never fires in solo |
 | L8 | `cardDatabase.js` ~L520 | Splice Humans scheme has `specificVillainRequirement` declared twice |
-| L9 | `styles.css` ~L8556 | `#summary-panel` hard-coded `height: 100px` — could overflow on small screens |
+| L9 | `styles.css` | ~~`#summary-panel` hard-coded `height: 100px`~~ — fixed 2026-03-30; panel now uses `height: auto` |
 | L10 | `index.html` ~L137 | X-Cutioner's Song hero radio inputs share `name="hero"` with main hero checkboxes |
 
 ### Tech debt — low priority
 
 - **`refillHQSlot` helper** — the `if (gameMode === 'golden') { goldenRefillHQ(index) } else { hq[index] = heroDeck.pop() }` pattern appears ~22 times across 5 files. Consolidate into a shared helper in `script.js` near `goldenRefillHQ`.
 - **Magic string `'golden'`** — `gameMode === 'golden'` repeated throughout; no constant defined. Low urgency.
+- **Summary panel hero names truncate on narrow screens** — accepted for now; revisit in next UI pass.
 
 ### Scheme vs Game Mode villain count conflict
 
