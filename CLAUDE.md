@@ -88,6 +88,8 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 - `const` declarations inside `vm.runInContext()` are block-scoped to the script and NOT accessible on the context object — `context.heroes` will be `undefined`
 - Fix: before running, replace the declaration: `code = code.replace(/\bconst heroes\s*=/, 'heroes =');`
 - Apply the same pattern for any other top-level `const` arrays you need from the DB
+- `cardDatabase.js` assigns `window.henchmen = henchmen` etc. at the end — stub `window` in the vm context: `const context = { window: {} };` or the script crashes with "window is not defined"
+- Reusable extraction script: `scripts/extract-hero-data.js <FolderName>` — pass the image folder name (e.g. `"Dark City"`, `"GotG"`, `"PtTR"`) to extract hero data for any expansion
 
 ## Mastermind Code Gotchas
 
@@ -118,10 +120,8 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 5. **Card Effect Auditor system** — in progress on `feature/card-effect-auditor` branch (2026-03-31)
    - Two components: Comprehensive Card Reference (`docs/card-effects-reference/`, one file per expansion), Card Effect Auditor subagent (`.claude/agents/card-effect-auditor.md`)
    - Design spec: `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; implementation plan: `docs/superpowers/plans/2026-03-30-card-effect-auditor.md`
-   - Reference files built for all 5 expansions; auditor subagent created; first audit run completed (65 issues found)
-   - **Blocking issue:** Hero card reference data needs rebuilding — subagents misread class/team icons from card images, producing false audit findings. Fix: use `cardDatabase.js` as authoritative source for class/team/cost/condition, use images ONLY for effect text. See Card Image Reading Gotcha below.
-   - Hero rebuild design spec: `docs/superpowers/specs/2026-03-31-hero-reference-rebuild-design.md`; implementation plan: `docs/superpowers/plans/2026-03-31-hero-reference-rebuild.md`
-   - Remaining tasks: execute hero rebuild plan (Core Set first, then 4 more expansions), re-run audit, update `/new-expansion` skill
+   - Hero reference rebuild: **complete** for all 5 expansions (Core Set, Dark City, FF, GotG, PtTR) — DB-first fields, image-only effect text
+   - **Next session:** verify 3 GotG code bugs against physical cards (see GotG Code Bugs section below), then fix code, re-run audit, update `/new-expansion` skill
 6. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
    - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
@@ -318,6 +318,16 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 - **`refillHQSlot` helper** — the `if (gameMode === 'golden') { goldenRefillHQ(index) } else { hq[index] = heroDeck.pop() }` pattern appears ~22 times across 5 files. Consolidate into a shared helper in `script.js` near `goldenRefillHQ`.
 - **Magic string `'golden'`** — `gameMode === 'golden'` repeated throughout; no constant defined. Low urgency.
 - **Summary panel hero names truncate on narrow screens** — accepted for now; revisit in next UI pass.
+
+### GotG Code Bugs — Pending Verification (2026-03-31)
+
+Three `expansionGuardiansOfTheGalaxy.js` functions check the wrong condition class. Verify against physical cards, then fix the condition check in each function:
+
+| Card | Function | Card says | Code checks |
+|------|----------|-----------|-------------|
+| Deadliest Woman in the Universe | `gamoraDeadliestWomanInTheUniverse` (~L4959) | `[Guardians]:` | Covert |
+| Trigger Happy | `rocketRaccoonTriggerHappy` (~L6408) | `[Ranged]:` | Guardians |
+| Vengeance is Rocket | `rocketRaccoonVengeanceIsRocket` (~L6496) | `[Ranged]:` | Tech |
 
 ### Scheme vs Game Mode villain count conflict
 
