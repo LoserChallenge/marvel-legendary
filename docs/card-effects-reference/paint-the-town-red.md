@@ -2,52 +2,53 @@
 
 ## Heroes
 
+<!-- 5 heroes — Paint the Town Red expansion -->
+<!-- Data source: cardDatabase.js (structured fields) + card images (effect text only) -->
+
 ### Black Cat
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Pickpocket | [Covert] | Spider Friends | 1 | Common | 0+ [Attack] | **Wall-Crawl** -- Reveal the top card of any player's deck. You get +[Attack] equal to that card's printed [Recruit] plus its printed [Attack]. |
-| Casual Bank Robbery | [Covert] | Spider Friends | 4 | Common 2 | 2+ [Recruit] | **Wall-Crawl** -- You get another +1 [Recruit] usable only to recruit the Hero in the HQ space under the Bank. |
-| Jinx | [Instinct] | Spider Friends | 5 | Uncommon | 3 [Attack] | Each player reveals the top card of their deck. Choose any number of those cards to be discarded. |
-| Cat Burglar | [Covert] | Spider Friends | 8 | Rare | 5+ [Attack] | Each other player reveals a [Covert] Hero or chooses a Bystander from their Victory Pile. You rescue those Bystanders. **Covert**: You get +1 [Attack] for each Bystander you rescued this turn. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Pickpocket | Covert | Spider Friends | 1 | 0 [Attack] | "Wall-Crawl — Reveal the top card of any player's deck. You get +[Recruit] equal to that card's printed [Recruit] plus its printed [Attack]." |
+| Casual Bank Robbery | Covert | Spider Friends | 4 | 2 [Recruit] | "Wall-Crawl — You get another +1[Recruit] usable only to recruit the Hero in the HQ Space under the Bank." |
+| Jinx | Instinct | Spider Friends | 5 | 3 [Attack] | "Each player reveals the top card of their deck. Choose any number of those cards to be discarded." |
+| Cat Burglar | Covert | Spider Friends | 8 | 5 [Attack] | "Each other player reveals a [Covert] Hero or chooses a Bystander from their Victory Pile. You rescue those Bystanders. [Covert]: You get +1[Attack] for each Bystander you rescued this turn." |
 
 ### Moon Knight
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Climbing Claws | [Tech] | Marvel Knights | 3 | Common | 2 [Recruit] | **Wall-Crawl** -- **Instinct**: You get +1 [Recruit]. |
-| Lunar Communion | [Instinct] | Marvel Knights | 3 | Common 2 | 2 [Attack] | **Wall-Crawl** -- Whenever you defeat a Villain on the Rooftops this turn, you may KO one of your cards or a card from your discard pile. |
-| Crescent Moon Darts | [Tech] | Marvel Knights | 5 | Uncommon | 3 [Attack] | Reveal the top card of your deck. If it's [Instinct] or [Tech], draw it. |
-| Golden Ankh of Khonshu | [Instinct] | Marvel Knights | 8 | Rare | 6 [Attack] | Whenever you defeat a Villain on the Rooftops this turn, rescue Bystanders equal to that Villain's printed VP. **Tech**: You may move a Villain to the Rooftops. If another Villain is already there, swap them. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Climbing Claws | Tech | Marvel Knights | 3 | 2 [Recruit] | "Wall-Crawl — [Instinct]: You get +1[Recruit]." |
+| Lunar Communion | Instinct | Marvel Knights | 3 | 2 [Attack] | "Wall-Crawl — Whenever you defeat a Villain on the Rooftops this turn, you may KO one of your cards or a card from your discard pile." |
+| Crescent Moon Darts | Tech | Marvel Knights | 5 | 3 [Attack] | "Reveal the top card of your deck. If it's [Instinct] or [Tech], draw it." |
+| Golden Ankh of Khonshu | Instinct | Marvel Knights | 8 | 6 [Attack] | "Whenever you defeat a Villain on the Rooftops this turn, rescue Bystanders equal to that Villain's printed [Fight]. [Tech]: You may move a Villain to the Rooftops. If another Villain is already there, swap them." |
 
 ### Scarlet Spider
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Flip Out | [Strength] | Spider Friends | 2 | Common | 1 [Recruit] | **Wall-Crawl** -- **Spider Friends**: Draw a card. |
-| Perfect Hunter | [Instinct] | Spider Friends | 4 | Common 2 | 1 [Attack] | **Wall-Crawl** -- Draw a card. |
-| Leap from Above | [Covert] | Spider Friends | 6 | Uncommon | 3+ [Attack] | **Wall-Crawl** -- **Instinct**: You get +2 [Attack]. |
-| Sting of the Spider | [Strength] | Spider Friends | 7 | Rare | 5 [Attack] | Whenever you put a card on top of your deck this turn, you may draw that card. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Flip Out | Strength | Spider Friends | 2 | 1 [Recruit] | "Wall-Crawl — [Spider-Friends]: Draw a card." |
+| Perfect Hunter | Instinct | Spider Friends | 4 | 1 [Attack] | "Wall-Crawl — Draw a card." |
+| Leap from Above | Covert | Spider Friends | 6 | 3 [Attack] | "Wall-Crawl — [Instinct]: You get +2[Attack]." |
+| Sting of the Spider | Strength | Spider Friends | 7 | 5 [Attack] | "Whenever you put a card on top of your deck this turn, you may draw that card." |
 
 ### Spider-Woman
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Radioactive Spider | [Strength] | Spider Friends | 2 | Common | 3 [Recruit] | To play this card, you must put a card from your hand on top of your deck. |
-| Bioelectric Shock | [Ranged] | Spider Friends | 4 | Common 2 | 2 [Attack] | **Wall-Crawl** -- Reveal the top card of your deck. If that card has an [Attack] icon, draw it. |
-| Venom Blast | [Ranged] | Spider Friends | 6 | Uncommon | 3 [Attack] | **Wall-Crawl** -- Reveal the top card of your deck. If that card has a [Recruit] icon, draw it. |
-| Arachno-Pheromones | [Covert] | Spider Friends | 7 | Rare | -- | Recruit a Hero from the HQ for free. **Covert**: Put that Hero on top of your deck. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Radioactive Spider | Strength | Spider Friends | 2 | 3 [Recruit] | "To play this card, you must put a card from your hand on top of your deck." |
+| Bioelectric Shock | Range | Spider Friends | 4 | 2 [Attack] | "Wall-Crawl — Reveal the top card of your deck. If that card has a [Attack] icon, draw it." |
+| Venom Blast | Range | Spider Friends | 6 | 3 [Attack] | "Wall-Crawl — Reveal the top card of your deck. If that card has a [Recruit] icon, draw it." |
+| Arachno-Pheromones | Covert | Spider Friends | 7 | 0 | "Recruit a Hero from the HQ for free. [Spider-Friends]: Put that Hero on top of your deck." |
 
 ### Symbiote Spider-Man
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Dark Strength | [Strength] | Spider Friends | 2 | Common | 1+ [Attack] | **Wall-Crawl** -- Reveal the top card of your deck. If it costs 1 or 2, you get +2 [Attack]. |
-| Spider-Sense Tingling | [Instinct] | Spider Friends | 2 | Common 2 | -- | Reveal the top two cards of your deck. Put any that cost 2 or less into your hand. Put the rest back in any order. |
-| Shadowed Spider | [Covert] | Spider Friends | 2 | Uncommon | 1+ [Attack] | **Wall-Crawl** -- You get +1 [Attack] for each other Hero you played this turn that costs 1 or 2. |
-| Thwip! | [Ranged] | Spider Friends | 2 | Rare | 4 [Attack] | To play this card, you must put two cards from your hand on top of your deck. |
-
----
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Dark Strength | Strength | Spider Friends | 2 | 1 [Attack] | "Wall-Crawl — Reveal the top card of your deck. If it costs 1[Recruit] or 2[Recruit], you get +2[Attack]." |
+| Spider-Sense Tingling | Instinct | Spider Friends | 2 | 0 | "Reveal the top two cards of your deck. Put any that cost 2[Recruit] or less into your hand. Put the rest back in any order." |
+| Shadowed Spider | Covert | Spider Friends | 2 | 1 [Attack] | "Wall-Crawl — You get +1[Attack] for each other Hero you played this turn that costs 1[Recruit] or 2[Recruit]." |
+| Thwip! | Range | Spider Friends | 2 | 4 [Attack] | "To play this card, you must put two cards from your hand on top of your deck." |
 
 ## Villains
 
@@ -167,3 +168,4 @@
 ## Henchmen
 
 None in this expansion.
+

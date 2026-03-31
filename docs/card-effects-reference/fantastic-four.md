@@ -2,52 +2,53 @@
 
 ## Heroes
 
+<!-- 5 heroes — Fantastic Four expansion -->
+<!-- Data source: cardDatabase.js (structured fields) + card images (effect text only) -->
+
 ### Human Torch
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Call for Backup | [Instinct] | Fantastic Four | 3 | Common | 2 [Recruit] | You may KO a Wound from your hand or discard pile. If you do, you get +1 [Recruit]. |
-| Hothead | [Ranged] | Fantastic Four | 4 | Common 2 | 4 [Attack] | You gain a Wound. |
-| Flame On! | [Ranged] | Fantastic Four | 6 | Uncommon | 4+ [Attack] | **Focus 6** [Recruit] -- You get +4 [Attack]. |
-| Nova Flame | [Ranged] | Fantastic Four | 8 | Rare | 6+ [Attack] | **Fantastic Four**: You get +1 [Attack] for each city space that contains a Villain. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Call for Backup | Instinct | Fantastic Four | 3 | 2 [Recruit] | "You may KO a Wound from your hand or discard pile. If you do, get +1 [Recruit]." |
+| Hothead | Range | Fantastic Four | 4 | 4 [Attack] | "You gain a Wound." |
+| Flame On! | Range | Fantastic Four | 6 | 4 [Attack] | "Focus 6 [Recruit] → You get +4 [Attack]." |
+| Nova Flame | Range | Fantastic Four | 8 | 6 [Attack] | "[Fantastic Four]: You get +1 [Attack] for each city space that contains a Villain." |
 
 ### Invisible Woman
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Disappearing Act | [Covert] | Fantastic Four | 4 | Common | 2 [Recruit] | **Focus 2** [Recruit] -- You may KO a card from your hand or discard pile. |
-| Four of a Kind | [Ranged] | Fantastic Four | 4 | Common 2 | 2+ [Attack] | If you played any other cards that cost 4 this turn, you get +2 [Attack]. |
-| Unseen Rescue | [Covert] | Fantastic Four | 4 | Uncommon | 2 [Attack] | **Focus 2** [Recruit] -- Rescue a Bystander. You may only use this ability up to four times this turn. |
-| Invisible Barrier | [Covert] | Fantastic Four | 7 | Rare | 5 [Attack] | If an Enemy you fight this turn would have an Ambush effect, you may reveal this card to cancel that effect and draw two cards instead. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Disappearing Act | Covert | Fantastic Four | 4 | 2 [Recruit] | "Focus 2 [Recruit] → You may KO a card from your hand or discard pile." |
+| Four of a Kind | Range | Fantastic Four | 4 | 2 [Attack] | "If you played any other cards that cost 4 this turn, you get +2 [Attack]." |
+| Unseen Rescue | Covert | Fantastic Four | 4 | 2 [Attack] | "Focus 2 [Recruit] → Rescue a Bystander. You may only use this ability up to four times this turn." |
+| Invisible Barrier | Covert | Fantastic Four | 7 | 5 [Attack] | "If an ambush effect would occur, you may reveal this card and draw two cards instead." |
 
 ### Mr. Fantastic
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Twisting Equations | [Tech] | Fantastic Four | 3 | Common | 2 [Recruit] | **Focus 2** [Recruit] -- When you draw a new hand of cards at the end of this turn, draw an extra card. |
-| Unstable Molecules | [Tech] | Fantastic Four | 5 | Common 2 | -- | Draw two cards. |
-| One Gigantic Hand | [Instinct] | Fantastic Four | 5 | Uncommon | 1+ [Attack] | **Fantastic Four**: You get +1 [Attack] for each card in your hand. |
-| Ultimate Nullifier | [Tech] | Fantastic Four | 7 | Rare | 4+ [Attack] | If an Enemy you fight this turn would have a Fight effect, you may cancel that effect instead. **Focus 1** [Recruit] -- You get +1 [Attack] usable only against the Mastermind. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Twisting Equations | Tech | Fantastic Four | 3 | 2 [Recruit] | "Focus 2 [Recruit] → When you draw a card next turn, draw an extra card." |
+| Unstable Molecules | Tech | Fantastic Four | 5 | 0 | "Draw two cards." |
+| One Gigantic Hand | Instinct | Fantastic Four | 5 | 1 [Attack] | "[Fantastic Four]: You get +1 [Attack] for each card in your hand." |
+| Ultimate Nullifier | Tech | Fantastic Four | 7 | 4 [Attack] | "If an Enemy you fight this turn would have a fight effect, you may cancel that effect instead. Focus 1 [Recruit] → You get +1 [Attack] usable only against the Mastermind." |
 
 ### Silver Surfer
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Warp Speed | [Covert] | None | 3 | Common | 2 [Recruit] | **Focus 2** [Recruit] -- Draw a card. |
-| Epic Destiny | [Strength] | None | 4 | Common 2 | 2 [Recruit] | **Focus 6** [Recruit] -- Defeat a Villain of 5 or 6 [Attack] for free. |
-| The Power Cosmic | [Ranged] | None | 6 | Uncommon | 3 [Recruit], 0+ [Attack] | **Focus 9** [Recruit] -- You get +9 [Attack]. |
-| Energy Surge | [Ranged] | None | 7 | Rare | -- | Double the [Recruit] you have. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Warp Speed | Covert | None | 3 | 2 [Recruit] | "Focus 2 [Recruit] → Draw a card." |
+| Epic Destiny | Strength | None | 4 | 2 [Recruit] | "Focus 6 [Recruit] → Defeat a Villain with 5 or 6 [Attack]." |
+| The Power Cosmic | Range | None | 6 | 0 [Attack], 3 [Recruit] | "Focus 9 [Recruit] → You get +9 [Attack]." |
+| Energy Surge | Range | None | 7 | 0 | "Double the [Recruit] you have." |
 
 ### Thing
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| It Started on Yancy Street | [Instinct] | Fantastic Four | 3 | Common | 2+ [Recruit] | **Fantastic Four**: You get +2 [Recruit]. |
-| Knuckle Sandwich | [Strength] | Fantastic Four | 5 | Common 2 | 3 [Recruit], 0+ [Attack] | **Focus 3** [Recruit] -- You get +2 [Attack]. You may use this ability twice per turn. |
-| Crime Stopper | [Strength] | Fantastic Four | 6 | Uncommon | 4 [Attack] | Whenever you defeat a Villain in the Bank this turn, rescue a Bystander. **Focus 1** [Recruit] -- Move a Villain to an adjacent city space. |
-| It's Clobberin' Time! | [Strength] | Fantastic Four | 8 | Rare | 5+ [Attack] | You get +3 [Attack] for each other [Strength] Hero you played this turn. **Strength**: You may KO a card from your hand or discard pile. |
-
----
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| It Started on Yancy Street | Instinct | Fantastic Four | 3 | 2 [Recruit] | "[Fantastic Four]: You get +2 [Recruit]." |
+| Knuckle Sandwich | Strength | Fantastic Four | 5 | 0 [Attack], 3 [Recruit] | "Focus 3 [Recruit] → You get +2 [Attack]." |
+| Crime Stopper | Strength | Fantastic Four | 6 | 4 [Attack] | "Whenever you defeat a Villain in the Bank this turn, rescue a Bystander. Focus 1 [Recruit] → Move a Villain to an adjacent city space." |
+| It's Clobberin' Time! | Strength | Fantastic Four | 8 | 0+ [Attack] | "[Strength]: You get +3 [Attack] for each [Strength] Hero you played this turn." |
 
 ## Villains
 
@@ -170,3 +171,4 @@
 ## Henchmen
 
 None in this expansion.
+
