@@ -50,6 +50,55 @@
 | Psychic Link | Instinct | X-Men | 5 | 3 [Attack] | "Each player may reveal another [X-Men] Hero. Each player who does draws a card." |
 | Diamond Form | Strength | X-Men | 7 | 5 [Attack], 0+ [Recruit] | "Whenever you defeat a Villain or Mastermind this turn, you get +3 [Recruit]." |
 
+### Gambit
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Stack the Deck | Covert | X-Men | 2 | 2 [Recruit] | "Draw two cards. Then put a card from your hand on top of your deck." |
+| Card Shark | Ranged | X-Men | 4 | 4 [Attack] | "Reveal the top card of your deck. If it's an [Instinct] Hero, draw it." |
+| Hypnotic Charm | Instinct | X-Men | 3 | 2 [Recruit] | "Reveal the top card of your deck. Discard it or put it back. [Instinct]: Do the same thing to each other player's deck." |
+| High Stakes Jackpot | Instinct | X-Men | 7 | 4+ [Attack] | "Reveal the top card of your deck. You get +[Attack] equal to that card's cost." |
+
+**Notes:** Card Shark image shows "2" at bottom-left — DB has `cost: 4, attack: 2` suggesting the card image bottom-right "4" is the attack display and "2" is a separate indicator. However, DB `attack: 2` seems low given the image shows a large "4" in the attack circle. Possible image/DB mismatch on Card Shark's attack value.
+
+### Hawkeye
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Quick Draw | Instinct | Avengers | 3 | 1 [Attack] | "Draw a card." |
+| Team Player | Tech | Avengers | 4 | 2+ [Attack] | "[Avengers]: You get +1 [Attack]." |
+| Covering Fire | Tech | Avengers | 5 | 3 [Attack] | "[Tech]: Choose one: each other player draws a card or each other player discards a card." |
+| Impossible Trick Shot | Tech | Avengers | 7 | 5 [Attack] | "Whenever you defeat a Villain or Mastermind this turn, rescue three Bystanders." |
+
+### Hulk
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Unstoppable Hulk | Instinct | Avengers | 4 | 2+ [Attack] | "You may KO a Wound from your hand or discard pile. If you do, you get +2 [Attack]." |
+| Growing Anger | Strength | Avengers | 3 | 2+ [Attack] | "[Strength]: You get +1 [Attack]." |
+| Crazed Rampage | Strength | Avengers | 5 | 4 [Attack] | "Each player gains a Wound." |
+| Hulk Smash! | Strength | Avengers | 8 | 5+ [Attack] | "[Strength]: You get +5 [Attack]." |
+
+### Iron Man
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Endless Invention | Tech | Avengers | 3 | 3 [Recruit] | "Draw a card. [Tech]: Draw another card." |
+| Repulsor Rays | Ranged | Avengers | 3 | 2+ [Attack] | "[Ranged]: You get +1 [Attack]." |
+| Arc Reactor | Tech | Avengers | 5 | 3+ [Attack] | "[Tech]: You get +1 [Attack] for each other [Tech] Hero you played this turn." |
+| Quantum Breakthrough | Tech | Avengers | 7 | 7 [Recruit] | "Draw two cards. [Tech]: Draw two more cards." |
+
+### Nick Fury
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Battlefield Promotion | Covert | S.H.I.E.L.D. | 4 | 4 [Recruit] | "You may KO a [Strength] Hero from your hand or discard pile. If you do, you may gain a S.H.I.E.L.D. Officer to your hand." |
+| High-Tech Weaponry | Tech | S.H.I.E.L.D. | 3 | 2+ [Attack] | "[Tech]: You get +1 [Attack]." |
+| Legendary Commander | Strength | S.H.I.E.L.D. | 6 | 1+ [Attack] | "You get +1 [Attack] for each other [S.H.I.E.L.D.] Hero you played this turn." |
+| Pure Fury | Tech | S.H.I.E.L.D. | 8 | 8 [Attack] | "Defeat any Villain or Mastermind whose [Attack] is less than the number of [S.H.I.E.L.D.] Heroes in the KO pile." |
+
+**Notes:** Battlefield Promotion image shows the [Strength] icon for the KO condition (green fist icon). The DB class is "Covert" (the card border is red). Pure Fury's DB has `attack: 0` and the effect is conditional defeat rather than a static attack value — the "8" shown on the card image is the cost, not attack.
+
 ## Villains
 
 <!-- Data source: cardDatabase.js villains array, IDs 1-7 -->
