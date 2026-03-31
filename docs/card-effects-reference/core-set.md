@@ -99,6 +99,53 @@
 
 **Notes:** Battlefield Promotion image shows the [Strength] icon for the KO condition (green fist icon). The DB class is "Covert" (the card border is red). Pure Fury's DB has `attack: 0` and the effect is conditional defeat rather than a static attack value — the "8" shown on the card image is the cost, not attack.
 
+### Rogue
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Energy Drain | Covert | X-Men | 3 | 2+ [Recruit] | "[Covert]: You may KO a card from your hand or discard pile. If you do, you get +1 [Recruit]." |
+| Borrowed Brawn | Strength | X-Men | 4 | 1+ [Attack] | "[Strength]: You get +3 [Attack]." |
+| Copy Powers | Covert | X-Men | 5 | 0 | "Play this card as a copy of another Hero you played this turn. This card is both [Covert] and the color you copy." |
+| Steal Abilities | Strength | X-Men | 8 | 4 [Attack] | "Each player discards the top card of their deck. Play a copy of each of those cards." |
+
+### Spider-Man
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Astonishing Strength | Strength | Spider Friends | 2 | 1 [Recruit] | "Reveal the top card of your deck. If that card costs 2 [Recruit] or less, draw it." |
+| Great Responsibility | Instinct | Spider Friends | 2 | 1 [Attack] | "Reveal the top card of your deck. If that card costs 2 [Recruit] or less, draw it." |
+| Web-Shooters | Tech | Spider Friends | 2 | 0 | "Rescue a Bystander. Reveal the top card of your deck. If that card costs 2 [Recruit] or less, draw it." |
+| The Amazing Spider-Man | Covert | Spider Friends | 2 | 0 | "Reveal the top three cards of your deck. Put any that cost 2 [Recruit] or less into your hand. Put the rest back in any order." |
+
+**Notes:** All four Spider-Man cards cost 2. The Amazing Spider-Man is the Rare despite sharing the same cost as the Commons.
+
+### Storm
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Lightning Bolt | Ranged | X-Men | 4 | 2 [Attack] | "Any Villain you fight on the Rooftops this turn gets -2 [Attack]." |
+| Gathering Stormclouds | Ranged | X-Men | 3 | 2 [Recruit] | "[Ranged]: Draw a card." |
+| Spinning Cyclone | Covert | X-Men | 6 | 4 [Attack] | "You may move a Villain to a new city space. Rescue any Bystanders captured by that Villain. (If you move a Villain to a city space that already has a Villain, swap them.)" |
+| Tidal Wave | Ranged | X-Men | 7 | 5 [Attack] | "Any Villain you fight on the Bridge this turn gets -2 [Attack]. [Ranged]: The Mastermind gets -2 [Attack] this turn." |
+
+### Thor
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Surge of Power | Ranged | Avengers | 4 | 2 [Recruit], 0+ [Attack] | "If you made 8 or more [Recruit] this turn, you get +3 [Attack]." |
+| Odinson | Strength | Avengers | 3 | 2+ [Recruit] | "[Strength]: You get +2 [Recruit]." |
+| Call Lightning | Ranged | Avengers | 6 | 3+ [Attack] | "[Ranged]: You get +3 [Attack]." |
+| God of Thunder | Ranged | Avengers | 8 | 5 [Recruit], 0+ [Attack] | "You can use [Recruit] as [Attack] this turn." |
+
+### Wolverine
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Healing Factor | Instinct | X-Men | 3 | 2 [Attack] | "You may KO a Wound from your hand or discard pile. If you do, draw a card." |
+| Keen Senses | Instinct | X-Men | 2 | 1 [Attack] | "[Instinct]: Draw a card." |
+| Frenzied Slashing | Instinct | X-Men | 5 | 2 [Attack] | "[Instinct]: Draw two cards." |
+| Berserker Rage | Instinct | X-Men | 8 | 0+ [Attack] | "Draw three cards. [Instinct]: You get +1 [Attack] for each extra card you've drawn this turn." |
+
 ## Villains
 
 <!-- Data source: cardDatabase.js villains array, IDs 1-7 -->
