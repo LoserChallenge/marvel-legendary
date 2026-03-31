@@ -1,0 +1,342 @@
+{
+  "Angel - Diving Catch": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Angel_DivingCatch.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Angel - High-Speed Chase": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Angel_High-SpeedChase.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Angel - Drop Off A Friend": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Angel_DropOffAFriend.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Angel - Strength of Spirit": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Angel_StrengthOfSpirit.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Bishop - Absorb Energies": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Bishop_AbsorbEnergies.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Bishop - Whatever the Cost": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Bishop_WhateverTheCost.webp",
+    "condition": "Covert",
+    "conditionType": "playedCards"
+  },
+  "Bishop - Concussive Blast": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Bishop_ConcussiveBlast.webp",
+    "condition": "Range&Range",
+    "conditionType": "playedCards"
+  },
+  "Bishop - Firepower from the Future": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Bishop_FirepowerFromTheFuture.webp",
+    "condition": "X-Men",
+    "conditionType": "playedCards"
+  },
+  "Blade - Stalk the Prey": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Blade_StalkThePrey.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Blade - Night Hunter": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Blade_NightHunter.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Blade - Nowhere To Hide": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Blade_NowhereToHide.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Blade - Vampiric Surge": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Blade_VampiricSurge.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Cable - Strike at the Heart of Evil": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Cable_StrikeAtTheHeartOfEvil.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Cable - Disaster Survivalist": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Cable_DisasterSurvivalist.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Cable - Rapid Response Force": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Cable_RapidResponseForce.webp",
+    "condition": "X-Force",
+    "conditionType": "playedCards"
+  },
+  "Cable - Army of One": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Cable_ArmyOfOne.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Colossus - Draw Their Fire": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Colossus_DrawTheirFire.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Colossus - Invulnerability": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Colossus_Invulnerability.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Colossus - Silent Statue": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Colossus_SilentStatue.webp",
+    "condition": "Strength",
+    "conditionType": "playedCards"
+  },
+  "Colossus - Russian Heavy Tank": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Colossus_RussianHeavyTank.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Daredevil - Backflip": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Daredevil_Backflip.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Daredevil - Radar Sense": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Daredevil_RadarSense.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Daredevil - Blind Justice": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Daredevil_BlindJustice.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Daredevil - The Man Without Fear": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Daredevil_TheManWithoutFear.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Domino - Lucky Break": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Domino_LuckyBreak.webp",
+    "condition": "X-Force",
+    "conditionType": "playedCards"
+  },
+  "Domino - Ready For Anything": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Domino_ReadyForAnything.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Domino - Specialized Ammunition": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Domino_SpecializedAmmunition.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Domino - Against All Odds": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Domino_AgainstAllOdds.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Elektra - First Strike": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Elektra_FirstStrike.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Elektra - Ninjitsu": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Elektra_Ninjitsu.webp",
+    "condition": "Covert",
+    "conditionType": "playedCards"
+  },
+  "Elektra - Sai Blades": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Elektra_SaiBlades.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Elektra - Silent Meditation": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Elektra_SilentMeditation.webp",
+    "condition": "Marvel Knights",
+    "conditionType": "playedCards"
+  },
+  "Forge - Reboot": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Forge_Reboot.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Forge - Dirty Work": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Forge_DirtyWork.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Forge - Overdrive": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Forge_Overdrive.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Forge - B.F.G.": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Forge_BFG.webp",
+    "condition": "Tech&Tech",
+    "conditionType": "playedCards"
+  },
+  "Ghost Rider - Hell On Wheels": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_GhostRider_HellOnWheels.webp",
+    "condition": "Marvel Knights",
+    "conditionType": "playedCards"
+  },
+  "Ghost Rider - Blazing Hellfire": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_GhostRider_BlazingHellfire.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Ghost Rider - Infernal Chains": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_GhostRider_InfernalChains.webp",
+    "condition": "Strength",
+    "conditionType": "playedCards"
+  },
+  "Ghost Rider - Penance Stare": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_GhostRider_PenanceStare.webp",
+    "condition": "Marvel Knights",
+    "conditionType": "playedCards"
+  },
+  "Iceman - Ice Slide": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Iceman_IceSlide.webp",
+    "condition": "Range",
+    "conditionType": "playedCards"
+  },
+  "Iceman - Deep Freeze": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Iceman_DeepFreeze.webp",
+    "condition": "Range",
+    "conditionType": "playedCards"
+  },
+  "Iceman - Frost Spike Armor": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Iceman_FrostSpikeArmor.webp",
+    "condition": "Range",
+    "conditionType": "playedCards"
+  },
+  "Iceman - Impenetrable Ice Wall": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Iceman_ImpenetrableIceWall.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Iron Fist - Focus Chi": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_IronFist_FocusChi.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Iron Fist - Wield the Iron Fist": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_IronFist_WieldTheIronFist.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Iron Fist - Ancient Legacy": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_IronFist_AncientLegacy.webp",
+    "condition": "Strength&Strength",
+    "conditionType": "playedCards"
+  },
+  "Iron Fist - Living Weapon": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_IronFist_LivingWeapon.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Jean Grey - Read Your Thoughts": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_JeanGrey_ReadYourThoughts.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Jean Grey - Psychic Search": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_JeanGrey_PsychicSearch.webp",
+    "condition": "X-Men",
+    "conditionType": "playedCards"
+  },
+  "Jean Grey - Mind Over Matter": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_JeanGrey_MindOverMatter.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Jean Grey - Telekinetic Mastery": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_JeanGrey_TelekineticMastery.webp",
+    "condition": "X-Men",
+    "conditionType": "playedCards"
+  },
+  "Nightcrawler - Bamf!": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Nightcrawler_Bamf.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Nightcrawler - Blend Into Shadows": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Nightcrawler_BlendIntoShadows.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Nightcrawler - Swashbuckler": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Nightcrawler_Swashbuckler.webp",
+    "condition": "Instinct&Covert",
+    "conditionType": "playedCards"
+  },
+  "Nightcrawler - Along for the Ride": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Nightcrawler_AlongForTheRide.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Professor X - Class Dismissed": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_ClassDismissed.webp",
+    "condition": "Instinct",
+    "conditionType": "playedCards"
+  },
+  "Professor X - Psionic Astral Form": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_PsionicAstralForm.webp",
+    "condition": "X-Men",
+    "conditionType": "playedCards"
+  },
+  "Professor X - Telepathic Probe": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_TelepathicProbe.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Professor X - Mind Control": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_MindControl.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Punisher - Boom Goes the Dynamite": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Punisher_BoomGoesTheDynamite.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Punisher - Hail of Bullets": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Punisher_HailOfBullets.webp",
+    "condition": "Tech&Tech",
+    "conditionType": "playedCards"
+  },
+  "Punisher - Hostile Interrogation": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Punisher_HostileInterrogation.webp",
+    "condition": "Strength",
+    "conditionType": "playedCards"
+  },
+  "Punisher - The Punisher": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_Punisher_ThePunisher.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "X-Force Wolverine - Sudden Ambush": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_X-ForceWolverine_SuddenAmbush.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "X-Force Wolverine - Animal Instincts": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_X-ForceWolverine_AnimalInstincts.webp",
+    "condition": "Instinct",
+    "conditionType": "playedCards"
+  },
+  "X-Force Wolverine - No Mercy": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_X-ForceWolverine_NoMercy.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "X-Force Wolverine - Reckless Abandon": {
+    "image": "Visual Assets/Heroes/Dark City/DarkCity_X-ForceWolverine_RecklessAbandon.webp",
+    "condition": "None",
+    "conditionType": "None"
+  }
+}
