@@ -7,152 +7,155 @@
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Diving Catch | Strength | X-Men | 4 | 2 [Recruit] | |
-| High-Speed Chase | Covert | X-Men | 3 | 0 | |
-| Drop Off A Friend | Instinct | X-Men | 5 | 2 [Attack] | |
-| Strength of Spirit | Strength | X-Men | 7 | 4 [Attack] | |
+| Diving Catch | Strength | X-Men | 4 | 2 [Recruit] | "Rescue a Bystander. Draw two cards." |
+| High-Speed Chase | Covert | X-Men | 3 | 0 | "Draw two cards, then discard a card." |
+| Drop Off A Friend | Instinct | X-Men | 5 | 2 [Attack] | "You may discard a card. You get +[Attack] equal to that card's cost." |
+| Strength of Spirit | Strength | X-Men | 7 | 4 [Attack] | "Discard any number of cards. Draw that many cards." |
 
 ### Bishop
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Absorb Energies | Covert | X-Men | 3 | 2 [Attack], 0 [Recruit] | |
-| Whatever the Cost | Range | X-Men | 2 | 0 | |
-| Concussive Blast | Range | X-Men | 5 | 0+ [Attack] | |
-| Firepower from the Future | Tech | X-Men | 7 | 4 [Attack] | |
+| Absorb Energies | Covert | X-Men | 3 | 2 [Attack], 0 [Recruit] | "Whenever a card you own is KO'd this turn, you get +2[Recruit]." |
+| Whatever the Cost | Range | X-Men | 2 | 0 | "Draw a card. [Covert]: You may KO a card from your hand or discard pile." |
+| Concussive Blast | Range | X-Men | 5 | 0+ [Attack] | "[Range][Range]: You get +3[Attack]." |
+| Firepower from the Future | Tech | X-Men | 7 | 4 [Attack] | "Discard the top four cards of your deck. You get +[Attack] equal to those cards' combined [Attack]. [X-Men]: You may KO one of those cards." |
 
 ### Blade
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Stalk the Prey | Covert | Marvel Knights | 3 | 2 [Attack] | |
-| Night Hunter | Strength | Marvel Knights | 4 | 2 [Attack], 0 [Recruit] | |
-| Nowhere To Hide | Tech | Marvel Knights | 6 | 3 [Attack] | |
-| Vampiric Surge | Instinct | Marvel Knights | 7 | 0 [Attack] | |
+| Stalk the Prey | Covert | Marvel Knights | 3 | 2 [Attack] | "You may move a Villain to an adjacent city space. If another Villain is already there, swap them." |
+| Night Hunter | Strength | Marvel Knights | 4 | 2 [Attack], 0 [Recruit] | "Whenever you defeat a Villain in the Sewers or Rooftops this turn, you get +2[Recruit]." |
+| Nowhere To Hide | Tech | Marvel Knights | 6 | 3 [Attack] | "Whenever you defeat a Villain in the Sewers or Rooftops this turn, draw two cards." |
+| Vampiric Surge | Instinct | Marvel Knights | 7 | 0 [Attack] | "You get +1[Attack] for each Villain in your Victory Pile." |
 
 ### Cable
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Strike at the Heart of Evil | Range | X-Force | 4 | 2 [Attack] | |
-| Disaster Survivalist | Tech | X-Force | 3 | 2 [Recruit] | |
-| Rapid Response Force | Covert | X-Force | 6 | 0+ [Attack] | |
-| Army of One | Range | X-Force | 8 | 0+ [Attack] | |
+| Strike at the Heart of Evil | Range | X-Force | 4 | 2 [Attack] | "You get +2[Attack] only when fighting Masterminds." |
+| Disaster Survivalist | Tech | X-Force | 3 | 2 [Recruit] | "When a Master Strike is played, you may discard this card to draw three extra cards at the end of this turn." |
+| Rapid Response Force | Covert | X-Force | 6 | 0+ [Attack] | "[X-Force]: You get +1[Attack] for each other [X-Force] Hero you played this turn." |
+| Army of One | Range | X-Force | 8 | 0+ [Attack] | "KO any number of cards from your hand. You get +1[Attack] for each card KO'd this way." |
 
 ### Colossus
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Draw Their Fire | Strength | X-Force | 1 | 3 [Attack] | |
-| Invulnerability | Strength | X-Force | 3 | 2 [Recruit] | |
-| Silent Statue | Covert | X-Force | 6 | 0+ [Attack] | |
-| Russian Heavy Tank | Strength | X-Force | 8 | 6 [Attack] | |
+| Draw Their Fire | Strength | X-Force | 1 | 3 [Attack] | "You gain a Wound." |
+| Invulnerability | Strength | X-Force | 3 | 2 [Recruit] | "If you would gain a Wound, you may discard this card instead. If you do, draw two cards." |
+| Silent Statue | Covert | X-Force | 6 | 0+ [Attack] | "[Strength]: You get +2[Attack]." |
+| Russian Heavy Tank | Strength | X-Force | 8 | 6 [Attack] | "If another player would gain a Wound, you may reveal this card and draw a card." |
 
 ### Daredevil
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Backflip | Strength | Marvel Knights | 3 | 2 [Recruit] | |
-| Radar Sense | Instinct | Marvel Knights | 4 | 2 [Attack] | |
-| Blind Justice | Covert | Marvel Knights | 6 | 4 [Attack] | |
-| The Man Without Fear | Instinct | Marvel Knights | 8 | 7 [Attack] | |
+| Backflip | Strength | Marvel Knights | 3 | 2 [Recruit] | "The next Hero you recruit this turn goes on top of your deck." |
+| Radar Sense | Instinct | Marvel Knights | 4 | 2 [Attack] | "Choose a number, then reveal the top card of your deck. If the card is that cost, you get +2[Attack]." |
+| Blind Justice | Covert | Marvel Knights | 6 | 4 [Attack] | "Choose a number, then reveal the top card of your deck. If the card is that cost, draw it." |
+| The Man Without Fear | Instinct | Marvel Knights | 8 | 7 [Attack] | "Choose a number, then reveal the top card of your deck. If the card is that cost, draw it and repeat this process." |
 
 ### Domino
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Lucky Break | Tech | X-Force | 1 | 0 [Attack], 0 [Recruit] | |
-| Ready For Anything | Instinct | X-Force | 3 | 0 [Attack], 0 [Recruit] | |
-| Specialized Ammunition | Tech | X-Force | 5 | 0 [Attack], 0 [Recruit] | |
-| Against All Odds | Covert | X-Force | 7 | 0 [Attack], 0 [Recruit] | |
+| Lucky Break | Tech | X-Force | 1 | 0 [Attack], 0 [Recruit] | "Draw a card. [X-Force]: Versatile 1" |
+| Ready For Anything | Instinct | X-Force | 3 | 0 [Attack], 0 [Recruit] | "Versatile 2" |
+| Specialized Ammunition | Tech | X-Force | 5 | 0 [Attack], 0 [Recruit] | "You may discard a card from your hand. If that card has a [Recruit] icon, you get +4[Recruit]. If that card has an [Attack] icon, you get +4[Attack]." |
+| Against All Odds | Covert | X-Force | 7 | 0 [Attack], 0 [Recruit] | "This card and each other Versatile ability you use this turn produce both [Recruit] and [Attack]. Versatile 5" |
 
 ### Elektra
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| First Strike | Covert | Marvel Knights | 1 | 1 [Attack] | |
-| Ninjitsu | Instinct | Marvel Knights | 2 | 0+ [Recruit] | |
-| Sai Blades | Instinct | Marvel Knights | 6 | 4 [Attack] | |
-| Silent Meditation | Instinct | Marvel Knights | 7 | 0+ [Recruit] | |
+| First Strike | Covert | Marvel Knights | 1 | 1 [Attack] | "If this is the first card you played this turn, you get +1[Attack]." |
+| Ninjitsu | Instinct | Marvel Knights | 2 | 0+ [Recruit] | "Draw a card. [Covert]: +2[Recruit]." |
+| Sai Blades | Instinct | Marvel Knights | 6 | 4 [Attack] | "You get +1[Attack] for each Hero you played that costs 1 or 2." |
+| Silent Meditation | Instinct | Marvel Knights | 7 | 0+ [Recruit] | "The next Hero you recruit this turn will go into your hand. [Marvel Knights]: +2[Recruit]." |
 
 ### Forge
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Reboot | Tech | X-Force | 4 | 2 [Recruit] | |
-| Dirty Work | Tech | X-Force | 3 | 2 [Attack] | |
-| Overdrive | Tech | X-Force | 5 | 0 [Attack], 0 [Recruit] | |
-| B.F.G. | Tech | X-Force | 7 | 5 [Attack] | |
+| Reboot | Tech | X-Force | 4 | 2 [Recruit] | "[Tech]: You may discard a card. If you do, draw two cards." |
+| Dirty Work | Tech | X-Force | 3 | 2 [Attack] | "[Tech]: Any Villain you fight in the Sewers this turn gets -2[Attack]." |
+| Overdrive | Tech | X-Force | 5 | 0 [Attack], 0 [Recruit] | "Versatile 3" |
+| B.F.G. | Tech | X-Force | 7 | 5 [Attack] | "[Tech][Tech]: Defeat the Mastermind once for free." |
 
 ### Ghost Rider
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Hell On Wheels | Tech | Marvel Knights | 3 | 0+ [Recruit] | |
-| Blazing Hellfire | Range | Marvel Knights | 5 | 2 [Attack] | |
-| Infernal Chains | Strength | Marvel Knights | 2 | 0 | |
-| Penance Stare | Range | Marvel Knights | 8 | 3 [Attack] | |
+| Hell On Wheels | Tech | Marvel Knights | 3 | 0+ [Recruit] | "[Marvel Knights]: +2[Recruit]." |
+| Blazing Hellfire | Range | Marvel Knights | 5 | 2 [Attack] | "You may KO a Villain from your Victory Pile. You get +2[Attack]." |
+| Infernal Chains | Strength | Marvel Knights | 2 | 0 | "Draw a card. [Strength]: Defeat a Villain of 3[Attack] or less for free." |
+| Penance Stare | Range | Marvel Knights | 8 | 3 [Attack] | "[Marvel Knights]: KO a Villain from your Victory Pile. You get +1[Attack]." |
 
 ### Iceman
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Ice Slide | Range | X-Men | 4 | 2 [Attack] | |
-| Deep Freeze | Range | X-Men | 2 | 0 [Recruit] | |
-| Frost Spike Armor | Strength | X-Men | 5 | 3 [Attack] | |
-| Impenetrable Ice Wall | Range | X-Men | 8 | 7 [Attack] | |
+| Ice Slide | Range | X-Men | 4 | 2 [Attack] | "[Range]: You get +1[Attack] for each other [Range] Hero you played this turn." |
+| Deep Freeze | Range | X-Men | 2 | 0 [Recruit] | "Draw a card. [Range]: You get +1[Recruit] for each other [Range] Hero you played this turn." |
+| Frost Spike Armor | Strength | X-Men | 5 | 3 [Attack] | "[Range]: Draw a card for each [Range] Hero you played this turn." |
+| Impenetrable Ice Wall | Range | X-Men | 8 | 7 [Attack] | "If a Villain, Master Strike, or Mastermind Tactic would cause you to gain a Wound or discard any cards, you may reveal this card instead." |
 
 ### Iron Fist
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Focus Chi | Instinct | Marvel Knights | 3 | 0 [Recruit] | |
-| Wield the Iron Fist | Strength | Marvel Knights | 4 | 0 [Attack] | |
-| Ancient Legacy | Strength | Marvel Knights | 1 | 0 [Attack], 0 [Recruit] | |
-| Living Weapon | Strength | Marvel Knights | 9 | 8 [Attack] | |
+| Focus Chi | Instinct | Marvel Knights | 3 | 0 [Recruit] | "You get +1[Recruit] for each Hero in play with a different cost." |
+| Wield the Iron Fist | Strength | Marvel Knights | 4 | 0 [Attack] | "You get +1[Attack] for each Hero in play with a different cost." |
+| Ancient Legacy | Strength | Marvel Knights | 1 | 0 [Attack], 0 [Recruit] | "Draw a card. [Strength][Strength]: Versatile 2" |
+| Living Weapon | Strength | Marvel Knights | 9 | 8 [Attack] | "Reveal cards from the top of your deck until you have revealed two cards with the same cost. Draw all the cards you revealed." |
 
 ### Jean Grey
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Read Your Thoughts | Covert | X-Men | 5 | 3 [Recruit] | |
-| Psychic Search | Range | X-Men | 3 | 2 [Attack] | |
-| Mind Over Matter | Covert | X-Men | 6 | 4 [Attack] | |
-| Telekinetic Mastery | Range | X-Men | 7 | 5 [Attack] | |
+| Read Your Thoughts | Covert | X-Men | 5 | 3 [Recruit] | "Whenever you rescue a Bystander this turn, you get +1[Recruit]." |
+| Psychic Search | Range | X-Men | 3 | 2 [Attack] | "[X-Men]: Rescue a Bystander." |
+| Mind Over Matter | Covert | X-Men | 6 | 4 [Attack] | "Whenever you rescue a Bystander this turn, draw a card." |
+| Telekinetic Mastery | Range | X-Men | 7 | 5 [Attack] | "Whenever you rescue a Bystander this turn, you get +1[Attack]. [X-Men]: Rescue a Bystander for each [X-Men] Hero you played before this." |
 
 ### Nightcrawler
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Bamf! | Instinct | X-Men | 3 | 2 [Recruit] | |
-| Blend Into Shadows | Covert | X-Men | 4 | 2 [Attack] | |
-| Swashbuckler | Instinct | X-Men | 5 | 0+ [Attack] | |
-| Along for the Ride | Covert | X-Men | 7 | 5 [Attack] | |
+| Bamf! | Instinct | X-Men | 3 | 2 [Recruit] | "Teleport" |
+| Blend Into Shadows | Covert | X-Men | 4 | 2 [Attack] | "Teleport" |
+| Swashbuckler | Instinct | X-Men | 5 | 0+ [Attack] | "[Instinct][Covert]: You get +3[Attack]." |
+| Along for the Ride | Covert | X-Men | 7 | 5 [Attack] | "Teleport. When you play or Teleport this card, you may also Teleport up to three other cards from your hand." |
 
 ### Professor X
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Class Dismissed | Instinct | X-Men | 3 | 2 [Recruit] | |
-| Psionic Astral Form | Range | X-Men | 2 | 0+ [Attack] | |
-| Telepathic Probe | Range | X-Men | 5 | 3 [Attack] | |
-| Mind Control | Covert | X-Men | 8 | 6 [Attack] | |
+| Class Dismissed | Instinct | X-Men | 3 | 2 [Recruit] | "You may choose a Hero in the HQ to return to the bottom of the Hero Deck. [Instinct]: You may KO a card from your hand or discard pile." |
+| Psionic Astral Form | Range | X-Men | 2 | 0+ [Attack] | "[X-Men]: +2[Attack]." |
+| Telepathic Probe | Range | X-Men | 5 | 3 [Attack] | "Reveal the top card of the Villain Deck. If it is a Villain, you may fight it this turn." |
+| Mind Control | Covert | X-Men | 8 | 6 [Attack] | "Whenever you defeat a Villain this turn, you may gain it. It becomes a grey Hero with no text that gives +[Attack] equal to its [Attack]. (You still get its Victory Points.)" |
 
 ### Punisher
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Boom Goes the Dynamite | Tech | Marvel Knights | 2 | 0 | |
-| Hail of Bullets | Tech | Marvel Knights | 5 | 2 [Attack] | |
-| Hostile Interrogation | Strength | Marvel Knights | 3 | 2 [Recruit] | |
-| The Punisher | Tech | Marvel Knights | 8 | 4 [Attack] | |
+| Boom Goes the Dynamite | Tech | Marvel Knights | 2 | 0 | "Reveal the top card of your deck. If it costs 0, KO it. [Tech]: Draw a card." |
+| Hail of Bullets | Tech | Marvel Knights | 5 | 2 [Attack] | "[Tech][Tech]: Reveal the top card of the Villain Deck. If it's a Villain, you may fight it for free." |
+| Hostile Interrogation | Strength | Marvel Knights | 3 | 2 [Recruit] | "[Strength]: Each other player reveals the top card of their deck. You get +1[Recruit] for each card discarded this way." |
+| The Punisher | Tech | Marvel Knights | 8 | 4 [Attack] | "Reveal cards from the Hero Deck until you have revealed two Heroes with the same cost. You get +[Attack] equal to the number of cards revealed. Shuffle those cards back into the Hero Deck." |
 
 ### X-Force Wolverine
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Sudden Ambush | Covert | X-Force | 4 | 2 [Attack] | |
-| Animal Instincts | Instinct | X-Force | 2 | 0+ [Attack] | |
-| No Mercy | Strength | X-Force | 4 | 0 | |
-| Reckless Abandon | Covert | X-Force | 7 | 3 [Attack] | |
+| Sudden Ambush | Covert | X-Force | 4 | 2 [Attack] | "If you drew any extra cards this turn, you get +2[Attack]." |
+| Animal Instincts | Instinct | X-Force | 2 | 0+ [Attack] | "Draw a card. [Instinct]: +2[Attack]." |
+| No Mercy | Strength | X-Force | 4 | 0 | "Draw a card. You may KO a card from your hand or discard pile." |
+| Reckless Abandon | Covert | X-Force | 7 | 3 [Attack] | "Count the number of extra cards you drew this turn. Draw that many cards." |
 
+## Needs Review
+
+None — all cards matched their DB condition values.
