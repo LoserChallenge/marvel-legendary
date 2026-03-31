@@ -117,46 +117,46 @@
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Read Your Thoughts | [Covert] | X-Men | 5 | 3+ [Recruit] | Whenever you rescue a Bystander this turn, you get +1 [Recruit]. |
+| Psychic Search | [Ranged] | X-Men | 3 | 2 [Attack] | [X-Men]: Rescue a Bystander. |
+| Mind Over Matter | [Covert] | X-Men | 6 | 4 [Attack] | Whenever you rescue a Bystander this turn, draw a card. |
+| Telekinetic Mastery | [Ranged] | X-Men | 7 | 5+ [Attack] | Whenever you rescue a Bystander this turn, you get +1 [Attack]. [X-Men]: For each other X-Men Hero you played this turn, rescue a Bystander. |
 
 ### Nightcrawler
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Bamf! | [Instinct] | X-Men | 3 | 2 [Recruit] | **Teleport** |
+| Blend Into Shadows | [Covert] | X-Men | 4 | 2 [Attack] | **Teleport** |
+| Swashbuckler | [Instinct] | X-Men | 5 | 3+ [Attack] | [Instinct][Covert]: You get +3 [Attack]. |
+| Along for the Ride | [Covert] | X-Men | 7 | 5 [Attack] | **Teleport.** When you play or Teleport this card, you may also Teleport up to three other cards from your hand. |
 
 ### Professor X
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Class Dismissed | [Instinct] | X-Men | 3 | 2 [Recruit] | You may put a Hero from the HQ on the bottom of the Hero Deck. [Instinct]: You may KO a card from your hand or discard pile. |
+| Psionic Astral Form | [Ranged] | X-Men | 2 | 1+ [Attack] | [X-Men]: You get +2 [Attack]. |
+| Telepathic Probe | [Ranged] | X-Men | 5 | 3 [Attack] | Reveal the top card of the Villain Deck. If it's a Bystander, you may rescue it. If it's a Villain, you may fight it this turn. |
+| Mind Control | [Covert] | X-Men | 8 | 6 [Attack] | Whenever you defeat a Villain this turn, you may gain it. It becomes a grey Hero with no text that gives +[Attack] equal to its [Attack]. (You still get its Victory Points.) |
 
 ### Punisher
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Boom Goes the Dynamite | [Tech] | Marvel Knights | 2 | 0 | Reveal the top card of your deck. If it costs 0, KO it. [Tech]: Draw a card. |
+| Hostile Interrogation | [Strength] | Marvel Knights | 3 | 2 [Recruit] | [Strength]: Each other player reveals the top card of their deck. If it costs 4 or more, discard it. You get +1 [Attack] for each card discarded this way. |
+| Hail of Bullets | [Tech] | Marvel Knights | 5 | 2 [Attack] | Reveal the top card of the Villain Deck. If it's a Villain, you get +[Attack] equal to its Victory Points. [Tech][Tech]: Defeat that Villain for free. |
+| The Punisher | [Tech] | Marvel Knights | 8 | 4 [Attack] | Reveal cards from the Hero Deck until you reveal two cards with the same cost. Put the rest back in random order. Put them on the bottom of the Hero Deck in a random order. |
 
 ### X-Force Wolverine
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Sudden Ambush | [Covert] | X-Force | 4 | 2+ [Attack] | If you drew any extra cards this turn, you get +2 [Attack]. |
+| Animal Instincts | [Instinct] | X-Force | 2 | 0 | Draw a card. [Instinct]: You get +2 [Attack]. |
+| No Mercy | [Strength] | X-Force | 4 | 0 | Draw a card. You may KO a card from your hand or discard pile. |
+| Reckless Abandon | [Covert] | X-Force | 7 | 3 [Attack] | Count the number of extra cards you drew this turn. Draw that many cards. |
 
 ## Villains
 
