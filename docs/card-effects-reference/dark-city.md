@@ -63,55 +63,55 @@
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Lucky Break | [Tech] | X-Force | 1 | 0+ [Attack], 0+ [Recruit] | Draw a card. **X-Force**: Versatile 1. |
+| Ready For Anything | [Instinct] | X-Force | 3 | 0+ [Attack], 0+ [Recruit] | Versatile 2. If this Domino is a second exclusively different card name from the first Domino you played this turn, draw a card and Versatile 2 again. |
+| Specialized Ammunition | [Tech] | X-Force | 5 | 0+ [Attack], 0+ [Recruit] | You may discard a card from your hand. If the card had a [Tech] icon, you get +3 [Attack]. If it had a [Covert] icon, you get +3 [Recruit]. If it had both, you get both. |
+| Against All Odds | [Covert] | X-Force | 7 | 0+ [Attack], 0+ [Recruit] | Versatile 5. This card and each other Domino card you played this turn gets "for the rest of the turn provide Versatile 3." |
 
 ### Elektra
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| First Strike | [Covert] | Marvel Knights | 1 | 1 [Attack] | If this is the first card you played this turn, you get +3 [Attack]. |
+| Ninjitsu | [Instinct] | Marvel Knights | 2 | 0+ [Recruit] | Draw a card. [Covert]: You get +2 [Recruit]. |
+| Sai Blades | [Instinct] | Marvel Knights | 6 | 4+ [Attack] | You get +1 [Attack] for each Hero you played this turn that costs 1 or less. |
+| Silent Meditation | [Instinct] | Marvel Knights | 7 | 5 [Recruit] | When you play Silent Meditation, the next Hero you recruit this turn goes into your hand. [Marvel Knights]: You get +2 [Recruit]. |
 
 ### Forge
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Reboot | [Tech] | X-Force | 4 | 2 [Recruit] | [Tech]: You may discard a card. If you do, draw two cards. |
+| Dirty Work | [Tech] | X-Force | 3 | 2 [Attack] | [Tech]: Any Villain you fight in the Sewers this turn gets -2 [Attack]. |
+| Overdrive | [Tech] | X-Force | 5 | 0+ [Attack], 0+ [Recruit] | Versatile 3. When Forge can't find the turner he needs, he makes it in a couple of seconds and builds a new one. |
+| B.F.G. | [Tech] | X-Force | 7 | 5 [Attack] | [Tech][Tech]: Defeat the Mastermind once for free. |
 
 ### Ghost Rider
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Hell On Wheels | [Tech] | Marvel Knights | 3 | 2 [Recruit] | [Marvel Knights]: You get +2 [Recruit]. |
+| Blazing Hellfire | [Ranged] | Marvel Knights | 5 | 2 [Attack] | You may KO a card from your Victory Pile. If you do, you get +3 [Attack]. |
+| Infernal Chains | [Strength] | Marvel Knights | 2 | 0 | Draw a card. [Strength]: Defeat a Villain of 3 [Attack] or less for free. |
+| Penance Stare | [Ranged] | Marvel Knights | 8 | 3+ [Attack] | Each player KOs a Villain from their Victory Pile. You get +1 [Attack] for each VP on the cards KO'd this way. Put the cards into your Victory Pile. |
 
 ### Iceman
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Ice Slide | [Ranged] | X-Men | 4 | 2+ [Attack] | [Ranged]: You get +1 [Attack] for each other [Ranged] Hero you played this turn. |
+| Deep Freeze | [Ranged] | X-Men | 2 | 0+ [Recruit] | Draw a card. [Ranged]: You get +1 [Recruit] for each other [Ranged] Hero you played this turn. |
+| Frost Spike Armor | [Strength] | X-Men | 5 | 3 [Attack] | [Ranged]: Draw a card for each [Ranged] Hero you played this turn. |
+| Impenetrable Ice Wall | [Ranged] | X-Men | 8 | 7 [Attack] | If a Villain, Master Strike, or Mastermind Tactic would cause you to get any Wounds or discard any cards, you may reveal this card instead. |
 
 ### Iron Fist
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
-| (image needed) | | | | | |
+| Focus Chi | [Instinct] | Marvel Knights | 3 | 0+ [Recruit] | You get +1 [Recruit] for each Hero with a different [Instinct] you have. |
+| Wield the Iron Fist | [Strength] | Marvel Knights | 4 | 0+ [Attack] | You get +1 [Attack] for each Hero with a different [Strength] you have. |
+| Ancient Legacy | [Strength] | Marvel Knights | 1 | 0+ [Attack], 0+ [Recruit] | Draw a card. [Strength][Strength]: Versatile 2. |
+| Living Weapon | [Strength] | Marvel Knights | 9 | 8 [Attack] | Reveal cards from your deck one at a time until you reveal one that costs 0. Put the rest on the bottom of your deck in the same order. Draw all the cards you revealed. |
 
 ### Jean Grey
 
