@@ -16,7 +16,7 @@ let code = fs.readFileSync(dbPath, 'utf8');
 // available as context.heroes after execution.
 code = code.replace(/\bconst heroes\s*=/, 'heroes =');
 
-const context = {};
+const context = { window: {} };
 vm.createContext(context);
 vm.runInContext(code, context);
 

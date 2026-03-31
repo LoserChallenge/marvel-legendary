@@ -1,0 +1,302 @@
+{
+  "Black Widow - Mission Accomplished": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_BlackWidow_MissionAccomplished.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Black Widow - Dangerous Rescue": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_BlackWidow_DangerousRescue.webp",
+    "condition": "Covert",
+    "conditionType": "playedCards"
+  },
+  "Black Widow - Covert Operation": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_BlackWidow_CovertOperation.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Black Widow - Silent Sniper": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_BlackWidow_SilentSniper.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Captain America - Avengers Assemble!": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_CaptainAmerica_AvengersAssemble.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Captain America - Perfect Teamwork": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_CaptainAmerica_PerfectTeamwork.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Captain America - Diving Block": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_CaptainAmerica_DivingBlock.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Captain America - A Day Unlike Any Other": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_CaptainAmerica_ADayUnlikeAnyOther.webp",
+    "condition": "Avengers",
+    "conditionType": "playedCards"
+  },
+  "Cyclops - Optic Blast": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Cyclops_OpticBlast.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Cyclops - Determination": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Cyclops_Determination.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Cyclops - Unending Energy": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Cyclops_UnendingEnergy.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Cyclops - X-Men United": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Cyclops_XMenUnited.webp",
+    "condition": "X-Men",
+    "conditionType": "playedCards"
+  },
+  "Deadpool - Here, Hold This For a Second": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Deadpool_HereHoldThisForASecond.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Deadpool - Oddball": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Deadpool_Oddball.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Deadpool - Hey, Can I Get a Do-Over?": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Deadpool_HeyCanIGetADoOver.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Deadpool - Random Acts of Unkindness": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Deadpool_RandomActsOfUnkindness.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Emma Frost - Mental Discipline": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_EmmaFrost_MentalDiscipline.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Emma Frost - Shadowed Thoughts": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_EmmaFrost_ShadowedThoughts.webp",
+    "condition": "Covert",
+    "conditionType": "playedCards"
+  },
+  "Emma Frost - Psychic Link": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_EmmaFrost_PsychicLink.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Emma Frost - Diamond Form": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_EmmaFrost_DiamondForm.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Gambit - Stack the Deck": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Gambit_StackTheDeck.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Gambit - Card Shark": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Gambit_CardShark.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Gambit - Hypnotic Charm": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Gambit_HypnoticCharm.webp",
+    "condition": "Instinct",
+    "conditionType": "playedCards"
+  },
+  "Gambit - High Stakes Jackpot": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Gambit_HighStakesJackpot.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Hawkeye - Quick Draw": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Hawkeye_QuickDraw.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Hawkeye - Team Player": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Hawkeye_TeamPlayer.webp",
+    "condition": "Avengers",
+    "conditionType": "playedCards"
+  },
+  "Hawkeye - Covering Fire": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Hawkeye_CoveringFire.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Hawkeye - Impossible Trick Shot": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Hawkeye_ImpossibleTrickShot.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Hulk - Unstoppable Hulk": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Hulk_UnstoppableHulk.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Hulk - Growing Anger": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Hulk_GrowingAnger.webp",
+    "condition": "Strength",
+    "conditionType": "playedCards"
+  },
+  "Hulk - Crazed Rampage": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Hulk_CrazedRampage.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Hulk - Hulk Smash!": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Hulk_HulkSmash.webp",
+    "condition": "Strength",
+    "conditionType": "playedCards"
+  },
+  "Iron Man - Endless Invention": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_IronMan_EndlessInvention.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Iron Man - Repulsor Rays": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_IronMan_RepulsorRays.webp",
+    "condition": "Range",
+    "conditionType": "playedCards"
+  },
+  "Iron Man - Arc Reactor": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_IronMan_ArcReactor.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Iron Man - Quantum Breakthrough": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_IronMan_QuantumBreakthrough.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Nick Fury - Battlefield Promotion": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_NickFury_BattlefieldPromotion.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Nick Fury - High-Tech Weaponry": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_NickFury_HighTechWeaponry.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Nick Fury - Legendary Commander": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_NickFury_LegendaryCommander.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Nick Fury - Pure Fury": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_NickFury_PureFury.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Rogue - Energy Drain": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Rogue_EnergyDrain.webp",
+    "condition": "Covert",
+    "conditionType": "playedCards"
+  },
+  "Rogue - Borrowed Brawn": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Rogue_BorrowedBrawn.webp",
+    "condition": "Strength",
+    "conditionType": "playedCards"
+  },
+  "Rogue - Copy Powers": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Rogue_CopyPowers.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Rogue - Steal Abilities": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Rogue_StealAbilities.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Spider-Man - Astonishing Strength": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_SpiderMan_AstonishingStrength.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Spider-Man - Great Responsibility": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_SpiderMan_GreatResponsibility.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Spider-Man - Web-Shooters": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_SpiderMan_WebShooters.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Spider-Man - The Amazing Spider-Man": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_SpiderMan_TheAmazingSpiderMan.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Storm - Lightning Bolt": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Storm_LightningBolt.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Storm - Gathering Stormclouds": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Storm_GatheringStormclouds.webp",
+    "condition": "Range",
+    "conditionType": "playedCards"
+  },
+  "Storm - Spinning Cyclone": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Storm_SpinningCyclone.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Storm - Tidal Wave": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Storm_TidalWave.webp",
+    "condition": "Range",
+    "conditionType": "playedCards"
+  },
+  "Thor - Surge of Power": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Thor_SurgeOfPower.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Thor - Odinson": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Thor_Odinson.webp",
+    "condition": "Strength",
+    "conditionType": "playedCards"
+  },
+  "Thor - Call Lightning": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Thor_CallLightning.webp",
+    "condition": "Range",
+    "conditionType": "playedCards"
+  },
+  "Thor - God of Thunder": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Thor_GodOfThunder.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Wolverine - Healing Factor": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Wolverine_HealingFactor.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Wolverine - Keen Senses": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Wolverine_KeenSenses.webp",
+    "condition": "Instinct",
+    "conditionType": "playedCards"
+  },
+  "Wolverine - Frenzied Slashing": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Wolverine_FrenziedSlashing.webp",
+    "condition": "Instinct",
+    "conditionType": "playedCards"
+  },
+  "Wolverine - Berserker Rage": {
+    "image": "Visual Assets/Heroes/Reskinned Core/Core_Wolverine_BerserkerRage.webp",
+    "condition": "Instinct",
+    "conditionType": "playedCards"
+  }
+}
