@@ -2,52 +2,53 @@
 
 ## Heroes
 
+<!-- 5 heroes — Guardians of the Galaxy expansion -->
+<!-- Data source: cardDatabase.js (structured fields) + card images (effect text only) -->
+
 ### Drax the Destroyer
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Knives of the Hunter | [Strength] | Guardians of the Galaxy | 3 | Common | -- | **Artifact** -- Once per turn, you get +1 [Attack]. |
-| Interstellar Tracker | [Instinct] | Guardians of the Galaxy | 3 | Common 2 | 2 [Recruit] | Look at the top card of your deck. Discard it or put it back. **Instinct**: You may KO the card you discarded this way. |
-| The Destroyer | [Instinct] | Guardians of the Galaxy | 6 | Uncommon | 4 [Attack] | **Guardians of the Galaxy**: Each other player reveals an [Instinct] Hero or discards an Artifact they control. For each Artifact discarded this way, you gain a Shard. |
-| Avatar of Destruction | [Instinct] | Guardians of the Galaxy | 7 | Rare | -- | Double the [Attack] you have. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Knives of the Hunter | Strength | Guardians of the Galaxy | 3 | 0 | "Artifact - Once per turn, you get +1 [Attack]." |
+| Interstellar Tracker | Instinct | Guardians of the Galaxy | 3 | 2 [Recruit] | "Look at the top card of your deck. Discard it or put it back. [Instinct]: You may KO the card you discarded this way." |
+| The Destroyer | Instinct | Guardians of the Galaxy | 6 | 4 [Attack] | "[Guardians]: Each other player reveals an [Instinct] Hero or discards an Artifact they control. For each Artifact discarded this way, you gain a Shard." |
+| Avatar of Destruction | Instinct | Guardians of the Galaxy | 7 | 0 | "Double the [Attack] you have." |
 
 ### Gamora
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Bounty Hunter | [Covert] | Guardians of the Galaxy | 2 | Common | 2 [Recruit] | A Villain gains a Shard. |
-| Deadliest Woman in the Universe | [Instinct] | Guardians of the Galaxy | 3 | Common 2 | -- | Gain two Shards. **Covert**: Gain another Shard. |
-| Galactic Assassin | [Covert] | Guardians of the Galaxy | 5 | Uncommon | 3 [Attack] | A Villain of your choice gets no [Attack] from Shards this turn. **Covert Covert**: The Mastermind gets no [Attack] from Shards this turn. |
-| Godslayer Blade | [Covert] | Guardians of the Galaxy | 8 | Rare | -- | **Artifact** -- Once per turn, gain two Shards. Once per turn, you may spend 5 Shards to get +10 [Attack]. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Bounty Hunter | Covert | Guardians of the Galaxy | 2 | 2 [Recruit] | "A Villain gains a Shard." |
+| Deadliest Woman in the Universe | Instinct | Guardians of the Galaxy | 3 | 0 | "Gain two Shards. [Guardians]: Gain another Shard." |
+| Galactic Assassin | Covert | Guardians of the Galaxy | 5 | 3 [Attack] | "A Villain of your choice gets no [Attack] from Shards this turn. [Guardians] [Guardians]: The Mastermind gets no [Attack] from Shards this turn." |
+| Godslayer Blade | Covert | Guardians of the Galaxy | 8 | 0 | "Artifact - Once per turn, gain two Shards. Once per turn, you may spend 5 Shards to get +10 [Attack]." |
 
 ### Groot
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Surviving Sprig | [Strength] | Guardians of the Galaxy | 3 | Common | 1 [Attack] | When you draw a new hand of cards at the end of this turn, draw an extra card. |
-| Prune the Growths | [Strength] | Guardians of the Galaxy | 4 | Common 2 | 2 [Attack] | **Strength**: You may KO a card from your hand or discard pile. If you do, gain a Shard. |
-| Groot and Branches | [Covert] | Guardians of the Galaxy | 4 | Uncommon | -- | Gain two Shards. You may spend Shards to get [Recruit] this turn. **Covert**: You may choose another player. That player gains a Shard. |
-| I Am Groot | [Strength] | Guardians of the Galaxy | 8 | Rare | 5 [Recruit] | When you recruit your next Hero this turn, you gain Shards equal to that Hero's cost. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Surviving Sprig | Strength | Guardians of the Galaxy | 3 | 1 [Attack] | "When you draw a new hand of cards at the end of this turn, draw an extra card." |
+| Prune the Growths | Strength | Guardians of the Galaxy | 4 | 2 [Attack] | "[Strength]: You may KO a card from your hand or discard pile. If you do, gain a Shard." |
+| Groot and Branches | Covert | Guardians of the Galaxy | 4 | 0 | "Gain two Shards. You may spend Shards to get [Recruit] this turn. [Guardians]: You may choose another player. That player gains a Shard." |
+| I Am Groot | Strength | Guardians of the Galaxy | 8 | 5 [Recruit] | "When you recruit your next Hero this turn, you gain Shards equal to that Hero's cost." |
 
 ### Rocket Raccoon
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Gritty Scavenger | [Tech] | Guardians of the Galaxy | 3 | Common | 2 [Recruit] | You may discard a card. If you do, draw a card. |
-| Trigger Happy | [Ranged] | Guardians of the Galaxy | 4 | Common 2 | 2 [Attack] | **Guardians of the Galaxy**: You gain a Shard for each other [Guardians of the Galaxy] Hero you played this turn. |
-| Incoming Detector | [Instinct] | Guardians of the Galaxy | 4 | Uncommon | -- | **Artifact** -- Whenever a Master Strike or a Villain's Ambush ability is completed, you may gain a Shard. |
-| Vengeance is Rocket | [Tech] | Guardians of the Galaxy | 7 | Rare | 5+ [Attack] | **Tech**: You get +1 [Attack] for each Master Strike in the KO pile and/or stacked next to the Mastermind. |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Gritty Scavenger | Tech | Guardians of the Galaxy | 3 | 2 [Recruit] | "You may discard a card. If you do, draw a card." |
+| Trigger Happy | Range | Guardians of the Galaxy | 4 | 2 [Attack] | "[Ranged]: You gain a Shard for each other [Ranged] Hero you played this turn." |
+| Incoming Detector | Instinct | Guardians of the Galaxy | 4 | 0 | "Artifact - Whenever a Master Strike or a Villain's Ambush ability is completed, you may gain a Shard." |
+| Vengeance is Rocket | Tech | Guardians of the Galaxy | 7 | 5 [Attack] | "[Ranged]: You get +1 [Attack] for each Master Strike in the KO pile and/or stacked next to the Mastermind." |
 
 ### Star-Lord
 
-| Card Name | Class | Team | Cost | Rarity | Base Value | Effect Text |
-|-----------|-------|------|------|--------|------------|-------------|
-| Element Guns | [Ranged] | Guardians of the Galaxy | 4 | Common | -- | **Artifact** -- Once per turn, gain a Shard. |
-| Legendary Outlaw | [Covert] | Guardians of the Galaxy | 4 | Common 2 | 2 [Recruit] | Choose an Artifact any player controls with a "once per turn" ability. Play a copy of one of those abilities. |
-| Implanted Memory Chip | [Tech] | Guardians of the Galaxy | 6 | Uncommon | -- | **Artifact** -- Once per turn, draw a card. |
-| Sentient Starship | [Ranged] | Guardians of the Galaxy | 8 | Rare | -- | **Artifact** -- Once per turn, gain a Shard for each Artifact you control. |
-
----
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Element Guns | Range | Guardians of the Galaxy | 4 | 0 | "Artifact - Once per turn, gain a Shard." |
+| Legendary Outlaw | Covert | Guardians of the Galaxy | 4 | 2 [Recruit] | "Choose an Artifact any player controls with a \"once per turn\" ability. Play a copy of one of those abilities." |
+| Implanted Memory Chip | Tech | Guardians of the Galaxy | 6 | 0 | "Artifact - Once per turn, draw a card." |
+| Sentient Starship | Range | Guardians of the Galaxy | 8 | 0 | "Artifact - Once per turn, gain a Shard for each Artifact you control." |
 
 ## Villains
 
@@ -170,3 +171,4 @@
 ## Henchmen
 
 None in this expansion.
+
