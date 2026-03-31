@@ -1,0 +1,102 @@
+{
+  "Black Cat - Pickpocket": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_BlackCat_Pickpocket.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Black Cat - Casual Bank Robbery": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_BlackCat_CasualBankRobbery.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Black Cat - Jinx": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_BlackCat_Jinx.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Black Cat - Cat Burglar": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_BlackCat_CatBurglar.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Moon Knight - Climbing Claws": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_MoonKnight_ClimbingClaws.webp",
+    "condition": "Instinct",
+    "conditionType": "playedCards"
+  },
+  "Moon Knight - Lunar Communion": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_MoonKnight_LunarCommunion.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Moon Knight - Crescent Moon Darts": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_MoonKnight_CrescentMoonDarts.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Moon Knight - Golden Ankh of Khonshu": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_MoonKnight_GoldenAnkhOfKhonshu.webp",
+    "condition": "Tech",
+    "conditionType": "playedCards"
+  },
+  "Scarlet Spider - Flip Out": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_FlipOut.webp",
+    "condition": "Spider Friends",
+    "conditionType": "playedCards"
+  },
+  "Scarlet Spider - Perfect Hunter": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_PerfectHunter.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Scarlet Spider - Leap from Above": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_LeapFromAbove.webp",
+    "condition": "Instinct",
+    "conditionType": "playedCards"
+  },
+  "Scarlet Spider - Sting of the Spider": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_StingOfTheSpider.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Spider-Woman - Radioactive Spider": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_RadioactiveSpider.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Spider-Woman - Bioelectric Shock": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_BioelectricShock.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Spider-Woman - Venom Blast": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_VenomBlast.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Spider-Woman - Arachno-Pheromones": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_ArachnoPheromones.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Symbiote Spider-Man - Dark Strength": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_DarkStrength.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Symbiote Spider-Man - Spider-Sense Tingling": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_SpiderSenseTingling.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Symbiote Spider-Man - Shadowed Spider": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_ShadowedSpider.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Symbiote Spider-Man - Thwip!": {
+    "image": "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_Thwip.webp",
+    "condition": "None",
+    "conditionType": "None"
+  }
+}

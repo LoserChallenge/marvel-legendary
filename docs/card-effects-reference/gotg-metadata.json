@@ -1,0 +1,102 @@
+{
+  "Drax the Destroyer - Knives of the Hunter": {
+    "image": "Visual Assets/Heroes/GotG/GotG_DraxTheDestroyer_KnivesOfTheHunter.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Drax the Destroyer - Interstellar Tracker": {
+    "image": "Visual Assets/Heroes/GotG/GotG_DraxTheDestroyer_InterstellarTracker.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Drax the Destroyer - The Destroyer": {
+    "image": "Visual Assets/Heroes/GotG/GotG_DraxTheDestroyer_TheDestroyer.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Drax the Destroyer - Avatar of Destruction": {
+    "image": "Visual Assets/Heroes/GotG/GotG_DraxTheDestroyer_AvatarOfDestruction.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Gamora - Bounty Hunter": {
+    "image": "Visual Assets/Heroes/GotG/GotG_Gamora_BountyHunter.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Gamora - Deadliest Woman in the Universe": {
+    "image": "Visual Assets/Heroes/GotG/GotG_Gamora_DeadliestWomanInTheUniverse.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Gamora - Galactic Assassin": {
+    "image": "Visual Assets/Heroes/GotG/GotG_Gamora_GalacticAssassin.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Gamora - Godslayer Blade": {
+    "image": "Visual Assets/Heroes/GotG/GotG_Gamora_GodslayerBlade.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Groot - Surviving Sprig": {
+    "image": "Visual Assets/Heroes/GotG/GotG_Groot_SurvivingSprig.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Groot - Prune the Growths": {
+    "image": "Visual Assets/Heroes/GotG/GotG_Groot_PruneTheGrowths.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Groot - Groot and Branches": {
+    "image": "Visual Assets/Heroes/GotG/GotG_Groot_GrootAndBranches.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Groot - I Am Groot": {
+    "image": "Visual Assets/Heroes/GotG/GotG_Groot_IAmGroot.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Rocket Raccoon - Gritty Scavenger": {
+    "image": "Visual Assets/Heroes/GotG/GotG_RocketRaccoon_GrittyScavenger.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Rocket Raccoon - Trigger Happy": {
+    "image": "Visual Assets/Heroes/GotG/GotG_RocketRaccoon_TriggerHappy.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Rocket Raccoon - Incoming Detector": {
+    "image": "Visual Assets/Heroes/GotG/GotG_RocketRaccoon_IncomingDetector.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Rocket Raccoon - Vengeance is Rocket": {
+    "image": "Visual Assets/Heroes/GotG/GotG_RocketRaccoon_VengeanceIsRocket.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Star-Lord - Element Guns": {
+    "image": "Visual Assets/Heroes/GotG/GotG_StarLord_ElementGuns.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Star-Lord - Legendary Outlaw": {
+    "image": "Visual Assets/Heroes/GotG/GotG_StarLord_LegendaryOutlaw.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Star-Lord - Implanted Memory Chip": {
+    "image": "Visual Assets/Heroes/GotG/GotG_StarLord_ImplantedMemoryChip.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Star-Lord - Sentient Starship": {
+    "image": "Visual Assets/Heroes/GotG/GotG_StarLord_SentientStarship.webp",
+    "condition": "None",
+    "conditionType": "None"
+  }
+}

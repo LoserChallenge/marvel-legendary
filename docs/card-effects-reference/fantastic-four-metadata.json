@@ -1,0 +1,102 @@
+{
+  "Human Torch - Call for Backup": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_HumanTorch_CallForBackup.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Human Torch - Hothead": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_HumanTorch_Hothead.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Human Torch - Flame On!": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_HumanTorch_FlameOn.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Human Torch - Nova Flame": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_HumanTorch_NovaFlame.webp",
+    "condition": "Fantastic Four",
+    "conditionType": "playedCards"
+  },
+  "Invisible Woman - Disappearing Act": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_InvisibleWoman_DisappearingAct.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Invisible Woman - Four of a Kind": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_InvisibleWoman_FourOfAKind.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Invisible Woman - Unseen Rescue": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_InvisibleWoman_UnseenRescue.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Invisible Woman - Invisible Barrier": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_InvisibleWoman_InvisibleBarrier.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Mr. Fantastic - Twisting Equations": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_MrFantastic_TwistingEquations.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Mr. Fantastic - Unstable Molecules": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_MrFantastic_UnstableMolecules.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Mr. Fantastic - One Gigantic Hand": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_MrFantastic_OneGiganticHand.webp",
+    "condition": "Fantastic Four",
+    "conditionType": "playedCards"
+  },
+  "Mr. Fantastic - Ultimate Nullifier": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_MrFantastic_UltimateNullifier.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Silver Surfer - Warp Speed": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_SilverSurfer_WarpSpeed.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Silver Surfer - Epic Destiny": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_SilverSurfer_EpicDestiny.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Silver Surfer - The Power Cosmic": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_SilverSurfer_ThePowerCosmic.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Silver Surfer - Energy Surge": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_SilverSurfer_EnergySurge.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Thing - It Started on Yancy Street": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_Thing_ItStartedOnYancyStreet.webp",
+    "condition": "Fantastic Four",
+    "conditionType": "playedCards"
+  },
+  "Thing - Knuckle Sandwich": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_Thing_KnuckleSandwich.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Thing - Crime Stopper": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_Thing_CrimeStopper.webp",
+    "condition": "None",
+    "conditionType": "None"
+  },
+  "Thing - It's Clobberin' Time!": {
+    "image": "Visual Assets/Heroes/Fantastic Four/FantasticFour_Thing_ItsClobberinTime.webp",
+    "condition": "Strength",
+    "conditionType": "playedCards"
+  }
+}
