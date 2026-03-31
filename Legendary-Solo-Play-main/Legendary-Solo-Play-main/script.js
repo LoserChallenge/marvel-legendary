@@ -3571,6 +3571,10 @@ async function onBeginGame(e) {
   loader.classList.remove("show");
   blackout.classList.remove("show");
 
+  // Draw the first villain card after the loading screen is gone
+  // so popups are visible to the player
+  await drawVillainCard();
+
   if (e?.currentTarget) e.currentTarget.disabled = false;
 }
 
@@ -4540,9 +4544,8 @@ if (scheme.name === "Splice Humans with Spider DNA") {
     `<span class="console-highlights" style="text-decoration:underline;">Turn 1:</span>`,
   );
 
-  // Update the game board and draw the first villain card
+  // Update the game board
   updateGameBoard();
-  await drawVillainCard();
 
   // Hide the confirm selection popup (if this is where you want to close it)
   document.getElementById("confirm-start-up-choices").style.display = "none";
