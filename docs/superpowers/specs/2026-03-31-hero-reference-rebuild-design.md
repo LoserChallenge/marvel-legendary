@@ -23,6 +23,8 @@ These errors make audit findings unreliable — real bugs may be buried under fa
 | Lower left | Base value (attack or recruit points when played) |
 | Lower right | Cost (recruit points to acquire the card) |
 
+**Exception — Silver Surfer (Fantastic Four set):** Silver Surfer is the only hero with no team affiliation. The team slot is empty on his cards. The Class icon is still in its regular position (upper left). This is correct — do not flag as an error.
+
 ### Villain / Mastermind / Henchmen Cards
 | Corner | Content |
 |--------|---------|
@@ -120,6 +122,18 @@ Rebuild one expansion at a time, starting with Core Set. Validate the process on
 5. Paint the Town Red
 
 Each expansion follows the same two-phase process. Non-hero sections are not touched.
+
+## New Expansion Cards (Future Work)
+
+This DB-first approach only applies to cards already in `cardDatabase.js`. For new expansions where no DB entry exists yet, the `/new-expansion` skill will use a **structured per-corner image read** instead:
+
+- Read upper-left top area only → Team
+- Read upper-left bottom area only → Class
+- Read lower-left corner only → Base Value
+- Read lower-right corner only → Cost
+- Read centre text area only → Effect Text
+
+Targeted corner-by-corner reads are much harder to confuse than whole-card reads. This protocol will be added to the `/new-expansion` skill when expansion work begins.
 
 ## Success Criteria
 
