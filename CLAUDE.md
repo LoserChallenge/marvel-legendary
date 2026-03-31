@@ -72,6 +72,23 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 
 - When making a card ability function `async`, grep for ALL its call sites and add `await` there too — callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (this was missed for `heroSkrulled` callers in health check phase 2 and caught by code review).
 
+## Card Image Reading Gotcha
+
+- `cardDatabase.js` is the authoritative source for class, team, cost, condition, and base attack/recruit values — NEVER override these from card images
+- Card images should ONLY be used to extract the **effect text** (the written description of what the card does) which is not stored in the database for hero cards
+- Class icons (Tech gear, Covert eye, Strength fist, Instinct bolt, Ranged crosshair) and team icons (X-Men X, Avengers A, S.H.I.E.L.D. eagle) are easily confused by image readers — always trust the DB fields
+- When building card reference data: pull all structured fields from DB first, then read images only to fill in the effect text column
+- Hero card layout: upper-left (top) = Team affiliation; upper-left (bottom) = Class (stacked directly below Team); lower-left = Base Value (attack/recruit when played); lower-right = Cost (recruit to acquire). Villain/Mastermind/Henchmen: lower-right = Fight value.
+- Silver Surfer (Fantastic Four set) is the only hero with no team affiliation — his team slot is empty. This is correct; do not flag as missing data.
+- When reading effect text from images: if the text starts with `[Tag]:` (a trigger condition), cross-check that Tag against the DB `condition` field. Match → write as-is. Mismatch → flag in "Needs Review" for manual review, do not guess.
+- New expansion cards (not yet in DB): use per-corner reads — target each corner of the image explicitly rather than reading the whole card at once, to minimise corner confusion.
+
+## Node.js vm Gotcha (cardDatabase.js scripts)
+
+- `const` declarations inside `vm.runInContext()` are block-scoped to the script and NOT accessible on the context object — `context.heroes` will be `undefined`
+- Fix: before running, replace the declaration: `code = code.replace(/\bconst heroes\s*=/, 'heroes =');`
+- Apply the same pattern for any other top-level `const` arrays you need from the DB
+
 ## Mastermind Code Gotchas
 
 - Mastermind names in `cardDatabase.js` must be matched exactly — `"The Supreme Intelligence of the Kree"` not `"Supreme Intelligence"`. Wrong names silently return `undefined` from `masterminds.find()`.
@@ -98,10 +115,13 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 2. **Villain deck rules fix (Golden Solo)** ✅ Complete — merged to master (2026-03-30)
 3. **Health check cleanup** ✅ Phase 1 complete — merged to master (2026-03-30)
 4. **Health check cleanup Phase 2** ✅ Complete — merged to master (2026-03-30); 10 Low items deferred (see Known Issues)
-5. **Card Effect Auditor system** — design approved (2026-03-29); spec at `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; pending implementation plan
-   - Three components: Card Effect Taxonomy, Card Effects Reference (text extracted from card images + code), Card Effect Auditor subagent
-   - Audits four layers: card text accuracy, Golden Solo compatibility, cross-card interactions, keyword/mechanic consistency
-   - Must be built before starting expansion work so new cards are audited as they're added
+5. **Card Effect Auditor system** — in progress on `feature/card-effect-auditor` branch (2026-03-31)
+   - Two components: Comprehensive Card Reference (`docs/card-effects-reference/`, one file per expansion), Card Effect Auditor subagent (`.claude/agents/card-effect-auditor.md`)
+   - Design spec: `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; implementation plan: `docs/superpowers/plans/2026-03-30-card-effect-auditor.md`
+   - Reference files built for all 5 expansions; auditor subagent created; first audit run completed (65 issues found)
+   - **Blocking issue:** Hero card reference data needs rebuilding — subagents misread class/team icons from card images, producing false audit findings. Fix: use `cardDatabase.js` as authoritative source for class/team/cost/condition, use images ONLY for effect text. See Card Image Reading Gotcha below.
+   - Hero rebuild design spec: `docs/superpowers/specs/2026-03-31-hero-reference-rebuild-design.md`; implementation plan: `docs/superpowers/plans/2026-03-31-hero-reference-rebuild.md`
+   - Remaining tasks: execute hero rebuild plan (Core Set first, then 4 more expansions), re-run audit, update `/new-expansion` skill
 6. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
    - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
    - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
@@ -153,9 +173,9 @@ Card effects targeting "each other player" apply to the top card of the hero dec
 - **Subagent**: `.claude/agents/revision-tracker.md` — scans HTML/JS for UI revision progress; use at start of any UI revision session
 - **Skill**: `.claude/skills/golden-solo-fixer/SKILL.md` — step-by-step guide for executing compatibility audit fixes; invoke with `/golden-solo-fixer`
 - **Skill**: `.claude/skills/new-expansion/SKILL.md` — step-by-step guide for adding a new expansion (file structure, card data, Golden Solo compatibility rules); invoke with `/new-expansion`
-- **Reference**: `docs/card-effect-taxonomy.md` — living catalog of all card trigger/condition types (pending creation)
-- **Reference**: `docs/card-effects-reference.md` — extracted effect text for every card, source of truth for audits (pending creation)
-- **Subagent**: `.claude/agents/card-effect-auditor.md` — compares card effect text against code implementations, flags mismatches (pending creation)
+- **Reference**: `docs/card-effects-reference/` — per-expansion card data and effect text, source of truth for audits (built, hero data needs rebuild)
+- **Subagent**: `.claude/agents/card-effect-auditor.md` — compares card reference data against code implementations, flags mismatches (built)
+- **Reference**: `docs/card-effect-audit-results-2026-03-31.md` — first audit run results (65 issues, needs re-run after hero data rebuild)
 
 ## Workflow Preferences
 
