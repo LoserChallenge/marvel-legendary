@@ -5,6 +5,51 @@
 <!-- 15 heroes, 4 cards each = 60 cards total -->
 <!-- Data source: card images in Visual Assets/Heroes/Reskinned Core/ -->
 
+### Black Widow
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Mission Accomplished | Tech | Avengers | 2 | 0 | "Draw a card. [Covert]: Rescue a Bystander." |
+| Dangerous Rescue | Covert | Avengers | 3 | 2 [Attack] | "[Covert]: You may KO a card from your hand or discard pile. If you do, rescue a Bystander." |
+| Covert Operation | Covert | Avengers | 4 | 0+ [Attack] | "You get +1 [Attack] for each Bystander in your Victory Pile." |
+| Silent Sniper | Covert | Avengers | 7 | 4 [Attack] | "Defeat a Villain or Mastermind that has a Bystander." |
+
+### Captain America
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Avengers Assemble! | Instinct | Avengers | 3 | 0+ [Recruit] | "You get +1 [Recruit] for each color of Hero you have." |
+| Perfect Teamwork | Strength | Avengers | 4 | 0+ [Attack] | "You get +1 [Attack] for each color of Hero you have." |
+| Diving Block | Tech | Avengers | 6 | 4 [Attack] | "If you would gain a Wound, you may reveal this card and draw a card instead." |
+| A Day Unlike Any Other | Covert | Avengers | 7 | 3+ [Attack] | "[Covert]: You get +3 [Attack] for each other [Covert] Hero you played this turn." |
+
+### Cyclops
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Determination | Strength | X-Men | 2 | 3 [Recruit] | "To play this card, you must discard a card from your hand." |
+| Optic Blast | Ranged | X-Men | 3 | 3 [Attack] | "To play this card, you must discard a card from your hand." |
+| Unending Energy | Ranged | X-Men | 6 | 4 [Attack] | "If a card effect makes you discard this card, you may return this card to your hand." |
+| X-Men United | Ranged | X-Men | 8 | 6+ [Attack] | "[X-Men]: You get +2 [Attack] for each other [X-Men] Hero you played this turn." |
+
+### Deadpool
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Here, Hold This For a Second | Tech | None | 3 | 2 [Recruit] | "A Villain of your choice captures a Bystander." |
+| Oddball | Covert | None | 5 | 2+ [Attack] | "You get +1 [Attack] for each other Hero with an odd-numbered cost you played this turn." |
+| Hey, Can I Get a Do-Over? | Instinct | None | 3 | 2 [Attack] | "If this is the first Hero you played this turn, you may discard the rest of your hand and draw four cards." |
+| Random Acts of Unkindness | Instinct | None | 7 | 6 [Attack] | "You may gain a Wound to your hand. Then each player passes a card from their hand to the player on their left." |
+
+### Emma Frost
+
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Mental Discipline | Ranged | X-Men | 3 | 1 [Recruit] | "Draw a card." |
+| Shadowed Thoughts | Covert | X-Men | 4 | 2+ [Attack] | "[Covert]: You may play the top card of the Villain Deck. If you do, you get +2 [Attack]." |
+| Psychic Link | Instinct | X-Men | 5 | 3 [Attack] | "Each player may reveal another [X-Men] Hero. Each player who does draws a card." |
+| Diamond Form | Strength | X-Men | 7 | 5 [Attack], 0+ [Recruit] | "Whenever you defeat a Villain or Mastermind this turn, you get +3 [Recruit]." |
+
 ## Villains
 
 <!-- Data source: cardDatabase.js villains array, IDs 1-7 -->
