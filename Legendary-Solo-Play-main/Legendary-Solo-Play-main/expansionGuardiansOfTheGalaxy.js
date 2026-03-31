@@ -6767,6 +6767,7 @@ shardSupply -= playerArtifacts.length;
 
 function initCosmicBackground() {
   const canvas = document.getElementById("mycanvas");
+  if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
   // Stars configuration
