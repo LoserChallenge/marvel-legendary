@@ -7002,6 +7002,8 @@ function initSplash() {
   );
   const popupContainer = document.getElementById("expansion-popup-container");
 
+  if (!splashContent || !splashText || !backgroundElement || !popupContainer) return;
+
   // Initialize cosmic background instead of cityscape
   initCosmicBackground();
 
