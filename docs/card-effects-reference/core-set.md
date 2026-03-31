@@ -3,13 +3,13 @@
 ## Heroes
 
 <!-- 15 heroes, 4 cards each = 60 cards total -->
-<!-- Data source: card images in Visual Assets/Heroes/Reskinned Core/ -->
+<!-- Data source: cardDatabase.js (structured fields) + card images (effect text only) -->
 
 ### Black Widow
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Mission Accomplished | Tech | Avengers | 2 | 0 | "Draw a card. [Covert]: Rescue a Bystander." |
+| Mission Accomplished | Tech | Avengers | 2 | 0 | "Draw a card. [Tech]: Rescue a Bystander." |
 | Dangerous Rescue | Covert | Avengers | 3 | 2 [Attack] | "[Covert]: You may KO a card from your hand or discard pile. If you do, rescue a Bystander." |
 | Covert Operation | Covert | Avengers | 4 | 0+ [Attack] | "You get +1 [Attack] for each Bystander in your Victory Pile." |
 | Silent Sniper | Covert | Avengers | 7 | 4 [Attack] | "Defeat a Villain or Mastermind that has a Bystander." |
@@ -18,26 +18,26 @@
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Avengers Assemble! | Instinct | Avengers | 3 | 0+ [Recruit] | "You get +1 [Recruit] for each color of Hero you have." |
-| Perfect Teamwork | Strength | Avengers | 4 | 0+ [Attack] | "You get +1 [Attack] for each color of Hero you have." |
+| Avengers Assemble! | Instinct | Avengers | 3 | 0 [Recruit] | "You get +1 [Recruit] for each color of Hero you have." |
+| Perfect Teamwork | Strength | Avengers | 4 | 0 [Attack] | "You get +1 [Attack] for each color of Hero you have." |
 | Diving Block | Tech | Avengers | 6 | 4 [Attack] | "If you would gain a Wound, you may reveal this card and draw a card instead." |
-| A Day Unlike Any Other | Covert | Avengers | 7 | 3+ [Attack] | "[Covert]: You get +3 [Attack] for each other [Covert] Hero you played this turn." |
+| A Day Unlike Any Other | Covert | Avengers | 7 | 0+ [Attack] | "[Avengers]: You get +3 [Attack] for each other [Avengers] Hero you played this turn." |
 
 ### Cyclops
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
+| Optic Blast | Range | X-Men | 3 | 3 [Attack] | "To play this card, you must discard a card from your hand." |
 | Determination | Strength | X-Men | 2 | 3 [Recruit] | "To play this card, you must discard a card from your hand." |
-| Optic Blast | Ranged | X-Men | 3 | 3 [Attack] | "To play this card, you must discard a card from your hand." |
-| Unending Energy | Ranged | X-Men | 6 | 4 [Attack] | "If a card effect makes you discard this card, you may return this card to your hand." |
-| X-Men United | Ranged | X-Men | 8 | 6+ [Attack] | "[X-Men]: You get +2 [Attack] for each other [X-Men] Hero you played this turn." |
+| Unending Energy | Range | X-Men | 6 | 4 [Attack] | "If a card effect makes you discard this card, you may return this card to your hand." |
+| X-Men United | Range | X-Men | 8 | 0+ [Attack] | "[X-Men]: You get +2 [Attack] for each other [X-Men] Hero you played this turn." |
 
 ### Deadpool
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
 | Here, Hold This For a Second | Tech | None | 3 | 2 [Recruit] | "A Villain of your choice captures a Bystander." |
-| Oddball | Covert | None | 5 | 2+ [Attack] | "You get +1 [Attack] for each other Hero with an odd-numbered cost you played this turn." |
+| Oddball | Covert | None | 5 | 0+ [Attack] | "You get +1 [Attack] for each other Hero with an odd-numbered [Cost] you played this turn." |
 | Hey, Can I Get a Do-Over? | Instinct | None | 3 | 2 [Attack] | "If this is the first Hero you played this turn, you may discard the rest of your hand and draw four cards." |
 | Random Acts of Unkindness | Instinct | None | 7 | 6 [Attack] | "You may gain a Wound to your hand. Then each player passes a card from their hand to the player on their left." |
 
@@ -45,28 +45,26 @@
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Mental Discipline | Ranged | X-Men | 3 | 1 [Recruit] | "Draw a card." |
-| Shadowed Thoughts | Covert | X-Men | 4 | 2+ [Attack] | "[Covert]: You may play the top card of the Villain Deck. If you do, you get +2 [Attack]." |
+| Mental Discipline | Range | X-Men | 3 | 1 [Recruit] | "Draw a card." |
+| Shadowed Thoughts | Covert | X-Men | 4 | 0+ [Attack] | "[Covert]: You may play the top card of the Villain Deck. If you do, you get +2 [Attack]." |
 | Psychic Link | Instinct | X-Men | 5 | 3 [Attack] | "Each player may reveal another [X-Men] Hero. Each player who does draws a card." |
-| Diamond Form | Strength | X-Men | 7 | 5 [Attack], 0+ [Recruit] | "Whenever you defeat a Villain or Mastermind this turn, you get +3 [Recruit]." |
+| Diamond Form | Strength | X-Men | 7 | 5 [Attack], 0 [Recruit] | "Whenever you defeat a Villain or Mastermind this turn, you get +3 [Recruit]." |
 
 ### Gambit
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Stack the Deck | Covert | X-Men | 2 | 2 [Recruit] | "Draw two cards. Then put a card from your hand on top of your deck." |
-| Card Shark | Ranged | X-Men | 4 | 4 [Attack] | "Reveal the top card of your deck. If it's an [Instinct] Hero, draw it." |
+| Stack the Deck | Covert | X-Men | 2 | 0 | "Draw two cards. Then put a card from your hand on top of your deck." |
+| Card Shark | Range | X-Men | 4 | 2 [Attack] | "Reveal the top card of your deck. If it's an [X-Men] Hero, draw it." |
 | Hypnotic Charm | Instinct | X-Men | 3 | 2 [Recruit] | "Reveal the top card of your deck. Discard it or put it back. [Instinct]: Do the same thing to each other player's deck." |
-| High Stakes Jackpot | Instinct | X-Men | 7 | 4+ [Attack] | "Reveal the top card of your deck. You get +[Attack] equal to that card's cost." |
-
-**Notes:** Card Shark image shows "2" at bottom-left — DB has `cost: 4, attack: 2` suggesting the card image bottom-right "4" is the attack display and "2" is a separate indicator. However, DB `attack: 2` seems low given the image shows a large "4" in the attack circle. Possible image/DB mismatch on Card Shark's attack value.
+| High Stakes Jackpot | Instinct | X-Men | 7 | 4 [Attack] | "Reveal the top card of your deck. You get +[Attack] equal to that card's cost." |
 
 ### Hawkeye
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
 | Quick Draw | Instinct | Avengers | 3 | 1 [Attack] | "Draw a card." |
-| Team Player | Tech | Avengers | 4 | 2+ [Attack] | "[Avengers]: You get +1 [Attack]." |
+| Team Player | Tech | Avengers | 4 | 0+ [Attack] | "[Avengers]: You get +1 [Attack]." |
 | Covering Fire | Tech | Avengers | 5 | 3 [Attack] | "[Tech]: Choose one: each other player draws a card or each other player discards a card." |
 | Impossible Trick Shot | Tech | Avengers | 7 | 5 [Attack] | "Whenever you defeat a Villain or Mastermind this turn, rescue three Bystanders." |
 
@@ -74,37 +72,35 @@
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Unstoppable Hulk | Instinct | Avengers | 4 | 2+ [Attack] | "You may KO a Wound from your hand or discard pile. If you do, you get +2 [Attack]." |
-| Growing Anger | Strength | Avengers | 3 | 2+ [Attack] | "[Strength]: You get +1 [Attack]." |
+| Unstoppable Hulk | Instinct | Avengers | 4 | 2 [Attack] | "You may KO a Wound from your hand or discard pile. If you do, you get +2 [Attack]." |
+| Growing Anger | Strength | Avengers | 3 | 0+ [Attack] | "[Strength]: You get +1 [Attack]." |
 | Crazed Rampage | Strength | Avengers | 5 | 4 [Attack] | "Each player gains a Wound." |
-| Hulk Smash! | Strength | Avengers | 8 | 5+ [Attack] | "[Strength]: You get +5 [Attack]." |
+| Hulk Smash! | Strength | Avengers | 8 | 0+ [Attack] | "[Strength]: You get +5 [Attack]." |
 
 ### Iron Man
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Endless Invention | Tech | Avengers | 3 | 3 [Recruit] | "Draw a card. [Tech]: Draw another card." |
-| Repulsor Rays | Ranged | Avengers | 3 | 2+ [Attack] | "[Ranged]: You get +1 [Attack]." |
-| Arc Reactor | Tech | Avengers | 5 | 3+ [Attack] | "[Tech]: You get +1 [Attack] for each other [Tech] Hero you played this turn." |
-| Quantum Breakthrough | Tech | Avengers | 7 | 7 [Recruit] | "Draw two cards. [Tech]: Draw two more cards." |
+| Endless Invention | Tech | Avengers | 3 | 0 | "Draw a card. [Tech]: Draw another card." |
+| Repulsor Rays | Range | Avengers | 3 | 0+ [Attack] | "[Ranged]: You get +1 [Attack]." |
+| Arc Reactor | Tech | Avengers | 5 | 0+ [Attack] | "[Tech]: You get +1 [Attack] for each other [Tech] Hero you played this turn." |
+| Quantum Breakthrough | Tech | Avengers | 7 | 0 | "Draw two cards. [Tech]: Draw two more cards." |
 
 ### Nick Fury
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Battlefield Promotion | Covert | S.H.I.E.L.D. | 4 | 4 [Recruit] | "You may KO a [Strength] Hero from your hand or discard pile. If you do, you may gain a S.H.I.E.L.D. Officer to your hand." |
-| High-Tech Weaponry | Tech | S.H.I.E.L.D. | 3 | 2+ [Attack] | "[Tech]: You get +1 [Attack]." |
-| Legendary Commander | Strength | S.H.I.E.L.D. | 6 | 1+ [Attack] | "You get +1 [Attack] for each other [S.H.I.E.L.D.] Hero you played this turn." |
-| Pure Fury | Tech | S.H.I.E.L.D. | 8 | 8 [Attack] | "Defeat any Villain or Mastermind whose [Attack] is less than the number of [S.H.I.E.L.D.] Heroes in the KO pile." |
-
-**Notes:** Battlefield Promotion image shows the [Strength] icon for the KO condition (green fist icon). The DB class is "Covert" (the card border is red). Pure Fury's DB has `attack: 0` and the effect is conditional defeat rather than a static attack value — the "8" shown on the card image is the cost, not attack.
+| Battlefield Promotion | Covert | S.H.I.E.L.D. | 4 | 0 | "You may KO a [S.H.I.E.L.D.] Hero from your hand or discard pile. If you do, you may gain a S.H.I.E.L.D. Officer to your hand." |
+| High-Tech Weaponry | Tech | S.H.I.E.L.D. | 3 | 0+ [Attack] | "[Tech]: You get +1 [Attack]." |
+| Legendary Commander | Strength | S.H.I.E.L.D. | 6 | 0+ [Attack] | "You get +1 [Attack] for each other [S.H.I.E.L.D.] Hero you played this turn." |
+| Pure Fury | Tech | S.H.I.E.L.D. | 8 | 0 | "Defeat any Villain or Mastermind whose [Attack] is less than the number of [S.H.I.E.L.D.] Heroes in the KO pile." |
 
 ### Rogue
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Energy Drain | Covert | X-Men | 3 | 2+ [Recruit] | "[Covert]: You may KO a card from your hand or discard pile. If you do, you get +1 [Recruit]." |
-| Borrowed Brawn | Strength | X-Men | 4 | 1+ [Attack] | "[Strength]: You get +3 [Attack]." |
+| Energy Drain | Covert | X-Men | 3 | 0+ [Recruit] | "[Covert]: You may KO a card from your hand or discard pile. If you do, you get +1 [Recruit]." |
+| Borrowed Brawn | Strength | X-Men | 4 | 0+ [Attack] | "[Strength]: You get +3 [Attack]." |
 | Copy Powers | Covert | X-Men | 5 | 0 | "Play this card as a copy of another Hero you played this turn. This card is both [Covert] and the color you copy." |
 | Steal Abilities | Strength | X-Men | 8 | 4 [Attack] | "Each player discards the top card of their deck. Play a copy of each of those cards." |
 
@@ -112,30 +108,28 @@
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Astonishing Strength | Strength | Spider Friends | 2 | 1 [Recruit] | "Reveal the top card of your deck. If that card costs 2 [Recruit] or less, draw it." |
-| Great Responsibility | Instinct | Spider Friends | 2 | 1 [Attack] | "Reveal the top card of your deck. If that card costs 2 [Recruit] or less, draw it." |
-| Web-Shooters | Tech | Spider Friends | 2 | 0 | "Rescue a Bystander. Reveal the top card of your deck. If that card costs 2 [Recruit] or less, draw it." |
-| The Amazing Spider-Man | Covert | Spider Friends | 2 | 0 | "Reveal the top three cards of your deck. Put any that cost 2 [Recruit] or less into your hand. Put the rest back in any order." |
-
-**Notes:** All four Spider-Man cards cost 2. The Amazing Spider-Man is the Rare despite sharing the same cost as the Commons.
+| Astonishing Strength | Strength | Spider Friends | 2 | 1 [Recruit] | "Reveal the top card of your deck. If that card costs 2 or less, draw it." |
+| Great Responsibility | Instinct | Spider Friends | 2 | 1 [Attack] | "Reveal the top card of your deck. If that card costs 2 or less, draw it." |
+| Web-Shooters | Tech | Spider Friends | 2 | 0 | "Rescue a Bystander. Reveal the top card of your deck. If that card costs 2 or less, draw it." |
+| The Amazing Spider-Man | Covert | Spider Friends | 2 | 0 | "Reveal the top three cards of your deck. Put any that cost 2 or less into your hand. Put the rest back in any order." |
 
 ### Storm
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Lightning Bolt | Ranged | X-Men | 4 | 2 [Attack] | "Any Villain you fight on the Rooftops this turn gets -2 [Attack]." |
-| Gathering Stormclouds | Ranged | X-Men | 3 | 2 [Recruit] | "[Ranged]: Draw a card." |
+| Lightning Bolt | Range | X-Men | 4 | 2 [Attack] | "Any Villain you fight on the Rooftops this turn gets -2 [Attack]." |
+| Gathering Stormclouds | Range | X-Men | 3 | 2 [Recruit] | "[Ranged]: Draw a card." |
 | Spinning Cyclone | Covert | X-Men | 6 | 4 [Attack] | "You may move a Villain to a new city space. Rescue any Bystanders captured by that Villain. (If you move a Villain to a city space that already has a Villain, swap them.)" |
-| Tidal Wave | Ranged | X-Men | 7 | 5 [Attack] | "Any Villain you fight on the Bridge this turn gets -2 [Attack]. [Ranged]: The Mastermind gets -2 [Attack] this turn." |
+| Tidal Wave | Range | X-Men | 7 | 5 [Attack] | "Any Villain you fight on the Bridge this turn gets -2 [Attack]. [Ranged]: The Mastermind gets -2 [Attack] this turn." |
 
 ### Thor
 
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
-| Surge of Power | Ranged | Avengers | 4 | 2 [Recruit], 0+ [Attack] | "If you made 8 or more [Recruit] this turn, you get +3 [Attack]." |
-| Odinson | Strength | Avengers | 3 | 2+ [Recruit] | "[Strength]: You get +2 [Recruit]." |
-| Call Lightning | Ranged | Avengers | 6 | 3+ [Attack] | "[Ranged]: You get +3 [Attack]." |
-| God of Thunder | Ranged | Avengers | 8 | 5 [Recruit], 0+ [Attack] | "You can use [Recruit] as [Attack] this turn." |
+| Surge of Power | Range | Avengers | 4 | 0 [Attack], 2 [Recruit] | "If you made 8 or more [Recruit] this turn, you get +3 [Attack]." |
+| Odinson | Strength | Avengers | 3 | 0+ [Recruit] | "[Strength]: You get +2 [Recruit]." |
+| Call Lightning | Range | Avengers | 6 | 0+ [Attack] | "[Ranged]: You get +3 [Attack]." |
+| God of Thunder | Range | Avengers | 8 | 0 [Attack], 5 [Recruit] | "You can use [Recruit] as [Attack] this turn." |
 
 ### Wolverine
 
@@ -404,3 +398,4 @@
 | Hand Ninjas | 3 | 1 | +1 [Recruit] |
 | Savage Land Mutates | 3 | 1 | Draw one extra card next turn |
 | Sentinel | 3 | 1 | KO one of your Heroes (from hand, played cards, or artifacts) |
+
