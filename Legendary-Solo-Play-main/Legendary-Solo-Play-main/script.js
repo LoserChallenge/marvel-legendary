@@ -1319,7 +1319,7 @@ document
   });
 
 document
-  .querySelectorAll("#xCutionersSongHero input[type=radio][name='hero']")
+  .querySelectorAll("#xCutionersSongHero input[type=radio][name='xcutioner-hero']")
   .forEach((radio) => {
     radio.addEventListener("change", function () {
       // Change the dropdown anchor's inner HTML to the radio button's value
@@ -4124,7 +4124,7 @@ if (scheme.name === "Unite the Shards") {
 
   // Check if a specific hero was selected in the dropdown
   const selectedHeroRadio = document.querySelector(
-    "#xCutionersSongHero input[type=radio][name='hero']:checked"
+    "#xCutionersSongHero input[type=radio][name='xcutioner-hero']:checked"
   );
   
   if (selectedHeroRadio && selectedHeroRadio.value !== "Random") {
