@@ -2408,7 +2408,7 @@ async function thanosKeeperOfSouls() {
     // Set popup content
     titleElement.textContent = "MASTERMIND TACTIC";
     instructionsElement.innerHTML =
-      `Gain a Hero from <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile. Then each other player puts a non-grey Hero from their discard pile into <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
+      `Gain a Hero from <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
 
     // Hide row labels and row2
     document.querySelector(
@@ -2519,7 +2519,7 @@ async function thanosKeeperOfSouls() {
 
           // Update instructions and confirm button
           instructionsElement.innerHTML =
-          `Gain a Hero from <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile. Then each other player puts a non-grey Hero from their discard pile into <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
+          `Gain a Hero from <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
           document.getElementById("card-choice-popup-confirm").disabled = true;
         } else {
           // Deselect previous card if any
@@ -6500,7 +6500,7 @@ const previousCards = cardsPlayedThisTurn.slice(0, -1);
     (item) => item.classes && item.classes.includes("Tech"),
   ).length;
   
-  const masterStrikeCount = koPile.filter((item) => item.name === "Master Strike").length;
+  const masterStrikeCount = koPile.filter((item) => item.type === "Master Strike").length;
   
   if (techPlayed > 0) {
     onscreenConsole.log(
