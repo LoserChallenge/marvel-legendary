@@ -1690,7 +1690,7 @@ updateGameBoard();
 function supremeIntelligenceOfTheKreeCosmicOmniscience() {
   const mastermind = getSelectedMastermind();
 const masterStrikes = koPile.filter(
-      (card) => card.name === "Master Strike",
+      (card) => card.type === "Master Strike",
     ).length;
       if (typeof mastermind.shards === 'undefined') {
     mastermind.shards = 0;
