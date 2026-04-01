@@ -3224,7 +3224,7 @@ function morgAmbush() {
   let heroesMovedCounter = 0;
 
   // Process each HQ slot one by one
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < hq.length; i++) {
     if (hq[i] && hq[i].type === "Hero") {
       const hero = hq[i];
       const hasInstinct = hero.classes && hero.classes.includes("Instinct");
