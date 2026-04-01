@@ -127,7 +127,7 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 4. **Health check cleanup Phase 2** ✅ Complete — merged to master (2026-03-30); 10 Low items deferred (see Known Issues)
 5. **Card Effect Auditor system** ✅ Complete — merged to master (2026-03-31)
    - Card reference files + auditor subagent built; 5 bugs fixed (4 audit-found + 1 play-test); see Post-Launch Bug Fixes
-   - Deferred cleanup plan written: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md` (L1–L8, L10, R1, R2, T1, T2) — T2, T1, L5 complete (2026-03-31); L2, L3, L4, L6, L7, L8, L10, R1, R2 still pending
+   - Deferred cleanup plan: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md` — ✅ All items complete (T2, T1, L5, L2, L3, L4, L6, L7, L8, L10, R1, R2) merged to master (2026-03-31)
 6. **Expansion content** — one expansion at a time; use `/new-expansion` skill when starting each one
    - **Next session:** user will provide full asset details for the first expansion; review and revise `/new-expansion` skill as part of that process before writing any code
 
