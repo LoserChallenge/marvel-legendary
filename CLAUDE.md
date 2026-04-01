@@ -127,7 +127,7 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 4. **Health check cleanup Phase 2** ✅ Complete — merged to master (2026-03-30); 10 Low items deferred (see Known Issues)
 5. **Card Effect Auditor system** ✅ Complete — merged to master (2026-03-31)
    - Card reference files + auditor subagent built; 5 bugs fixed (4 audit-found + 1 play-test); see Post-Launch Bug Fixes
-   - Deferred cleanup plan written: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md` (L1–L8, L10, R1, R2, T1, T2) — execute before or alongside expansion work
+   - Deferred cleanup plan written: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md` (L1–L8, L10, R1, R2, T1, T2) — T2, T1, L5 complete (2026-03-31); L2, L3, L4, L6, L7, L8, L10, R1, R2 still pending
 6. **Expansion content** — one expansion at a time; use `/new-expansion` skill when starting each one
    - **Next session:** user will provide full asset details for the first expansion; review and revise `/new-expansion` skill as part of that process before writing any code
 
@@ -302,11 +302,22 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 
 ## Known Issues / Deferred
 
-### Low-priority cleanup items — pending execution
+### Low-priority cleanup items — in progress
 
-All L1–L8, L10, R1, R2, T1, T2 items captured in implementation plan: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md`
+All items captured in implementation plan: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md`
 
-Execute before or alongside expansion work. Order: T2 (GOLDEN_SOLO constant) → T1 (refillHQSlot helper) → individual fixes.
+**Done (2026-03-31):** T2 (GOLDEN_SOLO constant), T1 (refillHQSlot helper), L5 (dead enterCityNotDraw flag)
+
+**Still pending — pick up here next session:**
+- L2: Remove dead `drawMultipleVillainCards` function (`cardAbilities.js`)
+- L4: `KOAllHeroesInHQ` — remove `heroDeck.length > 0` guard, fix `i < 5` → `hq.length` (`cardAbilities.js`)
+- L3: `KOAllHQBystanders` — add missing `return` after no-bystander guard (`cardAbilitiesDarkCity.js`)
+- L6: `morgAmbush` — fix hardcoded `i < 5` → `hq.length` (`expansionFantasticFour.js`)
+- L7: Thanos tactic popup — remove "each other player" text (`expansionGuardiansOfTheGalaxy.js`)
+- L8: Remove duplicate `specificVillainRequirement` on Splice Humans scheme (`cardDatabase.js`)
+- L10: Rename X-Cutioner's Song radio inputs `name="hero"` → `name="xcutioner-hero"` (`index.html` + 2 `script.js` selectors)
+- R1: Remove dead `bonusAttack`/`multiplier` fields on Arc Reactor card (`cardDatabase.js`)
+- R2: Vengeance is Rocket — count Master Strikes by `type` not `name` (`expansionGuardiansOfTheGalaxy.js`)
 
 Remaining deferred (not in plan):
 - **Summary panel hero names truncate on narrow screens** — accepted for now; revisit in next UI pass.
