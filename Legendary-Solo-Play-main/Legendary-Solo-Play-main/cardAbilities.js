@@ -16830,16 +16830,6 @@ async function bankRobbery() {
     });
 }
 
-function drawMultipleVillainCards(count) {
-  let promiseChain = Promise.resolve();
-
-  for (let i = 0; i < count; i++) {
-    promiseChain = promiseChain.then(() => processVillainCard());
-  }
-
-  return promiseChain;
-}
-
 async function darkPortal() {
   const twistCount = koPile.filter(
     (item) => item.type === "Scheme Twist",
@@ -16932,8 +16922,8 @@ async function KOAllHeroesInHQ() {
     }
   }
 
-  for (let i = 0; i < 5; i++) {
-    if (!hq[i] && heroDeck.length > 0) {
+  for (let i = 0; i < hq.length; i++) {
+    if (!hq[i]) {
       refillHQSlot(i);
     }
   }
