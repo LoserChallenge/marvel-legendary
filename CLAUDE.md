@@ -89,6 +89,7 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 
 - Every function that grants attack must update BOTH `totalAttackPoints` (current turn display) AND `cumulativeAttackPoints` (Final Showdown tracking) — missing the second one silently breaks Final Showdown
 - Check every `totalAttackPoints +=` line has a matching `cumulativeAttackPoints +=`
+- Attack-granting functions must also call `updateGameBoard()` after modifying points — missing this means the on-screen total won't refresh until the next natural update (caught in Vengeance is Rocket 2026-03-31)
 
 ## Node.js vm Gotcha (cardDatabase.js scripts)
 
@@ -124,13 +125,9 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 2. **Villain deck rules fix (Golden Solo)** ✅ Complete — merged to master (2026-03-30)
 3. **Health check cleanup** ✅ Phase 1 complete — merged to master (2026-03-30)
 4. **Health check cleanup Phase 2** ✅ Complete — merged to master (2026-03-30); 10 Low items deferred (see Known Issues)
-5. **Card Effect Auditor system** — in progress on `feature/card-effect-auditor` branch (2026-03-31)
-   - Two components: Comprehensive Card Reference (`docs/card-effects-reference/`, one file per expansion), Card Effect Auditor subagent (`.claude/agents/card-effect-auditor.md`)
-   - Design spec: `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; implementation plan: `docs/superpowers/plans/2026-03-30-card-effect-auditor.md`
-   - Hero reference rebuild: **complete** for all 5 expansions (Core Set, Dark City, FF, GotG, PtTR) — DB-first fields, image-only effect text
-   - GotG false positives resolved (2026-03-31): 3 suspected code bugs were confirmed correct against physical cards — reference data was wrong, not the code; reference corrected
-   - Card Effect Auditor re-run complete (2026-03-31): 4 real issues found and fixed (Vengeance is Rocket, Galactic Assassin popup, Four of a Kind, Arc Reactor); audit results in `docs/card-effect-audit-results-2026-03-31-v2.md`
-   - **Next session:** branch is ready to merge; then start first expansion
+5. **Card Effect Auditor system** ✅ Complete — merged to master (2026-03-31)
+   - Card reference files + auditor subagent built; 5 bugs fixed (4 audit-found + 1 play-test); see Post-Launch Bug Fixes
+   - Deferred cleanup plan written: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md` (L1–L8, L10, R1, R2, T1, T2) — execute before or alongside expansion work
 6. **Expansion content** — one expansion at a time; use `/new-expansion` skill when starting each one
    - **Next session:** user will provide full asset details for the first expansion; review and revise `/new-expansion` skill as part of that process before writing any code
 
@@ -305,28 +302,15 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 
 ## Known Issues / Deferred
 
-### Low-priority health check items (L1–L10)
+### Low-priority cleanup items — pending execution
 
-10 low-priority items from the full audit at `docs/health-check-report-2026-03-30.md`. Fix opportunistically during expansion work:
+All L1–L8, L10, R1, R2, T1, T2 items captured in implementation plan: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md`
 
-| # | File | Issue |
-|---|------|-------|
-| L1 | `expansionPaintTheTownRed.js` ~L1730 | Dead `koHero()` function — never called; also contains bare HQ fill bug |
-| L2 | `cardAbilities.js` ~L16855 | Dead `drawMultipleVillainCards()` — never called |
-| L3 | `cardAbilitiesDarkCity.js` ~L15963 | `KOAllHQBystanders` missing `return` after no-bystander guard |
-| L4 | `cardAbilities.js` ~L16962 | `KOAllHeroesInHQ` missing `showHeroDeckEmptyPopup()` in What If? path |
-| L5 | `script.js` ~L651 | `enterCityNotDraw` flag declared but never set to `true` — dead |
-| L6 | `expansionFantasticFour.js` ~L3232 | `morgAmbush` iterates `i < 5` hardcoded instead of `i < hq.length` |
-| L7 | `expansionGuardiansOfTheGalaxy.js` ~L2411 | Thanos tactic popup shows "each other player" text that never fires in solo |
-| L8 | `cardDatabase.js` ~L520 | Splice Humans scheme has `specificVillainRequirement` declared twice |
-| L9 | `styles.css` | ~~`#summary-panel` hard-coded `height: 100px`~~ — fixed 2026-03-30; panel now uses `height: auto` |
-| L10 | `index.html` ~L137 | X-Cutioner's Song hero radio inputs share `name="hero"` with main hero checkboxes |
+Execute before or alongside expansion work. Order: T2 (GOLDEN_SOLO constant) → T1 (refillHQSlot helper) → individual fixes.
 
-### Tech debt — low priority
-
-- **`refillHQSlot` helper** — the `if (gameMode === 'golden') { goldenRefillHQ(index) } else { hq[index] = heroDeck.pop() }` pattern appears ~22 times across 5 files. Consolidate into a shared helper in `script.js` near `goldenRefillHQ`.
-- **Magic string `'golden'`** — `gameMode === 'golden'` repeated throughout; no constant defined. Low urgency.
+Remaining deferred (not in plan):
 - **Summary panel hero names truncate on narrow screens** — accepted for now; revisit in next UI pass.
+- **Kree-Skrull War scheme villain count** — needs rules decision (see Known Issues below)
 
 ### GotG Code Bugs — Resolved (2026-03-31)
 
