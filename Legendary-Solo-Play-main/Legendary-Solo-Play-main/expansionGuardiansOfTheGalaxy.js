@@ -5010,7 +5010,7 @@ updateGameBoard();
     );
 
     // Set popup content
-    titleElement.textContent = "GAMORA - BOUNTY HUNTER";
+    titleElement.textContent = "GAMORA - GALACTIC ASSASSIN";
     instructionsElement.innerHTML =
       `SELECT A VILLAIN TO GAIN NO <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> FROM SHARDS THIS TURN:`;
 
@@ -6510,7 +6510,8 @@ onscreenConsole.log(
     `There are ${masterStrikeCount} Master Strike${masterStrikeCount === 1 ? '' : 's'} in the KO pile and/or stacked next to the Mastermind. You get +${masterStrikeCount} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
   );
 totalAttackPoints += masterStrikeCount;
-cumulativePlayerAttack += masterStrikeCount;
+cumulativeAttackPoints += masterStrikeCount;
+updateGameBoard();
   } else {
         onscreenConsole.log(
     `No <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Heroes played. No effect.`,

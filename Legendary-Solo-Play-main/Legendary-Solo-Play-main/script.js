@@ -14579,7 +14579,7 @@ async function confirmMastermindAttack() {
     const mastermind = getSelectedMastermind();
     const finalBlowNow = isFinalBlowRequired(mastermind);
     healingPossible = false;
-    const mastermindAttack = recalculateMastermindAttack(mastermind);
+    let mastermindAttack = recalculateMastermindAttack(mastermind);
 
     // Handle forcefield cost first
     if (invincibleForceField > 0) {
