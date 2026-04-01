@@ -19,7 +19,7 @@
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
 | Bounty Hunter | Covert | Guardians of the Galaxy | 2 | 2 [Recruit] | "A Villain gains a Shard." |
-| Deadliest Woman in the Universe | Instinct | Guardians of the Galaxy | 3 | 0 | "Gain two Shards. [Guardians]: Gain another Shard." |
+| Deadliest Woman in the Universe | Instinct | Guardians of the Galaxy | 3 | 0 | "Gain two Shards. [Covert]: Gain another Shard." |
 | Galactic Assassin | Covert | Guardians of the Galaxy | 5 | 3 [Attack] | "A Villain of your choice gets no [Attack] from Shards this turn. [Guardians] [Guardians]: The Mastermind gets no [Attack] from Shards this turn." |
 | Godslayer Blade | Covert | Guardians of the Galaxy | 8 | 0 | "Artifact - Once per turn, gain two Shards. Once per turn, you may spend 5 Shards to get +10 [Attack]." |
 
@@ -37,9 +37,9 @@
 | Card Name | Class | Team | Cost | Base Value | Effect Text |
 |-----------|-------|------|------|------------|-------------|
 | Gritty Scavenger | Tech | Guardians of the Galaxy | 3 | 2 [Recruit] | "You may discard a card. If you do, draw a card." |
-| Trigger Happy | Range | Guardians of the Galaxy | 4 | 2 [Attack] | "[Ranged]: You gain a Shard for each other [Ranged] Hero you played this turn." |
+| Trigger Happy | Ranged | Guardians of the Galaxy | 4 | 2 [Attack] | "[Guardians]: You gain a Shard for each other [Guardians] Hero you played this turn." |
 | Incoming Detector | Instinct | Guardians of the Galaxy | 4 | 0 | "Artifact - Whenever a Master Strike or a Villain's Ambush ability is completed, you may gain a Shard." |
-| Vengeance is Rocket | Tech | Guardians of the Galaxy | 7 | 5 [Attack] | "[Ranged]: You get +1 [Attack] for each Master Strike in the KO pile and/or stacked next to the Mastermind." |
+| Vengeance is Rocket | Tech | Guardians of the Galaxy | 7 | 5 [Attack] | "[Tech]: You get +1 [Attack] for each Master Strike in the KO pile and/or stacked next to the Mastermind." |
 
 ### Star-Lord
 

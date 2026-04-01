@@ -1,6 +1,7 @@
 # Card Effect Auditor — Design Spec
 
 **Date:** 2026-03-29
+**Updated:** 2026-03-30
 **Status:** Approved design, pending implementation plan
 
 ## Problem
@@ -16,50 +17,103 @@ Hero cards in `cardDatabase.js` store only a function key (`unconditionalAbility
 
 ## Solution
 
-Three components, built in order:
+Two components, built in order:
 
 | Component | Purpose | File |
 |-----------|---------|------|
-| **Card Effect Taxonomy** | Reference of all known trigger/condition types | `docs/card-effect-taxonomy.md` |
-| **Card Effects Reference** | Every card's effect text, extracted from images/code | `docs/card-effects-reference.md` |
-| **Card Effect Auditor** | Subagent that compares reference text against code | `.claude/agents/card-effect-auditor.md` |
+| **Comprehensive Card Reference** | Every card's full data and effect text, grouped by expansion and card type | `docs/card-effects-reference.md` |
+| **Card Effect Auditor** | Subagent that compares reference data against code implementations | `.claude/agents/card-effect-auditor.md` |
 
-## Component 1: Card Effect Taxonomy
+### Why not a separate taxonomy?
 
-A living reference file listing every distinct trigger/condition type in the game. Starts with the known types below, grows as new expansions introduce new mechanics.
+The original design included a standalone "Card Effect Taxonomy" document categorizing every trigger/condition type. This was dropped because the auditor is Claude — it can read effect text like "Covert: You get +2 Attack" and understand it's a class-conditional effect without needing a separate classification document. The comprehensive card reference contains all the information the auditor needs.
 
-### Known Trigger/Condition Types
+## Component 1: Comprehensive Card Reference
 
-| Type | Description | Example |
-|------|-------------|---------|
-| **Unconditional** | Effect always fires when card is played | "You get +5 Attack" |
-| **Class-conditional** | Triggers when you've played a card of a specific class (Covert, Strength, Instinct, Ranged, Tech) | "Covert: You may play the top card of the Villain Deck" |
-| **Team-conditional** | Triggers based on team affiliation (X-Men, Avengers, S.H.I.E.L.D., etc.) | "X-Men: Draw a card" |
-| **Count-based** | Scales with a quantity | "You get +1 Attack for each Bystander in your Victory Pile" |
-| **Reveal-and-check** | Reveals top card(s) of a deck, effect depends on what's revealed | "Reveal the top card of your deck. If that card costs 2 or less, draw it" |
-| **Choice** | Player picks between options | "Choose one: each other player draws a card or each other player discards a card" |
-| **Each other player** | Targets other players (Golden Solo special handling) | "Each player discards the top card of their deck" |
-| **Game state** | Depends on current board state | "If there are 3+ Villains in the city..." |
-| **Draw villain card** | Any effect that draws from the villain deck mid-turn | "Play the top card of the Villain Deck" |
-| **KO from HQ** | Any effect that removes a card from the HQ | "KO a Hero from the HQ" |
-| **Keyword-driven** | Effects tied to expansion keywords | "Bribe", "Teleport", etc. |
+A structured file containing every card in the game, grouped by expansion, then by card type. This is the single source of truth the auditor checks against.
 
-### Uncategorized Handling
+### Card Types and Fields
 
-If the auditor encounters a card effect that doesn't fit any known type, it flags it as **UNCATEGORIZED** rather than silently skipping it. New types get added to the taxonomy when discovered.
+#### Heroes
 
-## Component 2: Card Effects Reference
+| Field | Description |
+|-------|-------------|
+| Hero name | The character (e.g. "Black Widow") |
+| Card name | The specific card (e.g. "Covert Operation") |
+| Class | Covert, Strength, Instinct, Ranged, or Tech |
+| Team | X-Men, Avengers, S.H.I.E.L.D., etc. |
+| Cost | Recruit cost |
+| Base value | Recruit or attack value |
+| Effect text | Full text from the physical card |
 
-A structured file with every card's effect text, grouped by expansion, then by card type (Heroes, Villains, Masterminds, Schemes).
+#### Villains
+
+| Field | Description |
+|-------|-------------|
+| Villain name | The specific villain (e.g. "Venom") |
+| Villain group | The group they belong to (e.g. "Sinister Six") |
+| Fight effect | What happens when you fight/defeat them |
+| Escape effect | What happens when they escape the city |
+| Ambush effect | Effect that triggers when they enter the city (if any) |
+| VP value | Victory points awarded |
+
+#### Masterminds
+
+| Field | Description |
+|-------|-------------|
+| Mastermind name | Full name as it appears in the database |
+| Strength | Attack value needed to defeat |
+| Always Leads | Which villain group they always lead |
+| Master Strike effect | What happens when a Master Strike is drawn |
+| Tactic cards | Each tactic card's name and effect text |
+
+#### Schemes
+
+| Field | Description |
+|-------|-------------|
+| Scheme name | Full name |
+| Setup rules | Special setup modifications (extra villain groups, hero count changes, etc.) |
+| Twist effects | What happens for each Scheme Twist (may differ by twist number) |
+| Win/lose conditions | Any special victory or defeat conditions beyond the default |
+
+#### Henchmen
+
+| Field | Description |
+|-------|-------------|
+| Group name | The henchmen group (e.g. "Sentinel") |
+| Fight effect | What happens when you fight/defeat them |
+| Escape effect | What happens when they escape the city |
+| Ambush effect | Effect that triggers when they enter the city (if any) |
+
+#### Bystanders (special)
+
+| Field | Description |
+|-------|-------------|
+| Bystander name | Name of the special bystander (if any) |
+| Effect text | Any special effect that triggers when rescued or otherwise interacted with |
+
+Only bystanders with special effects need entries — standard bystanders with no text effect are skipped.
+
+#### Sidekicks
+
+| Field | Description |
+|-------|-------------|
+| Name | Sidekick card name |
+| Class | Class type (if any) |
+| Effect text | Any special effect text |
+
+Only sidekicks with special effects need entries — standard sidekicks with no text effect are skipped.
 
 ### Data Sources
 
 - **Heroes**: Effect text extracted from card images in `Visual Assets/Heroes/`
-- **Villains**: `effect` field already in `cardDatabase.js`
+- **Villains**: `effect` field in `cardDatabase.js`
 - **Masterminds/Tactics**: `effect` and `masterStrikeConsoleLog` fields in `cardDatabase.js`
 - **Schemes**: `twistText` field in `cardDatabase.js`
+- **Henchmen**: `effect` fields in `cardDatabase.js`
+- **Bystanders/Sidekicks**: Effect text from card images or code as applicable
 
-### Structure
+### Structure Example
 
 ```markdown
 ## Core Set
@@ -67,33 +121,62 @@ A structured file with every card's effect text, grouped by expansion, then by c
 ### Heroes
 
 #### Black Widow
-| Card Name | Class | Cost | Base Value | Trigger Type | Effect Text |
-|-----------|-------|------|------------|-------------|-------------|
-| Covert Operation | Covert | 4 | 0+ Attack | Count-based | "You get +1 Attack for each Bystander in your Victory Pile." |
+| Card Name | Class | Team | Cost | Base Value | Effect Text |
+|-----------|-------|------|------|------------|-------------|
+| Covert Operation | Covert | Avengers | 4 | 0+ Attack | "You get +1 Attack for each Bystander in your Victory Pile." |
 | Dangerous Rescue | ... | ... | ... | ... | ... |
 
 #### Captain America
 ...
 
 ### Villains
-(populated from cardDatabase.js `effect` fields)
+
+#### Brotherhood
+| Villain Name | Fight Effect | Escape Effect | Ambush | VP |
+|-------------|-------------|---------------|--------|-----|
+| Juggernaut | "..." | "..." | — | 4 |
+| Mystique | "..." | "..." | "..." | 3 |
 
 ### Masterminds
-(populated from cardDatabase.js `effect` and `masterStrikeConsoleLog` fields)
+
+#### Dr. Doom
+| Field | Value |
+|-------|-------|
+| Strength | 9 |
+| Always Leads | Doombot Legion |
+| Master Strike | "..." |
+
+**Tactics:**
+| Tactic Name | Effect Text |
+|-------------|-------------|
+| ... | "..." |
 
 ### Schemes
-(populated from cardDatabase.js `twistText` fields)
+
+#### The Legacy Virus
+| Field | Value |
+|-------|-------|
+| Setup | "..." |
+| Twist | "..." |
+| Win/Lose | Standard |
+
+### Henchmen
+
+#### Sentinels
+| Fight Effect | Escape Effect | Ambush |
+|-------------|---------------|--------|
+| "..." | "..." | — |
 ```
 
 ### Expansion Workflow Integration
 
 When adding a new expansion via `/new-expansion`, new card entries are added to this reference file as part of the workflow — reading from card images for heroes, from code for villains/masterminds/schemes.
 
-## Component 3: Card Effect Auditor (Subagent)
+## Component 2: Card Effect Auditor (Subagent)
 
 ### Purpose
 
-Compares each card's reference text against its code implementation. Flags issues only — stays silent on cards that pass.
+Compares each card's reference data against its code implementation. Flags issues only — stays silent on cards that pass.
 
 ### Four Audit Layers
 
@@ -137,17 +220,17 @@ See `teams-classes.pdf` for icon visuals.
 
 ## Build Order
 
-1. Create `docs/card-effect-taxonomy.md` — the taxonomy reference
-2. Create `docs/card-effects-reference.md` — populate Core Set heroes from images, villains/masterminds/schemes from code
-3. Populate remaining expansions (Dark City, Fantastic Four, GotG, Paint the Town Red) into reference file
-4. Create `.claude/agents/card-effect-auditor.md` — the subagent
-5. Run first audit against all existing cards
-6. Update `/new-expansion` skill to include reference file + auditor steps
+1. Create `docs/card-effects-reference.md` — populate Core Set heroes from card images, villains/masterminds/schemes/henchmen from `cardDatabase.js`
+2. Populate remaining existing expansions (Dark City, Fantastic Four, GotG, Paint the Town Red) into reference file
+3. Create `.claude/agents/card-effect-auditor.md` — the subagent
+4. Run first audit against all existing cards
+5. Update `/new-expansion` skill to include reference file + auditor steps
 
 ## Design Decisions
 
+- **Two components, not three**: The standalone taxonomy was dropped. The auditor (Claude) can classify effects directly from card text without a separate reference document.
+- **Comprehensive card reference**: Covers all card types (heroes, villains, masterminds, schemes, henchmen, bystanders, sidekicks) with type-appropriate fields including class and team for heroes.
 - **Reference file over image reading**: Card text is extracted once into a reference file rather than reading images every audit run. Faster, reviewable, and correctable.
-- **Taxonomy is a living document**: Starts with known types, grows when uncategorized effects are found. Avoids silent blind spots.
 - **Flagged issues only**: No pass/fail noise — only surfaces problems.
 - **Four audit layers**: Card accuracy, Golden Solo compat, cross-card interactions, keyword consistency.
-- **Flexible condition handling**: Auditor checks against known taxonomy but flags anything that doesn't fit rather than ignoring it.
+- **Existing cards first**: All currently-implemented cards are inventoried and audited before any new expansion work begins.

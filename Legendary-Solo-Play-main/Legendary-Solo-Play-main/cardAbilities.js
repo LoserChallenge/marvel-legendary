@@ -1160,20 +1160,18 @@ function IronManArcReactorBonusAttack() {
   const techCount = previousCards.filter(
     (item) => item.classes && item.classes.includes("Tech"),
   ).length;
-  let techText = "Heroes"; // Use let to allow reassignment
-
-  if (techCount === 1) {
-    techText = "Hero";
-  }
+  const techText = techCount === 1 ? "Hero" : "Heroes";
 
   onscreenConsole.log(
     `<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
   );
   onscreenConsole.log(
-    `You have played ${techCount} ${techText}. +${techCount}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    `You have played ${techCount} Tech ${techText}. +${techCount}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
   );
 
-  bonusAttack();
+  totalAttackPoints += techCount;
+  cumulativeAttackPoints += techCount;
+  updateGameBoard();
 }
 
 function HawkeyeBonusAttack() {

@@ -4303,6 +4303,7 @@ function invisibleWomanFourOfAKind() {
 
   if (fourCostCount > 0) {
     totalAttackPoints += 2;
+    cumulativeAttackPoints += 2;
     onscreenConsole.log(
       `Special Ability: You have played ${fourCostCount} ${fourCostText} that cost <b>4</b> <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons">. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
     );

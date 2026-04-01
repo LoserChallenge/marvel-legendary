@@ -44,6 +44,7 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 - Game is hosted on GitHub Pages at: `https://LoserChallenge.github.io/marvel-legendary/`
 - Push to `master` branch deploys automatically (~1 min delay; hard refresh `Ctrl+Shift+R` to bust cache)
 - Rules PDFs (105MB) are gitignored — local only
+- Core Set card images are in `Visual Assets/Heroes/Reskinned Core/` (not a subfolder named "Core Set")
 
 ## Platform & Constraints
 
@@ -77,11 +78,17 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 - `cardDatabase.js` is the authoritative source for class, team, cost, condition, and base attack/recruit values — NEVER override these from card images
 - Card images should ONLY be used to extract the **effect text** (the written description of what the card does) which is not stored in the database for hero cards
 - Class icons (Tech gear, Covert eye, Strength fist, Instinct bolt, Ranged crosshair) and team icons (X-Men X, Avengers A, S.H.I.E.L.D. eagle) are easily confused by image readers — always trust the DB fields
+- The small `[ClassName]:` or `[TeamName]:` trigger icons embedded in effect text (e.g. the icon before "Gain another Shard") are equally prone to misreading — after recording an effect, cross-check the trigger icon against (a) the card's own class/team in the DB and (b) what the code actually checks; a mismatch means the image was likely misread, not that the code is wrong
 - When building card reference data: pull all structured fields from DB first, then read images only to fill in the effect text column
 - Hero card layout: upper-left (top) = Team affiliation; upper-left (bottom) = Class (stacked directly below Team); lower-left = Base Value (attack/recruit when played); lower-right = Cost (recruit to acquire). Villain/Mastermind/Henchmen: lower-right = Fight value.
 - Silver Surfer (Fantastic Four set) is the only hero with no team affiliation — his team slot is empty. This is correct; do not flag as missing data.
 - When reading effect text from images: if the text starts with `[Tag]:` (a trigger condition), cross-check that Tag against the DB `condition` field. Match → write as-is. Mismatch → flag in "Needs Review" for manual review, do not guess.
 - New expansion cards (not yet in DB): use per-corner reads — target each corner of the image explicitly rather than reading the whole card at once, to minimise corner confusion.
+
+## Attack-Granting Function Pattern
+
+- Every function that grants attack must update BOTH `totalAttackPoints` (current turn display) AND `cumulativeAttackPoints` (Final Showdown tracking) — missing the second one silently breaks Final Showdown
+- Check every `totalAttackPoints +=` line has a matching `cumulativeAttackPoints +=`
 
 ## Node.js vm Gotcha (cardDatabase.js scripts)
 
@@ -121,10 +128,11 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
    - Two components: Comprehensive Card Reference (`docs/card-effects-reference/`, one file per expansion), Card Effect Auditor subagent (`.claude/agents/card-effect-auditor.md`)
    - Design spec: `docs/superpowers/specs/2026-03-29-card-effect-auditor-design.md`; implementation plan: `docs/superpowers/plans/2026-03-30-card-effect-auditor.md`
    - Hero reference rebuild: **complete** for all 5 expansions (Core Set, Dark City, FF, GotG, PtTR) — DB-first fields, image-only effect text
-   - **Next session:** verify 3 GotG code bugs against physical cards (see GotG Code Bugs section below), then fix code, re-run audit, update `/new-expansion` skill
-6. **Expansion content** — all 12 expansions, phased by complexity; use `/new-expansion` skill when starting each one
-   - Phase A (existing mechanics): Heroes of Asgard, New Mutants, Doctor Strange, S.H.I.E.L.D., Into The Cosmos, Annihilation
-   - Phase B (new mechanics required): Secret Wars Vol. 1, X-Men, Revelations, Messiah Complex, Weapon X, World War Hulk
+   - GotG false positives resolved (2026-03-31): 3 suspected code bugs were confirmed correct against physical cards — reference data was wrong, not the code; reference corrected
+   - Card Effect Auditor re-run complete (2026-03-31): 4 real issues found and fixed (Vengeance is Rocket, Galactic Assassin popup, Four of a Kind, Arc Reactor); audit results in `docs/card-effect-audit-results-2026-03-31-v2.md`
+   - **Next session:** branch is ready to merge; then start first expansion
+6. **Expansion content** — one expansion at a time; use `/new-expansion` skill when starting each one
+   - **Next session:** user will provide full asset details for the first expansion; review and revise `/new-expansion` skill as part of that process before writing any code
 
 ## Golden Solo Rules Summary
 
@@ -247,6 +255,7 @@ All 7 phases of Golden Solo Mode have been implemented as of 2026-03-09.
 | RANDOMIZE ALL picked scheme's hero count instead of Golden Solo count | `randomizeHeroWithRequirements()` ~line 2875 now reads DOM for Golden Solo hero count |
 | Plutonium Scheme Twist caused 6+ villain cards drawn per round in Golden Solo | `handlePlutoniumSchemeTwist` at `script.js:5469` called `drawVillainCard()` (full round machinery) instead of `processVillainCard()` (single draw) — fixed 2026-03-12 |
 | 36 card-effect functions called `drawVillainCard()` mid-turn, triggering full Golden Solo rounds | All 22 Type 1 call sites replaced with `processVillainCard()`; 5 HQ fill-in-place assignments replaced with `goldenRefillHQ()` conditionals; 2 async chain bugs fixed; 1 log message updated — applied 2026-03-26 |
+| Final Showdown crashed with "Attempted to assign to readonly property" — game never resolved | `confirmMastermindAttack()` at `script.js:14582` declared `mastermindAttack` as `const` then tried to add 4 to it for the Final Showdown threshold — changed to `let` — fixed 2026-03-31 |
 
 ### Testing Status
 
@@ -275,8 +284,8 @@ All 7 phases of Golden Solo Mode have been implemented as of 2026-03-09.
 - [ ] Bystander discard popup appears when bystanders in victory pile
 - [ ] Spending bystander reduces villain draws to 1 that round
 - [ ] Villain KO of HQ card rotates HQ
-- [ ] 4th Mastermind defeat triggers Final Showdown button label
-- [ ] Final Showdown pass: combined recruit+attack ≥ strength+4 → Ultimate Victory
+- [x] 4th Mastermind defeat triggers Final Showdown button label
+- [x] Final Showdown pass: combined recruit+attack ≥ strength+4 → Ultimate Victory (confirmed in play 2026-03-31; bug fixed — see Post-Launch Bug Fixes)
 - [ ] Final Showdown fail: points too low → no victory
 - [ ] Card effects that draw extra villain cards (Emma Frost, Electro, Kingpin, Forge, etc.) draw single cards only — not full Golden Solo rounds
 - [ ] KO effects on HQ cards (Skrull, Kraven, Morg) rotate HQ correctly rather than fill-in-place
@@ -319,15 +328,9 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 - **Magic string `'golden'`** — `gameMode === 'golden'` repeated throughout; no constant defined. Low urgency.
 - **Summary panel hero names truncate on narrow screens** — accepted for now; revisit in next UI pass.
 
-### GotG Code Bugs — Pending Verification (2026-03-31)
+### GotG Code Bugs — Resolved (2026-03-31)
 
-Three `expansionGuardiansOfTheGalaxy.js` functions check the wrong condition class. Verify against physical cards, then fix the condition check in each function:
-
-| Card | Function | Card says | Code checks |
-|------|----------|-----------|-------------|
-| Deadliest Woman in the Universe | `gamoraDeadliestWomanInTheUniverse` (~L4959) | `[Guardians]:` | Covert |
-| Trigger Happy | `rocketRaccoonTriggerHappy` (~L6408) | `[Ranged]:` | Guardians |
-| Vengeance is Rocket | `rocketRaccoonVengeanceIsRocket` (~L6496) | `[Ranged]:` | Tech |
+Verified against physical cards and card images: all three functions were correct. The suspected bugs were false positives caused by the reference data misreading trigger icons in effect text (Covert eye, Guardians swirl, and Tech gear icons confused during the image-reading pass). Reference data corrected in `docs/card-effects-reference/guardians-of-the-galaxy.md`.
 
 ### Scheme vs Game Mode villain count conflict
 
