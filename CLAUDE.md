@@ -306,18 +306,7 @@ All fixes applied 2026-03-26. Full report: `docs/golden-solo-compatibility-repor
 
 All items captured in implementation plan: `docs/superpowers/plans/2026-03-31-deferred-cleanup.md`
 
-**Done (2026-03-31):** T2 (GOLDEN_SOLO constant), T1 (refillHQSlot helper), L5 (dead enterCityNotDraw flag)
-
-**Still pending — pick up here next session:**
-- L2: Remove dead `drawMultipleVillainCards` function (`cardAbilities.js`)
-- L4: `KOAllHeroesInHQ` — remove `heroDeck.length > 0` guard, fix `i < 5` → `hq.length` (`cardAbilities.js`)
-- L3: `KOAllHQBystanders` — add missing `return` after no-bystander guard (`cardAbilitiesDarkCity.js`)
-- L6: `morgAmbush` — fix hardcoded `i < 5` → `hq.length` (`expansionFantasticFour.js`)
-- L7: Thanos tactic popup — remove "each other player" text (`expansionGuardiansOfTheGalaxy.js`)
-- L8: Remove duplicate `specificVillainRequirement` on Splice Humans scheme (`cardDatabase.js`)
-- L10: Rename X-Cutioner's Song radio inputs `name="hero"` → `name="xcutioner-hero"` (`index.html` + 2 `script.js` selectors)
-- R1: Remove dead `bonusAttack`/`multiplier` fields on Arc Reactor card (`cardDatabase.js`)
-- R2: Vengeance is Rocket — count Master Strikes by `type` not `name` (`expansionGuardiansOfTheGalaxy.js`)
+**All cleanup items complete** ✅ (2026-03-31) — T2, T1, L5, L2, L3, L4, L6, L7, L8, L10, R1, R2 all done
 
 Remaining deferred (not in plan):
 - **Summary panel hero names truncate on narrow screens** — accepted for now; revisit in next UI pass.
