@@ -15962,6 +15962,7 @@ async function KOAllHQBystanders() {
   // If no bystanders found, exit early
   if (bystanderIndices.length === 0) {
     onscreenConsole.log("No Bystanders found in HQ.");
+    return;
   }
 
   // Process in reverse order so Golden Solo splices don't shift unprocessed indices
