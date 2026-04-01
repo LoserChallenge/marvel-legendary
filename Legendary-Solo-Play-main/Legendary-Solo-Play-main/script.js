@@ -649,7 +649,6 @@ let silentMeditationRecruit = false;
 let backflipRecruit = false;
 let sewerRooftopDefeats = 0;
 let thingCrimeStopperRescue = false;
-let enterCityNotDraw = false;
 let spiderWomanArachnoRecruit = false;
 let throgRecruit = false;
 let bystandersRescuedThisTurn = 0;
@@ -4704,7 +4703,7 @@ function goldenHQRotate() {
 // Draw villain card(s) entry point
 // ---------------------------------
 async function drawVillainCard() {
-  if (!enterCityNotDraw && playerArtifacts.filter((card) => card.name === "Reality Gem").length > 0) {
+  if (playerArtifacts.filter((card) => card.name === "Reality Gem").length > 0) {
     await realityGemVillainChoice();
   }
 
