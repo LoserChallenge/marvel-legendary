@@ -15972,7 +15972,7 @@ async function KOAllHQBystanders() {
 
     // Draw new card from hero deck (if available)
     let newCard;
-    if (gameMode === 'golden') {
+    if (gameMode === GOLDEN_SOLO) {
       newCard = goldenRefillHQ(index);
     } else {
       newCard = heroDeck.length > 0 ? heroDeck.pop() : null;

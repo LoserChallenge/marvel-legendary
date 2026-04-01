@@ -273,7 +273,7 @@ async function dailyBugleVillainToHQ(selectedHQIndex) {
   if (villainsInCity.length === 0) {
     onscreenConsole.log(`No Villains invade at this time!`);
       let newCard;
-      if (gameMode === 'golden') {
+      if (gameMode === GOLDEN_SOLO) {
         newCard = goldenRefillHQ(selectedHQIndex);
       } else {
         newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
@@ -1712,7 +1712,7 @@ function koHeroKraven(hero) {
   koPile.push(hero);
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
-  if (gameMode === 'golden') {
+  if (gameMode === GOLDEN_SOLO) {
     goldenRefillHQ(heroIndex);
   } else {
     hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;

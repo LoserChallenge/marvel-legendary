@@ -604,7 +604,8 @@ let healingPossible = true;
 let finalBlowEnabled = false;
 let finalBlowDelivered = false;
 // --- Golden Solo Mode globals ---
-let gameMode = 'whatif';       // 'whatif' | 'golden'
+const GOLDEN_SOLO = 'golden';
+let gameMode = 'whatif';       // 'whatif' | GOLDEN_SOLO
 let goldenFirstRound = true;   // skip HQ rotation on round 1 of Golden Solo
 // --------------------------------
 let escapedVillainsCount = 0;
@@ -2290,7 +2291,7 @@ function randomizeHero() {
 
   // Randomly select heroes — Golden Solo always uses 5 heroes
   const _rh_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const _rh_count = (_rh_gameMode === 'golden') ? 5 : 3;
+  const _rh_count = (_rh_gameMode === GOLDEN_SOLO) ? 5 : 3;
   const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random());
   const selectedCheckboxes = shuffledCheckboxes.slice(0, _rh_count);
 
@@ -2516,7 +2517,7 @@ function updateSummaryPanel() {
     heroesValueEl.textContent = selectedHeroes.join(', ');
   }
 
-  const requiredHeroes = (gameModeValue === 'golden') ? 5 : (scheme ? (scheme.requiredHeroes ?? null) : null);
+  const requiredHeroes = (gameModeValue === GOLDEN_SOLO) ? 5 : (scheme ? (scheme.requiredHeroes ?? null) : null);
   heroesCountEl.textContent = `(${selectedHeroes.length}/${requiredHeroes !== null ? requiredHeroes : '?'})`;
   heroesCountEl.className = 'summary-count ' + getCountColorClass(selectedHeroes.length, requiredHeroes);
 }
@@ -2889,7 +2890,7 @@ function randomizeHeroWithRequirements(scheme) {
 
   // Randomly select the required number of heroes — Golden Solo always uses 5
   const _rhr_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const _rhr_count = (_rhr_gameMode === 'golden') ? 5 : scheme.requiredHeroes;
+  const _rhr_count = (_rhr_gameMode === GOLDEN_SOLO) ? 5 : scheme.requiredHeroes;
   const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random());
   const selectedCheckboxes = shuffledCheckboxes.slice(0, _rhr_count);
 
@@ -3081,7 +3082,7 @@ function showConfirmChoicesPopup(
   // Hero count validation — Golden Solo always requires 5 heroes.
   // Read from DOM directly (gameMode global isn't set until startGame() runs).
   const _selectedGameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const requiredHeroes = (_selectedGameMode === 'golden') ? 5 : scheme.requiredHeroes;
+  const requiredHeroes = (_selectedGameMode === GOLDEN_SOLO) ? 5 : scheme.requiredHeroes;
 
   if (heroes.length < requiredHeroes) {
     heroFeedback += `<br><span class="error-spans">Please select ${requiredHeroes - heroes.length > 1 ? "more heroes" : "another hero"}.</span>`;
@@ -3508,7 +3509,7 @@ async function onBeginGame(e) {
 
     // --- Golden Solo Mode: read game mode selection ---
     gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-    if (gameMode === 'golden') finalBlowEnabled = true; // Final Showdown always on in Golden Solo
+    if (gameMode === GOLDEN_SOLO) finalBlowEnabled = true; // Final Showdown always on in Golden Solo
     // --------------------------------------------------
 
     const selectedScheme = schemes.find(
@@ -3867,7 +3868,7 @@ function generateVillainDeck(
   let henchmenToPlaceOnTop = [];
 
   // Golden Solo: 2-player rules — add all 10 cards from the one henchmen group, shuffled in normally
-  if (gameMode === 'golden') {
+  if (gameMode === GOLDEN_SOLO) {
     villainDeckHenchmen.forEach((henchmanName) => {
       const henchman = window.henchmen.find((h) => h.name === henchmanName);
       if (henchman) {
@@ -3984,7 +3985,7 @@ function generateVillainDeck(
 
   // Add bystanders, master strikes, and scheme twists
   // Golden Solo uses 2-player default (2 bystanders) unless the scheme specifies more
-  const bystanderCount = (gameMode === 'golden') ? Math.max(2, scheme.bystanderCount) : scheme.bystanderCount;
+  const bystanderCount = (gameMode === GOLDEN_SOLO) ? Math.max(2, scheme.bystanderCount) : scheme.bystanderCount;
   for (let i = 0; i < bystanderCount; i++) {
     const bystander = bystanderDeck.splice(0, 1)[0];
     if (bystander) {
@@ -4457,7 +4458,7 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   } else if (villains.length > 1) {
     let selectedVillainName;
 
-    if (gameMode === 'golden' && mastermind.alwaysLeads && mastermind.alwaysLeadsType === 'villain') {
+    if (gameMode === GOLDEN_SOLO && mastermind.alwaysLeads && mastermind.alwaysLeadsType === 'villain') {
       // Golden Solo: always use the mastermind's correct Always Leads group
       selectedVillainName = mastermind.alwaysLeads;
     } else {
@@ -4492,7 +4493,7 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   }
 
   // Golden Solo: restructure the hero deck (small stack on top, Rares in main)
-  if (gameMode === 'golden') {
+  if (gameMode === GOLDEN_SOLO) {
     restructureGoldenHeroDeck();
   }
 
@@ -4703,7 +4704,7 @@ async function drawVillainCard() {
     return;
   }
 
-  if (gameMode === 'golden') {
+  if (gameMode === GOLDEN_SOLO) {
     // --- Golden Solo turn start ---
 
     // Step 2: HQ rotation (skip round 1)
@@ -6130,7 +6131,7 @@ function returnHeroToDeck(hqIndex) {
     heroDeck.unshift(hero);
 
     let newCard;
-    if (gameMode === 'golden') {
+    if (gameMode === GOLDEN_SOLO) {
       newCard = goldenRefillHQ(hqIndex);
     } else {
       // Draw new top card (end of array)
@@ -12676,7 +12677,7 @@ async function handleHQPostDefeat(
     console.log("10. Replacing HQ card...");
     try {
       let newCard;
-      if (gameMode === 'golden') {
+      if (gameMode === GOLDEN_SOLO) {
         newCard = goldenRefillHQ(index); // Golden Solo: rotation refill
       } else {
         newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
@@ -13816,7 +13817,7 @@ function koHeroInHQ(index) {
     // Only refill if we haven't reached 6 explosions
     if (currentExplosions < 6) {
       let newCard;
-      if (gameMode === 'golden') {
+      if (gameMode === GOLDEN_SOLO) {
         newCard = goldenRefillHQ(index); // Golden Solo: rotation refill
       } else {
         newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
@@ -13839,7 +13840,7 @@ function koHeroInHQ(index) {
       onscreenConsole.log(
         `<span class="console-highlights">${hero.name}</span> has been KO'd during a Helicarrier explosion. This HQ space has been Destroyed.`,
       );
-      if (gameMode === 'golden') {
+      if (gameMode === GOLDEN_SOLO) {
         hq.splice(index, 1); // Golden Solo: remove the slot entirely to avoid null holes
       } else {
         hq[index] = null; // Normal: mark slot as permanently destroyed
@@ -13849,7 +13850,7 @@ function koHeroInHQ(index) {
     // Normal KO handling
     koPile.push(hero);
     let newCard;
-    if (gameMode === 'golden') {
+    if (gameMode === GOLDEN_SOLO) {
       newCard = goldenRefillHQ(index); // Golden Solo: rotation refill
     } else {
       newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
@@ -14380,7 +14381,7 @@ const handleMastermindClick = () => {
   }
 
   // Golden Solo Final Showdown: combined (recruit + attack) must reach strength + 4
-  if (gameMode === 'golden' && isFinalBlowRequired(mastermind)) {
+  if (gameMode === GOLDEN_SOLO && isFinalBlowRequired(mastermind)) {
     const combinedPoints = totalAttackPoints + totalRecruitPoints;
     const finalShowdownThreshold = mastermindAttack + 4;
     canAttack = combinedPoints >= finalShowdownThreshold;
@@ -14463,7 +14464,7 @@ const handleMastermindClick = () => {
         return;
       } else {
         // Explain why they can't Final Blow / Final Showdown yet
-        if (gameMode === 'golden') {
+        if (gameMode === GOLDEN_SOLO) {
           // Golden Solo: combined recruit + attack vs strength + 4
           const finalShowdownThreshold = mastermindAttack + 4;
           const combinedPoints = totalAttackPoints + totalRecruitPoints;
@@ -14520,7 +14521,7 @@ function showMastermindAttackButton() {
   let mastermindAttack = recalculateMastermindAttack(mastermind);
 
   // Golden Solo: label the button as Final Showdown when applicable
-  if (gameMode === 'golden' && isFinalBlowRequired(mastermind)) {
+  if (gameMode === GOLDEN_SOLO && isFinalBlowRequired(mastermind)) {
     const threshold = mastermindAttack + 4;
     mastermindAttackButton.textContent = `FINAL SHOWDOWN! (need ${threshold} combined)`;
   } else {
@@ -14639,7 +14640,7 @@ async function confirmMastermindAttack() {
       mastermind.keywords && mastermind.keywords.includes("Bribe");
 
     // Golden Solo Final Showdown: cost is strength + 4, using combined points
-    const goldenFinalShowdown = (gameMode === 'golden' && finalBlowNow);
+    const goldenFinalShowdown = (gameMode === GOLDEN_SOLO && finalBlowNow);
     if (goldenFinalShowdown) {
       mastermindAttack = mastermindAttack + 4;
     }
@@ -14700,7 +14701,7 @@ async function confirmMastermindAttack() {
       finalBlowDelivered = true;
 
       const finalBlowCard = {
-        name: gameMode === 'golden' ? "Final Showdown" : "Final Blow",
+        name: gameMode === GOLDEN_SOLO ? "Final Showdown" : "Final Blow",
         type: "Mastermind",
         victoryPoints: mastermind.victoryPoints,
         image: mastermind.image,
@@ -14708,7 +14709,7 @@ async function confirmMastermindAttack() {
       victoryPile.push(finalBlowCard);
       updateGameBoard();
 
-      if (gameMode === 'golden') {
+      if (gameMode === GOLDEN_SOLO) {
         onscreenConsole.log(
           `<span class="console-highlights">ULTIMATE VICTORY!</span> You won the Final Showdown against <span class="console-highlights">${mastermind.name}</span>!`,
         );
@@ -17457,7 +17458,7 @@ async function recruitHeroConfirmed(hero, hqIndex) {
 
   // Refill HQ slot
   let newCard;
-  if (gameMode === 'golden') {
+  if (gameMode === GOLDEN_SOLO) {
     newCard = goldenRefillHQ(hqIndex); // rotation: splice out, push to rightmost
   } else {
     newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
@@ -17477,7 +17478,7 @@ async function recruitHeroConfirmed(hero, hqIndex) {
   // After Golden Solo rotation hqIndex is gone, check via heroDeck length
   if (gameMode !== 'golden' && !hq[hqIndex] && heroDeck.length === 0) {
     heroDeckHasRunOut = true;
-  } else if (gameMode === 'golden' && !newCard && heroDeck.length === 0) {
+  } else if (gameMode === GOLDEN_SOLO && !newCard && heroDeck.length === 0) {
     heroDeckHasRunOut = true;
   }
 

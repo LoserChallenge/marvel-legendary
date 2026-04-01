@@ -15171,7 +15171,7 @@ async function AmbushRightHeroSkrull() {
 
   // Replace the rightmost HQ space with the top card from the hero deck, if available
   let newCard;
-  if (gameMode === 'golden') {
+  if (gameMode === GOLDEN_SOLO) {
     newCard = goldenRefillHQ(hqIndex);
   } else {
     hq[hqIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
@@ -15243,7 +15243,7 @@ function captureHeroBySkrullQueen(hero) {
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
   const heroIndex = hq.indexOf(hero);
-  if (gameMode === 'golden') {
+  if (gameMode === GOLDEN_SOLO) {
     goldenRefillHQ(heroIndex);
   } else {
     hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
@@ -16954,7 +16954,7 @@ async function KOAllHeroesInHQ() {
 
   for (let i = 0; i < 5; i++) {
     if (!hq[i] && heroDeck.length > 0) {
-      if (gameMode === 'golden') {
+      if (gameMode === GOLDEN_SOLO) {
         goldenRefillHQ(i);
       } else {
         hq[i] = heroDeck.pop();
@@ -17014,7 +17014,7 @@ async function heroSkrulled(hero) {
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
   const heroIndex = hq.indexOf(hero);
-  if (gameMode === 'golden') {
+  if (gameMode === GOLDEN_SOLO) {
     goldenRefillHQ(heroIndex);
   } else {
     hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
