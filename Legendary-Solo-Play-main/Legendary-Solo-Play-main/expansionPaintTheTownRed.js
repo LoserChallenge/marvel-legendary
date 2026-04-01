@@ -272,13 +272,7 @@ async function dailyBugleVillainToHQ(selectedHQIndex) {
 
   if (villainsInCity.length === 0) {
     onscreenConsole.log(`No Villains invade at this time!`);
-      let newCard;
-      if (gameMode === GOLDEN_SOLO) {
-        newCard = goldenRefillHQ(selectedHQIndex);
-      } else {
-        newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-        hq[selectedHQIndex] = newCard;
-      }
+      const newCard = refillHQSlot(selectedHQIndex);
 
       if (newCard) {
       onscreenConsole.log(
@@ -1712,16 +1706,7 @@ function koHeroKraven(hero) {
   koPile.push(hero);
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
-  if (gameMode === GOLDEN_SOLO) {
-    goldenRefillHQ(heroIndex);
-  } else {
-    hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
-  }
-
-  // Check if the HQ space is empty after drawing
-  if (!hq[heroIndex]) {
-    showHeroDeckEmptyPopup();
-  }
+  refillHQSlot(heroIndex);
 
   onscreenConsole.log(
     `<span class="console-highlights">Kraven the Hunter</span> also KO'd <span class="console-highlights">${hero.name}</span>.`,

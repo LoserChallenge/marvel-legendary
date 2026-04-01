@@ -15170,18 +15170,7 @@ async function AmbushRightHeroSkrull() {
   }
 
   // Replace the rightmost HQ space with the top card from the hero deck, if available
-  let newCard;
-  if (gameMode === GOLDEN_SOLO) {
-    newCard = goldenRefillHQ(hqIndex);
-  } else {
-    hq[hqIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
-    newCard = hq[hqIndex];
-
-    // Check if the HQ space is empty after drawing
-    if (!hq[hqIndex]) {
-      showHeroDeckEmptyPopup();
-    }
-  }
+  const newCard = refillHQSlot(hqIndex);
 
   if (newCard) {
     onscreenConsole.log(
@@ -15243,16 +15232,7 @@ function captureHeroBySkrullQueen(hero) {
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
   const heroIndex = hq.indexOf(hero);
-  if (gameMode === GOLDEN_SOLO) {
-    goldenRefillHQ(heroIndex);
-  } else {
-    hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
-
-    // Check if the HQ space is empty after drawing
-    if (!hq[heroIndex]) {
-      showHeroDeckEmptyPopup();
-    }
-  }
+  refillHQSlot(heroIndex);
 
   // Attach an overlay to the villain
   skrullQueen.overlayText = `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SKRULL</span><img src="${hero.image}" alt="${hero.name}" class="hero-image-overlay">`;
@@ -16954,11 +16934,7 @@ async function KOAllHeroesInHQ() {
 
   for (let i = 0; i < 5; i++) {
     if (!hq[i] && heroDeck.length > 0) {
-      if (gameMode === GOLDEN_SOLO) {
-        goldenRefillHQ(i);
-      } else {
-        hq[i] = heroDeck.pop();
-      }
+      refillHQSlot(i);
     }
   }
 
@@ -17014,16 +16990,7 @@ async function heroSkrulled(hero) {
 
   // Replace the hero's HQ space with the top card from the hero deck, if available
   const heroIndex = hq.indexOf(hero);
-  if (gameMode === GOLDEN_SOLO) {
-    goldenRefillHQ(heroIndex);
-  } else {
-    hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
-
-    // Check if the HQ space is empty after drawing
-    if (!hq[heroIndex]) {
-      showHeroDeckEmptyPopup();
-    }
-  }
+  refillHQSlot(heroIndex);
   await processVillainCard();
 
   // Attach an overlay to the villain

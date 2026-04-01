@@ -15971,13 +15971,7 @@ async function KOAllHQBystanders() {
     koPile.push(koedBystander);
 
     // Draw new card from hero deck (if available)
-    let newCard;
-    if (gameMode === GOLDEN_SOLO) {
-      newCard = goldenRefillHQ(index);
-    } else {
-      newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-      hq[index] = newCard;
-    }
+    const newCard = refillHQSlot(index);
 
     // Log the changes
     if (koedBystander && newCard) {

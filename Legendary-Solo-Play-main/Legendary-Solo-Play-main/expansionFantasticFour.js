@@ -623,13 +623,7 @@ async function risingWatersTwist() {
       // Remove from HQ and replace with new card
       const hqIndex = hq.indexOf(hero);
       if (hqIndex !== -1) {
-        let newCard;
-        if (gameMode === GOLDEN_SOLO) {
-          newCard = goldenRefillHQ(hqIndex);
-        } else {
-          newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-          hq[hqIndex] = newCard;
-        }
+        const newCard = refillHQSlot(hqIndex);
 
         if (newCard) {
           // Log the KO
@@ -1277,13 +1271,7 @@ async function cosmicRaysRecruit(maxCost) {
         const hero = hq[selectedHQIndex];
 
         // Remove from HQ and replace with new card from deck
-        let newCard;
-        if (gameMode === GOLDEN_SOLO) {
-          newCard = goldenRefillHQ(selectedHQIndex);
-        } else {
-          newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-          hq[selectedHQIndex] = newCard;
-        }
+        const newCard = refillHQSlot(selectedHQIndex);
 
         if (newCard) {
           onscreenConsole.log(
@@ -3260,11 +3248,7 @@ function morgAmbush() {
   // Now fill any empty HQ slots with new heroes from top of deck
   for (let i = 0; i < 5; i++) {
     if (hq[i] === null && heroDeck.length > 0) {
-      if (gameMode === GOLDEN_SOLO) {
-        goldenRefillHQ(i);
-      } else {
-        hq[i] = heroDeck.pop();
-      }
+      refillHQSlot(i);
     }
   }
 

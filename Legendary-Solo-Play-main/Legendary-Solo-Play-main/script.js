@@ -4665,6 +4665,18 @@ function goldenRefillHQ(index) {
   return newCard;
 }
 
+// Unified HQ slot refill: Golden Solo uses rotation, What If? uses fill-in-place.
+// Always call this instead of the if/else pattern. Returns the new card (or null).
+function refillHQSlot(index) {
+  if (gameMode === GOLDEN_SOLO) {
+    return goldenRefillHQ(index);
+  }
+  const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+  hq[index] = newCard;
+  if (!newCard) showHeroDeckEmptyPopup();
+  return newCard;
+}
+
 // ---------------------------------
 // Golden Solo: rotate HQ at start of each round (skip round 1)
 // New hero enters rightmost slot; leftmost card removed from game.
@@ -6130,14 +6142,7 @@ function returnHeroToDeck(hqIndex) {
     // Bottom = front; drawing uses pop() from end (top)
     heroDeck.unshift(hero);
 
-    let newCard;
-    if (gameMode === GOLDEN_SOLO) {
-      newCard = goldenRefillHQ(hqIndex);
-    } else {
-      // Draw new top card (end of array)
-      newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-      hq[hqIndex] = newCard;
-    }
+    const newCard = refillHQSlot(hqIndex);
 
     if (newCard) {
       onscreenConsole.log(
@@ -12676,13 +12681,7 @@ async function handleHQPostDefeat(
     // 10. Replace HQ card
     console.log("10. Replacing HQ card...");
     try {
-      let newCard;
-      if (gameMode === GOLDEN_SOLO) {
-        newCard = goldenRefillHQ(index); // Golden Solo: rotation refill
-      } else {
-        newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-        hq[index] = newCard;
-      }
+      const newCard = refillHQSlot(index);
 
       if (newCard) {
         console.log("New HQ card:", newCard.name);
@@ -13816,13 +13815,7 @@ function koHeroInHQ(index) {
 
     // Only refill if we haven't reached 6 explosions
     if (currentExplosions < 6) {
-      let newCard;
-      if (gameMode === GOLDEN_SOLO) {
-        newCard = goldenRefillHQ(index); // Golden Solo: rotation refill
-      } else {
-        newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-        hq[index] = newCard;
-      }
+      const newCard = refillHQSlot(index);
 
       if (newCard) {
         onscreenConsole.log(
@@ -13849,13 +13842,7 @@ function koHeroInHQ(index) {
   } else {
     // Normal KO handling
     koPile.push(hero);
-    let newCard;
-    if (gameMode === GOLDEN_SOLO) {
-      newCard = goldenRefillHQ(index); // Golden Solo: rotation refill
-    } else {
-      newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-      hq[index] = newCard;
-    }
+    const newCard = refillHQSlot(index);
 
     if (newCard) {
       onscreenConsole.log(
@@ -17457,13 +17444,7 @@ async function recruitHeroConfirmed(hero, hqIndex) {
   updateReserveAttackAndRecruit();
 
   // Refill HQ slot
-  let newCard;
-  if (gameMode === GOLDEN_SOLO) {
-    newCard = goldenRefillHQ(hqIndex); // rotation: splice out, push to rightmost
-  } else {
-    newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-    hq[hqIndex] = newCard;
-  }
+  const newCard = refillHQSlot(hqIndex);
 
   if (newCard) {
     onscreenConsole.log(
