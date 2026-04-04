@@ -1922,6 +1922,18 @@ document
     }
   });
 
+// Fisher-Yates shuffle — produces a truly uniform random permutation.
+// The naive .sort(() => 0.5 - Math.random()) is biased because the
+// comparator is inconsistent; this algorithm guarantees every ordering
+// is equally likely.  Shuffles the array in place and returns it.
+function fisherYatesShuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 function randomizeScheme() {
   // Get the selected filters
   const selectedFilters = Array.from(
@@ -2058,7 +2070,7 @@ function randomizeVillain() {
   // Fill remaining slots randomly from filtered pool (excluding already-locked)
   const remainingSlots = Math.max(0, req.requiredVillains - selectedVillainGroups.length);
   const available = filteredCheckboxes.filter(cb => !lockedCheckboxes.includes(cb));
-  const shuffled = [...available].sort(() => 0.5 - Math.random());
+  const shuffled = fisherYatesShuffle([...available]);
   shuffled.slice(0, remainingSlots).forEach(cb => {
     cb.checked = true;
     const group = villains.find(g => g.name === cb.value);
@@ -2291,7 +2303,7 @@ function randomizeHero() {
   // Randomly select heroes — Golden Solo always uses 5 heroes
   const _rh_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
   const _rh_count = (_rh_gameMode === GOLDEN_SOLO) ? 5 : 3;
-  const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random());
+  const shuffledCheckboxes = fisherYatesShuffle([...filteredCheckboxes]);
   const selectedCheckboxes = shuffledCheckboxes.slice(0, _rh_count);
 
   // Clear the previously selected hero groups
@@ -2662,9 +2674,7 @@ function randomizeVillainWithRequirements(scheme) {
 
   // Select remaining villains from available pool
   if (remainingSlots > 0 && availableCheckboxes.length > 0) {
-    const shuffledCheckboxes = [...availableCheckboxes].sort(
-      () => 0.5 - Math.random()
-    );
+    const shuffledCheckboxes = fisherYatesShuffle([...availableCheckboxes]);
     const selectedCheckboxes = shuffledCheckboxes.slice(0, remainingSlots);
 
     selectedCheckboxes.forEach((checkbox) => {
@@ -2768,9 +2778,7 @@ function randomizeHenchmenWithRequirements(scheme) {
       // Randomly select the remaining henchmen (if any are needed)
       const remainingSlots = scheme.requiredHenchmen - 1; // Subtract 1 for the required henchmen
       if (remainingSlots > 0 && remainingCheckboxes.length > 0) {
-        const shuffledCheckboxes = remainingCheckboxes.sort(
-          () => 0.5 - Math.random(),
-        ); // Shuffle the array
+        const shuffledCheckboxes = fisherYatesShuffle([...remainingCheckboxes]); // Shuffle the array
         const selectedCheckboxes = shuffledCheckboxes.slice(0, remainingSlots); // Pick the required number
 
         // Add the selected henchmen groups
@@ -2789,9 +2797,7 @@ function randomizeHenchmenWithRequirements(scheme) {
     }
   } else {
     // If no specific henchmen is required, randomly select the required number of henchmen
-    const shuffledCheckboxes = filteredCheckboxes.sort(
-      () => 0.5 - Math.random(),
-    ); // Shuffle the array
+    const shuffledCheckboxes = fisherYatesShuffle([...filteredCheckboxes]); // Shuffle the array
     const selectedCheckboxes = shuffledCheckboxes.slice(
       0,
       scheme.requiredHenchmen,
@@ -2890,7 +2896,7 @@ function randomizeHeroWithRequirements(scheme) {
   // Randomly select the required number of heroes — Golden Solo always uses 5
   const _rhr_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
   const _rhr_count = (_rhr_gameMode === GOLDEN_SOLO) ? 5 : scheme.requiredHeroes;
-  const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random());
+  const shuffledCheckboxes = fisherYatesShuffle([...filteredCheckboxes]);
   const selectedCheckboxes = shuffledCheckboxes.slice(0, _rhr_count);
 
   // Clear the previously selected hero groups
