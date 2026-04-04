@@ -32,6 +32,17 @@
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const f=(JSON.parse(d).tool_input||{}).file_path||'';const b=require('path').basename(f);if(/^(script|cardAbilities).*\\.js$/.test(b)){console.error('LARGE FILE WARNING: '+b+' has ~17-19K lines. For substantial feature changes, consider a git worktree first (/using-git-worktrees). Proceeding with edit.');}}catch(e){}});\""
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",

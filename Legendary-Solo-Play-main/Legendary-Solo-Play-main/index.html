@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Marvel Legendary Solo Play</title>
   <link rel="icon" type="image/png" href="Visual Assets/Icons/favicon.webp">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1838,6 +1840,11 @@ document.head.appendChild(cardDatabaseScript);
     <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="loading-card-icons">
     <img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="loading-card-icons">
   </div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/sw.js');
+    }
+  </script>
 </body>
 
 </html>

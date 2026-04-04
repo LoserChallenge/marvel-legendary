@@ -22,7 +22,7 @@ You are a specialist in navigating the Marvel Legendary Solo Play codebase. It i
 | `updatesContent.js` | 475 | Patch notes |
 
 All files are located in:
-`d:\AI\Claude Code\marvel-legendary\Legendary-Solo-Play-main\Legendary-Solo-Play-main\`
+`D:\Games\Digital\Marvel Legendary\Claude Code\marvel-legendary\Legendary-Solo-Play-main\Legendary-Solo-Play-main\`
 
 ## How to Search
 

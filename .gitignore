@@ -11,5 +11,8 @@ desktop.ini
 # Rules PDFs — large files, stored locally only
 rules/
 
+# Expansion staging area — card images and inventory PDFs, local only
+expansions/
+
 # Superpowers plugin cache
 .superpowers/

@@ -6,7 +6,20 @@
       "Bash(grep \"in Solo Play, ''each other player'' refers to you\" \"/d/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/cardAbilitiesDarkCity.js\")",
       "Bash(grep -c \"drawVillainCard\\(\\)\" \"/d/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main\"/*.js)",
       "Bash(grep -v \":0$\")",
-      "Bash(grep -c \"drawVillainCard\\(\\)\" *.js)"
+      "Bash(grep -c \"drawVillainCard\\(\\)\" *.js)",
+      "Skill(claude-md-management:revise-claude-md)",
+      "Skill(claude-md-management:revise-claude-md:*)",
+      "Bash(pdftotext -layout 'D:/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/expansions/secret-wars-vol1/Secret-Wars-Vol-1-Inventory.pdf' -)",
+      "Bash(python3 -c \":*)",
+      "Skill(hookify:help)",
+      "Skill(hookify:help:*)",
+      "Bash(python3:*)",
+      "Bash(grep -n \"name: ''''Rogue''''\" cardDatabase.js)",
+      "Bash(grep -n \"name: ''''Spider-Man''''\" cardDatabase.js)",
+      "Bash(grep -n \"name: ''''Storm''''\" cardDatabase.js)",
+      "Bash(grep -n \"name: ''''Thor''''\" cardDatabase.js)",
+      "Bash(grep -n \"name: ''''Wolverine''''\" cardDatabase.js)",
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" -e \":*)"
     ]
   },
   "allowedTools": [
