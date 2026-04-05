@@ -21,19 +21,19 @@ Enhance the existing Legendary Solo Play web app. Golden Solo Mode is complete. 
 
 ## Source Files
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `script.js` | 19,322 | Core game engine — turn logic, UI, villain deck, HQ, mastermind, city |
-| `cardAbilities.js` | 17,704 | Hero card effects — Core set |
-| `cardAbilitiesDarkCity.js` | 16,972 | Hero card effects — Dark City expansion |
-| `cardAbilitiesSidekicks.js` | 2,470 | Sidekick card effects |
-| `cardDatabase.js` | 9,869 | All card data definitions |
-| `index.html` | 1,830 | Setup screen + game board HTML |
-| `styles.css` | 8,804 | All styling |
-| `expansionFantasticFour.js` | 5,851 | Fantastic Four expansion |
-| `expansionGuardiansOfTheGalaxy.js` | 7,052 | Guardians of the Galaxy expansion |
-| `expansionPaintTheTownRed.js` | 5,582 | Paint the Town Red expansion |
-| `updatesContent.js` | 475 | Patch notes |
+| File | Purpose |
+|------|---------|
+| `script.js` | Core game engine — turn logic, UI, villain deck, HQ, mastermind, city |
+| `cardAbilities.js` | Hero card effects — Core Set |
+| `cardAbilitiesDarkCity.js` | Hero card effects — Dark City expansion |
+| `cardAbilitiesSidekicks.js` | Sidekick card effects |
+| `cardDatabase.js` | All card data definitions |
+| `index.html` | Setup screen + game board HTML |
+| `styles.css` | All styling |
+| `expansionFantasticFour.js` | Fantastic Four expansion |
+| `expansionGuardiansOfTheGalaxy.js` | Guardians of the Galaxy expansion |
+| `expansionPaintTheTownRed.js` | Paint the Town Red expansion |
+| `updatesContent.js` | Patch notes |
 
 ## How to Run
 
@@ -54,11 +54,7 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 - User is on Claude Pro — no API usage
 - `node` is installed at `C:\Program Files\nodejs\node.exe` but not on the Bash tool's PATH — manual `node --check` will fail; rely on the hook runner instead
 - When running Node `-e` scripts, use relative paths from the working directory — absolute Windows paths with backslashes get mangled by double-escaping
-- `poppler` installed via winget; binaries copied to `C:\Users\Paul\bin` — Bash tool can run `pdftoppm`/`pdftotext` directly.
-- `pdftoppm` PNG output: always pass `-png` flag — without it, outputs `.ppm` files. Output filenames auto-include a hyphen separator (e.g., `prefix-01.png` not `prefix1.png`).
-- Rules PDFs are in `rules/` — read them with the Read tool as needed (visual layout and icons included).
-- **PDF token cost:** Each page = one image render regardless of text size — use default (smaller) text to fit more content per page and reduce page count. Never attach PDFs in chat; always use the Read tool with page ranges.
-- **Expansion inventory PDFs:** User places them in `expansions/[expansion-name]/` (e.g. `expansions/revelations/revelations-Inventory.pdf`). Always read page-by-page with the Read tool. **Never use pdftotext or any other conversion tool on these PDFs** — they contain reference images that must be read visually. If the Read tool fails on any PDF, **stop immediately and tell the user** — do not attempt any workaround. Known fix: the Read tool's PDF renderer relies on `pdftoppm` being on PATH at VS Code launch time — if it fails, ask the user to fully close and reopen VS Code (not just reload window), then retry.
+- PDF/image tool gotchas (poppler, pdftoppm, inventory PDFs) — see `docs/card-inventory/card-reading-rules.md`
 
 ## JS/HTML Pairing Rule
 
@@ -120,6 +116,8 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `docs/expansion-pipeline-status.md` — pipeline progress table for all expansions
 - `docs/expansion-mechanics/` — mechanics reference docs produced by `/analyze-expansion`
 - `docs/expansion-progress/` — implementation progress files produced by `/new-expansion`
+- `docs/known-issues.md` — detailed descriptions of open/deferred issues
+- `docs/golden-solo-history.md` — Golden Solo implementation history, architectural rules, testing checklist
 
 ## Planned Work (in order)
 
@@ -195,42 +193,13 @@ Staging structure, file naming conventions, staging process steps, card inventor
 
 ## Golden Solo Implementation
 
-All 7 phases implemented and stable (2026-03-09). Compatibility audit complete (2026-03-26). Mode flag: `gameMode` global (`'whatif'` | `'golden'`). Key functions: `goldenRefillHQ()`, `goldenHQRotate()`, bystander discard popup, Final Showdown, hero deck restructuring.
-
-Full history (bug fixes, testing checklist, audit details): `docs/golden-solo-history.md`
-
-**Key architectural rule:** `enterCityNotDraw = true` does NOT suppress the Golden Solo block. Mid-turn card effects must call `processVillainCard()` (single draw) not `drawVillainCard()` (full round). Any new expansion card that draws a villain card mid-turn must follow this same pattern.
-
-**"Other Player" effects:** Keep the existing silent skip for Golden Solo — do not apply hero superpower bonuses to the hero deck. New expansion cards with "each other player" wording should follow the same approach.
+Complete and stable. Mode flag: `gameMode` (`'whatif'` | `'golden'`). Full history, architectural rules, and testing checklist: `docs/golden-solo-history.md`
 
 ---
 
 ## Known Issues / Deferred
 
-- **Summary panel hero names truncate on narrow screens** — accepted for now; revisit in next UI pass.
-- **"Other player" effects — broader solo mode review** — needs a dedicated conversation (see below)
-- **Kree-Skrull War scheme villain count** — needs rules decision (see below)
-
-### Scheme vs Game Mode villain count conflict
-
-**Symptom:** The Kree-Skrull War scheme enforces both Kree Starforce and Skrulls as required villain groups in What If? Solo, even though What If? Solo is normally a 1-villain-group mode.
-
-**Root cause:** `getEffectiveSetupRequirements` returns the scheme's `specificVillainRequirement` array unchanged in What If? mode. Kree-Skrull War has 2 specific requirements, so both are enforced regardless of game mode.
-
-**The open question:** For schemes that explicitly require 2 villain groups (Kree-Skrull War), should What If? Solo honour the scheme's count (2) or always cap at 1? This is a rules interpretation question that needs a deliberate decision before fixing.
-
-**Status:** Deferred — needs rules clarification before implementation.
-
-### "Other player" effects in solo mode
-
-**Problem:** The current rule is "silent skip" for Golden Solo — but the codebase isn't consistent. Some cards correctly suppress the effect, while others apply it to the active player instead. The inventory passes have surfaced specific cases:
-
-**Known inconsistencies (found during inventory):**
-- **Shriek (PtTR)** — Card says "each other player gains a Wound." Code applies wound to active player. Should be suppressed per the current rule.
-- **Death (Dark City)** — Code scope includes played cards + artifacts; card says hand only. (Separate bug, but same category of "check all villain effects against card text.")
-
-**The bigger question:** Not all "other player" effects translate cleanly to a 1-player game. Some are purely negative (Shriek's wound — skip makes sense), some are mixed (reveal-or-penalty — does the solo player reveal?), and some affect game state in ways that matter even solo. A blanket "suppress all" rule may not be correct for every case.
-
-**What's needed:** After all expansion inventories are complete, do a single pass across all expansions to catalogue every "other player" / "each other player" / "each player" card, then decide case-by-case how each should behave in Golden Solo.
-
-**Status:** Deferred — waiting until all expansion inventories are finalized so the full list is available.
+Details in `docs/known-issues.md`. Summary:
+- **Hero name truncation** on narrow screens — accepted, revisit in next UI pass
+- **Kree-Skrull War villain count** — rules decision needed (What If? Solo 1-group cap vs. scheme's 2-group requirement)
+- **"Other player" effects** — inconsistent solo handling; full review deferred until all inventories are finalized (will be addressed by `/analyze-expansion`)

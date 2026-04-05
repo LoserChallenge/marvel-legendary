@@ -24,8 +24,13 @@ Detailed rules for reading card data from images and databases. Referenced from 
 - New expansion cards (not yet in DB): use per-corner reads — target each corner of the image explicitly rather than reading the whole card at once, to minimise corner confusion.
 - **Never use thematic, flavor, or contextual reasoning to guess uncertain card data.** If a value cannot be confirmed from available assets, flag and leave for human spot-check.
 
-## Tool Gotchas
+## Tool & Platform Gotchas
 
+- `poppler` installed via winget; binaries copied to `C:\Users\Paul\bin` — Bash tool can run `pdftoppm`/`pdftotext` directly.
+- `pdftoppm` PNG output: always pass `-png` flag — without it, outputs `.ppm` files. Output filenames auto-include a hyphen separator (e.g., `prefix-01.png` not `prefix1.png`).
+- Rules PDFs are in `rules/` — read them with the Read tool as needed (visual layout and icons included).
+- **PDF token cost:** Each page = one image render regardless of text size — use default (smaller) text to fit more content per page and reduce page count. Never attach PDFs in chat; always use the Read tool with page ranges.
+- **Expansion inventory PDFs:** User places them in `expansions/[expansion-name]/` (e.g. `expansions/revelations/revelations-Inventory.pdf`). Always read page-by-page with the Read tool. **Never use pdftotext or any other conversion tool on these PDFs** — they contain reference images that must be read visually. If the Read tool fails on any PDF, **stop immediately and tell the user** — do not attempt any workaround. Known fix: the Read tool's PDF renderer relies on `pdftoppm` being on PATH at VS Code launch time — if it fails, ask the user to fully close and reopen VS Code (not just reload window), then retry.
 - Glob tool fails on paths containing spaces when searching from the game root (e.g. `Visual Assets/Villains/*.webp` = no results). Use the full project-root path: `Legendary-Solo-Play-main/Legendary-Solo-Play-main/Visual Assets/...`
 - **Large BGG reference files:** X-Men reference is 107K+ tokens — too large for a single Read. Use `Grep` to find section headers, then pass targeted line ranges to subagents. Split by card type section.
 
