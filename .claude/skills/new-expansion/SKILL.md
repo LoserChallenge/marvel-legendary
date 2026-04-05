@@ -1,171 +1,247 @@
 ---
 name: new-expansion
-description: Step-by-step guide for adding a new expansion to the Marvel Legendary Solo Play app — correct file structure, card data, Golden Solo compatibility rules, and workflow order.
+description: Multi-phase code integration for a Marvel Legendary expansion. Consumes finalized inventory + mechanics reference to add card data, images, setup screen entries, and all card effects. Supports multi-session work with progress tracking.
 ---
 
-# New Expansion Skill
+# New Expansion — Code Integration
 
-Use this skill whenever starting work on a new expansion. Follow the steps in order.
+Multi-phase skill that takes a fully analyzed expansion and builds it into the game. This is the final step in the expansion pipeline.
 
----
-
-## Before You Start
-
-You will need:
-- The expansion's rulesheet PDF (user attaches to chat)
-- `card-directory.pdf` (already in project root) for card names, costs, and classes
-- The name of the expansion (e.g. "Heroes of Asgard")
-
-All source files are in:
-`D:\Games\Digital\Marvel Legendary\Claude Code\marvel-legendary\Legendary-Solo-Play-main\Legendary-Solo-Play-main\`
+**Pipeline position:** `/stage-expansion` → `/inventory-creator` → `/inventory-verifier` → user spot-check → `/analyze-expansion` → **`/new-expansion` (this skill)**
 
 ---
 
-## Step 1 — Read and Plan (before touching any files)
+## Interaction Model
 
-1. Read the rulesheet PDF to understand:
-   - All heroes, their cards (names, costs, classes, recruit/attack values)
-   - All villains (fight effects, ambush effects, escape effects)
-   - All schemes (twist effects, win condition)
-   - The mastermind (lead card, tactics, master strike)
-   - Any new keywords the expansion introduces
-
-2. Read the relevant pages of `card-directory.pdf` to confirm card names and values.
-
-3. Draft a full content plan and present it to the user for approval before writing any code. The plan should list:
-   - Hero roster and card names
-   - Villain group(s)
-   - Scheme(s)
-   - Mastermind name and tactics
-   - Any new keywords and how they'll be implemented
-
-**Do not write any code until the user approves the plan.**
+The user wants to be involved in decisions about **gameplay** but not the code itself. Surface checkpoints about game logic; handle code details autonomously.
 
 ---
 
-## Step 2 — Create the Expansion File
+## Phase 0: Pre-flight Check
 
-Create a new file: `expansion[Name].js` (e.g. `expansionHeroesOfAsgard.js`)
+Before any work, verify ALL prerequisites exist:
 
-Model the structure on `expansionFantasticFour.js`. Typical sections:
+1. **Finalized inventory** — `docs/card-inventory/final/[name].md` exists and has no `⏳` sections
+2. **Mechanics reference** — `docs/expansion-mechanics/[name].md` exists and `Status:` says "Complete"
+3. **Staged images** — `expansions/[name]/` has organized subfolders (Heroes/, Villains/, etc.)
+4. **Rules PDF** — accessible in `rules/` or `expansions/[name]/`
+
+**If anything is missing, stop and tell the user what's needed. Do not proceed.**
+
+### Resume Check
+
+If `docs/expansion-progress/[name].md` exists, read it and report current status:
+> "Picking up where we left off — Phases 1-2 are complete, Phase 3b (Heroes) is in progress. [Hero1] and [Hero2] are done, [Hero3] is next. Ready to continue?"
+
+If no progress file exists, create one (see Progress Tracking section at the end).
+
+---
+
+## Phase 1: Card Data + Image Import
+
+### 1a: Import Images
+
+Copy staged images from `expansions/[name]/` into production folders following the import mapping:
+
+| Staging subfolder | Production folder |
+|---|---|
+| `Heroes/` | `Visual Assets/Heroes/[Expansion Display Name]/` |
+| `Villains/` | `Visual Assets/Villains/` |
+| `Masterminds/` | `Visual Assets/Masterminds/` |
+| `Schemes/` | `Visual Assets/Schemes/` |
+| `Henchmen/` | `Visual Assets/Henchmen/` |
+| `Bystanders/` | `Visual Assets/Other/Bystanders/` |
+| `Sidekicks/` | `Visual Assets/Sidekicks/` |
+
+Only copy subfolders that exist in the staging area.
+
+### 1b: Add Card Data to cardDatabase.js
+
+Add all card entries pulling structured data directly from the inventory file. Follow the existing format in `cardDatabase.js` — use a nearby expansion's entries as the template for field order and naming.
+
+For each card entry:
+- All structured fields (name, cost, team, classes, attack, recruit, rarity, etc.) come from the inventory
+- `image` path points to the production location from Step 1a
+- `unconditionalAbility` and `conditionalAbility` reference function names that will be created in Phase 3 — use the standard naming convention: `camelCaseHeroNameCardTitle`
+- For villain/mastermind/scheme entries, follow the same field patterns as existing expansions
+
+### Checkpoint
+
+Show the user a summary:
+> "Added [N] heroes ([M] cards), [N] villain groups ([M] cards), [N] mastermind(s) ([M] tactics), [N] scheme(s), [N] henchmen group(s). Here's the roster: [list]. Does this match what you'd expect?"
+
+### Update progress file: Phase 1 ✅
+
+---
+
+## Phase 2: Setup Screen Registration
+
+1. Add expansion heroes to the hero selection area in `index.html` — follow the pattern of existing expansion hero entries
+2. Add villain groups, schemes, masterminds to their respective dropdowns/selection areas
+3. Add a `<script>` tag for the new expansion file in the loading chain — find where the existing expansion scripts are loaded (nested `onload` callbacks) and add the new one in sequence
+4. Create `expansion[Name].js` with a basic skeleton:
 
 ```js
 // [Expansion Name] Expansion
 // [date]
 
-// Keywords (if any)
-// [keyword helper functions here]
+// --- KEYWORDS & HELPERS ---
 
 // --- HERO CARD ABILITIES ---
-// [one async function per card ability]
 
 // --- VILLAIN CARD EFFECTS ---
-// [ambush, fight, escape functions]
 
 // --- SCHEME TWIST EFFECTS ---
-// [scheme twist functions]
 
 // --- MASTERMIND EFFECTS ---
-// [master strike, lead card, tactic functions]
+
+// --- HENCHMEN EFFECTS ---
 ```
+
+### Checkpoint
+
+> "The expansion is now registered in the game. You should be able to open index.html, see [Expansion Name] in all the dropdowns, and start a game — cards will appear with images but no special effects yet. Want to test that before I start on effects?"
+
+### Update progress file: Phase 2 ✅
 
 ---
 
-## Step 3 — Add Card Data to cardDatabase.js
+## Phase 3: Effect Implementation
 
-Use the Grep tool to find where existing expansion card data is added (search for `// Fantastic Four` or `// Guardians`). Add the new expansion's data in the same format immediately after the last expansion block.
+Broken into sub-phases by card type. **Each sub-phase can be its own session** — check the progress file to know where to resume.
 
-Card data entries follow this structure:
-```js
-{ name: "Hero Name - Card Title", cost: 4, recruit: 3, attack: 0, classes: ["Instinct"], type: "Hero", team: "Expansion Name", ability: heroNameCardTitle },
-```
+Read the mechanics reference document at the start of this phase (or at resume) to refresh context on all keyword implementations and solo mode decisions.
 
----
+### 3a: Keywords & Helpers
 
-## Step 4 — Register on the Setup Screen (index.html)
+Implement keyword functions defined in the mechanics reference. These are shared functions that individual card abilities will call.
 
-1. Add the expansion's heroes to the hero selection checkboxes.
-2. Add the expansion's villains to the villain group selection.
-3. Add the expansion's schemes to the scheme dropdown.
-4. Add the expansion's mastermind to the mastermind dropdown.
-5. Add a `<script src="expansion[Name].js"></script>` tag alongside the other expansion script tags.
+For each keyword:
+- Refer to the mechanics reference for the agreed implementation approach
+- Follow the complexity rating: "Fits cleanly" = expansion file only; "New capability" = new helpers in expansion file; "Core engine change" = modify script.js per the agreed approach
+- If the mechanics reference lists core engine changes, implement those first
 
-Search `index.html` for `expansionFantasticFour.js` to find the right location for the script tag.
+**Checkpoint:** For each keyword, explain what it does in gameplay terms:
+> "[Keyword] is now implemented. When a card has [Keyword] [N], it means [plain English explanation]. Does that match your understanding?"
 
----
+### 3b: Hero Abilities
 
-## Step 5 — Golden Solo Compatibility (MANDATORY)
+One hero at a time, all 4 cards per hero. For each card:
+- Read the effect text from the inventory file
+- Implement the function referenced in the `cardDatabase.js` entry
+- Use `async` for any function that may trigger popups, draws, or player choices — and grep all call sites to ensure `await` is present
+- Follow Golden Solo rules: `processVillainCard()` not `drawVillainCard()`, conditional `goldenRefillHQ()` for HQ manipulation, silent skip for "other player" effects
+- Follow the attack-granting pattern: update both `totalAttackPoints` and `cumulativeAttackPoints`, call `updateGameBoard()`
 
-Every function in the new expansion file that affects villain draws or the HQ **must** follow these three rules. The anti-pattern hook will catch violations at save time, but read these rules first.
+**Checkpoint per hero:**
+> "[Hero Name] — 4 cards implemented. Here's what each does:
+> - [Card 1]: [gameplay description]
+> - [Card 2]: [gameplay description]
+> - [Card 3]: [gameplay description]
+> - [Card 4]: [gameplay description]
+> Does this match the cards?"
 
-### Rule 1 — Villain draws mid-turn: use `processVillainCard()`
+### 3c: Villain Effects
 
-Any card effect that draws a villain card during play (ambush effects, scheme twists, etc.) must call `processVillainCard()`, **not** `drawVillainCard()`.
+For each villain group, implement ambush, fight, and escape effects. Reference the inventory for exact effect text and the mechanics reference for any keywords or special mechanics.
 
-```js
-// CORRECT
-await processVillainCard();
+**Checkpoint per villain group:**
+> "[Group Name] — [N] cards implemented. Key effects: [summary of notable ambush/fight/escape behaviors]. Does this match?"
 
-// WRONG — triggers full Golden Solo round machinery
-await drawVillainCard();
-```
+### 3d: Mastermind Effects
 
-If an effect draws multiple villain cards, loop over `processVillainCard()`:
-```js
-for (let i = 0; i < count; i++) {
-  await processVillainCard();
-}
-```
+Implement master strike, lead card ability, and all tactic effects. Pay special attention to:
+- Mastermind names must match `cardDatabase.js` exactly
+- Tactic fight effects often involve complex interactions
+- Epic variants if present
 
-### Rule 2 — HQ KO effects: use `goldenRefillHQ()`
+**Checkpoint:**
+> "[Mastermind Name] implemented. Master Strike does [X]. Tactics: [summary of each]. Does this match?"
 
-Any effect that KOs a hero from the HQ and immediately fills the slot must use the conditional pattern:
+### 3e: Scheme Effects
 
-```js
-// CORRECT
-if (gameMode === 'golden') {
-  goldenRefillHQ(index);
-} else {
-  hq[index] = heroDeck.pop();
-}
+Implement scheme twist effects, any setup modifications, and evil wins conditions. Schemes are often the most complex — they can modify core game flow.
 
-// WRONG — breaks HQ rotation in Golden Solo
-hq[index] = heroDeck.pop();
-```
+Refer to the mechanics reference for any schemes flagged as "Core engine change."
 
-Read the full function before editing — the variable name for the index may vary.
+**Checkpoint per scheme:**
+> "[Scheme Name] — Setup: [description]. Twist: [what happens]. Evil Wins: [condition]. Does this match?"
 
-### Rule 3 — "Each other player" effects: skip in Golden Solo
+### 3f: Henchmen / Other
 
-Any effect worded "each other player" should be silently skipped in Golden Solo (no hero deck interaction):
+Implement henchmen fight effects, bystander rescue effects, and any expansion-specific card type effects (Locations, Traps, Horrors, etc.).
 
-```js
-if (gameMode === 'golden') {
-  // skip — no other player in Golden Solo
-  return;
-}
-// ...normal effect...
-```
+**Checkpoint:**
+> "[Type] effects implemented: [summary]. Does this match?"
+
+### Update progress file after each sub-phase completes
 
 ---
 
-## Step 6 — Verify
+## Phase 4: Validation & Testing
 
-After completing all files:
+### 4a: Expansion Validator
 
-1. The JS syntax check hook runs automatically on every save — fix any errors immediately.
-2. The anti-pattern hook blocks any `drawVillainCard()` calls in expansion files — fix if triggered.
-3. Grep for `drawVillainCard` in the new expansion file — confirm zero results.
-4. Open `index.html` in the browser and confirm the new expansion appears on the setup screen with no console errors.
-5. Start a test game using the new expansion and play through at least one full round.
+Run the expansion-validator subagent against the new expansion file:
+> Use `.claude/agents/expansion-validator.md` — it checks all 7 Golden Solo compatibility rules.
+
+Present results to the user in plain English:
+> "Validation results: [N] of 7 rules passed. [Details of any failures and what the fix does]."
+
+Fix any issues found, then re-run until all 7 rules pass.
+
+### 4b: JS Syntax Check
+
+Run an explicit syntax check on the new expansion file (beyond the automatic hook):
+```bash
+node --check expansion[Name].js
+```
+
+### 4c: Guided Test Game
+
+Suggest a test setup that exercises the expansion's key mechanics:
+> "For testing, I'd suggest: [Mastermind] with [Scheme], heroes: [list that includes new + existing heroes]. This setup will exercise [keyword], [mechanic], and [interaction]. Ready to try it?"
+
+Walk the user through what to look for during the test game.
+
+### Update progress file: Phase 4 ✅, Status → Complete
 
 ---
 
-## Key Functions (defined in script.js)
+## Progress Tracking
 
-| Function | Purpose |
-|---|---|
-| `processVillainCard()` | Draw a single villain card — use this in card effects |
-| `drawVillainCard()` | Full Golden Solo round machinery — only called by the turn engine |
-| `goldenRefillHQ(index)` | Remove HQ card at index, append new card to rightmost slot |
-| `gameMode` | Global: `'golden'` or `'whatif'` |
+Create and maintain `docs/expansion-progress/[name].md`:
+
+```markdown
+# [Expansion Name] — Implementation Progress
+
+Started: YYYY-MM-DD
+Status: In Progress
+
+## Phase 0: Pre-flight — ✅ Complete
+
+## Phase 1: Card Data + Images — ⬜ Not started
+<!-- After completion: ✅ Complete — [N] heroes, [N] villain groups, [N] masterminds, [N] schemes added -->
+
+## Phase 2: Setup Screen — ⬜ Not started
+
+## Phase 3: Effects — ⬜ Not started
+- 3a Keywords: ⬜
+- 3b Heroes: ⬜
+- 3c Villains: ⬜
+- 3d Mastermind: ⬜
+- 3e Schemes: ⬜
+- 3f Henchmen/Other: ⬜
+
+## Phase 4: Validation — ⬜ Not started
+```
+
+**Update this file at the end of every phase and sub-phase.** Use:
+- ✅ Complete (with summary)
+- ⬜ Not started
+- ⏳ In progress (with details of what's done within the phase)
+
+For Phase 3b (Heroes), track individual heroes:
+```
+- 3b Heroes: ⏳ — ✅ Hero1, ✅ Hero2, ⬜ Hero3, ⬜ Hero4, ⬜ Hero5
+```
