@@ -7709,8 +7709,8 @@ rogueCard.isCopied = true;
 }
 
 function StormMinus2ToRooftops() {
-  city3LocationAttack--;
-  city3LocationAttack--;
+  cityLocationAttack[2]--;
+  cityLocationAttack[2]--;
   onscreenConsole.log(
     `Any Villain you fight on the Rooftops this turn gets -2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
   );
@@ -7718,8 +7718,8 @@ function StormMinus2ToRooftops() {
 }
 
 function StormMinus2ToBridge() {
-  city1LocationAttack--;
-  city1LocationAttack--;
+  cityLocationAttack[0]--;
+  cityLocationAttack[0]--;
   console.log("Any villain on the bridge loses 2 Attack this turn.");
   onscreenConsole.log(
     `Any Villain you fight on the Bridge this turn gets -2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
@@ -7935,7 +7935,7 @@ function StormMoveVillain() {
         const attackFromScheme = city[i].attackFromScheme || 0;
         const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
         const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
-        const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
+        const currentTempBuff = cityTempBuff[i] || 0;
         const villainShattered = city[i].shattered || 0;
         const totalAttackModifiers =
           attackFromMastermind +
@@ -8121,13 +8121,7 @@ function StormMoveVillain() {
     }
 
     // Add location attack overlays
-    const locations = [
-      { value: city1LocationAttack, id: "bridge-label" },
-      { value: city2LocationAttack, id: "streets-label" },
-      { value: city3LocationAttack, id: "rooftops-label" },
-      { value: city4LocationAttack, id: "bank-label" },
-      { value: city5LocationAttack, id: "sewers-label" },
-    ];
+    const locations = cityLocationAttack.map((value, idx) => ({ value, id: `city-label-${idx}` }));
 
     locations.forEach(({ value, id }) => {
       if (value !== 0) {
@@ -11516,7 +11510,7 @@ function addCardOverlays(cardContainer, card, index, location = 'city') {
     const attackFromScheme = city[index].attackFromScheme || 0;
     const attackFromOwnEffects = city[index].attackFromOwnEffects || 0;
     const attackFromHeroEffects = city[index].attackFromHeroEffects || 0;
-    const currentTempBuff = window[`city${index + 1}TempBuff`] || 0;
+    const currentTempBuff = cityTempBuff[index] || 0;
     const villainShattered = city[index].shattered || 0;
     totalAttackModifiers =
       attackFromMastermind +
@@ -11577,7 +11571,7 @@ function addCardOverlays(cardContainer, card, index, location = 'city') {
 
   // Add temp buff overlay if exists (only for city)
   if (location === 'city') {
-    const currentTempBuff = window[`city${index + 1}TempBuff`] || 0;
+    const currentTempBuff = cityTempBuff[index] || 0;
     if (currentTempBuff !== 0) {
       const tempBuffOverlay = document.createElement("div");
       tempBuffOverlay.className = "temp-buff-overlay-villain-move";
@@ -11681,18 +11675,10 @@ function addCardOverlays(cardContainer, card, index, location = 'city') {
 
   // Add location attack overlays if applicable (only for city)
   if (location === 'city') {
-    const locationAttacks = [
-      { value: city1LocationAttack, index: 0 },
-      { value: city2LocationAttack, index: 1 },
-      { value: city3LocationAttack, index: 2 },
-      { value: city4LocationAttack, index: 3 },
-      { value: city5LocationAttack, index: 4 },
-    ];
-
-    const locationAttack = locationAttacks.find((loc) => loc.index === index);
-    if (locationAttack && locationAttack.value !== 0) {
+    const locationAttackValue = cityLocationAttack[index] || 0;
+    if (locationAttackValue !== 0) {
       const locationElement = document.querySelector(
-        `#${["bridge-label", "streets-label", "rooftops-label", "bank-label", "sewers-label"][index]}`,
+        `#city-label-${index}`,
       );
       if (locationElement) {
         const existingOverlay = locationElement.querySelector(
@@ -11702,7 +11688,7 @@ function addCardOverlays(cardContainer, card, index, location = 'city') {
 
         const attackElement = document.createElement("div");
         attackElement.className = "location-attack-changes";
-        attackElement.innerHTML = `<p>${locationAttack.value} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
+        attackElement.innerHTML = `<p>${locationAttackValue} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
         locationElement.appendChild(attackElement);
       }
     }
@@ -16847,35 +16833,35 @@ async function darkPortal() {
       console.log(
         "A dark portal opens beneath the Bridge. Villains on the Bridge gain 1 Attack.",
       );
-      city1PermBuff++;
+      cityPermBuff[0]++;
       darkPortalSpaces[0] = true;
       break;
     case 3:
       console.log(
         "A dark portal opens beneath the Streets. Villains on the Streets gain 1 Attack.",
       );
-      city2PermBuff++;
+      cityPermBuff[1]++;
       darkPortalSpaces[1] = true;
       break;
     case 4:
       console.log(
         "A dark portal opens above the Rooftops. Villains on the Rooftops gain 1 Attack.",
       );
-      city3PermBuff++;
+      cityPermBuff[2]++;
       darkPortalSpaces[2] = true;
       break;
     case 5:
       console.log(
         "A dark portal opens within the Bank. Villains in the Bank gain 1 Attack.",
       );
-      city4PermBuff++;
+      cityPermBuff[3]++;
       darkPortalSpaces[3] = true;
       break;
     case 6:
       console.log(
         "A dark portal opens within the Sewers. Villains within the Sewers gain 1 Attack.",
       );
-      city5PermBuff++;
+      cityPermBuff[4]++;
       darkPortalSpaces[4] = true;
       break;
     case 7:
