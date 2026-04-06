@@ -540,43 +540,42 @@ let currentVillainLocation = null;
 let heroDeck = [];
 let capturedCardsDeck = [];
 let hq = [];
-let city = [null, null, null, null, null];
-let destroyedSpaces = [false, false, false, false, false];
-let darkPortalSpaces = [false, false, false, false, false];
-let darkPortalMastermind = false;
-let darkPortalMastermindRendered = false;
-const citySpaceLabels = [
-  "The Bridge",
-  "The Streets",
-  "The Rooftops",
-  "The Bank",
-  "The Sewers",
+// City space configuration — default 5 spaces, schemes can override via scheme.citySpaces
+const CITY_SPACE_DEFAULTS = [
+  { label: "The Bridge",   bg: "Bridge.webp",   bgPos: "top" },
+  { label: "The Streets",  bg: "Streets.webp",  bgPos: "center" },
+  { label: "The Rooftops", bg: "Rooftops.webp", bgPos: "top" },
+  { label: "The Bank",     bg: "Bank.webp",     bgPos: "center" },
+  { label: "The Sewers",   bg: "Sewers.webp",   bgPos: "center" },
 ];
 let citySize = 5;
-var city1TempBuff = 0;
-var city2TempBuff = 0;
-var city3TempBuff = 0;
-var city4TempBuff = 0;
-var city5TempBuff = 0;
-var city1LocationAttack = 0;
-var city2LocationAttack = 0;
-var city3LocationAttack = 0;
-var city4LocationAttack = 0;
-var city5LocationAttack = 0;
+let citySpaces = CITY_SPACE_DEFAULTS; // active config for current game
+let citySpaceLabels = CITY_SPACE_DEFAULTS.map(s => s.label);
+let city = [];
+let destroyedSpaces = [];
+let darkPortalSpaces = [];
+let darkPortalMastermind = false;
+let darkPortalMastermindRendered = false;
+// Per-space buff arrays — initialized to citySize in initCityArrays()
+let cityTempBuff = [];
+let cityPermBuff = [];
+let cityLocationAttack = [];
+let cityReserveAttack = [];
 var mastermindTempBuff = 0;
-var city1PermBuff = 0;
-var city2PermBuff = 0;
-var city3PermBuff = 0;
-var city4PermBuff = 0;
-var city5PermBuff = 0;
 var mastermindPermBuff = 0;
 let mastermindPermBuffDynamicPrev = 0;
 var mastermindReserveAttack = 0;
-var bridgeReserveAttack = 0;
-var streetsReserveAttack = 0;
-var rooftopsReserveAttack = 0;
-var bankReserveAttack = 0;
-var sewersReserveAttack = 0;
+
+function initCityArrays() {
+  city = new Array(citySize).fill(null);
+  destroyedSpaces = new Array(citySize).fill(false);
+  darkPortalSpaces = new Array(citySize).fill(false);
+  cityTempBuff = new Array(citySize).fill(0);
+  cityPermBuff = new Array(citySize).fill(0);
+  cityLocationAttack = new Array(citySize).fill(0);
+  cityReserveAttack = new Array(citySize).fill(0);
+  cityCosmicThreat = new Array(citySize).fill(0);
+}
 var hq1ReserveRecruit = 0;
 var hq2ReserveRecruit = 0;
 var hq3ReserveRecruit = 0;
@@ -669,11 +668,7 @@ let galactusForceOfEternityDraw = false;
 let galactusDestroyedCityDelay = false;
 let negativeZoneAttackAndRecruit = false;
 let invincibleForceField = 0;
-let city1CosmicThreat = 0;
-let city2CosmicThreat = 0;
-let city3CosmicThreat = 0;
-let city4CosmicThreat = 0;
-let city5CosmicThreat = 0;
+let cityCosmicThreat = [];
 let mastermindCosmicThreat = 0;
 let mastermindCosmicThreatResolved = false;
 let unseenRescueBystanders = 0;
@@ -4562,6 +4557,7 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   goldenFirstRound = true; // reset for new game
   isFirstTurn = true;
   finalBlowDelivered = false;
+  initCityArrays();
   console.log("Initializing game with:");
   console.log("Heroes:", heroes);
   console.log("Villains:", villains);
