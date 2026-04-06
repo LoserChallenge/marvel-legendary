@@ -7015,14 +7015,6 @@ function updateHighlights() {
   }
 
   // ===== City villains (as you had) =====
-  const cityReserveAttacks = [
-    bridgeReserveAttack,
-    streetsReserveAttack,
-    rooftopsReserveAttack,
-    bankReserveAttack,
-    sewersReserveAttack,
-  ];
-
   for (let i = 0; i < city.length; i++) {
     const cityCell = document.querySelector(`#city-${i + 1}`);
     if (!cityCell) continue;
@@ -7035,10 +7027,10 @@ function updateHighlights() {
       const conditionMet = !hasFightCondition || isVillainConditionMet(city[i]);
 
       if (conditionMet) {
-        const locationAttack = window[`city${i + 1}LocationAttack`] || 0;
+        const locationAttack = cityLocationAttack[i];
         const villainAttack =
           recalculateVillainAttack(city[i]) + locationAttack;
-        const reservedAttack = cityReserveAttacks[i] || 0;
+        const reservedAttack = cityReserveAttack[i] || 0;
 
         const canAttackWithAttackPoints =
           totalAttackPoints + reservedAttack >= villainAttack;
@@ -7270,14 +7262,6 @@ function updateHighlights() {
   }
 
   // ===== City villains (as you had) =====
-  const cityReserveAttacks = [
-    bridgeReserveAttack,
-    streetsReserveAttack,
-    rooftopsReserveAttack,
-    bankReserveAttack,
-    sewersReserveAttack,
-  ];
-
   for (let i = 0; i < city.length; i++) {
     const cityCell = document.querySelector(`#city-${i + 1}`);
     if (!cityCell) continue;
@@ -7290,10 +7274,10 @@ function updateHighlights() {
       const conditionMet = !hasFightCondition || isVillainConditionMet(city[i]);
 
       if (conditionMet) {
-        const locationAttack = window[`city${i + 1}LocationAttack`] || 0;
+        const locationAttack = cityLocationAttack[i];
         const villainAttack =
           recalculateVillainAttack(city[i]) + locationAttack;
-        const reservedAttack = cityReserveAttacks[i] || 0;
+        const reservedAttack = cityReserveAttack[i] || 0;
 
         const canAttackWithAttackPoints =
           totalAttackPoints + reservedAttack >= villainAttack;
@@ -7531,7 +7515,7 @@ function updateHighlightsNegativeZone() {
         // Calculate effective attack value
         let villainAttack = recalculateVillainAttack(city[i]);
 
-        const locationAttack = window[`city${i + 1}LocationAttack`] || 0;
+        const locationAttack = cityLocationAttack[i];
 
         villainAttack += locationAttack;
 
@@ -7668,11 +7652,7 @@ function updateReserveAttackAndRecruit() {
   // Create arrays of location-value pairs for attack points
   const attackLocations = [
     { name: "Mastermind", value: mastermindReserveAttack },
-    { name: "Bridge", value: bridgeReserveAttack },
-    { name: "Streets", value: streetsReserveAttack },
-    { name: "Rooftops", value: rooftopsReserveAttack },
-    { name: "Bank", value: bankReserveAttack },
-    { name: "Sewers", value: sewersReserveAttack },
+    ...citySpaceLabels.map((label, i) => ({ name: label, value: cityReserveAttack[i] })),
   ];
 
   // Create arrays of location-value pairs for recruit points
@@ -8213,34 +8193,23 @@ if (stackedTwistNextToMastermind > 0) {
       cardContainer.appendChild(cardImage);
     }
 
-    const locations = [
-      { value: city1LocationAttack, id: "bridge-label" },
-      { value: city2LocationAttack, id: "streets-label" },
-      { value: city3LocationAttack, id: "rooftops-label" },
-      { value: city4LocationAttack, id: "bank-label" },
-      { value: city5LocationAttack, id: "sewers-label" },
-    ];
-
-    locations.forEach(({ value, id }) => {
-      if (value !== 0) {
-        const element = document.getElementById(id);
-        const existingOverlay = element.querySelector(
+    {
+      const locationAttackValue = cityLocationAttack[i];
+      const locationLabelElement = document.getElementById(`city-label-${i}`);
+      if (locationLabelElement) {
+        const existingOverlay = locationLabelElement.querySelector(
           ".location-attack-changes",
         );
         if (existingOverlay) existingOverlay.remove();
 
-        const attackElement = document.createElement("div");
-        attackElement.className = "location-attack-changes";
-        attackElement.innerHTML = `<p>${value} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
-        element.appendChild(attackElement);
-      } else {
-        const element = document.getElementById(id);
-        const existingOverlay = element.querySelector(
-          ".location-attack-changes",
-        );
-        if (existingOverlay) existingOverlay.remove();
+        if (locationAttackValue !== 0) {
+          const attackElement = document.createElement("div");
+          attackElement.className = "location-attack-changes";
+          attackElement.innerHTML = `<p>${locationAttackValue} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
+          locationLabelElement.appendChild(attackElement);
+        }
       }
-    });
+    }
 
     if (city[i]) {
       // Create a container to hold the card image and overlays
@@ -11125,17 +11094,10 @@ function showAttackButton(cityIndex, location = "city") {
 
   // Calculate attack synchronously first
   const selectedScheme = getSelectedScheme(); // Extract this to a function
-  const locationAttack = window[`city${cityIndex + 1}LocationAttack`] || 0;
+  const locationAttack = cityLocationAttack[cityIndex];
   let villainAttack = recalculateVillainAttack(villainCard) + locationAttack;
 
-  const cityReserveAttacks = [
-    bridgeReserveAttack,
-    streetsReserveAttack,
-    rooftopsReserveAttack,
-    bankReserveAttack,
-    sewersReserveAttack,
-  ];
-  const reservedAttack = cityReserveAttacks[cityIndex] || 0;
+  const reservedAttack = cityReserveAttack[cityIndex] || 0;
 
   if (villainAttack < 0) {
     villainAttack = 0;
@@ -11500,23 +11462,13 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
   // ---- GAME STATE CHANGES HAPPEN FIRST ----
   currentVillainLocation = cityIndex;
   const villainCopy = createVillainCopy(villainCard);
-  const locationAttack = window[`city${cityIndex + 1}LocationAttack`] || 0;
+  const locationAttack = cityLocationAttack[cityIndex];
   const villainAttack = isInstantDefeat
     ? 0
     : recalculateVillainAttack(villainCard) + locationAttack;
 
   // Clear the city slot now so subsequent draws/movement see a free space
   city[cityIndex] = null;
-
-  // Map city indices to reserve attack variables
-  const reserveAttackVars = [
-    bridgeReserveAttack, // 0 - Bridge
-    streetsReserveAttack, // 1 - Streets
-    rooftopsReserveAttack, // 2 - Rooftops
-    bankReserveAttack, // 3 - Bank
-    sewersReserveAttack, // 4 - Sewers
-    mastermindReserveAttack, // 5 - Mastermind
-  ];
 
   if (villainAttack > 0) {
     // Handle point deduction (skip for instant defeat)
@@ -11532,7 +11484,7 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
           let recruitNeeded = result.recruitUsed || 0;
 
           // Use reserved attack points for this location first
-          const reservedAttackAvailable = reserveAttackVars[cityIndex] || 0;
+          const reservedAttackAvailable = (cityIndex === 5 ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
           const reservedAttackUsed = Math.min(
             attackNeeded,
             reservedAttackAvailable,
@@ -11540,25 +11492,10 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
 
           // Deduct from reserved points
           if (reservedAttackUsed > 0) {
-            switch (cityIndex) {
-              case 0:
-                bridgeReserveAttack -= reservedAttackUsed;
-                break;
-              case 1:
-                streetsReserveAttack -= reservedAttackUsed;
-                break;
-              case 2:
-                rooftopsReserveAttack -= reservedAttackUsed;
-                break;
-              case 3:
-                bankReserveAttack -= reservedAttackUsed;
-                break;
-              case 4:
-                sewersReserveAttack -= reservedAttackUsed;
-                break;
-              case 5:
-                mastermindReserveAttack -= reservedAttackUsed;
-                break;
+            if (cityIndex === 5) {
+              mastermindReserveAttack -= reservedAttackUsed;
+            } else {
+              cityReserveAttack[cityIndex] -= reservedAttackUsed;
             }
             attackNeeded -= reservedAttackUsed;
           }
@@ -11572,32 +11509,17 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
           );
         } else {
           if (!negativeZoneAttackAndRecruit) {
-            const reservedAttackAvailable = reserveAttackVars[cityIndex] || 0;
+            const reservedAttackAvailable = (cityIndex === 5 ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
             const reservedAttackUsed = Math.min(
               villainAttack,
               reservedAttackAvailable,
             );
 
             if (reservedAttackUsed > 0) {
-              switch (cityIndex) {
-                case 0:
-                  bridgeReserveAttack -= reservedAttackUsed;
-                  break;
-                case 1:
-                  streetsReserveAttack -= reservedAttackUsed;
-                  break;
-                case 2:
-                  rooftopsReserveAttack -= reservedAttackUsed;
-                  break;
-                case 3:
-                  bankReserveAttack -= reservedAttackUsed;
-                  break;
-                case 4:
-                  sewersReserveAttack -= reservedAttackUsed;
-                  break;
-                case 5:
-                  mastermindReserveAttack -= reservedAttackUsed;
-                  break;
+              if (cityIndex === 5) {
+                mastermindReserveAttack -= reservedAttackUsed;
+              } else {
+                cityReserveAttack[cityIndex] -= reservedAttackUsed;
               }
             }
 
