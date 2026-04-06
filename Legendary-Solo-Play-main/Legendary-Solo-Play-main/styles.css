@@ -8812,3 +8812,14 @@ div.screws:nth-of-type(4) {
     font-size: 12px !important;
   }
 }
+
+/* Hero requirements banner */
+.hero-requirements-banner {
+  background-color: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 6px 0;
+  font-size: 0.85em;
+  color: #e0e0e0;
+}

@@ -2539,19 +2539,58 @@ function getCountColorClass(selected, required) {
   return 'count-red'; // selected > required
 }
 
+function updateHeroRequirementsBanner() {
+  const banner = document.getElementById('hero-requirements-banner');
+  if (!banner) return;
+
+  const schemeName = document.querySelector('#scheme-section input[type="radio"]:checked')?.value;
+  const scheme = schemes.find(s => s.name === schemeName);
+
+  if (!scheme || !scheme.heroRequirements) {
+    banner.style.display = 'none';
+    banner.textContent = '';
+    return;
+  }
+
+  const parts = [];
+  const req = scheme.heroRequirements;
+
+  if (req.teamComposition) {
+    for (const tc of req.teamComposition) {
+      if (tc.team.startsWith('non:')) {
+        parts.push(`${tc.count} non-${tc.team.slice(4)} hero${tc.count !== 1 ? 'es' : ''}`);
+      } else {
+        parts.push(`${tc.count} ${tc.team} hero${tc.count !== 1 ? 'es' : ''}`);
+      }
+    }
+  }
+
+  if (req.requiredHero) {
+    for (const hero of req.requiredHero) {
+      parts.push(hero);
+    }
+  }
+
+  banner.textContent = 'This scheme requires: ' + parts.join(', ');
+  banner.style.display = 'block';
+}
+
 // --- Summary Panel: live update listeners ---
 document.getElementById('scheme-selection').addEventListener('change', updateSummaryPanel);
+document.getElementById('scheme-selection').addEventListener('change', updateHeroRequirementsBanner);
 document.getElementById('mastermind-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('villain-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('henchmen-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('hero-selection').addEventListener('change', updateSummaryPanel);
 document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
   radio.addEventListener('change', updateSummaryPanel);
+  radio.addEventListener('change', updateHeroRequirementsBanner);
 });
 
 // Show summary panel on setup screen load
 document.getElementById('summary-panel').classList.add('visible');
 updateSummaryPanel();
+updateHeroRequirementsBanner();
 
 function randomizeAll() {
   // Step 1: Randomize the scheme first
