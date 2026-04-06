@@ -55,6 +55,7 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 - `node` is installed at `C:\Program Files\nodejs\node.exe` but not on the Bash tool's PATH — manual `node --check` will fail; rely on the hook runner instead
 - When running Node `-e` scripts, use relative paths from the working directory — absolute Windows paths with backslashes get mangled by double-escaping
 - PDF/image tool gotchas (poppler, pdftoppm, inventory PDFs) — see `docs/card-inventory/card-reading-rules.md`
+- **Staging `mv` gotcha:** Filenames starting with `---` (or any leading dash) are parsed as flags by bash. Use `mv -- "---filename" dest` to end option parsing.
 
 ## JS/HTML Pairing Rule
 
@@ -110,7 +111,7 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `revisions-additions.md` — prioritised list of planned UI/setup screen changes
 - `card-directory.pdf` — full card list for all expansions with faction symbols
 - `rules/` — PDF rulesheets for all expansions. Read tool PDF support works when VS Code is launched with the full user PATH (so `pdftoppm` is accessible). It's intermittent: try `Read` first; if it fails with a pdftoppm error, **stop and tell the user** to fully close and reopen VS Code (not just reload window), then retry. Do not use pdftotext or any other workaround.
-- `docs/card-inventory/final/` — finalized card inventory files; source of truth for audits. 8 finalized (2026-04-04).
+- `docs/card-inventory/final/` — finalized card inventory files; source of truth for audits. 10 finalized (Into the Cosmos 2026-04-05).
 - `docs/card-inventory/card-reading-rules.md` — card image reading rules, DB authority, inventory template notes, expansion-specific card types
 - `docs/expansion-asset-pipeline.md` — staging structure, naming conventions, import mapping, inventory process, visual reference setup
 - `docs/expansion-pipeline-status.md` — pipeline progress table for all expansions
@@ -124,7 +125,7 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 1. ✅ UI revisions, Golden Solo villain fix, health check (phases 1+2), card effect auditor — all merged to master by 2026-03-31
 2. **Expansion content** — complete inventories for all expansions (both tracks), then implement one at a time
    - **Two inventory tracks — see `docs/expansion-pipeline-status.md` for full status and per-expansion notes.** Track A (new expansions): stage → inventory (PDF-primary) → verify → user review → move to `final/`. Track B (in-game expansions): inventory (DB-primary) → verify → user review → move to `final/`.
-   - **Current position (2026-04-04):** All 5 in-game expansions + Revelations + Secret Wars Vol. 1 + Heroes of Asgard fully finalized in `card-inventory/final/` (8 total). X-Men Pass 1 complete (awaiting Pass 2). S.H.I.E.L.D. staged (awaiting Pass 1). Track A new expansions next.
+   - **Current position (2026-04-05):** 10 expansions finalized in `card-inventory/final/` (Into the Cosmos complete). Pass 1 complete, awaiting Pass 2: weapon-x, shield. Staged and awaiting Pass 1: messiah-complex, shadows-of-nightmare, the-new-mutants, world-war-hulk. All expansions now staged.
    - `/analyze-expansion` → `/new-expansion` pipeline is ready. Run `/analyze-expansion` first (produces mechanics reference), then `/new-expansion` (multi-phase code integration with progress tracking).
 
 ## Visual Reference Setup ✅ Complete
@@ -140,10 +141,11 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - **Production**: `Visual Assets/` inside the game root
 - **Inventory**: 3-pass process — `/inventory-creator` → `/inventory-verifier` → user spot-check
 - **Pipeline status**: `docs/expansion-pipeline-status.md` for full progress table
+- **Staging agent pattern:** Parallel agents cannot execute bash (permission denied in background). Use agents for steps 1–3 of `/stage-expansion` (image reading + plan writing only). Execute all `mkdir`/`mv` renames in the main session.
 
 ## Golden Solo Rules Summary
 
-- **Setup:** 5 heroes always; villain deck = 2-player rules (2 bystanders default, 10 henchmen shuffled in); hero deck restructured (10-card starting stack on top, Rares shuffled into main deck)
+- **Setup:** Hero count follows `scheme.requiredHeroes` (no longer hardcoded to 5); villain deck = 2-player rules (2 bystanders default, 10 henchmen shuffled in); hero deck restructured (10-card starting stack on top, Rares shuffled into main deck)
 - **Each round:** Draw 6; HQ rotates (1 added right, 1 removed left — skip round 1); optional bystander spend to reduce villain draws; draw **2** villain cards; play 6 cards
 - **HQ refill:** New card always goes rightmost, others slide left — rotation, not fill-in-place
 - **"Other player" effects:** Currently silent skip — under review (see Known Issues)
@@ -190,6 +192,24 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - Propose a plan and get approval before editing any files
 - Use the `codebase-navigator` subagent for searching large files
 - Explain all terminal steps in plain English
+
+## Scheme Hero Requirements Infrastructure
+
+Both game modes use `scheme.requiredHeroes` for hero count (Golden Solo no longer hardcodes 5). Schemes can optionally declare a `heroRequirements` field:
+
+```js
+heroRequirements: {
+    teamComposition: [{ team: "X-Men", count: 4 }, { team: "non:X-Men", count: 2 }],
+    requiredHero: ["Spider-Man"]
+}
+```
+
+- **Banner** (`#hero-requirements-banner`): shows/hides based on selected scheme's `heroRequirements`
+- **Validation**: `showConfirmChoicesPopup()` checks team composition + required heroes; blocks game start if unmet
+- **Randomize**: `pickHeroesForRequirements()` helper fills required heroes → team constraints → random remainder
+- **Villain/henchmen requirements** already handled separately via `specificVillainRequirement` / `specificHenchmenRequirement`
+- Spec: `docs/superpowers/specs/2026-04-05-scheme-hero-requirements-design.md`
+- **Status**: Merged to master (2026-04-06). No current schemes use `heroRequirements` yet — infrastructure ready for expansion schemes
 
 ## Golden Solo Implementation
 
