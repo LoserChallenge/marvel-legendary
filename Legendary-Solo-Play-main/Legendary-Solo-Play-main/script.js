@@ -605,9 +605,22 @@ let finalBlowEnabled = false;
 let finalBlowDelivered = false;
 // --- Golden Solo Mode globals ---
 const GOLDEN_SOLO = 'golden';
+const GOLDEN_SOLO_DEFAULT_HEROES = 5;
+const WHATIF_DEFAULT_HEROES = 3;
 let gameMode = 'whatif';       // 'whatif' | GOLDEN_SOLO
 let goldenFirstRound = true;   // skip HQ rotation on round 1 of Golden Solo
 // --------------------------------
+
+/**
+ * Returns the effective hero count for a scheme in the current game mode.
+ * Golden Solo defaults to 5, What If defaults to 3.
+ * If the scheme specifies a non-default count, that takes priority in both modes.
+ */
+function getEffectiveHeroCount(scheme, currentGameMode) {
+  if (!scheme) return null;
+  const defaultCount = (currentGameMode === GOLDEN_SOLO) ? GOLDEN_SOLO_DEFAULT_HEROES : WHATIF_DEFAULT_HEROES;
+  return (scheme.requiredHeroes === WHATIF_DEFAULT_HEROES) ? defaultCount : scheme.requiredHeroes;
+}
 let escapedVillainsCount = 0;
 let lastTurn = false;
 let finalTwist = false;
@@ -2250,8 +2263,8 @@ function randomizeHenchmen() {
  * @param {object} scheme - the selected scheme object
  * @returns {HTMLInputElement[]} - selected checkboxes satisfying requirements
  */
-function pickHeroesForRequirements(availableCheckboxes, scheme) {
-  const count = scheme.requiredHeroes;
+function pickHeroesForRequirements(availableCheckboxes, scheme, currentGameMode) {
+  const count = getEffectiveHeroCount(scheme, currentGameMode);
   const req = scheme.heroRequirements;
 
   if (!req) {
@@ -2372,8 +2385,9 @@ function randomizeHero() {
     return;
   }
 
+  const _rh_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
   const selectedCheckboxes = selectedScheme
-    ? pickHeroesForRequirements(filteredCheckboxes, selectedScheme)
+    ? pickHeroesForRequirements(filteredCheckboxes, selectedScheme, _rh_gameMode)
     : fisherYatesShuffle([...filteredCheckboxes]).slice(0, 3);
 
   // Clear the previously selected hero groups
@@ -2598,7 +2612,7 @@ function updateSummaryPanel() {
     heroesValueEl.textContent = selectedHeroes.join(', ');
   }
 
-  const requiredHeroes = scheme ? (scheme.requiredHeroes ?? null) : null;
+  const requiredHeroes = scheme ? (getEffectiveHeroCount(scheme, gameModeValue) ?? null) : null;
   heroesCountEl.textContent = `(${selectedHeroes.length}/${requiredHeroes !== null ? requiredHeroes : '?'})`;
   heroesCountEl.className = 'summary-count ' + getCountColorClass(selectedHeroes.length, requiredHeroes);
 }
@@ -3002,7 +3016,8 @@ function randomizeHeroWithRequirements(scheme) {
     return;
   }
 
-  const selectedCheckboxes = pickHeroesForRequirements(filteredCheckboxes, scheme);
+  const _rhr_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const selectedCheckboxes = pickHeroesForRequirements(filteredCheckboxes, scheme, _rhr_gameMode);
 
   // Clear the previously selected hero groups
   selectedHeroGroups = [];
@@ -3189,8 +3204,9 @@ function showConfirmChoicesPopup(
     villainFeedback += `<br><span class="error-spans">Please select ${villains.length - req.requiredVillains > 1 ? "fewer villain groups" : "one less villain group"}.</span>`;
   }
 
-  // Hero count validation — uses scheme's requiredHeroes for all game modes.
-  const requiredHeroes = scheme.requiredHeroes;
+  // Hero count validation — Golden Solo defaults to 5, What If to 3; scheme overrides take priority.
+  const _confirmGameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
+  const requiredHeroes = getEffectiveHeroCount(scheme, _confirmGameMode);
 
   if (heroes.length < requiredHeroes) {
     heroFeedback += `<br><span class="error-spans">Please select ${requiredHeroes - heroes.length > 1 ? "more heroes" : "another hero"}.</span>`;
