@@ -125,8 +125,9 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 1. ✅ UI revisions, Golden Solo villain fix, health check (phases 1+2), card effect auditor — all merged to master by 2026-03-31
 2. **Expansion content** — complete inventories for all expansions (both tracks), then implement one at a time
    - **Two inventory tracks — see `docs/expansion-pipeline-status.md` for full status and per-expansion notes.** Track A (new expansions): stage → inventory (PDF-primary) → verify → user review → move to `final/`. Track B (in-game expansions): inventory (DB-primary) → verify → user review → move to `final/`.
-   - **Current position (2026-04-05):** 10 expansions finalized in `card-inventory/final/` (Into the Cosmos complete). Pass 1 complete, awaiting Pass 2: weapon-x, shield. Staged and awaiting Pass 1: messiah-complex, shadows-of-nightmare, the-new-mutants, world-war-hulk. All expansions now staged.
+   - **Current position (2026-04-06):** 10 expansions finalized in `card-inventory/final/` (Into the Cosmos complete). Pass 1 complete, awaiting Pass 2: weapon-x, shield. Staged and awaiting Pass 1: messiah-complex, shadows-of-nightmare, the-new-mutants, world-war-hulk. All expansions now staged.
    - `/analyze-expansion` → `/new-expansion` pipeline is ready. Run `/analyze-expansion` first (produces mechanics reference), then `/new-expansion` (multi-phase code integration with progress tracking).
+   - **Revelations:** `/new-expansion` active (started 2026-04-06). Infrastructure-first build order: dynamic city refactor (worktree) → Location system → small infrastructure bundle → content phases. Progress at `docs/expansion-progress/revelations.md`. Next step: Step 1 (dynamic city refactor in worktree).
 
 ## Visual Reference Setup ✅ Complete
 
