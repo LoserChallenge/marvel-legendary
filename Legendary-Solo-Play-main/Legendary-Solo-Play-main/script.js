@@ -19599,15 +19599,8 @@ function closeHQCityCardChoicePopup() {
   }
 
   // Remove location attack overlays
-  const locationLabels = [
-    "bridge-label",
-    "rooftops-label",
-    "streets-label",
-    "bank-label",
-    "sewers-label",
-  ];
-  locationLabels.forEach((label) => {
-    const locationElement = document.getElementById(label);
+  for (let i = 0; i < citySize; i++) {
+    const locationElement = document.getElementById(`city-label-${i}`);
     if (locationElement) {
       const locationAttackOverlay = locationElement.querySelector(
         ".location-attack-changes",
@@ -19616,7 +19609,7 @@ function closeHQCityCardChoicePopup() {
         locationAttackOverlay.remove();
       }
     }
-  });
+  }
 
   // Reset location labels
   document.getElementById("hq-city-table-city-hq-1-label").innerHTML = "Bridge";
