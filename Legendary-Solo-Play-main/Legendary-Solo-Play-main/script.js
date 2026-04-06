@@ -2244,6 +2244,78 @@ function randomizeHenchmen() {
   updateSummaryPanel();
 }
 
+/**
+ * Picks random heroes that satisfy a scheme's heroRequirements.
+ * @param {HTMLInputElement[]} availableCheckboxes - filtered hero checkboxes
+ * @param {object} scheme - the selected scheme object
+ * @returns {HTMLInputElement[]} - selected checkboxes satisfying requirements
+ */
+function pickHeroesForRequirements(availableCheckboxes, scheme) {
+  const count = scheme.requiredHeroes;
+  const req = scheme.heroRequirements;
+
+  if (!req) {
+    // No special requirements — simple random pick
+    return fisherYatesShuffle([...availableCheckboxes]).slice(0, count);
+  }
+
+  const selected = [];
+  const used = new Set();
+
+  // Step 1: Include required specific heroes
+  if (req.requiredHero) {
+    for (const heroName of req.requiredHero) {
+      const cb = availableCheckboxes.find(c => c.value === heroName);
+      if (cb && !used.has(cb.value)) {
+        selected.push(cb);
+        used.add(cb.value);
+      }
+    }
+  }
+
+  // Step 2: Fill team composition constraints
+  if (req.teamComposition) {
+    for (const tc of req.teamComposition) {
+      // Count how many already-selected heroes satisfy this constraint
+      let alreadySatisfied;
+      if (tc.team.startsWith('non:')) {
+        const excludeTeam = tc.team.slice(4);
+        alreadySatisfied = selected.filter(c => c.dataset.team !== excludeTeam).length;
+      } else {
+        alreadySatisfied = selected.filter(c => c.dataset.team === tc.team).length;
+      }
+
+      const needed = tc.count - alreadySatisfied;
+      if (needed <= 0) continue;
+
+      // Find eligible candidates not yet selected
+      let candidates;
+      if (tc.team.startsWith('non:')) {
+        const excludeTeam = tc.team.slice(4);
+        candidates = availableCheckboxes.filter(c => c.dataset.team !== excludeTeam && !used.has(c.value));
+      } else {
+        candidates = availableCheckboxes.filter(c => c.dataset.team === tc.team && !used.has(c.value));
+      }
+
+      const picks = fisherYatesShuffle([...candidates]).slice(0, needed);
+      for (const cb of picks) {
+        selected.push(cb);
+        used.add(cb.value);
+      }
+    }
+  }
+
+  // Step 3: Fill remaining slots randomly
+  const remaining = count - selected.length;
+  if (remaining > 0) {
+    const leftover = availableCheckboxes.filter(c => !used.has(c.value));
+    const picks = fisherYatesShuffle([...leftover]).slice(0, remaining);
+    selected.push(...picks);
+  }
+
+  return selected;
+}
+
 function randomizeHero() {
   // Clear all current checkbox selections before randomizing
   const heroCheckboxes = document.querySelectorAll(
@@ -2300,9 +2372,9 @@ function randomizeHero() {
     return;
   }
 
-  const _rh_count = selectedScheme ? selectedScheme.requiredHeroes : 3;
-  const shuffledCheckboxes = fisherYatesShuffle([...filteredCheckboxes]);
-  const selectedCheckboxes = shuffledCheckboxes.slice(0, _rh_count);
+  const selectedCheckboxes = selectedScheme
+    ? pickHeroesForRequirements(filteredCheckboxes, selectedScheme)
+    : fisherYatesShuffle([...filteredCheckboxes]).slice(0, 3);
 
   // Clear the previously selected hero groups
   selectedHeroGroups = [];
@@ -2930,9 +3002,7 @@ function randomizeHeroWithRequirements(scheme) {
     return;
   }
 
-  const _rhr_count = scheme.requiredHeroes;
-  const shuffledCheckboxes = fisherYatesShuffle([...filteredCheckboxes]);
-  const selectedCheckboxes = shuffledCheckboxes.slice(0, _rhr_count);
+  const selectedCheckboxes = pickHeroesForRequirements(filteredCheckboxes, scheme);
 
   // Clear the previously selected hero groups
   selectedHeroGroups = [];
