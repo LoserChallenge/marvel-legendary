@@ -8226,7 +8226,7 @@ if (stackedTwistNextToMastermind > 0) {
       cardContainer.appendChild(cardImage);
 
       // Add buff overlays
-      const currentTempBuff = window[`city${i + 1}TempBuff`];
+      const currentTempBuff = cityTempBuff[i];
       if (currentTempBuff !== 0) {
         const tempBuffOverlay = document.createElement("div");
         tempBuffOverlay.className = "temp-buff-overlay";
@@ -8234,7 +8234,7 @@ if (stackedTwistNextToMastermind > 0) {
         cardContainer.appendChild(tempBuffOverlay);
       }
 
-      const currentPermBuff = window[`city${i + 1}PermBuff`];
+      const currentPermBuff = cityPermBuff[i];
       if (currentPermBuff !== 0) {
         const permBuffOverlay = document.createElement("div");
         permBuffOverlay.className = "perm-buff-overlay";
@@ -9615,7 +9615,7 @@ function updateVillainAttackValues(villain, i) {
     "#scheme-section input[type=radio]:checked",
   ).value;
   const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
-  const currentPermBuff = window[`city${i + 1}PermBuff`];
+  const currentPermBuff = cityPermBuff[i];
 
   villain.attackFromMastermind = 0;
   villain.attackFromScheme = 0;
@@ -11356,8 +11356,8 @@ updateVillainAttackValues(villainCard, cityIndex);
   try {
     const cityIndex = city.findIndex((card) => card === villainCard);
     if (cityIndex !== -1) {
-      const tempBuff = window[`city${cityIndex + 1}TempBuff`] || 0;
-      const permBuff = window[`city${cityIndex + 1}PermBuff`] || 0;
+      const tempBuff = cityTempBuff[cityIndex] || 0;
+      const permBuff = cityPermBuff[cityIndex] || 0;
       const shattered = villainCard.shattered || 0;
       finalAttack += tempBuff - shattered;
     }
