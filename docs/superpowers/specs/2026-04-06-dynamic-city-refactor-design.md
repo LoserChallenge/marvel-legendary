@@ -8,7 +8,7 @@ Context: Revelations expansion Step 1 — foundation for Location system and Ear
 
 ## Goal
 
-Convert the hardcoded 5-space city infrastructure into a dynamically-sized system driven by a `citySize` variable. All existing content must work identically after the refactor. The city must support sizes 3, 5, and 7 (Revelations Earthquake/Tsunami scheme).
+Convert the hardcoded 5-space city infrastructure into a dynamically-sized system driven by a `citySize` variable. All existing content must work identically after the refactor. The city will support any number of spaces — arrays and HTML are generated dynamically from `citySize`. Revelations needs 3, 5, and 7, but the system is not limited to those values.
 
 ## Why This Is Needed
 
@@ -23,11 +23,12 @@ Every piece of Revelations city-related code benefits from this refactor being d
 
 ## Current State (What Exists Today)
 
-### Variables (20 individually-named, declared in script.js ~lines 556-579)
+### Variables (25 individually-named, declared in script.js ~lines 556-579, 672-676)
 - `city1TempBuff` through `city5TempBuff` (5) — per-turn temporary attack modifiers, reset each turn
 - `city1PermBuff` through `city5PermBuff` (5) — permanent attack modifiers, persist all game
 - `city1LocationAttack` through `city5LocationAttack` (5) — location-based attack bonuses, reset each turn
 - `bridgeReserveAttack` through `sewersReserveAttack` (5) — reserved attack from card abilities, reset each turn
+- `city1CosmicThreat` through `city5CosmicThreat` (5) — cosmic threat tracking per space (~line 672)
 
 ### Arrays (already dynamic)
 - `city[]` — villain cards in each space (already `[null, null, null, null, null]`)
