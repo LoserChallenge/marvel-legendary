@@ -556,18 +556,10 @@ function cosmicThreat(card, index, attackReduction, className) {
   const capitalizedClassName = className.charAt(0).toUpperCase() + className.slice(1);
   
   // temp buff
-  if (index === 0) city1TempBuff -= attackReduction;
-  else if (index === 1) city2TempBuff -= attackReduction;
-  else if (index === 2) city3TempBuff -= attackReduction;
-  else if (index === 3) city4TempBuff -= attackReduction;
-  else if (index === 4) city5TempBuff -= attackReduction;
+  cityTempBuff[index] -= attackReduction;
 
   // cosmic threat record
-  if (index === 0) city1CosmicThreat = attackReduction;
-  else if (index === 1) city2CosmicThreat = attackReduction;
-  else if (index === 2) city3CosmicThreat = attackReduction;
-  else if (index === 3) city4CosmicThreat = attackReduction;
-  else if (index === 4) city5CosmicThreat = attackReduction;
+  cityCosmicThreat[index] = attackReduction;
 
   const cardCount = attackReduction / 3;
   const cardText = cardCount === 1 ? "card" : "cards";
@@ -579,21 +571,9 @@ function cosmicThreat(card, index, attackReduction, className) {
 
 // Call whenever an attack is completed
 function removeCosmicThreatBuff(cityIndex) {
-  if (cityIndex === 0 && city1CosmicThreat > 0) {
-    city1TempBuff += city1CosmicThreat;
-    city1CosmicThreat = 0;
-  } else if (cityIndex === 1 && city2CosmicThreat > 0) {
-    city2TempBuff += city2CosmicThreat;
-    city2CosmicThreat = 0;
-  } else if (cityIndex === 2 && city3CosmicThreat > 0) {
-    city3TempBuff += city3CosmicThreat;
-    city3CosmicThreat = 0;
-  } else if (cityIndex === 3 && city4CosmicThreat > 0) {
-    city4TempBuff += city4CosmicThreat;
-    city4CosmicThreat = 0;
-  } else if (cityIndex === 4 && city5CosmicThreat > 0) {
-    city5TempBuff += city5CosmicThreat;
-    city5CosmicThreat = 0;
+  if (cityCosmicThreat[cityIndex] > 0) {
+    cityTempBuff[cityIndex] += cityCosmicThreat[cityIndex];
+    cityCosmicThreat[cityIndex] = 0;
   }
 
   updateGameBoard();
@@ -2658,7 +2638,7 @@ function moleManSecretTunnel() {
   onscreenConsole.log(
     `You gain +6 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> usable only against Villains in the Streets.`,
   );
-  streetsReserveAttack += 6;
+  cityReserveAttack[1] += 6; // Streets = index 1
   updateGameBoard();
 }
 
@@ -4693,7 +4673,7 @@ function thingCrimeStopperFocus() {
         const attackFromScheme = city[i].attackFromScheme || 0;
         const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
         const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
-        const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
+        const currentTempBuff = cityTempBuff[i] || 0;
         const villainShattered = city[i].shattered || 0;
         const totalAttackModifiers =
           attackFromMastermind +
@@ -4879,13 +4859,7 @@ function thingCrimeStopperFocus() {
     }
 
     // Add location attack overlays
-    const locations = [
-      { value: city1LocationAttack, id: "bridge-label" },
-      { value: city2LocationAttack, id: "streets-label" },
-      { value: city3LocationAttack, id: "rooftops-label" },
-      { value: city4LocationAttack, id: "bank-label" },
-      { value: city5LocationAttack, id: "sewers-label" },
-    ];
+    const locations = cityLocationAttack.map((value, idx) => ({ value, id: `city-label-${idx}` }));
 
     locations.forEach(({ value, id }) => {
       if (value !== 0) {
