@@ -3128,6 +3128,47 @@ function showConfirmChoicesPopup(
     heroFeedback += `<br><span class="error-spans">Please select ${heroes.length - requiredHeroes > 1 ? "fewer heroes" : "one less hero"}.</span>`;
   }
 
+  // Hero requirements validation (team composition + required heroes)
+  let heroRequirementsMet = true;
+
+  const heroTeamMap = {};
+  for (const h of heroes) {
+    const checkbox = document.querySelector(`input[name="hero"][value="${h}"]`);
+    heroTeamMap[h] = checkbox ? checkbox.dataset.team : '';
+  }
+
+  if (scheme.heroRequirements) {
+    const heroReq = scheme.heroRequirements;
+
+    // Team composition validation
+    if (heroReq.teamComposition) {
+      for (const tc of heroReq.teamComposition) {
+        let matchCount;
+        if (tc.team.startsWith('non:')) {
+          const excludeTeam = tc.team.slice(4);
+          matchCount = heroes.filter(h => heroTeamMap[h] !== excludeTeam).length;
+        } else {
+          matchCount = heroes.filter(h => heroTeamMap[h] === tc.team).length;
+        }
+        if (matchCount !== tc.count) {
+          const teamLabel = tc.team.startsWith('non:') ? `non-${tc.team.slice(4)}` : tc.team;
+          heroFeedback += `<br><span class="error-spans">You need ${tc.count} ${teamLabel} hero${tc.count !== 1 ? 'es' : ''} (currently have ${matchCount}).</span>`;
+          heroRequirementsMet = false;
+        }
+      }
+    }
+
+    // Required specific hero validation
+    if (heroReq.requiredHero) {
+      for (const heroName of heroReq.requiredHero) {
+        if (!heroes.includes(heroName)) {
+          heroFeedback += `<br><span class="error-spans">This scheme requires ${heroName}.</span>`;
+          heroRequirementsMet = false;
+        }
+      }
+    }
+  }
+
   // Henchmen count validation
   if (henchmen.length < scheme.requiredHenchmen) {
     if (henchmen.length === 0) {
@@ -3168,7 +3209,7 @@ function showConfirmChoicesPopup(
   const henchmenCorrect =
     henchmen.length === scheme.requiredHenchmen &&
     specificHenchmenRequirementMet;
-  const heroesCorrect = heroes.length === requiredHeroes;
+  const heroesCorrect = heroes.length === requiredHeroes && heroRequirementsMet;
 
   const allRequirementsMet =
     villainsCorrect && henchmenCorrect && heroesCorrect;
