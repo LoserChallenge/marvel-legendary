@@ -4910,7 +4910,7 @@ async function drawVillainCard() {
     await realityGemVillainChoice();
   }
 
-  if (destroyedSpaces[4] === true) {
+  if (destroyedSpaces[citySize - 1] === true) {
     onscreenConsole.log(
       `The city is destroyed. No more Villains can be drawn. You have until the end of this turn before defeat...`,
     );
@@ -10934,7 +10934,7 @@ if (card.temporaryTeleport === true) {
   galactusDestroyedCityDelay = false;
   backflipRecruit = false;
   cityCosmicThreat.fill(0);
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < citySize; i++) {
     if (city[i] && "cosmicThreatResolved" in city[i]) {
       city[i].cosmicThreatResolved = false;
     }
@@ -19612,13 +19612,12 @@ function closeHQCityCardChoicePopup() {
   }
 
   // Reset location labels
-  document.getElementById("hq-city-table-city-hq-1-label").innerHTML = "Bridge";
-  document.getElementById("hq-city-table-city-hq-2-label").innerHTML =
-    "Rooftops";
-  document.getElementById("hq-city-table-city-hq-3-label").innerHTML =
-    "Streets";
-  document.getElementById("hq-city-table-city-hq-4-label").innerHTML = "Bank";
-  document.getElementById("hq-city-table-city-hq-5-label").innerHTML = "Sewers";
+  for (let i = 0; i < citySize; i++) {
+    const labelEl = document.getElementById(`hq-city-table-city-hq-${i + 1}-label`);
+    if (labelEl) {
+      labelEl.innerHTML = citySpaceLabels[i].replace("The ", "");
+    }
+  }
 
   // Hide modal overlay
   const modalOverlay = document.getElementById("modal-overlay");
