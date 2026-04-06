@@ -10899,23 +10899,11 @@ if (card.temporaryTeleport === true) {
   attackPoints = 0;
   recruitPoints = 0;
   extraCardsDrawnThisTurn = 0;
-  city1TempBuff = 0;
-  city2TempBuff = 0;
-  city3TempBuff = 0;
-  city4TempBuff = 0;
-  city5TempBuff = 0;
-  city1LocationAttack = 0;
-  city2LocationAttack = 0;
-  city3LocationAttack = 0;
-  city4LocationAttack = 0;
-  city5LocationAttack = 0;
+  cityTempBuff.fill(0);
+  cityLocationAttack.fill(0);
+  cityReserveAttack.fill(0);
   mastermindTempBuff = 0;
   mastermindReserveAttack = 0;
-  bridgeReserveAttack = 0;
-  streetsReserveAttack = 0;
-  rooftopsReserveAttack = 0;
-  bankReserveAttack = 0;
-  sewersReserveAttack = 0;
   hq1ReserveRecruit = 0;
   hq2ReserveRecruit = 0;
   hq3ReserveRecruit = 0;
@@ -10936,11 +10924,7 @@ if (card.temporaryTeleport === true) {
   mastermindCosmicThreatResolved = false;
   galactusDestroyedCityDelay = false;
   backflipRecruit = false;
-  city1CosmicThreat = 0;
-  city2CosmicThreat = 0;
-  city3CosmicThreat = 0;
-  city4CosmicThreat = 0;
-  city5CosmicThreat = 0;
+  cityCosmicThreat.fill(0);
   for (let i = 0; i < 5; i++) {
     if (city[i] && "cosmicThreatResolved" in city[i]) {
       city[i].cosmicThreatResolved = false;
@@ -13433,44 +13417,18 @@ async function instantDefeatAttack(cityIndex) {
 }
 // Call whenever an attack is completed
 function removeCosmicThreatBuff(cityIndex) {
-  if (cityIndex === 0 && city1CosmicThreat > 0) {
-    city1TempBuff += city1CosmicThreat;
-    city1CosmicThreat = 0;
-  } else if (cityIndex === 1 && city2CosmicThreat > 0) {
-    city2TempBuff += city2CosmicThreat;
-    city2CosmicThreat = 0;
-  } else if (cityIndex === 2 && city3CosmicThreat > 0) {
-    city3TempBuff += city3CosmicThreat;
-    city3CosmicThreat = 0;
-  } else if (cityIndex === 3 && city4CosmicThreat > 0) {
-    city4TempBuff += city4CosmicThreat;
-    city4CosmicThreat = 0;
-  } else if (cityIndex === 4 && city5CosmicThreat > 0) {
-    city5TempBuff += city5CosmicThreat;
-    city5CosmicThreat = 0;
+  if (cityCosmicThreat[cityIndex] > 0) {
+    cityTempBuff[cityIndex] += cityCosmicThreat[cityIndex];
+    cityCosmicThreat[cityIndex] = 0;
   }
-
   updateGameBoard();
 }
 
 function removeHQCosmicThreatBuff(index) {
-  if (index === 0 && city1CosmicThreat > 0) {
-    city1TempBuff += city1CosmicThreat;
-    city1CosmicThreat = 0;
-  } else if (index === 1 && city2CosmicThreat > 0) {
-    city2TempBuff += city2CosmicThreat;
-    city2CosmicThreat = 0;
-  } else if (index === 2 && city3CosmicThreat > 0) {
-    city3TempBuff += city3CosmicThreat;
-    city3CosmicThreat = 0;
-  } else if (index === 3 && city4CosmicThreat > 0) {
-    city4TempBuff += city4CosmicThreat;
-    city4CosmicThreat = 0;
-  } else if (index === 4 && city5CosmicThreat > 0) {
-    city5TempBuff += city5CosmicThreat;
-    city5CosmicThreat = 0;
+  if (cityCosmicThreat[index] > 0) {
+    cityTempBuff[index] += cityCosmicThreat[index];
+    cityCosmicThreat[index] = 0;
   }
-
   updateGameBoard();
 }
 
