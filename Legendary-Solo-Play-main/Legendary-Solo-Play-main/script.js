@@ -2300,9 +2300,7 @@ function randomizeHero() {
     return;
   }
 
-  // Randomly select heroes — Golden Solo always uses 5 heroes
-  const _rh_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const _rh_count = (_rh_gameMode === GOLDEN_SOLO) ? 5 : 3;
+  const _rh_count = selectedScheme ? selectedScheme.requiredHeroes : 3;
   const shuffledCheckboxes = fisherYatesShuffle([...filteredCheckboxes]);
   const selectedCheckboxes = shuffledCheckboxes.slice(0, _rh_count);
 
@@ -2528,7 +2526,7 @@ function updateSummaryPanel() {
     heroesValueEl.textContent = selectedHeroes.join(', ');
   }
 
-  const requiredHeroes = (gameModeValue === GOLDEN_SOLO) ? 5 : (scheme ? (scheme.requiredHeroes ?? null) : null);
+  const requiredHeroes = scheme ? (scheme.requiredHeroes ?? null) : null;
   heroesCountEl.textContent = `(${selectedHeroes.length}/${requiredHeroes !== null ? requiredHeroes : '?'})`;
   heroesCountEl.className = 'summary-count ' + getCountColorClass(selectedHeroes.length, requiredHeroes);
 }
@@ -2893,9 +2891,7 @@ function randomizeHeroWithRequirements(scheme) {
     return;
   }
 
-  // Randomly select the required number of heroes — Golden Solo always uses 5
-  const _rhr_gameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const _rhr_count = (_rhr_gameMode === GOLDEN_SOLO) ? 5 : scheme.requiredHeroes;
+  const _rhr_count = scheme.requiredHeroes;
   const shuffledCheckboxes = fisherYatesShuffle([...filteredCheckboxes]);
   const selectedCheckboxes = shuffledCheckboxes.slice(0, _rhr_count);
 
@@ -3084,10 +3080,8 @@ function showConfirmChoicesPopup(
     villainFeedback += `<br><span class="error-spans">Please select ${villains.length - req.requiredVillains > 1 ? "fewer villain groups" : "one less villain group"}.</span>`;
   }
 
-  // Hero count validation — Golden Solo always requires 5 heroes.
-  // Read from DOM directly (gameMode global isn't set until startGame() runs).
-  const _selectedGameMode = document.querySelector('input[name="gameMode"]:checked')?.value || 'whatif';
-  const requiredHeroes = (_selectedGameMode === GOLDEN_SOLO) ? 5 : scheme.requiredHeroes;
+  // Hero count validation — uses scheme's requiredHeroes for all game modes.
+  const requiredHeroes = scheme.requiredHeroes;
 
   if (heroes.length < requiredHeroes) {
     heroFeedback += `<br><span class="error-spans">Please select ${requiredHeroes - heroes.length > 1 ? "more heroes" : "another hero"}.</span>`;
