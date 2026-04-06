@@ -561,6 +561,7 @@ let cityTempBuff = [];
 let cityPermBuff = [];
 let cityLocationAttack = [];
 let cityReserveAttack = [];
+let cityCosmicThreat = [];
 var mastermindTempBuff = 0;
 var mastermindPermBuff = 0;
 let mastermindPermBuffDynamicPrev = 0;
@@ -575,6 +576,7 @@ function initCityArrays() {
   cityLocationAttack = new Array(citySize).fill(0);
   cityReserveAttack = new Array(citySize).fill(0);
   cityCosmicThreat = new Array(citySize).fill(0);
+  citySpaceLabels = citySpaces.map(s => s.label);
 }
 var hq1ReserveRecruit = 0;
 var hq2ReserveRecruit = 0;
@@ -668,7 +670,6 @@ let galactusForceOfEternityDraw = false;
 let galactusDestroyedCityDelay = false;
 let negativeZoneAttackAndRecruit = false;
 let invincibleForceField = 0;
-let cityCosmicThreat = [];
 let mastermindCosmicThreat = 0;
 let mastermindCosmicThreatResolved = false;
 let unseenRescueBystanders = 0;
