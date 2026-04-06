@@ -578,6 +578,45 @@ function initCityArrays() {
   cityCosmicThreat = new Array(citySize).fill(0);
   citySpaceLabels = citySpaces.map(s => s.label);
 }
+
+function generateCityHTML() {
+  // --- City space cells ---
+  const spacesContainer = document.getElementById('city-spaces-container');
+  spacesContainer.innerHTML = '';
+  for (let i = 0; i < citySize; i++) {
+    const space = citySpaces[i];
+    const displayLabel = space.label.replace(/^The /, '');
+    const div = document.createElement('div');
+    div.className = 'cell city city-space';
+    div.id = `city-${i + 1}`;
+    div.dataset.index = i;
+    div.textContent = `City - ${displayLabel}`;
+    div.style.backgroundImage = `url("Visual Assets/Backgrounds/${space.bg}")`;
+    div.style.backgroundPosition = space.bgPos;
+    spacesContainer.appendChild(div);
+  }
+
+  // --- City label cells ---
+  const labelsContainer = document.getElementById('city-labels-container');
+  labelsContainer.innerHTML = '';
+  for (let i = 0; i < citySize; i++) {
+    const space = citySpaces[i];
+    const displayLabel = space.label.replace(/^The /, '');
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'cell-label city-label';
+    const p = document.createElement('p');
+    p.className = 'labeltext';
+    p.id = `city-label-${i}`;
+    p.textContent = displayLabel;
+    labelDiv.appendChild(p);
+    labelsContainer.appendChild(labelDiv);
+  }
+
+  // --- Adjust grid columns for city size ---
+  const grid = document.querySelector('.grid');
+  const totalColumns = Math.max(citySize + 3, 8);
+  grid.style.gridTemplateColumns = `repeat(${totalColumns}, 1fr)`;
+}
 var hq1ReserveRecruit = 0;
 var hq2ReserveRecruit = 0;
 var hq3ReserveRecruit = 0;
@@ -4559,6 +4598,7 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   isFirstTurn = true;
   finalBlowDelivered = false;
   initCityArrays();
+  generateCityHTML();
   console.log("Initializing game with:");
   console.log("Heroes:", heroes);
   console.log("Villains:", villains);
