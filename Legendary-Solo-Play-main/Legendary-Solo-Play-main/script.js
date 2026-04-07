@@ -6942,7 +6942,7 @@ masterStrikeCountNumber.innerHTML = `${koPile.filter((card) => card.type === "Ma
   escapePileCountNumber.innerHTML = `${escapedVillainsDeck.length}`;
   koPileCountNumber.innerHTML = `${koPile.length}`;
   woundDeckCountNumber.innerHTML = `${woundDeck.length}`;
-  bystanderDeckCountNumber.innerHTML = `${bystanderDeck.length}`;
+  bystanderDeckCountNumber.textContent = `${victoryPile.filter(c => c.type === 'Bystander').length} rescued · ${bystanderDeck.length} deck`;
   sidekickCountNumber.innerHTML = `${sidekickDeck.length}`;
   shieldCountNumber.innerHTML = `${shieldDeck.length}`;
   discardCountNumber.innerHTML = `${playerDiscardPile.length}`;
