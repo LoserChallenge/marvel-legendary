@@ -11436,6 +11436,76 @@ function showHQAttackButton(index) {
   }
 }
 
+function showLocationAttackButton(cityIndex) {
+  const locationCard = cityLocations[cityIndex];
+  if (!locationCard) return;
+
+  const cityCell = document.querySelector(`#city-${cityIndex + 1}`);
+  if (!cityCell) return;
+
+  // Calculate effective attack cost
+  let effectiveAttack = locationCard.attack;
+  // HYDRA Base subtype: +2 while a villain is present in the same space
+  if (locationCard.subtype === "Henchman" && city[cityIndex] !== null) {
+    effectiveAttack += 2;
+  }
+
+  if (effectiveAttack < 0) {
+    effectiveAttack = 0;
+  }
+
+  // Check affordability — Locations use Attack only (no Bribe, no recruit-to-fight)
+  if (totalAttackPoints < effectiveAttack) {
+    onscreenConsole.log(
+      `You need ${effectiveAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight <span class="console-highlights">${locationCard.name}</span>.`,
+    );
+    return;
+  }
+
+  // Find the location container within the city cell
+  const locationContainer = cityCell.querySelector(".location-card-container");
+  if (!locationContainer) return;
+
+  // Create or update the attack button inside the location container
+  let attackButton = locationContainer.querySelector(".attack-button");
+  if (!attackButton) {
+    attackButton = document.createElement("div");
+    attackButton.classList.add("attack-button");
+    locationContainer.appendChild(attackButton);
+  }
+
+  // Update the button text and style
+  attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"</span>`;
+  attackButton.style.display = "block";
+
+  // Handle button click
+  attackButton.onclick = async function () {
+    attackButton.style.display = "none";
+    healingPossible = false;
+
+    try {
+      await defeatLocation(cityIndex, effectiveAttack);
+    } catch (error) {
+      console.error("Location fight failed:", error);
+    } finally {
+      updateGameBoard();
+    }
+  };
+
+  // Handle clicks outside the button
+  const handleClickOutside = (event) => {
+    if (!attackButton.contains(event.target)) {
+      attackButton.style.display = "none";
+      document.removeEventListener("click", handleClickOutside);
+    }
+  };
+
+  // Add a slight delay to avoid immediately hiding the button
+  setTimeout(() => {
+    document.addEventListener("click", handleClickOutside);
+  }, 0);
+}
+
 function recalculateVillainAttack(villainCard) {
   // Extreme defensive checks
   if (
@@ -11546,6 +11616,49 @@ async function drawVillainCardsSequential(count) {
   for (let i = 0; i < count; i++) {
     await processVillainCard();
   }
+}
+
+// ---------------------------------
+// Defeat a Location card
+// ---------------------------------
+async function defeatLocation(cityIndex, attackCost) {
+  const locationCard = cityLocations[cityIndex];
+  if (!locationCard) return;
+
+  playSFX("attack");
+
+  // Snapshot geometry for defeat animation
+  const cityCell = document.querySelector(`#city-${cityIndex + 1}`);
+  const locationContainer = cityCell ? cityCell.querySelector(".location-card-container") : null;
+  const locationImg = locationContainer ? locationContainer.querySelector(".card-image") : null;
+  let animationPromise = Promise.resolve();
+  if (locationContainer && locationImg) {
+    const rect = locationContainer.getBoundingClientRect();
+    animationPromise = animateDefeatFromRect(locationImg.src, rect);
+  }
+
+  // Deduct attack points
+  totalAttackPoints -= attackCost;
+  cumulativeAttackPoints -= attackCost;
+
+  // Move to Victory Pile
+  victoryPile.push(locationCard);
+  onscreenConsole.log(
+    `Defeated Location <span class="console-highlights">${locationCard.name}</span> at ${citySpaceLabels[cityIndex]}. Worth ${locationCard.vp} VP.`,
+  );
+
+  // Execute fight effect if present
+  if (locationCard.fightEffect && typeof window[locationCard.fightEffect] === "function") {
+    await window[locationCard.fightEffect](locationCard, cityIndex);
+  }
+
+  // Clear from city
+  cityLocations[cityIndex] = null;
+
+  // Wait for cosmetic animation
+  await animationPromise;
+
+  updateGameBoard();
 }
 
 // ---------------------------------
