@@ -4132,8 +4132,10 @@ function generateVillainDeck(
         }
 
         // Add the card to the deck the specified number of times
+        // Preserve original type for Locations; default to "Villain" for regular cards
+        const cardType = modifiedCard.type === "Location" ? "Location" : "Villain";
         for (let i = 0; i < (modifiedCard.quantity || 2); i++) {
-          deck.push({ ...modifiedCard, type: "Villain" });
+          deck.push({ ...modifiedCard, type: cardType });
         }
       });
     } else {
@@ -8327,10 +8329,11 @@ if (stackedTwistNextToMastermind > 0) {
 
       // Location click handler — calls showLocationAttackButton (Task 5)
       locationContainer.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (!popupMinimized) return;
-        if (typeof showLocationAttackButton === "function") {
-          showLocationAttackButton(i);
+        if (!popupMinimized) {
+          e.stopPropagation();
+          if (typeof showLocationAttackButton === "function") {
+            showLocationAttackButton(i);
+          }
         }
       });
 
@@ -11498,7 +11501,7 @@ function showLocationAttackButton(cityIndex) {
   // Check affordability — Locations use Attack only (no Bribe, no recruit-to-fight)
   if (totalAttackPoints < effectiveAttack) {
     onscreenConsole.log(
-      `You need ${effectiveAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight <span class="console-highlights">${locationCard.name}</span>.`,
+      `You need ${effectiveAttack} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight <span class="console-highlights">${locationCard.name}</span>.`,
     );
     return;
   }
@@ -11685,7 +11688,7 @@ async function defeatLocation(cityIndex, attackCost) {
   // Move to Victory Pile
   victoryPile.push(locationCard);
   onscreenConsole.log(
-    `Defeated Location <span class="console-highlights">${locationCard.name}</span> at ${citySpaceLabels[cityIndex]}. Worth ${locationCard.vp} VP.`,
+    `Defeated Location <span class="console-highlights">${locationCard.name}</span> at ${citySpaceLabels[cityIndex]}. Worth ${locationCard.victoryPoints} VP.`,
   );
 
   // Execute fight effect if present

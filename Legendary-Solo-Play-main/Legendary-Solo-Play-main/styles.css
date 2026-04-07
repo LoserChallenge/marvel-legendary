@@ -706,75 +706,55 @@ button:active {
 
 /* Location card layer — sits above city space */
 .location-card-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   z-index: 1;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .location-card-container img {
-  width: 100%;
+  height: 14.8vh;
+  width: auto;
   border-radius: 1vh;
   border: 2px solid #d4af37;
   box-sizing: border-box;
-}
-
-/* When Location is alone (no villain) — full size, fills cell */
-.location-card-full {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-.location-card-full img {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
+  filter: drop-shadow(0px 0px 0.5vh black);
 }
 
-/* When Location + Villain share space — Location peeks from top */
+/* When Location is alone (no villain) — same size as normal villain cards */
+.location-card-full {
+  padding-top: 5px;
+}
+
+/* When Location + Villain share space — Location extends above cell */
 .location-card-peek {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 35%;
-  overflow: hidden;
+  top: -4vh;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1;
 }
 
 .location-card-peek img {
-  width: 100%;
-  height: auto;
+  height: 14.8vh;
+  width: auto;
 }
 
-/* Villain card shifts down when Location is above */
+/* Hovering the peek area brings the Location to front so it can zoom */
+.location-card-peek:hover {
+  z-index: 10;
+}
+
+/* Villain card shifts down when Location is above, sits in front */
 .city-space-layered .villain-card-container {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  top: 25%;
-  height: auto;
+  position: relative;
   z-index: 2;
-}
-
-.city-space-layered .villain-card-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  margin-top: 5vh;
 }
 
 /* City space needs relative positioning for layers */
 .city-space-layered {
   position: relative;
-  overflow: hidden;
 }
 
 /* Location affordability glow */
