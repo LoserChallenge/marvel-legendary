@@ -562,6 +562,7 @@ let cityPermBuff = [];
 let cityLocationAttack = [];
 let cityReserveAttack = [];
 let cityCosmicThreat = [];
+let cityLocations = [];
 var mastermindTempBuff = 0;
 var mastermindPermBuff = 0;
 let mastermindPermBuffDynamicPrev = 0;
@@ -576,7 +577,44 @@ function initCityArrays() {
   cityLocationAttack = new Array(citySize).fill(0);
   cityReserveAttack = new Array(citySize).fill(0);
   cityCosmicThreat = new Array(citySize).fill(0);
+  cityLocations = new Array(citySize).fill(null);
   citySpaceLabels = citySpaces.map(s => s.label);
+}
+
+async function placeLocation(locationCard) {
+  // Find rightmost empty location slot
+  let targetIndex = -1;
+  for (let i = citySize - 1; i >= 0; i--) {
+    if (cityLocations[i] === null && !destroyedSpaces[i]) {
+      targetIndex = i;
+      break;
+    }
+  }
+
+  if (targetIndex === -1) {
+    // All spaces have Locations — overflow: KO the weakest
+    await handleLocationOverflow(locationCard);
+    return;
+  }
+
+  cityLocations[targetIndex] = locationCard;
+  console.log(`Location "${locationCard.name}" placed above ${citySpaceLabels[targetIndex]}.`);
+  updateGameBoard();
+}
+
+async function handleLocationOverflow(newLocation) {
+  // Stub — full implementation in Task 7
+  // For now, KO the first Location found (lowest index)
+  for (let i = 0; i < citySize; i++) {
+    if (cityLocations[i] !== null) {
+      console.log(`Location overflow: KO'd "${cityLocations[i].name}" to make room for "${newLocation.name}".`);
+      cityLocations[i] = null;
+      cityLocations[i] = newLocation;
+      console.log(`Location "${newLocation.name}" placed above ${citySpaceLabels[i]}.`);
+      updateGameBoard();
+      return;
+    }
+  }
 }
 
 function generateCityHTML() {
@@ -5889,6 +5927,8 @@ async function processVillainCard() {
         getSelectedScheme().name === `X-Cutioner's Song`
       ) {
         await handleXCutionerHero(villainCard);
+      } else if (villainCard.type === "Location") {
+        await placeLocation(villainCard);
       } else {
         // Handle regular villain card
         await processRegularVillainCard(villainCard);
