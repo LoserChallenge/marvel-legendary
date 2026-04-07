@@ -697,47 +697,9 @@ button:active {
   background-position: center;
 }
 
-#city-1 {
+.city-space {
   height: 15vh;
-  background-image: url("Visual Assets/Backgrounds/Bridge.webp");
   background-size: cover;
-  background-position: top;
-  background-blend-mode: overlay;
-  background-color: var(--city-background-color);
-}
-
-#city-2 {
-  height: 15vh;
-  background-image: url("Visual Assets/Backgrounds/Streets.webp");
-  background-size: cover;
-  background-position: center;
-  background-blend-mode: overlay;
-  background-color: var(--city-background-color);
-}
-
-#city-3 {
-  height: 15vh;
-  background-image: url("Visual Assets/Backgrounds/Rooftops.webp");
-  background-size: cover;
-  background-position: top;
-  background-blend-mode: overlay;
-  background-color: var(--city-background-color);
-}
-
-#city-4 {
-  height: 15vh;
-  background-image: url("Visual Assets/Backgrounds/Bank.webp");
-  background-size: cover;
-  background-position: center;
-  background-blend-mode: overlay;
-  background-color: var(--city-background-color);
-}
-
-#city-5 {
-  height: 15vh;
-  background-image: url("Visual Assets/Backgrounds/Sewers.webp");
-  background-size: cover;
-  background-position: center;
   background-blend-mode: overlay;
   background-color: var(--city-background-color);
 }

@@ -2430,7 +2430,7 @@ async function vultureAmbush() {
           const attackFromScheme = city[i].attackFromScheme || 0;
           const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
           const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
-          const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
+          const currentTempBuff = cityTempBuff[i] || 0;
           const villainShattered = city[i].shattered || 0;
           const totalAttackModifiers =
             attackFromMastermind +
@@ -3365,7 +3365,7 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
         const attackFromScheme = city[i].attackFromScheme || 0;
         const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
         const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
-        const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
+        const currentTempBuff = cityTempBuff[i] || 0;
         const villainShattered = city[i].shattered || 0;
         const totalAttackModifiers =
           attackFromMastermind +
@@ -3520,8 +3520,7 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
       }
 
       // Add the temp buff overlay if there is a buff
-      const tempBuffVariableName = `city${i + 1}TempBuff`;
-      const currentTempBuff = window[tempBuffVariableName];
+      const currentTempBuff = cityTempBuff[i];
       if (currentTempBuff !== 0) {
         const tempBuffOverlay = document.createElement("div");
         tempBuffOverlay.className = "temp-buff-overlay-villain-move";
@@ -3552,11 +3551,7 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
 
     // Add location attack overlays
     const locations = [
-      { value: city1LocationAttack, id: "bridge-label" },
-      { value: city2LocationAttack, id: "streets-label" },
-      { value: city3LocationAttack, id: "rooftops-label" },
-      { value: city4LocationAttack, id: "bank-label" },
-      { value: city5LocationAttack, id: "sewers-label" },
+      ...cityLocationAttack.map((value, idx) => ({ value, id: `city-label-${idx}` })),
     ];
 
     locations.forEach(({ value, id }) => {

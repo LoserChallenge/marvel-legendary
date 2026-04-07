@@ -3483,7 +3483,7 @@ function bladeStalkThePrey() {
         const attackFromScheme = city[i].attackFromScheme || 0;
         const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
         const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
-        const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
+        const currentTempBuff = cityTempBuff[i] || 0;
         const villainShattered = city[i].shattered || 0;
         const totalAttackModifiers =
           attackFromMastermind +
@@ -3669,13 +3669,7 @@ function bladeStalkThePrey() {
     }
 
     // Add location attack overlays
-    const locations = [
-      { value: city1LocationAttack, id: "bridge-label" },
-      { value: city2LocationAttack, id: "streets-label" },
-      { value: city3LocationAttack, id: "rooftops-label" },
-      { value: city4LocationAttack, id: "bank-label" },
-      { value: city5LocationAttack, id: "sewers-label" },
-    ];
+    const locations = cityLocationAttack.map((value, idx) => ({ value, id: `city-label-${idx}` }));
 
     locations.forEach(({ value, id }) => {
       if (value !== 0) {
@@ -5396,8 +5390,8 @@ function daredevilTheManWithoutFear() {
 }
 
 function forgeDirtyWork() {
-  city5LocationAttack--;
-  city5LocationAttack--;
+  cityLocationAttack[4]--;
+  cityLocationAttack[4]--;
   onscreenConsole.log(
     `Any Villain you fight in the Sewers this turn gets -2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
   );
