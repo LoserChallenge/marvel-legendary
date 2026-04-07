@@ -603,18 +603,59 @@ async function placeLocation(locationCard) {
 }
 
 async function handleLocationOverflow(newLocation) {
-  // Stub — full implementation in Task 7
-  // For now, KO the first Location found (lowest index)
+  // Find the lowest attack value among all active Locations
+  let lowestAttack = Infinity;
   for (let i = 0; i < citySize; i++) {
-    if (cityLocations[i] !== null) {
-      console.log(`Location overflow: KO'd "${cityLocations[i].name}" to make room for "${newLocation.name}".`);
-      cityLocations[i] = null;
-      cityLocations[i] = newLocation;
-      console.log(`Location "${newLocation.name}" placed above ${citySpaceLabels[i]}.`);
-      updateGameBoard();
-      return;
+    if (cityLocations[i] !== null && cityLocations[i].attack < lowestAttack) {
+      lowestAttack = cityLocations[i].attack;
     }
   }
+
+  // Collect all Locations tied at that lowest attack value
+  const candidates = [];
+  for (let i = 0; i < citySize; i++) {
+    if (cityLocations[i] !== null && cityLocations[i].attack === lowestAttack) {
+      candidates.push({ index: i, location: cityLocations[i] });
+    }
+  }
+
+  let targetIndex;
+  if (candidates.length === 1) {
+    // Only one candidate — KO it automatically
+    targetIndex = candidates[0].index;
+  } else {
+    // Multiple candidates tied at lowest attack — player chooses which to KO
+    const items = candidates.map((c) => ({
+      name: `${c.location.name} (Attack ${c.location.attack}) — above ${citySpaceLabels[c.index]}`,
+      image: c.location.image || null,
+      cityIndex: c.index,
+    }));
+
+    const choice = await showOperationSelectionPopup({
+      title: "Location Overflow",
+      instructions: `All city spaces are occupied. Choose which Location to KO to make room for <span class="console-highlights">${newLocation.name}</span>. Select the Location with the lowest threat:`,
+      items,
+      confirmText: "KO THIS LOCATION",
+    });
+
+    if (choice) {
+      targetIndex = choice.cityIndex;
+    } else {
+      // Fallback: KO the first candidate (lowest city index among tied locations)
+      targetIndex = candidates[0].index;
+    }
+  }
+
+  // KO the chosen Location (goes to KO pile, not Victory Pile)
+  const koLocation = cityLocations[targetIndex];
+  console.log(`Location overflow: KO'd "${koLocation.name}" to make room for "${newLocation.name}".`);
+  koPile.push(koLocation);
+  cityLocations[targetIndex] = null;
+
+  // Place the new Location in the freed space
+  cityLocations[targetIndex] = newLocation;
+  console.log(`Location "${newLocation.name}" placed above ${citySpaceLabels[targetIndex]}.`);
+  updateGameBoard();
 }
 
 function generateCityHTML() {
