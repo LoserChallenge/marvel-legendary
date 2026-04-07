@@ -704,6 +704,70 @@ button:active {
   background-color: var(--city-background-color);
 }
 
+/* Location card layer — sits above city space */
+.location-card-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.location-card-container img {
+  width: 100%;
+  border-radius: 1vh;
+  border: 2px solid #d4af37;
+  box-sizing: border-box;
+}
+
+/* When Location is alone (no villain) — full size */
+.location-card-full {
+  position: relative;
+}
+
+.location-card-full img {
+  height: 100%;
+  object-fit: contain;
+}
+
+/* When Location + Villain share space — Location peeks from top */
+.location-card-peek {
+  height: 40%;
+  overflow: hidden;
+}
+
+.location-card-peek img {
+  height: auto;
+  max-height: none;
+}
+
+/* Villain card shifts down when Location is above */
+.city-space-layered .villain-card-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 75%;
+  z-index: 2;
+}
+
+/* City space needs relative positioning for layers */
+.city-space-layered {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Location affordability glow */
+.location-card-container.attackable {
+  filter: drop-shadow(0 0 8px #d4af37);
+}
+
+.location-card-container.attackable img {
+  border-color: #ffd700;
+}
+
 .labeltext {
   color: white;
   filter: drop-shadow(0vh 0vh 0.3vh black);
