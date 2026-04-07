@@ -11796,6 +11796,14 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
     isInstantDefeat,
   );
 
+  // Check for Location triggered ability in this space
+  if (cityLocations[cityIndex] && cityLocations[cityIndex].triggeredAbility) {
+    const triggerFn = window[cityLocations[cityIndex].triggeredAbility];
+    if (typeof triggerFn === "function") {
+      await triggerFn(cityLocations[cityIndex], cityIndex);
+    }
+  }
+
   // Wait for the cosmetic animation to finish (keeps UI silky)
   await animationPromise;
 }
