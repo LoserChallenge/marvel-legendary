@@ -8258,7 +8258,51 @@ if (stackedTwistNextToMastermind > 0) {
       permBuffOverlayMastermind.style.display = "none"; // Hide the overlay if the buff is zero
     }
 
+    // --- Location layer rendering ---
+    const hasLocation = cityLocations[i] !== null;
+    const hasVillain = city[i] !== null;
+
+    if (hasLocation && !destroyedSpaces[i]) {
+      const locationCard = cityLocations[i];
+      const locationContainer = document.createElement("div");
+
+      if (hasVillain) {
+        locationContainer.className = "location-card-container location-card-peek";
+        newCityCell.classList.add("city-space-layered");
+      } else {
+        locationContainer.className = "location-card-container location-card-full";
+      }
+
+      const locationImg = document.createElement("img");
+      locationImg.src = locationCard.image;
+      locationImg.alt = locationCard.name;
+      locationImg.classList.add("card-image");
+      locationContainer.appendChild(locationImg);
+
+      // Location affordability check
+      if (totalAttackPoints >= locationCard.attack) {
+        locationContainer.classList.add("attackable");
+      }
+
+      // Location click handler — calls showLocationAttackButton (Task 5)
+      locationContainer.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!popupMinimized) return;
+        if (typeof showLocationAttackButton === "function") {
+          showLocationAttackButton(i);
+        }
+      });
+
+      newCityCell.appendChild(locationContainer);
+    }
+
     if (destroyedSpaces[i]) {
+      // Clear any Location from a destroyed space
+      if (cityLocations[i] !== null) {
+        console.log(`Location "${cityLocations[i].name}" destroyed with city space.`);
+        cityLocations[i] = null;
+      }
+
       // Create a container to hold the card image and overlays
       const cardContainer = document.createElement("div");
       cardContainer.classList.add("card-container"); // Add a class for styling the container
@@ -8295,6 +8339,9 @@ if (stackedTwistNextToMastermind > 0) {
       // Create a container to hold the card image and overlays
       const cardContainer = document.createElement("div");
       cardContainer.classList.add("card-container"); // Add a class for styling the container
+      if (hasLocation) {
+        cardContainer.classList.add("villain-card-container");
+      }
       cardContainer.setAttribute("data-city-index", i);
       newCityCell.appendChild(cardContainer);
 
