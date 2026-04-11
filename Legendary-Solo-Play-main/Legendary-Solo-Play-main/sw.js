@@ -1,4 +1,4 @@
-const CACHE_NAME = 'legendary-v1';
+const CACHE_NAME = 'legendary-v3'; // bump this version number with every push to force iPad to re-cache
 
 const FILES_TO_CACHE = [
   '/marvel-legendary/',
