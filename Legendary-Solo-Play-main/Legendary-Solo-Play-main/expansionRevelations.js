@@ -2104,4 +2104,274 @@ function theHoodWarehouse() {
 
 // --- HENCHMEN EFFECTS ---
 
+// === HYDRA Base (Henchman Location) ===
+// +2 Attack while a Villain is in the same space — handled in updateVillainAttackValues.
+// Fight: KO one of your Heroes.
+function hydraBaseFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">HYDRA Base</span>: KO one of your Heroes.`);
+  return FightKOHeroYouHave();
+}
+
+// === Mandarin's Rings (10 unique fight effects) ===
+
+// Daimonic, The White Light — Fight: Draw a card.
+function mandarinRingDaimonic() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Daimonic, The White Light</span>: Draw a card.`);
+  drawCard();
+}
+
+// Incandescence, The Flame Blast — Fight: KO a card from discard.
+async function mandarinRingIncandescence() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Incandescence, The Flame Blast</span>: You may KO a card from your discard pile.`);
+  if (playerDiscardPile.length === 0) {
+    onscreenConsole.log(`No cards in discard pile.`);
+    return;
+  }
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `KO a card from your discard pile?`, "KO a Card", "Skip",
+    );
+    confirmButton.onclick = function () {
+      closeInfoChoicePopup();
+      playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
+      const card = playerDiscardPile.shift();
+      koPile.push(card);
+      onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+      resolve();
+    };
+    denyButton.onclick = function () { closeInfoChoicePopup(); resolve(); };
+  });
+}
+
+// Influence, The Impact Beam — Fight: +1 Recruit.
+function mandarinRingInfluence() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Influence, The Impact Beam</span>: +1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
+  totalRecruitPoints += 1;
+  cumulativeRecruitPoints += 1;
+  updateGameBoard();
+}
+
+// Liar, The Mento-Intensifier — Fight: Look at top of your deck, choose to discard or keep.
+// (Solo adaptation: "another player's deck" -> your own deck)
+async function mandarinRingLiar() {
+  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`Fight! <span class="console-highlights">Liar</span>: No cards in deck.`);
+    return;
+  }
+  const topCard = playerDeck[playerDeck.length - 1];
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `<span class="console-highlights">Liar</span>: Top of your deck is <span class="bold-spans">${topCard.name}</span>. Discard it or put it back?`,
+      "Discard",
+      "Put It Back",
+    );
+    confirmButton.onclick = function () {
+      closeInfoChoicePopup();
+      const card = playerDeck.pop();
+      playerDiscardPile.push(card);
+      onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+      resolve();
+    };
+    denyButton.onclick = function () {
+      closeInfoChoicePopup();
+      onscreenConsole.log(`Left <span class="console-highlights">${topCard.name}</span> on top.`);
+      resolve();
+    };
+  });
+}
+
+// Lightning, The Electro-Blast — Fight: Reveal top of deck, may KO it.
+async function mandarinRingLightning() {
+  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`Fight! <span class="console-highlights">Lightning</span>: No cards in deck.`);
+    return;
+  }
+  const topCard = playerDeck[playerDeck.length - 1];
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `<span class="console-highlights">Lightning</span>: Revealed <span class="bold-spans">${topCard.name}</span>. KO it?`,
+      "KO It",
+      "Keep It",
+    );
+    confirmButton.onclick = function () {
+      closeInfoChoicePopup();
+      const card = playerDeck.pop();
+      koPile.push(card);
+      onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+      resolve();
+    };
+    denyButton.onclick = function () {
+      closeInfoChoicePopup();
+      onscreenConsole.log(`Left <span class="console-highlights">${topCard.name}</span> on top.`);
+      resolve();
+    };
+  });
+}
+
+// Nightbringer, The Black Light — Fight: Reveal top 3 of villain deck, may defeat a villain worth 2VP or less.
+async function mandarinRingNightbringer() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Nightbringer, The Black Light</span>: Reveal top three cards of the Villain Deck.`);
+  if (villainDeck.length === 0) {
+    onscreenConsole.log(`Villain Deck is empty.`);
+    return;
+  }
+  const revealed = [];
+  for (let i = 0; i < 3 && villainDeck.length > 0; i++) {
+    revealed.push(villainDeck.pop());
+  }
+  const eligible = revealed.filter(c => c.type === "Villain" && (c.victoryPoints || 0) <= 2);
+  const names = revealed.map(c => `${c.name} (${c.type}, ${c.victoryPoints || 0}VP)`).join(", ");
+  onscreenConsole.log(`Revealed: ${names}.`);
+  if (eligible.length > 0) {
+    const target = eligible[0];
+    const remaining = revealed.filter(c => c !== target);
+    victoryPile.push(target);
+    onscreenConsole.log(`Defeated <span class="console-highlights">${target.name}</span> (${target.victoryPoints}VP)!`);
+    // Put rest back on top
+    for (const c of remaining.reverse()) villainDeck.push(c);
+  } else {
+    onscreenConsole.log(`No eligible Villain (2VP or less). Put them all back.`);
+    for (const c of revealed.reverse()) villainDeck.push(c);
+  }
+  updateGameBoard();
+}
+
+// Remaker, The Matter Rearranger — Fight: Choose a card from discard, put it in your hand.
+// (Solo adaptation: "player on your right" -> yourself)
+async function mandarinRingRemaker() {
+  if (playerDiscardPile.length === 0) {
+    onscreenConsole.log(`Fight! <span class="console-highlights">Remaker</span>: No cards in discard pile.`);
+    return;
+  }
+  // Pick highest-cost card from discard to hand
+  playerDiscardPile.sort((a, b) => (b.cost || 0) - (a.cost || 0));
+  const card = playerDiscardPile.shift();
+  playerHand.push(card);
+  onscreenConsole.log(`Fight! <span class="console-highlights">Remaker, The Matter Rearranger</span>: Put <span class="console-highlights">${card.name}</span> from discard into your hand.`);
+  updateGameBoard();
+}
+
+// Spectral, The Disintegration Beam — Fight: KO one of your Heroes.
+function mandarinRingSpectral() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Spectral, The Disintegration Beam</span>: KO one of your Heroes.`);
+  return FightKOHeroYouHave();
+}
+
+// Spin, The Vortex Beam — Fight: Reveal top 6 of deck, discard all cost-0, put rest back.
+function mandarinRingSpin() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Spin, The Vortex Beam</span>: Reveal top six cards of your deck.`);
+  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  const revealed = [];
+  for (let i = 0; i < 6 && playerDeck.length > 0; i++) {
+    revealed.push(playerDeck.pop());
+  }
+  const costZero = revealed.filter(c => (c.cost || 0) === 0);
+  const rest = revealed.filter(c => (c.cost || 0) > 0);
+  for (const c of costZero) {
+    playerDiscardPile.push(c);
+    onscreenConsole.log(`Discarded <span class="console-highlights">${c.name}</span> (cost 0).`);
+  }
+  for (const c of rest.reverse()) {
+    playerDeck.push(c);
+  }
+  onscreenConsole.log(`Discarded ${costZero.length} cost-0 card(s). Put ${rest.length} back on top.`);
+  updateGameBoard();
+}
+
+// Zero, The Ice Blast — Fight: Choose a cost-0 card you played. Add it to hand at end of turn.
+function mandarinRingZero() {
+  const costZeroPlayed = cardsPlayedThisTurn.filter(c => (c.cost || 0) === 0 && !c.isCopied && !c.markedForDeletion && !c.isSimulation);
+  if (costZeroPlayed.length === 0) {
+    onscreenConsole.log(`Fight! <span class="console-highlights">Zero, The Ice Blast</span>: No cost-0 cards played this turn.`);
+    return;
+  }
+  const card = costZeroPlayed[0];
+  onscreenConsole.log(`Fight! <span class="console-highlights">Zero, The Ice Blast</span>: <span class="console-highlights">${card.name}</span> will be added to your hand at end of turn as an extra card.`);
+  // Mark card for end-of-turn retrieval
+  card.addToHandEndOfTurn = true;
+}
+
 // --- BYSTANDER EFFECTS ---
+
+// Dog Show Judge — When rescued: reveal top of each player's deck, "judge" best in show, draw it.
+// Solo: just reveal top of your deck, draw it.
+function bystanderDogShowJudge() {
+  onscreenConsole.log(`Rescued <span class="console-highlights">Dog Show Judge</span>! Reveal the top card of your deck and draw it.`);
+  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  if (playerDeck.length > 0) {
+    drawCard();
+  }
+}
+
+// Lawyer — When rescued: reveal top 3 of deck, draw each with 10+ words of rules text.
+function bystanderLawyer() {
+  onscreenConsole.log(`Rescued <span class="console-highlights">Lawyer</span>! Reveal top 3 cards of your deck.`);
+  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  const revealed = [];
+  for (let i = 0; i < 3 && playerDeck.length > 0; i++) {
+    revealed.push(playerDeck.pop());
+  }
+  if (revealed.length === 0) {
+    onscreenConsole.log(`No cards to reveal.`);
+    return;
+  }
+  // Approximate "10+ words of rules text" — cards with abilities are wordy
+  // Use a heuristic: cards with unconditionalAbility or conditionalAbility != "None"
+  const wordy = revealed.filter(c =>
+    (c.unconditionalAbility && c.unconditionalAbility !== "None") ||
+    (c.conditionalAbility && c.conditionalAbility !== "None")
+  );
+  const rest = revealed.filter(c => !wordy.includes(c));
+  for (const c of wordy) {
+    playerHand.push(c);
+    onscreenConsole.log(`Drew <span class="console-highlights">${c.name}</span> (has rules text).`);
+  }
+  // Put rest back on top
+  for (const c of rest.reverse()) {
+    playerDeck.push(c);
+  }
+  onscreenConsole.log(`Drew ${wordy.length}, put ${rest.length} back.`);
+  updateGameBoard();
+}
+
+// Rocket Test Pilot — When rescued: choose Recruit or Attack, then Hyperspeed 3.
+async function bystanderRocketTestPilot() {
+  onscreenConsole.log(`Rescued <span class="console-highlights">Rocket Test Pilot</span>!`);
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Choose Recruit or Attack. Then Hyperspeed 3 for that icon.`,
+      "Attack",
+      "Recruit",
+    );
+    confirmButton.onclick = function () {
+      closeInfoChoicePopup();
+      hyperspeed(3, "attack");
+      resolve();
+    };
+    denyButton.onclick = function () {
+      closeInfoChoicePopup();
+      hyperspeed(3, "recruit");
+      resolve();
+    };
+  });
+}
