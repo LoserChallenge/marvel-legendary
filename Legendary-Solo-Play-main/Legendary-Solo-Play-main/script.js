@@ -2024,6 +2024,9 @@ function randomizeScheme() {
   // Filter the radio buttons by the selected filters
   const filteredRadioButtons = schemeRadioButtons.filter((button) => {
     const schemeSet = button.getAttribute("data-set");
+    const schemeName = button.value;
+    const schemeData = schemes.find(s => s.name === schemeName);
+    if (schemeData && schemeData.hiddenFromSetup) return false;
     return selectedFilters.length === 0 || selectedFilters.includes(schemeSet);
   });
 
@@ -2050,6 +2053,31 @@ function randomizeScheme() {
 
   // Return the selected scheme value
   return selectedRadioButton.value;
+}
+
+function transformScheme() {
+  const targetName = selectedScheme.transformsInto;
+  if (!targetName) {
+    console.warn("transformScheme() called but current scheme has no transformsInto field.");
+    return;
+  }
+
+  const newScheme = schemes.find(s => s.name === targetName);
+  if (!newScheme) {
+    console.error(`Transform target scheme not found: "${targetName}"`);
+    return;
+  }
+
+  selectedScheme = newScheme;
+
+  // Update the in-game scheme image
+  const schemeImg = document.querySelector('#scheme-place img');
+  if (schemeImg) {
+    schemeImg.src = newScheme.image;
+    schemeImg.alt = newScheme.name;
+  }
+
+  onscreenConsole.log(`Scheme transformed to: <span class="console-highlights">${newScheme.name}</span>`);
 }
 
 function randomizeMastermind() {
