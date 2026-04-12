@@ -4102,8 +4102,14 @@ function generateVillainDeck(
     villainDeckHenchmen.forEach((henchmanName) => {
       const henchman = window.henchmen.find((h) => h.name === henchmanName);
       if (henchman) {
-        for (let i = 0; i < 10; i++) {
-          deck.push({ ...henchman, subtype: "Henchman" });
+        if (henchman.cards) {
+          for (const card of henchman.cards) {
+            deck.push({ ...henchman, ...card, subtype: "Henchman" });
+          }
+        } else {
+          for (let i = 0; i < 10; i++) {
+            deck.push({ ...henchman, subtype: "Henchman" });
+          }
         }
       } else {
         console.warn(`Henchman with name ${henchmanName} not found.`);
@@ -4148,9 +4154,15 @@ function generateVillainDeck(
           }
         } else {
           // For the other henchmen:
-          // Add 10 copies to the deck
-          for (let i = 0; i < 10; i++) {
-            deck.push({ ...henchman, subtype: "Henchman" });
+          if (henchman.cards) {
+            for (const card of henchman.cards) {
+              deck.push({ ...henchman, ...card, subtype: "Henchman" });
+            }
+          } else {
+            // Add 10 copies to the deck
+            for (let i = 0; i < 10; i++) {
+              deck.push({ ...henchman, subtype: "Henchman" });
+            }
           }
         }
       } else {
