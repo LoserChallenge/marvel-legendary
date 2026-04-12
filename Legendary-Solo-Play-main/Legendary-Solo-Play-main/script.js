@@ -7142,14 +7142,24 @@ function updateHighlights() {
           recalculateVillainAttack(city[i]) + locationAttack;
         const reservedAttack = cityReserveAttack[i] || 0;
 
-        const canAttackWithAttackPoints =
-          totalAttackPoints + reservedAttack >= villainAttack;
-        const hasBribeKeyword =
-          Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
-        const canAttackWithRecruitPoints =
-          (recruitUsedToAttack || hasBribeKeyword) &&
-          totalAttackPoints + totalRecruitPoints + reservedAttack >=
-            villainAttack;
+        const usesRecruitToFight = city[i].usesRecruitToFight === true;
+        let canAttackWithAttackPoints;
+        let canAttackWithRecruitPoints;
+
+        if (usesRecruitToFight) {
+          // Recruit-only fight (e.g., Mister Hyde as Dr. Calvin Zabo)
+          canAttackWithAttackPoints = false;
+          canAttackWithRecruitPoints = totalRecruitPoints >= villainAttack;
+        } else {
+          canAttackWithAttackPoints =
+            totalAttackPoints + reservedAttack >= villainAttack;
+          const hasBribeKeyword =
+            Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
+          canAttackWithRecruitPoints =
+            (recruitUsedToAttack || hasBribeKeyword) &&
+            totalAttackPoints + totalRecruitPoints + reservedAttack >=
+              villainAttack;
+        }
 
         if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
           cityCell.classList.add("attackable");
@@ -7389,14 +7399,24 @@ function updateHighlights() {
           recalculateVillainAttack(city[i]) + locationAttack;
         const reservedAttack = cityReserveAttack[i] || 0;
 
-        const canAttackWithAttackPoints =
-          totalAttackPoints + reservedAttack >= villainAttack;
-        const hasBribeKeyword =
-          Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
-        const canAttackWithRecruitPoints =
-          (recruitUsedToAttack || hasBribeKeyword) &&
-          totalAttackPoints + totalRecruitPoints + reservedAttack >=
-            villainAttack;
+        const usesRecruitToFight = city[i].usesRecruitToFight === true;
+        let canAttackWithAttackPoints;
+        let canAttackWithRecruitPoints;
+
+        if (usesRecruitToFight) {
+          // Recruit-only fight (e.g., Mister Hyde as Dr. Calvin Zabo)
+          canAttackWithAttackPoints = false;
+          canAttackWithRecruitPoints = totalRecruitPoints >= villainAttack;
+        } else {
+          canAttackWithAttackPoints =
+            totalAttackPoints + reservedAttack >= villainAttack;
+          const hasBribeKeyword =
+            Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
+          canAttackWithRecruitPoints =
+            (recruitUsedToAttack || hasBribeKeyword) &&
+            totalAttackPoints + totalRecruitPoints + reservedAttack >=
+              villainAttack;
+        }
 
         if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
           cityCell.classList.add("attackable");
@@ -11584,7 +11604,13 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
     // Handle point deduction (skip for instant defeat)
     if (!isInstantDefeat) {
       try {
-        if (
+        if (villainCard.usesRecruitToFight) {
+          // Recruit-only fight — deduct entirely from recruit points
+          totalRecruitPoints -= villainAttack;
+          onscreenConsole.log(
+            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${villainCopy.name}</span>.`
+          );
+        } else if (
           (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
           (villainCard.keywords && villainCard.keywords.includes("Bribe"))
         ) {
@@ -11790,7 +11816,13 @@ async function defeatHQVillain(index) {
     // Handle point deduction (skip for instant defeat)
     if (!isInstantDefeat) {
       try {
-        if (
+        if (villainCard.usesRecruitToFight) {
+          // Recruit-only fight — deduct entirely from recruit points
+          totalRecruitPoints -= villainAttack;
+          onscreenConsole.log(
+            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${villainCopy.name}</span>.`
+          );
+        } else if (
           (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
           (villainCard.keywords && villainCard.keywords.includes("Bribe"))
         ) {
