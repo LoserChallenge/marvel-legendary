@@ -856,9 +856,37 @@ function getSelectedMastermind() {
   const selectedMastermindName = document.querySelector(
     "#mastermind-section input[type=radio]:checked",
   ).value;
-  return masterminds.find(
+  const baseMastermind = masterminds.find(
     (mastermind) => mastermind.name === selectedMastermindName,
   );
+
+  const epicCheckbox = document.getElementById('epic-mastermind-toggle');
+  if (baseMastermind && baseMastermind.epic && epicCheckbox && epicCheckbox.checked) {
+    // Shallow merge — epic should only contain scalar overrides (name, attack, image, etc.)
+    return { ...baseMastermind, ...baseMastermind.epic };
+  }
+
+  return baseMastermind;
+}
+
+function updateEpicToggleVisibility() {
+  const epicToggleContainer = document.getElementById('epic-toggle-container');
+  const epicCheckbox = document.getElementById('epic-mastermind-toggle');
+  if (!epicToggleContainer) return;
+
+  const selectedRadio = document.querySelector('#mastermind-section input[type=radio]:checked');
+  if (!selectedRadio) {
+    epicToggleContainer.style.display = 'none';
+    return;
+  }
+
+  const mastermind = masterminds.find(m => m.name === selectedRadio.value);
+  if (mastermind && mastermind.epic) {
+    epicToggleContainer.style.display = '';
+  } else {
+    epicToggleContainer.style.display = 'none';
+    if (epicCheckbox) epicCheckbox.checked = false;
+  }
 }
 
 function generateMastermindDeck(mastermind) {
@@ -2075,6 +2103,9 @@ function randomizeScheme() {
   // Filter the radio buttons by the selected filters
   const filteredRadioButtons = schemeRadioButtons.filter((button) => {
     const schemeSet = button.getAttribute("data-set");
+    const schemeName = button.value;
+    const schemeData = schemes.find(s => s.name === schemeName);
+    if (schemeData && schemeData.hiddenFromSetup) return false;
     return selectedFilters.length === 0 || selectedFilters.includes(schemeSet);
   });
 
@@ -2101,6 +2132,31 @@ function randomizeScheme() {
 
   // Return the selected scheme value
   return selectedRadioButton.value;
+}
+
+function transformScheme() {
+  const targetName = selectedScheme.transformsInto;
+  if (!targetName) {
+    console.warn("transformScheme() called but current scheme has no transformsInto field.");
+    return;
+  }
+
+  const newScheme = schemes.find(s => s.name === targetName);
+  if (!newScheme) {
+    console.error(`Transform target scheme not found: "${targetName}"`);
+    return;
+  }
+
+  selectedScheme = newScheme;
+
+  // Update the in-game scheme image
+  const schemeImg = document.querySelector('#scheme-place img');
+  if (schemeImg) {
+    schemeImg.src = newScheme.image;
+    schemeImg.alt = newScheme.name;
+  }
+
+  onscreenConsole.log(`Scheme transformed to: <span class="console-highlights">${newScheme.name}</span>`);
 }
 
 function randomizeMastermind() {
@@ -2142,6 +2198,7 @@ function randomizeMastermind() {
 
   updateMastermindImage(selectedRadioButton.value);
   updateSummaryPanel();
+  updateEpicToggleVisibility();
 }
 
 // Function to randomize villain selection
@@ -2779,6 +2836,7 @@ function updateHeroRequirementsBanner() {
 document.getElementById('scheme-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('scheme-selection').addEventListener('change', updateHeroRequirementsBanner);
 document.getElementById('mastermind-selection').addEventListener('change', updateSummaryPanel);
+document.getElementById('mastermind-selection').addEventListener('change', updateEpicToggleVisibility);
 document.getElementById('villain-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('henchmen-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('hero-selection').addEventListener('change', updateSummaryPanel);
@@ -4153,8 +4211,14 @@ function generateVillainDeck(
     villainDeckHenchmen.forEach((henchmanName) => {
       const henchman = window.henchmen.find((h) => h.name === henchmanName);
       if (henchman) {
-        for (let i = 0; i < 10; i++) {
-          deck.push({ ...henchman, subtype: "Henchman" });
+        if (henchman.cards) {
+          for (const card of henchman.cards) {
+            deck.push({ ...henchman, ...card, subtype: "Henchman" });
+          }
+        } else {
+          for (let i = 0; i < 10; i++) {
+            deck.push({ ...henchman, subtype: "Henchman" });
+          }
         }
       } else {
         console.warn(`Henchman with name ${henchmanName} not found.`);
@@ -4199,9 +4263,15 @@ function generateVillainDeck(
           }
         } else {
           // For the other henchmen:
-          // Add 10 copies to the deck
-          for (let i = 0; i < 10; i++) {
-            deck.push({ ...henchman, subtype: "Henchman" });
+          if (henchman.cards) {
+            for (const card of henchman.cards) {
+              deck.push({ ...henchman, ...card, subtype: "Henchman" });
+            }
+          } else {
+            // Add 10 copies to the deck
+            for (let i = 0; i < 10; i++) {
+              deck.push({ ...henchman, subtype: "Henchman" });
+            }
           }
         }
       } else {
@@ -7155,14 +7225,24 @@ function updateHighlights() {
           recalculateVillainAttack(city[i]) + locationAttack;
         const reservedAttack = cityReserveAttack[i] || 0;
 
-        const canAttackWithAttackPoints =
-          totalAttackPoints + reservedAttack >= villainAttack;
-        const hasBribeKeyword =
-          Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
-        const canAttackWithRecruitPoints =
-          (recruitUsedToAttack || hasBribeKeyword) &&
-          totalAttackPoints + totalRecruitPoints + reservedAttack >=
-            villainAttack;
+        const usesRecruitToFight = city[i].usesRecruitToFight === true;
+        let canAttackWithAttackPoints;
+        let canAttackWithRecruitPoints;
+
+        if (usesRecruitToFight) {
+          // Recruit-only fight (e.g., Mister Hyde as Dr. Calvin Zabo)
+          canAttackWithAttackPoints = false;
+          canAttackWithRecruitPoints = totalRecruitPoints >= villainAttack;
+        } else {
+          canAttackWithAttackPoints =
+            totalAttackPoints + reservedAttack >= villainAttack;
+          const hasBribeKeyword =
+            Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
+          canAttackWithRecruitPoints =
+            (recruitUsedToAttack || hasBribeKeyword) &&
+            totalAttackPoints + totalRecruitPoints + reservedAttack >=
+              villainAttack;
+        }
 
         if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
           cityCell.classList.add("attackable");
@@ -7402,14 +7482,24 @@ function updateHighlights() {
           recalculateVillainAttack(city[i]) + locationAttack;
         const reservedAttack = cityReserveAttack[i] || 0;
 
-        const canAttackWithAttackPoints =
-          totalAttackPoints + reservedAttack >= villainAttack;
-        const hasBribeKeyword =
-          Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
-        const canAttackWithRecruitPoints =
-          (recruitUsedToAttack || hasBribeKeyword) &&
-          totalAttackPoints + totalRecruitPoints + reservedAttack >=
-            villainAttack;
+        const usesRecruitToFight = city[i].usesRecruitToFight === true;
+        let canAttackWithAttackPoints;
+        let canAttackWithRecruitPoints;
+
+        if (usesRecruitToFight) {
+          // Recruit-only fight (e.g., Mister Hyde as Dr. Calvin Zabo)
+          canAttackWithAttackPoints = false;
+          canAttackWithRecruitPoints = totalRecruitPoints >= villainAttack;
+        } else {
+          canAttackWithAttackPoints =
+            totalAttackPoints + reservedAttack >= villainAttack;
+          const hasBribeKeyword =
+            Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
+          canAttackWithRecruitPoints =
+            (recruitUsedToAttack || hasBribeKeyword) &&
+            totalAttackPoints + totalRecruitPoints + reservedAttack >=
+              villainAttack;
+        }
 
         if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
           cityCell.classList.add("attackable");
@@ -11758,7 +11848,13 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
     // Handle point deduction (skip for instant defeat)
     if (!isInstantDefeat) {
       try {
-        if (
+        if (villainCard.usesRecruitToFight) {
+          // Recruit-only fight — deduct entirely from recruit points
+          totalRecruitPoints -= villainAttack;
+          onscreenConsole.log(
+            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${villainCopy.name}</span>.`
+          );
+        } else if (
           (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
           (villainCard.keywords && villainCard.keywords.includes("Bribe"))
         ) {
@@ -11972,7 +12068,13 @@ async function defeatHQVillain(index) {
     // Handle point deduction (skip for instant defeat)
     if (!isInstantDefeat) {
       try {
-        if (
+        if (villainCard.usesRecruitToFight) {
+          // Recruit-only fight — deduct entirely from recruit points
+          totalRecruitPoints -= villainAttack;
+          onscreenConsole.log(
+            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${villainCopy.name}</span>.`
+          );
+        } else if (
           (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
           (villainCard.keywords && villainCard.keywords.includes("Bribe"))
         ) {
