@@ -25,22 +25,25 @@ On `location-system` worktree branch (9 commits, not merged — merge when full 
 
 ### Block 2: Content (standard /new-expansion phases)
 
-#### Phase 1: Card Data + Images ⬜ Not started
-- Copy staged images from `expansions/revelations/` to `Visual Assets/` production folders
-- Add all card entries to `cardDatabase.js` (9 heroes, 4 villain groups, 3 masterminds, 4 scheme pairs, 2 henchmen groups, 3 bystanders)
+#### Phase 1: Card Data + Images ✅ Complete (2026-04-12)
+102 images copied to production folders. All card entries added to cardDatabase.js: 9 heroes (36 cards), 4 villain groups (26 entries), 3 masterminds (with epic + 12 tactics), 8 schemes (4 transforming pairs), 2 henchmen groups (HYDRA Base + 10 unique Mandarin's Rings), 3 named bystanders. Fixed class name ("Ranged" → "Range") and color mapping post-insert.
 
-#### Phase 2: Setup Screen ⬜ Not started
-- Register heroes, villains, masterminds, schemes, henchmen in `index.html`
-- Add `<script>` tag for `expansionRevelations.js` in loading chain
-- Create expansion file skeleton
+#### Phase 2: Setup Screen ✅ Complete (2026-04-12)
+All Revelations content registered in index.html: heroes, villains, masterminds, schemes (Side A only), henchmen. Set filters updated. `expansionRevelations.js` added to script loading chain. Expansion file skeleton created.
 
-#### Phase 3: Effects ⬜ Not started
-- 3a Keywords (Hyperspeed, Dark Memories, Last Stand): ⬜
-- 3b Heroes (9 — Captain Marvel AoS, Darkhawk, Hellcat, Photon, Quicksilver, Ronin, Scarlet Witch, Speed, War Machine): ⬜
-- 3c Villains (4 groups — Army of Evil, Dark Avengers, Hood's Gang, Lethal Legion): ⬜
-- 3d Masterminds (3 normal + 3 epic — Grim Reaper, Mandarin, The Hood): ⬜
-- 3e Schemes (4 transforming, 8 sides — Earthquake/Tsunami, House of M/No More Mutants, Secret HYDRA/Open HYDRA, Korvac Saga/Korvac Revealed): ⬜
-- 3f Henchmen (HYDRA Base + Mandarin's Rings) + Bystanders (3): ⬜
+#### Phase 3: Effects ✅ Complete (2026-04-12)
+- 3a Keywords (Hyperspeed, Dark Memories, Last Stand): ✅ — reusable helpers + hyperspeedCountsBoth flag
+- 3b Heroes (9): ✅ — 36 ability functions, all DB references verified
+- 3c Villains (4 groups): ✅ — 26 cards, ambush/fight/escape effects, revealClassOrWound/Discard helpers
+- 3d Masterminds (3 normal + 3 epic): ✅ — 6 master strikes, 12 tactic effects, tactic→Location placement
+- 3e Schemes (4 transforming pairs): ✅ — 8 twist functions + 6 evil wins conditions in script.js
+- 3f Henchmen + Bystanders: ✅ — HYDRA Base fight, 10 Ring fight effects, 3 bystander rescue effects
+
+Deferred/placeholder items:
+- Speedy Delivery (recruit-to-top flag), Military-Industrial Complex (defeat-for-recruit trigger), Overwhelming Firepower (defeat-for-draw trigger), Second Chance at Life (reactive cancel) — logged as reminders, need fight/recruit flow hooks
+- Extra turn mechanism (Dark Dimension) — needs end-of-turn integration
+- Mysterious Identity (Ronin) — class/team wildcard needs superpower condition checker update
+- Location triggered effects (Laser Maze, Raft Prison, etc.) — stubs in place, trigger system wiring needed
 
 #### Phase 4: Validation ⬜ Not started
 - Expansion validator (7 Golden Solo rules)
