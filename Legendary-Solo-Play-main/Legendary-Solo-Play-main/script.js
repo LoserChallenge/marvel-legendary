@@ -562,6 +562,7 @@ let cityPermBuff = [];
 let cityLocationAttack = [];
 let cityReserveAttack = [];
 let cityCosmicThreat = [];
+let cityLocations = [];
 var mastermindTempBuff = 0;
 var mastermindPermBuff = 0;
 let mastermindPermBuffDynamicPrev = 0;
@@ -576,7 +577,85 @@ function initCityArrays() {
   cityLocationAttack = new Array(citySize).fill(0);
   cityReserveAttack = new Array(citySize).fill(0);
   cityCosmicThreat = new Array(citySize).fill(0);
+  cityLocations = new Array(citySize).fill(null);
   citySpaceLabels = citySpaces.map(s => s.label);
+}
+
+async function placeLocation(locationCard) {
+  // Find rightmost empty location slot
+  let targetIndex = -1;
+  for (let i = citySize - 1; i >= 0; i--) {
+    if (cityLocations[i] === null && !destroyedSpaces[i]) {
+      targetIndex = i;
+      break;
+    }
+  }
+
+  if (targetIndex === -1) {
+    // All spaces have Locations — overflow: KO the weakest
+    await handleLocationOverflow(locationCard);
+    return;
+  }
+
+  cityLocations[targetIndex] = locationCard;
+  console.log(`Location "${locationCard.name}" placed above ${citySpaceLabels[targetIndex]}.`);
+  updateGameBoard();
+}
+
+async function handleLocationOverflow(newLocation) {
+  // Find the lowest attack value among all active Locations
+  let lowestAttack = Infinity;
+  for (let i = 0; i < citySize; i++) {
+    if (cityLocations[i] !== null && cityLocations[i].attack < lowestAttack) {
+      lowestAttack = cityLocations[i].attack;
+    }
+  }
+
+  // Collect all Locations tied at that lowest attack value
+  const candidates = [];
+  for (let i = 0; i < citySize; i++) {
+    if (cityLocations[i] !== null && cityLocations[i].attack === lowestAttack) {
+      candidates.push({ index: i, location: cityLocations[i] });
+    }
+  }
+
+  let targetIndex;
+  if (candidates.length === 1) {
+    // Only one candidate — KO it automatically
+    targetIndex = candidates[0].index;
+  } else {
+    // Multiple candidates tied at lowest attack — player chooses which to KO
+    const items = candidates.map((c) => ({
+      name: `${c.location.name} (Attack ${c.location.attack}) — above ${citySpaceLabels[c.index]}`,
+      image: c.location.image || null,
+      cityIndex: c.index,
+    }));
+
+    const choice = await showOperationSelectionPopup({
+      title: "Location Overflow",
+      instructions: `All city spaces are occupied. Choose which Location to KO to make room for <span class="console-highlights">${newLocation.name}</span>. Select the Location with the lowest threat:`,
+      items,
+      confirmText: "KO THIS LOCATION",
+    });
+
+    if (choice) {
+      targetIndex = choice.cityIndex;
+    } else {
+      // Fallback: KO the first candidate (lowest city index among tied locations)
+      targetIndex = candidates[0].index;
+    }
+  }
+
+  // KO the chosen Location (goes to KO pile, not Victory Pile)
+  const koLocation = cityLocations[targetIndex];
+  console.log(`Location overflow: KO'd "${koLocation.name}" to make room for "${newLocation.name}".`);
+  koPile.push(koLocation);
+  cityLocations[targetIndex] = null;
+
+  // Place the new Location in the freed space
+  cityLocations[targetIndex] = newLocation;
+  console.log(`Location "${newLocation.name}" placed above ${citySpaceLabels[targetIndex]}.`);
+  updateGameBoard();
 }
 
 function generateCityHTML() {
@@ -4053,8 +4132,10 @@ function generateVillainDeck(
         }
 
         // Add the card to the deck the specified number of times
+        // Preserve original type for Locations; default to "Villain" for regular cards
+        const cardType = modifiedCard.type === "Location" ? "Location" : "Villain";
         for (let i = 0; i < (modifiedCard.quantity || 2); i++) {
-          deck.push({ ...modifiedCard, type: "Villain" });
+          deck.push({ ...modifiedCard, type: cardType });
         }
       });
     } else {
@@ -5889,6 +5970,8 @@ async function processVillainCard() {
         getSelectedScheme().name === `X-Cutioner's Song`
       ) {
         await handleXCutionerHero(villainCard);
+      } else if (villainCard.type === "Location") {
+        await placeLocation(villainCard);
       } else {
         // Handle regular villain card
         await processRegularVillainCard(villainCard);
@@ -8218,7 +8301,52 @@ if (stackedTwistNextToMastermind > 0) {
       permBuffOverlayMastermind.style.display = "none"; // Hide the overlay if the buff is zero
     }
 
+    // --- Location layer rendering ---
+    const hasLocation = cityLocations[i] !== null;
+    const hasVillain = city[i] !== null;
+
+    if (hasLocation && !destroyedSpaces[i]) {
+      const locationCard = cityLocations[i];
+      const locationContainer = document.createElement("div");
+
+      if (hasVillain) {
+        locationContainer.className = "location-card-container location-card-peek";
+        newCityCell.classList.add("city-space-layered");
+      } else {
+        locationContainer.className = "location-card-container location-card-full";
+      }
+
+      const locationImg = document.createElement("img");
+      locationImg.src = locationCard.image;
+      locationImg.alt = locationCard.name;
+      locationImg.classList.add("card-image");
+      locationContainer.appendChild(locationImg);
+
+      // Location affordability check
+      if (totalAttackPoints >= locationCard.attack) {
+        locationContainer.classList.add("attackable");
+      }
+
+      // Location click handler — calls showLocationAttackButton (Task 5)
+      locationContainer.addEventListener("click", (e) => {
+        if (!popupMinimized) {
+          e.stopPropagation();
+          if (typeof showLocationAttackButton === "function") {
+            showLocationAttackButton(i);
+          }
+        }
+      });
+
+      newCityCell.appendChild(locationContainer);
+    }
+
     if (destroyedSpaces[i]) {
+      // Clear any Location from a destroyed space
+      if (cityLocations[i] !== null) {
+        console.log(`Location "${cityLocations[i].name}" destroyed with city space.`);
+        cityLocations[i] = null;
+      }
+
       // Create a container to hold the card image and overlays
       const cardContainer = document.createElement("div");
       cardContainer.classList.add("card-container"); // Add a class for styling the container
@@ -8255,6 +8383,9 @@ if (stackedTwistNextToMastermind > 0) {
       // Create a container to hold the card image and overlays
       const cardContainer = document.createElement("div");
       cardContainer.classList.add("card-container"); // Add a class for styling the container
+      if (hasLocation) {
+        cardContainer.classList.add("villain-card-container");
+      }
       cardContainer.setAttribute("data-city-index", i);
       newCityCell.appendChild(cardContainer);
 
@@ -11349,6 +11480,76 @@ function showHQAttackButton(index) {
   }
 }
 
+function showLocationAttackButton(cityIndex) {
+  const locationCard = cityLocations[cityIndex];
+  if (!locationCard) return;
+
+  const cityCell = document.querySelector(`#city-${cityIndex + 1}`);
+  if (!cityCell) return;
+
+  // Calculate effective attack cost
+  let effectiveAttack = locationCard.attack;
+  // HYDRA Base subtype: +2 while a villain is present in the same space
+  if (locationCard.subtype === "Henchman" && city[cityIndex] !== null) {
+    effectiveAttack += 2;
+  }
+
+  if (effectiveAttack < 0) {
+    effectiveAttack = 0;
+  }
+
+  // Check affordability — Locations use Attack only (no Bribe, no recruit-to-fight)
+  if (totalAttackPoints < effectiveAttack) {
+    onscreenConsole.log(
+      `You need ${effectiveAttack} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight <span class="console-highlights">${locationCard.name}</span>.`,
+    );
+    return;
+  }
+
+  // Find the location container within the city cell
+  const locationContainer = cityCell.querySelector(".location-card-container");
+  if (!locationContainer) return;
+
+  // Create or update the attack button inside the location container
+  let attackButton = locationContainer.querySelector(".attack-button");
+  if (!attackButton) {
+    attackButton = document.createElement("div");
+    attackButton.classList.add("attack-button");
+    locationContainer.appendChild(attackButton);
+  }
+
+  // Update the button text and style
+  attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"</span>`;
+  attackButton.style.display = "block";
+
+  // Handle button click
+  attackButton.onclick = async function () {
+    attackButton.style.display = "none";
+    healingPossible = false;
+
+    try {
+      await defeatLocation(cityIndex, effectiveAttack);
+    } catch (error) {
+      console.error("Location fight failed:", error);
+    } finally {
+      updateGameBoard();
+    }
+  };
+
+  // Handle clicks outside the button
+  const handleClickOutside = (event) => {
+    if (!attackButton.contains(event.target)) {
+      attackButton.style.display = "none";
+      document.removeEventListener("click", handleClickOutside);
+    }
+  };
+
+  // Add a slight delay to avoid immediately hiding the button
+  setTimeout(() => {
+    document.addEventListener("click", handleClickOutside);
+  }, 0);
+}
+
 function recalculateVillainAttack(villainCard) {
   // Extreme defensive checks
   if (
@@ -11459,6 +11660,49 @@ async function drawVillainCardsSequential(count) {
   for (let i = 0; i < count; i++) {
     await processVillainCard();
   }
+}
+
+// ---------------------------------
+// Defeat a Location card
+// ---------------------------------
+async function defeatLocation(cityIndex, attackCost) {
+  const locationCard = cityLocations[cityIndex];
+  if (!locationCard) return;
+
+  playSFX("attack");
+
+  // Snapshot geometry for defeat animation
+  const cityCell = document.querySelector(`#city-${cityIndex + 1}`);
+  const locationContainer = cityCell ? cityCell.querySelector(".location-card-container") : null;
+  const locationImg = locationContainer ? locationContainer.querySelector(".card-image") : null;
+  let animationPromise = Promise.resolve();
+  if (locationContainer && locationImg) {
+    const rect = locationContainer.getBoundingClientRect();
+    animationPromise = animateDefeatFromRect(locationImg.src, rect);
+  }
+
+  // Deduct attack points
+  totalAttackPoints -= attackCost;
+  cumulativeAttackPoints -= attackCost;
+
+  // Move to Victory Pile
+  victoryPile.push(locationCard);
+  onscreenConsole.log(
+    `Defeated Location <span class="console-highlights">${locationCard.name}</span> at ${citySpaceLabels[cityIndex]}. Worth ${locationCard.victoryPoints} VP.`,
+  );
+
+  // Execute fight effect if present
+  if (locationCard.fightEffect && typeof window[locationCard.fightEffect] === "function") {
+    await window[locationCard.fightEffect](locationCard, cityIndex);
+  }
+
+  // Clear from city
+  cityLocations[cityIndex] = null;
+
+  // Wait for cosmetic animation
+  await animationPromise;
+
+  updateGameBoard();
 }
 
 // ---------------------------------
@@ -11595,6 +11839,14 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
     cityIndex,
     isInstantDefeat,
   );
+
+  // Check for Location triggered ability in this space
+  if (cityLocations[cityIndex] && cityLocations[cityIndex].triggeredAbility) {
+    const triggerFn = window[cityLocations[cityIndex].triggeredAbility];
+    if (typeof triggerFn === "function") {
+      await triggerFn(cityLocations[cityIndex], cityIndex);
+    }
+  }
 
   // Wait for the cosmetic animation to finish (keeps UI silky)
   await animationPromise;
