@@ -1535,6 +1535,177 @@ function whiteGorillaCultFight() {
 
 // --- SCHEME TWIST EFFECTS ---
 
+// Twist counter — tracks total twists across both sides of transforming schemes
+let revelationsTwistCount = 0;
+
+// === Earthquake Drains the Ocean / Tsunami Crushes the Coast ===
+
+// Earthquake (Side A) Twist: The tide rushes in. Transform to Tsunami.
+async function earthquakeDrainsTheOceanTwist() {
+  revelationsTwistCount++;
+  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! The tide rushes in. Transforming to <span class="console-highlights">Tsunami Crushes the Coast</span>.`);
+  // Tsunami: Low Tide, Bridge, and Streets destroyed. City shrinks to 3 spaces.
+  // Villains in destroyed spaces escape.
+  transformScheme();
+  // City size change will be handled by the dynamic city system
+  onscreenConsole.log(`City spaces reduced. Villains in destroyed spaces escape!`);
+}
+
+// Tsunami (Side B) Twist: The tide rushes out. Transform back, then play another villain card.
+async function tsunamiCrushesTheCoastTwist() {
+  revelationsTwistCount++;
+  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! The tide rushes out. Transforming back to <span class="console-highlights">Earthquake Drains the Ocean</span>.`);
+  transformScheme();
+  // City expands back to 7 spaces
+  onscreenConsole.log(`City spaces restored. Playing another card from the Villain Deck.`);
+  if (typeof processVillainCard === "function") {
+    await processVillainCard();
+  }
+}
+
+// === House of M / "No More Mutants" ===
+
+// House of M (Side A) Twist: KO all non-X-Men Heroes from HQ. If 2+ Scarlet Witch in city, transform.
+// Otherwise, play another villain card.
+async function houseOfMTwist() {
+  revelationsTwistCount++;
+  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! KO all non-X-Men Heroes from the HQ.`);
+  const hqCards = typeof hq !== "undefined" ? hq : [];
+  for (let i = 0; i < hqCards.length; i++) {
+    if (hqCards[i] && hqCards[i].type === "Hero" && hqCards[i].team !== "X-Men") {
+      onscreenConsole.log(`KO'd <span class="console-highlights">${hqCards[i].name}</span> from HQ.`);
+      koPile.push(hqCards[i]);
+      hqCards[i] = heroDeck.length > 0 ? heroDeck.pop() : null;
+    }
+  }
+  // Check for 2+ Scarlet Witch in city
+  const scarletWitchCount = city.filter(v => v && v.name && v.name.includes("Scarlet Witch")).length;
+  if (scarletWitchCount >= 2) {
+    onscreenConsole.log(`${scarletWitchCount} Scarlet Witch cards in the city. Transforming to <span class="console-highlights">"No More Mutants"</span>.`);
+    transformScheme();
+  } else {
+    onscreenConsole.log(`Fewer than 2 Scarlet Witch in city. Playing another card from the Villain Deck.`);
+    if (typeof processVillainCard === "function") {
+      await processVillainCard();
+    }
+  }
+  updateGameBoard();
+}
+
+// "No More Mutants" (Side B) Twist: KO all X-Men Heroes from HQ. Play another villain card.
+async function noMoreMutantsTwist() {
+  revelationsTwistCount++;
+  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! KO all X-Men Heroes from the HQ.`);
+  const hqCards = typeof hq !== "undefined" ? hq : [];
+  for (let i = 0; i < hqCards.length; i++) {
+    if (hqCards[i] && hqCards[i].type === "Hero" && hqCards[i].team === "X-Men") {
+      onscreenConsole.log(`KO'd <span class="console-highlights">${hqCards[i].name}</span> from HQ.`);
+      koPile.push(hqCards[i]);
+      hqCards[i] = heroDeck.length > 0 ? heroDeck.pop() : null;
+    }
+  }
+  onscreenConsole.log(`Playing another card from the Villain Deck.`);
+  if (typeof processVillainCard === "function") {
+    await processVillainCard();
+  }
+  updateGameBoard();
+}
+
+// === Secret HYDRA Corruption / Open HYDRA Revolution ===
+
+// Track officers placed next to scheme
+let hydraOfficersNextToScheme = 0;
+
+// Secret HYDRA (Side A) Twist: For each twist in KO pile (including this one),
+// put an Officer next to scheme. Then transform.
+async function secretHydraCorruptionTwist() {
+  revelationsTwistCount++;
+  // Count twists in KO pile
+  const twistsInKO = koPile.filter(c => c.type === "Scheme Twist").length + 1;
+  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! ${twistsInKO} Twist(s) in KO pile (including this one).`);
+  hydraOfficersNextToScheme += twistsInKO;
+  onscreenConsole.log(`${hydraOfficersNextToScheme} S.H.I.E.L.D. Officers now next to the Scheme.`);
+  onscreenConsole.log(`Transforming to <span class="console-highlights">Open HYDRA Revolution</span>.`);
+  transformScheme();
+}
+
+// Open HYDRA (Side B) Twist: Same officer placement, then transform back if evil hasn't won.
+async function openHydraRevolutionTwist() {
+  revelationsTwistCount++;
+  const twistsInKO = koPile.filter(c => c.type === "Scheme Twist").length + 1;
+  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! ${twistsInKO} Twist(s) in KO pile. Adding Officers.`);
+  hydraOfficersNextToScheme += twistsInKO;
+  onscreenConsole.log(`${hydraOfficersNextToScheme} S.H.I.E.L.D. Officers now next to the Scheme.`);
+  if (hydraOfficersNextToScheme >= 15) {
+    onscreenConsole.log(`15+ Officers next to Scheme. Evil Wins!`);
+    // Evil wins will be checked by the endGame system
+  } else {
+    onscreenConsole.log(`Transforming back to <span class="console-highlights">Secret HYDRA Corruption</span>.`);
+    transformScheme();
+  }
+}
+
+// === The Korvac Saga / Korvac Revealed ===
+
+// Korvac Saga (Side A) Twist: Discard down to 4 cards or KO a bystander from VP. Transform.
+async function theKorvacSagaTwist() {
+  revelationsTwistCount++;
+  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! Discard down to four cards or KO a Bystander from your Victory Pile.`);
+  if (playerHand.length > 4) {
+    while (playerHand.length > 4) {
+      const card = playerHand.pop();
+      playerDiscardPile.push(card);
+      onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+    }
+  } else {
+    const bystanders = victoryPile.filter(c => c.type === "Bystander");
+    if (bystanders.length > 0) {
+      const b = bystanders[0];
+      victoryPile.splice(victoryPile.indexOf(b), 1);
+      koPile.push(b);
+      onscreenConsole.log(`KO'd a Bystander from Victory Pile.`);
+    } else {
+      onscreenConsole.log(`No Bystanders in VP and 4 or fewer cards in hand.`);
+    }
+  }
+  onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
+  transformScheme();
+  updateGameBoard();
+}
+
+// Korvac Revealed (Side B) Twist:
+// Even-numbered twists (2,4,6): discard Avengers Hero or wound, then transform back.
+// Twist 8: Evil Wins!
+async function korvacRevealedTwist() {
+  revelationsTwistCount++;
+  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}!`);
+  if (revelationsTwistCount >= 8) {
+    onscreenConsole.log(`Twist 8: Evil Wins! <span class="console-highlights">Korvac</span> has triumphed!`);
+    // Evil wins handled by endGame check
+    return;
+  }
+  if (revelationsTwistCount % 2 === 0) {
+    // Even twist: discard Avengers or wound
+    const avengersHeroes = playerHand.filter(c => c.type === "Hero" && c.team === "Avengers");
+    if (avengersHeroes.length > 0) {
+      const card = avengersHeroes[0];
+      playerHand.splice(playerHand.indexOf(card), 1);
+      playerDiscardPile.push(card);
+      onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span> (Avengers Hero).`);
+    } else {
+      onscreenConsole.log(`No Avengers Heroes in hand. Gaining a Wound.`);
+      await drawWound();
+    }
+    onscreenConsole.log(`Transforming back to <span class="console-highlights">The Korvac Saga</span>.`);
+    transformScheme();
+  } else {
+    // Odd twist on Side B — transform back without penalty
+    onscreenConsole.log(`Transforming back to <span class="console-highlights">The Korvac Saga</span>.`);
+    transformScheme();
+  }
+  updateGameBoard();
+}
+
 // --- MASTERMIND EFFECTS ---
 
 // === Grim Reaper ===

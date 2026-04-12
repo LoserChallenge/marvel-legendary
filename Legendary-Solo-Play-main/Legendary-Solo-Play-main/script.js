@@ -9387,6 +9387,52 @@ if (selectedSchemeEndGame) {
           }
           break;
 
+        // === Revelations Scheme Evil Wins ===
+
+        case "earthquakeEvilWins":
+          if (escapedVillainsCount >= 3 || villainDeck.length === 0) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `3 Villains have escaped (or the Villain Deck ran out). The earthquake and tsunami have devastated the coast beyond recovery.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "houseOfMEvilWins":
+          // Evil wins condition is on Side B only — checked there
+          break;
+
+        case "noMoreMutantsEvilWins": {
+          const nonGreyKOd = koPile.filter(c => c.type === "Hero" && c.color !== "Grey").length;
+          const threshold = 10 + 2; // 10 + 2x number of players (solo = 1 player)
+          if (nonGreyKOd >= threshold) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `${nonGreyKOd} non-grey Heroes have been KO'd. "No More Mutants" has come true.`;
+            showDefeatPopup();
+          }
+          break;
+        }
+
+        case "secretHydraEvilWins":
+        case "openHydraEvilWins":
+          if (typeof hydraOfficersNextToScheme !== "undefined" && hydraOfficersNextToScheme >= 15) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `15 S.H.I.E.L.D. Officers are next to the Scheme. HYDRA's infiltration is complete.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "korvacEvilWins":
+          if (typeof revelationsTwistCount !== "undefined" && revelationsTwistCount >= 8) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Twist 8 has been reached. Korvac's power is absolute. Evil Wins!`;
+            showDefeatPopup();
+          }
+          break;
+
         default:
           console.log(
             `Scheme End Game "${selectedSchemeEndGame}" is not yet defined.`,
