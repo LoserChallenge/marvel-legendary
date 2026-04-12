@@ -15,7 +15,7 @@ After this pass, the user performs Pass 3: a final spot-check with physical card
 
 ## Before Starting: Confirm Scope
 
-Read the status comment at the top of `docs/staging-plans/[expansion]-card-data.md` to identify which sections were completed in Pass 1.
+Read the status comment at the top of `docs/card-inventory/drafts/[expansion].md` to identify which sections were completed in Pass 1.
 
 Verify only the sections that Pass 1 completed (marked ✅ in the status comment). Confirm with the user before beginning: "I'm verifying [list of card types]. Is that the correct scope?"
 
@@ -26,7 +26,7 @@ Verify only the sections that Pass 1 completed (marked ✅ in the status comment
 Before reading any card data, read this single reference file:
 
 ```
-docs/card-effects-reference/icons/icon-reference.md
+docs/card-inventory/icons/icon-reference.md
 ```
 
 Same as Pass 1. If any description proves insufficient for a specific icon, the original PNG files are available as a fallback — see Part 9 of the reference file.
@@ -45,7 +45,7 @@ Use the same source question as Pass 1: **Is this expansion already coded in the
 **NO — not yet in the game:**
 1. Card images in `expansions/[expansion-name]/` subfolders — primary source for **all effect text**. Card images are the single source of truth for how the game works.
 2. PDF inventory in `expansions/[expansion-name]/` — primary source for **structured fields** (names, counts, costs, values). Cross-check for effect text, but defer to card images when phrasing differs.
-3. `docs/card-effects-reference/[expansion].md` if it exists — additional cross-check only
+3. `docs/card-inventory/final/[expansion].md` if it exists — additional cross-check only
 
 **Do not refer to the Pass 1 log while consulting these sources.** Build your own independent understanding from the source materials first, then compare against the log.
 
@@ -124,6 +124,6 @@ If no issues are found, say so explicitly: "No discrepancies found. All entries 
 Your output feeds directly into the user's Pass 3 spot-check with physical cards. The user reviews your flags, checks physical cards for remaining `⚠️` and `[___]` items, and makes any corrections directly to card-data.md. When the user is satisfied with Pass 3, the file moves:
 
 ```
-docs/staging-plans/[expansion]-card-data.md
-→ docs/card-effects-reference/[expansion].md
+docs/card-inventory/drafts/[expansion].md
+→ docs/card-inventory/final/[expansion].md
 ```

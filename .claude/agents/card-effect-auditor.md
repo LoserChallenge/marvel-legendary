@@ -9,7 +9,7 @@ You audit card effect implementations by comparing the card effects reference fi
 
 ## Reference Files
 
-Card reference data is in `docs/card-effects-reference/`, one file per expansion:
+Card reference data is in `docs/card-inventory/final/`, one file per expansion:
 - `core-set.md` — 15 heroes, 7 villain groups, 4 masterminds, 8 schemes, 4 henchmen
 - `dark-city.md` — 17 heroes, 6 villain groups, 5 masterminds, 8 schemes, 2 henchmen, 3 special bystanders
 - `fantastic-four.md` — 5 heroes, 2 villain groups, 2 masterminds, 4 schemes

@@ -34,6 +34,7 @@ Enhance the existing Legendary Solo Play web app. Golden Solo Mode is complete. 
 | `expansionGuardiansOfTheGalaxy.js` | Guardians of the Galaxy expansion |
 | `expansionPaintTheTownRed.js` | Paint the Town Red expansion |
 | `updatesContent.js` | Patch notes |
+| `sw.js` | Service Worker — caches all game files for offline/PWA support |
 
 ## How to Run
 
@@ -43,6 +44,7 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 
 - Game is hosted on GitHub Pages at: `https://LoserChallenge.github.io/marvel-legendary/`
 - Push to `master` branch deploys automatically (~1 min delay; hard refresh `Ctrl+Shift+R` to bust cache)
+- **Service Worker cache:** After pushing code changes, bump `CACHE_NAME` in `sw.js` (e.g. `'legendary-v3'` → `'legendary-v4'`). Without this, users' browsers will keep serving the old cached files. This is the #1 cause of "changes don't show on GitHub Pages."
 - Rules PDFs (105MB) are gitignored — local only
 - Core Set card images are in `Visual Assets/Heroes/Reskinned Core/` (not a subfolder named "Core Set")
 
@@ -74,6 +76,14 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 ## Async Gotchas
 
 - When making a card ability function `async`, grep for ALL its call sites and add `await` there too — callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (this was missed for `heroSkrulled` callers in health check phase 2 and caught by code review).
+
+## generateVillainDeck Type Gotcha
+
+- `generateVillainDeck()` overwrites every card's `type` to `"Villain"` — new card types (e.g. Location) need a preservation check: `const cardType = modifiedCard.type === "Location" ? "Location" : "Villain";` (already added on location-system branch)
+
+## City Card Click Handler Pattern
+
+- `popupMinimized` is `false` during normal gameplay — villain/Location click handlers must use `if (!popupMinimized) { handle click }` to allow clicks during play. The guard looks inverted but matches how the variable is named. Do NOT use `if (!popupMinimized) return;` — that blocks clicks during normal play.
 
 ## Card Reading & Inventory Rules
 
@@ -127,7 +137,7 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
    - **Two inventory tracks — see `docs/expansion-pipeline-status.md` for full status and per-expansion notes.** Track A (new expansions): stage → inventory (PDF-primary) → verify → user review → move to `final/`. Track B (in-game expansions): inventory (DB-primary) → verify → user review → move to `final/`.
    - **Current position (2026-04-06):** 10 expansions finalized in `card-inventory/final/` (Into the Cosmos complete). Pass 1 complete, awaiting Pass 2: weapon-x, shield. Staged and awaiting Pass 1: messiah-complex, shadows-of-nightmare, the-new-mutants, world-war-hulk. All expansions now staged.
    - `/analyze-expansion` → `/new-expansion` pipeline is ready. Run `/analyze-expansion` first (produces mechanics reference), then `/new-expansion` (multi-phase code integration with progress tracking).
-   - **Revelations:** `/new-expansion` active (started 2026-04-06). Infrastructure-first build order: dynamic city refactor (worktree) → Location system → small infrastructure bundle → content phases. Progress at `docs/expansion-progress/revelations.md`. Next step: Step 1 (dynamic city refactor in worktree).
+   - **Revelations:** `/new-expansion` active (started 2026-04-06). Infrastructure-first build order: dynamic city refactor (worktree) → Location system → small infrastructure bundle → content phases. Progress at `docs/expansion-progress/revelations.md`. Next step: Step 3 (small infrastructure bundle). Steps 1-2 complete on worktree branches (not merged — merge when full expansion is ready).
 
 ## Visual Reference Setup ✅ Complete
 

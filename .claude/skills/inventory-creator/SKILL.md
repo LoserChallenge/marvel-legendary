@@ -31,7 +31,7 @@ If the expansion's inventory file already exists with completed sections, append
 Before reading any card data, read this single reference file:
 
 ```
-docs/card-effects-reference/icons/icon-reference.md
+docs/card-inventory/icons/icon-reference.md
 ```
 
 This covers all class icons, team icons, recruit/attack icons, card layout anatomy, value notation, and inline trigger icon identification. It replaces loading multiple PNG files.
@@ -73,7 +73,7 @@ Answer one question: **Is this expansion already coded in the game?**
 
 2. **PDF inventory in `expansions/[expansion-name]/`** — primary source for **structured fields**: card names, copy counts, costs, fight values, VP, team/class if listed. Also useful as a cross-check for effect text, but defer to card images when phrasing differs.
 
-3. **`docs/card-effects-reference/[expansion].md`** if it exists — additional cross-check only
+3. **`docs/card-inventory/final/[expansion].md`** if it exists — additional cross-check only
 
 **Team and Class values (not-in-game expansions):**
 - Fill from PDF if listed
@@ -123,9 +123,9 @@ If you encounter a card that does not clearly fit a standard type (Hero, Villain
 
 ## Output Format
 
-Save to `docs/staging-plans/[expansion]-card-data.md`.
+Save to `docs/card-inventory/drafts/[expansion].md`.
 
-**Follow `docs/card-effects-reference/TEMPLATE.md` exactly** — same section structure, table columns, notation, and SPECIAL ABILITY / SUPERPOWER convention for all card types.
+**Follow `docs/card-inventory/TEMPLATE.md` exactly** — same section structure, table columns, notation, and SPECIAL ABILITY / SUPERPOWER convention for all card types.
 
 **Status comment (add or update at the top of the file):**
 ```

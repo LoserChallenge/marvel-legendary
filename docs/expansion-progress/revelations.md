@@ -10,23 +10,11 @@ Build order optimized to avoid rework — each layer builds on the previous.
 
 ### Block 1: Infrastructure
 
-#### Step 1 — Dynamic City Refactor ⬜ Not started
-Worktree: `.worktrees/dynamic-city`
-- Convert 20 per-space buff variables → arrays (`cityTempBuff[]`, `cityPermBuff[]`, `cityLocationAttack[]`, `cityReserveAttack[]`)
-- Generate city HTML dynamically from `citySize`
-- Convert hardcoded city space labels to array-driven
-- Validate all existing expansions work identically at size 5
-- Test at size 7
-- Merge to master
+#### Step 1 — Dynamic City Refactor ✅ Complete (2026-04-06)
+Merged to master. 25 named variables → 5 arrays, 264 references converted across 8 files, city HTML generated dynamically. Browser-tested with Portals to the Dark Dimension (PermBuff) and Galactus (TempBuff + CosmicThreat + destroyed spaces). Deferred: 11 renderCityCards() popup loops still use `i < 5` — fix when Earthquake/Tsunami scheme changes citySize.
 
-#### Step 2 — Location System ⬜ Not started
-- `cityLocations[]` parallel array (same length as `city[]`)
-- Two-layer city rendering (Location above, villain below)
-- Placement logic (rightmost empty city space)
-- Separate fight targets (villain vs Location in same space)
-- Post-fight trigger hooks ("Whenever you fight a Villain here")
-- Location overflow (KO lowest Attack when all spaces full)
-- Tactic → Location lifecycle
+#### Step 2 — Location System ✅ Complete (2026-04-06)
+On `location-system` worktree branch (9 commits, not merged — merge when full expansion ready). `cityLocations[]` parallel array, fan-out CSS rendering (Location extends above cell at `top: -4vh`, villain shifts down via `margin-top: 5vh`), independent fight flow (`showLocationAttackButton` + `defeatLocation`), post-villain-fight trigger hooks, overflow (KO lowest-attack, player chooses ties), `generateVillainDeck` type preservation. Bugs fixed during testing: inverted `popupMinimized` click guard, `vp` → `victoryPoints` field name, missing space in console message.
 
 #### Step 3 — Small Infrastructure Bundle ⬜ Not started
 - Epic Mastermind toggle (`getSelectedMastermind()` + setup screen UI)
