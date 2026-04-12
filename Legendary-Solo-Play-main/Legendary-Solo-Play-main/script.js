@@ -11180,6 +11180,7 @@ if (card.temporaryTeleport === true) {
   shardsForRecruitEnabled = false;
   gamoraGodslayerOne = false;
   gamoraGodslayerTwo = false;
+  hyperspeedCountsBoth = false;
 
   playerHand.forEach((card) => {
     if (card.temporaryTeleport === true) {
