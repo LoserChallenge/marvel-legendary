@@ -777,9 +777,37 @@ function getSelectedMastermind() {
   const selectedMastermindName = document.querySelector(
     "#mastermind-section input[type=radio]:checked",
   ).value;
-  return masterminds.find(
+  const baseMastermind = masterminds.find(
     (mastermind) => mastermind.name === selectedMastermindName,
   );
+
+  const epicCheckbox = document.getElementById('epic-mastermind-toggle');
+  if (baseMastermind && baseMastermind.epic && epicCheckbox && epicCheckbox.checked) {
+    // Shallow merge — epic should only contain scalar overrides (name, attack, image, etc.)
+    return { ...baseMastermind, ...baseMastermind.epic };
+  }
+
+  return baseMastermind;
+}
+
+function updateEpicToggleVisibility() {
+  const epicToggleContainer = document.getElementById('epic-toggle-container');
+  const epicCheckbox = document.getElementById('epic-mastermind-toggle');
+  if (!epicToggleContainer) return;
+
+  const selectedRadio = document.querySelector('#mastermind-section input[type=radio]:checked');
+  if (!selectedRadio) {
+    epicToggleContainer.style.display = 'none';
+    return;
+  }
+
+  const mastermind = masterminds.find(m => m.name === selectedRadio.value);
+  if (mastermind && mastermind.epic) {
+    epicToggleContainer.style.display = '';
+  } else {
+    epicToggleContainer.style.display = 'none';
+    if (epicCheckbox) epicCheckbox.checked = false;
+  }
 }
 
 function generateMastermindDeck(mastermind) {
@@ -2063,6 +2091,7 @@ function randomizeMastermind() {
 
   updateMastermindImage(selectedRadioButton.value);
   updateSummaryPanel();
+  updateEpicToggleVisibility();
 }
 
 // Function to randomize villain selection
@@ -2700,6 +2729,7 @@ function updateHeroRequirementsBanner() {
 document.getElementById('scheme-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('scheme-selection').addEventListener('change', updateHeroRequirementsBanner);
 document.getElementById('mastermind-selection').addEventListener('change', updateSummaryPanel);
+document.getElementById('mastermind-selection').addEventListener('change', updateEpicToggleVisibility);
 document.getElementById('villain-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('henchmen-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('hero-selection').addEventListener('change', updateSummaryPanel);
