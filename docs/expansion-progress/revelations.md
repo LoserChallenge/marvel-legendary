@@ -16,12 +16,12 @@ Merged to master. 25 named variables → 5 arrays, 264 references converted acro
 #### Step 2 — Location System ✅ Complete (2026-04-06)
 On `location-system` worktree branch (9 commits, not merged — merge when full expansion ready). `cityLocations[]` parallel array, fan-out CSS rendering (Location extends above cell at `top: -4vh`, villain shifts down via `margin-top: 5vh`), independent fight flow (`showLocationAttackButton` + `defeatLocation`), post-villain-fight trigger hooks, overflow (KO lowest-attack, player chooses ties), `generateVillainDeck` type preservation. Bugs fixed during testing: inverted `popupMinimized` click guard, `vp` → `victoryPoints` field name, missing space in console message.
 
-#### Step 3 — Small Infrastructure Bundle ⬜ Not started
-- Epic Mastermind toggle (`getSelectedMastermind()` + setup screen UI)
-- Unique henchmen `cards` array branch in `generateVillainDeck()`
-- `transformScheme()` helper + `hiddenFromSetup` filtering
-- Recruit-only fight cost (Mister Hyde — new affordability check branch)
-- Extra turn mechanism (Dark Dimension fight reward)
+#### Step 3 — Small Infrastructure Bundle ✅ Complete (2026-04-11)
+- ✅ Epic Mastermind toggle (`getSelectedMastermind()` + setup screen UI)
+- ✅ Unique henchmen `cards` array branch in `generateVillainDeck()`
+- ✅ `transformScheme()` helper + `hiddenFromSetup` filtering
+- ✅ Recruit-only fight cost (Mister Hyde — new affordability check branch)
+- ⏳ Extra turn mechanism — deferred to Phase 3 content (Dark Dimension fight effect)
 
 ### Block 2: Content (standard /new-expansion phases)
 
