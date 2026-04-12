@@ -1537,6 +1537,400 @@ function whiteGorillaCultFight() {
 
 // --- MASTERMIND EFFECTS ---
 
+// === Grim Reaper ===
+
+// Master Strike (Normal): enters city as a 7 Attack "Graveyard" Location,
+// +2 Attack while villain here, worth 5VP.
+async function grimReaperStrike() {
+  onscreenConsole.log(`Master Strike! A 7 Attack <span class="console-highlights">Graveyard</span> Location enters the city (+2 Attack while a Villain is here). Worth 5VP.`);
+  // Create a Graveyard Location card and place it
+  if (typeof cityLocations !== "undefined") {
+    const graveyard = {
+      name: "Graveyard",
+      type: "Location",
+      attack: 7,
+      originalAttack: 7,
+      victoryPoints: 5,
+      fightEffect: "None",
+      team: "Lethal Legion",
+      keywords: [],
+      classes: [],
+      image: "Visual Assets/Masterminds/Revelations_GrimReaper.webp",
+      graveyardBonus: 2,
+    };
+    if (typeof placeLocation === "function") {
+      placeLocation(graveyard);
+    }
+  }
+}
+
+// Master Strike (Epic): 8 Attack Graveyard, +3 bonus, 6VP.
+// If 3+ Locations in city, each player gains a Wound.
+async function epicGrimReaperStrike() {
+  onscreenConsole.log(`Epic Master Strike! An 8 Attack <span class="console-highlights">Graveyard</span> Location enters the city (+3 Attack while a Villain is here). Worth 6VP.`);
+  if (typeof cityLocations !== "undefined") {
+    const graveyard = {
+      name: "Graveyard",
+      type: "Location",
+      attack: 8,
+      originalAttack: 8,
+      victoryPoints: 6,
+      fightEffect: "None",
+      team: "Lethal Legion",
+      keywords: [],
+      classes: [],
+      image: "Visual Assets/Masterminds/Revelations_GrimReaper_Epic.webp",
+      graveyardBonus: 3,
+    };
+    if (typeof placeLocation === "function") {
+      placeLocation(graveyard);
+    }
+    // Check for 3+ Locations
+    const locationCount = cityLocations.filter(loc => loc !== null).length;
+    if (locationCount >= 3) {
+      onscreenConsole.log(`3+ Locations in the city. Gaining a Wound.`);
+      await drawWound();
+    }
+  }
+}
+
+// Grim Reaper Tactics — all 4 become Locations when fought
+
+function grimReaperCarnivalOfConcussions() {
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Carnival of Concussions</span>: Draw three cards.`);
+  drawCard(); drawCard(); drawCard();
+  // Becomes a Location: "Whenever you fight a Villain here, each other player KOs a Bystander from VP."
+  onscreenConsole.log(`This Tactic enters the city as a Location.`);
+  if (typeof placeLocation === "function") {
+    placeLocation({
+      name: "Carnival of Concussions",
+      type: "Location",
+      attack: 0,
+      originalAttack: 0,
+      victoryPoints: 0,
+      fightEffect: "None",
+      team: "Lethal Legion",
+      keywords: [],
+      classes: [],
+      image: "Visual Assets/Masterminds/Revelations_GrimReaper_CarnivalOfConcussions.webp",
+      locationTrigger: "carnivalOfConcussionsTrigger",
+    });
+  }
+}
+
+function grimReaperCultOfSkulls() {
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Cult of Skulls</span>: KO up to two cards from your discard pile.`);
+  for (let i = 0; i < 2 && playerDiscardPile.length > 0; i++) {
+    playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
+    const card = playerDiscardPile.shift();
+    koPile.push(card);
+    onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
+  }
+  updateGameBoard();
+  onscreenConsole.log(`This Tactic enters the city as a Location.`);
+  if (typeof placeLocation === "function") {
+    placeLocation({
+      name: "Cult of Skulls",
+      type: "Location",
+      attack: 0,
+      originalAttack: 0,
+      victoryPoints: 0,
+      fightEffect: "None",
+      team: "Lethal Legion",
+      keywords: [],
+      classes: [],
+      image: "Visual Assets/Masterminds/Revelations_GrimReaper_CultOfSkulls.webp",
+      locationTrigger: "cultOfSkullsTrigger",
+    });
+  }
+}
+
+function grimReaperMazeOfBones() {
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Maze of Bones</span>: Look at the top four cards of your deck. KO any number, put the rest back.`);
+  // Simplified: KO all cost-0 cards from top 4, keep the rest
+  const revealed = [];
+  for (let i = 0; i < 4 && playerDeck.length > 0; i++) {
+    revealed.push(playerDeck.pop());
+  }
+  const toKO = revealed.filter(c => (c.cost || 0) === 0);
+  const toKeep = revealed.filter(c => (c.cost || 0) > 0);
+  for (const c of toKO) {
+    koPile.push(c);
+    onscreenConsole.log(`KO'd <span class="console-highlights">${c.name}</span>.`);
+  }
+  for (const c of toKeep.reverse()) {
+    playerDeck.push(c);
+  }
+  updateGameBoard();
+  onscreenConsole.log(`This Tactic enters the city as a Location.`);
+  if (typeof placeLocation === "function") {
+    placeLocation({
+      name: "Maze of Bones",
+      type: "Location",
+      attack: 0,
+      originalAttack: 0,
+      victoryPoints: 0,
+      fightEffect: "None",
+      team: "Lethal Legion",
+      keywords: [],
+      classes: [],
+      image: "Visual Assets/Masterminds/Revelations_GrimReaper_MazeOfBones.webp",
+      locationTrigger: "mazeOfBonesTrigger",
+    });
+  }
+}
+
+function grimReaperPrisonOfCoffins() {
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Prison of Coffins</span>: You get +5 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
+  totalRecruitPoints += 5;
+  cumulativeRecruitPoints += 5;
+  updateGameBoard();
+  onscreenConsole.log(`This Tactic enters the city as a Location.`);
+  if (typeof placeLocation === "function") {
+    placeLocation({
+      name: "Prison of Coffins",
+      type: "Location",
+      attack: 0,
+      originalAttack: 0,
+      victoryPoints: 0,
+      fightEffect: "None",
+      team: "Lethal Legion",
+      keywords: [],
+      classes: [],
+      image: "Visual Assets/Masterminds/Revelations_GrimReaper_PrisonOfCoffins.webp",
+      locationTrigger: "prisonOfCoffinsTrigger",
+    });
+  }
+}
+
+// === Mandarin ===
+
+// Master Strike (Normal): each player puts a Ring from VP into city, or gains wound.
+async function mandarinStrike() {
+  const rings = victoryPile.filter(c => c.team === "Mandarin's Rings");
+  if (rings.length > 0) {
+    const ring = rings[0];
+    const idx = victoryPile.indexOf(ring);
+    victoryPile.splice(idx, 1);
+    // Place ring back in city via villain deck processing
+    onscreenConsole.log(`Master Strike! <span class="console-highlights">${ring.name}</span> returns from your Victory Pile to the city.`);
+    // Add to city directly
+    for (let i = city.length - 1; i >= 0; i--) {
+      if (!city[i]) {
+        city[i] = ring;
+        break;
+      }
+    }
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`Master Strike! You have no Mandarin's Rings in your Victory Pile. Gaining a Wound.`);
+    await drawWound();
+  }
+}
+
+// Master Strike (Epic): same but wound goes on top of deck.
+async function epicMandarinStrike() {
+  const rings = victoryPile.filter(c => c.team === "Mandarin's Rings");
+  if (rings.length > 0) {
+    const ring = rings[0];
+    const idx = victoryPile.indexOf(ring);
+    victoryPile.splice(idx, 1);
+    onscreenConsole.log(`Epic Master Strike! <span class="console-highlights">${ring.name}</span> returns from your Victory Pile to the city.`);
+    for (let i = city.length - 1; i >= 0; i--) {
+      if (!city[i]) {
+        city[i] = ring;
+        break;
+      }
+    }
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`Epic Master Strike! No Rings in VP. Gaining a Wound to the top of your deck.`);
+    if (woundDeck.length > 0) {
+      const wound = woundDeck.pop();
+      playerDeck.push(wound);
+      onscreenConsole.log(`Wound placed on top of your deck.`);
+    }
+  }
+}
+
+// Mandarin Tactics
+
+function mandarinCirclesUnbroken() {
+  const ringCount = victoryPile.filter(c => c.team === "Mandarin's Rings").length;
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Circles Unbroken</span>: Draw ${ringCount} card(s) (one per Ring in VP).`);
+  for (let i = 0; i < ringCount; i++) drawCard();
+}
+
+function mandarinDragonOfHeavenSpaceship() {
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Dragon of Heaven Spaceship</span>: KO up to two of your Heroes.`);
+  // Simplified: KO up to 2 heroes
+  // Full implementation would present a card-choice popup
+  onscreenConsole.log(`This Tactic enters the city as a Location.`);
+  if (typeof placeLocation === "function") {
+    placeLocation({
+      name: "Dragon of Heaven Spaceship",
+      type: "Location",
+      attack: 0,
+      originalAttack: 0,
+      victoryPoints: 0,
+      fightEffect: "mandarinDragonOfHeavenSpaceshipLocationFight",
+      team: "Mandarin's Rings",
+      keywords: [],
+      classes: [],
+      image: "Visual Assets/Masterminds/Revelations_Mandarin_DragonOfHeavenSpaceship.webp",
+      locationTrigger: "dragonOfHeavenTrigger",
+    });
+  }
+}
+
+function mandarinDragonOfHeavenSpaceshipLocationFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Dragon of Heaven Spaceship</span> Location: KO up to two of your Heroes.`);
+  return FightKOHeroYouHave();
+}
+
+function mandarinIntertwiningPowers() {
+  // "Each other player" without 2 Rings gains wound — in solo, check yourself
+  const ringCount = victoryPile.filter(c => c.team === "Mandarin's Rings").length;
+  if (ringCount < 2) {
+    onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Intertwining Powers</span>: You have fewer than 2 Rings in VP. Gaining a Wound.`);
+    drawWound();
+  } else {
+    onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Intertwining Powers</span>: You have ${ringCount} Rings — no penalty.`);
+  }
+}
+
+async function mandarinRingsSeekTheirTrueHand() {
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Rings Seek Their True Hand</span>: Reveal a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero or put a Ring from VP into the Escape Pile.`);
+  const cardsYouHave = [...playerHand, ...cardsPlayedThisTurn.filter(c => !c.isCopied && !c.markedForDeletion && !c.isSimulation)];
+  const hasTech = cardsYouHave.some(c => c.classes && c.classes.includes("Tech"));
+  if (hasTech) {
+    onscreenConsole.log(`You revealed a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero.`);
+    return;
+  }
+  const rings = victoryPile.filter(c => c.team === "Mandarin's Rings");
+  if (rings.length > 0) {
+    const ring = rings[0];
+    const idx = victoryPile.indexOf(ring);
+    victoryPile.splice(idx, 1);
+    escapePile.push(ring);
+    onscreenConsole.log(`<span class="console-highlights">${ring.name}</span> moved from VP to the Escape Pile.`);
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`No Tech Hero and no Rings in VP.`);
+  }
+}
+
+// === The Hood ===
+
+// Master Strike (Normal): reveal top 6, discard all non-grey Heroes, put rest back.
+async function theHoodStrike() {
+  onscreenConsole.log(`Master Strike! Reveal the top 6 cards of your deck, discard all non-grey Heroes.`);
+  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  const revealed = [];
+  for (let i = 0; i < 6 && playerDeck.length > 0; i++) {
+    revealed.push(playerDeck.pop());
+  }
+  const nonGrey = revealed.filter(c => c.type === "Hero" && c.color !== "Grey");
+  const rest = revealed.filter(c => !(c.type === "Hero" && c.color !== "Grey"));
+  for (const c of nonGrey) {
+    playerDiscardPile.push(c);
+    onscreenConsole.log(`Discarded <span class="console-highlights">${c.name}</span>.`);
+  }
+  // Put rest back on top in any order
+  for (const c of rest.reverse()) {
+    playerDeck.push(c);
+  }
+  onscreenConsole.log(`Discarded ${nonGrey.length} non-grey Hero(es). Put ${rest.length} card(s) back on top.`);
+  updateGameBoard();
+}
+
+// Master Strike (Epic): discard entire deck, shuffle 6 random grey cards to form new deck.
+async function epicHoodStrike() {
+  onscreenConsole.log(`Epic Master Strike! Discard your entire deck, then shuffle 6 random grey cards from discard to form your new deck.`);
+  // Move entire deck to discard
+  while (playerDeck.length > 0) {
+    playerDiscardPile.push(playerDeck.pop());
+  }
+  // Pick 6 random grey cards from discard
+  const greyCards = playerDiscardPile.filter(c => c.color === "Grey");
+  const newDeck = [];
+  for (let i = 0; i < 6 && greyCards.length > 0; i++) {
+    const randIdx = Math.floor(Math.random() * greyCards.length);
+    const card = greyCards.splice(randIdx, 1)[0];
+    const discIdx = playerDiscardPile.indexOf(card);
+    if (discIdx !== -1) playerDiscardPile.splice(discIdx, 1);
+    newDeck.push(card);
+  }
+  playerDeck = shuffle(newDeck);
+  onscreenConsole.log(`New deck formed with ${playerDeck.length} grey card(s). Remaining discard: ${playerDiscardPile.length} cards.`);
+  updateGameBoard();
+}
+
+// Hood Tactics
+
+function theHoodDemonicRevelation() {
+  // "Each other player reveals hand and discards a non-grey Hero" — solo: do it to yourself
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Demonic Revelation</span>: Discard a non-grey Hero from your hand.`);
+  const nonGreyHeroes = playerHand.filter(c => c.type === "Hero" && c.color !== "Grey");
+  if (nonGreyHeroes.length > 0) {
+    const card = nonGreyHeroes[0];
+    playerHand.splice(playerHand.indexOf(card), 1);
+    playerDiscardPile.push(card);
+    onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`No non-grey Heroes in hand.`);
+  }
+}
+
+async function theHoodFocusMagicThroughGuns() {
+  // "Each other player" — solo: apply to yourself
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Focus Magic Through Guns</span>: Reveal a <img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero or discard a card. Then reveal a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero or gain a Wound.`);
+  await revealClassOrDiscard("Covert", "Covert.svg", "FOCUS MAGIC THROUGH GUNS");
+  await revealClassOrWound("Tech", "Tech.svg", "FOCUS MAGIC THROUGH GUNS");
+}
+
+function theHoodPaeanToDormammu() {
+  // "Each other player discards their deck" — solo: discard your own deck
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Paean to Dormammu</span>: Discard your entire deck.`);
+  while (playerDeck.length > 0) {
+    playerDiscardPile.push(playerDeck.pop());
+  }
+  onscreenConsole.log(`Deck discarded (${playerDiscardPile.length} cards now in discard).`);
+  updateGameBoard();
+}
+
+function theHoodWarehouse() {
+  onscreenConsole.log(`Tactic Fight! <span class="console-highlights">The Hood's Warehouse</span>: Rescue 4 Bystanders.`);
+  for (let i = 0; i < 4; i++) {
+    if (bystanderDeck.length > 0) {
+      const bystander = bystanderDeck.pop();
+      victoryPile.push(bystander);
+      onscreenConsole.log(`Rescued a <span class="console-highlights">Bystander</span>.`);
+    }
+  }
+  updateGameBoard();
+  onscreenConsole.log(`This Tactic enters the city as a Location.`);
+  if (typeof placeLocation === "function") {
+    placeLocation({
+      name: "The Hood's Warehouse",
+      type: "Location",
+      attack: 0,
+      originalAttack: 0,
+      victoryPoints: 0,
+      fightEffect: "None",
+      team: "Hood's Gang",
+      keywords: [],
+      classes: [],
+      image: "Visual Assets/Masterminds/Revelations_TheHood_TheHoodsWarehouse.webp",
+      locationTrigger: "hoodsWarehouseTrigger",
+    });
+  }
+}
+
 // --- HENCHMEN EFFECTS ---
 
 // --- BYSTANDER EFFECTS ---
