@@ -971,6 +971,568 @@ function warMachineOverwhelmingFirepower() {
 
 // --- VILLAIN CARD EFFECTS ---
 
+// Helper: Reveal a hero of a given class or suffer a consequence
+function revealClassOrWound(className, iconFile, villainName) {
+  const cardsYouHave = [
+    ...playerHand,
+    ...playerArtifacts,
+    ...cardsPlayedThisTurn.filter(c => !c.isCopied && !c.sidekickToDestroy && !c.markedForDeletion && !c.isSimulation),
+  ];
+  const hasClass = cardsYouHave.some(c => c.classes && c.classes.includes(className));
+  if (!hasClass) {
+    onscreenConsole.log(`You have no <img src="Visual Assets/Icons/${iconFile}" alt="${className} Icon" class="console-card-icons"> Hero to reveal. Gaining a Wound.`);
+    drawWound();
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Reveal a <img src="Visual Assets/Icons/${iconFile}" alt="${className} Icon" class="console-card-icons"> Hero to avoid gaining a Wound?`,
+      "Reveal Hero",
+      "Gain Wound",
+    );
+    document.querySelector(".info-or-choice-popup-title").textContent = villainName;
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      onscreenConsole.log(`You revealed a <img src="Visual Assets/Icons/${iconFile}" alt="${className} Icon" class="console-card-icons"> Hero.`);
+      resolve();
+    };
+    denyButton.onclick = () => {
+      closeInfoChoicePopup();
+      drawWound();
+      resolve();
+    };
+  });
+}
+
+// Helper: Reveal a hero of a given class or discard a card
+function revealClassOrDiscard(className, iconFile, villainName) {
+  const cardsYouHave = [
+    ...playerHand,
+    ...playerArtifacts,
+    ...cardsPlayedThisTurn.filter(c => !c.isCopied && !c.sidekickToDestroy && !c.markedForDeletion && !c.isSimulation),
+  ];
+  const hasClass = cardsYouHave.some(c => c.classes && c.classes.includes(className));
+  if (!hasClass) {
+    onscreenConsole.log(`You have no <img src="Visual Assets/Icons/${iconFile}" alt="${className} Icon" class="console-card-icons"> Hero. Discarding a card.`);
+    if (playerHand.length > 0) {
+      const card = playerHand.pop();
+      playerDiscardPile.push(card);
+      onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+    }
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Reveal a <img src="Visual Assets/Icons/${iconFile}" alt="${className} Icon" class="console-card-icons"> Hero to avoid discarding?`,
+      "Reveal Hero",
+      "Discard a Card",
+    );
+    document.querySelector(".info-or-choice-popup-title").textContent = villainName;
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      onscreenConsole.log(`You revealed a <img src="Visual Assets/Icons/${iconFile}" alt="${className} Icon" class="console-card-icons"> Hero.`);
+      resolve();
+    };
+    denyButton.onclick = () => {
+      closeInfoChoicePopup();
+      if (playerHand.length > 0) {
+        const card = playerHand.pop();
+        playerDiscardPile.push(card);
+        onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+        updateGameBoard();
+      }
+      resolve();
+    };
+  });
+}
+
+// === Army of Evil ===
+
+// Blackout — Ambush: reveal Range or discard. Fight: Draw two cards.
+async function blackoutAmbush() {
+  onscreenConsole.log(`Ambush! <span class="console-highlights">Blackout</span>: Reveal a <img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero or discard a card.`);
+  await revealClassOrDiscard("Range", "Range.svg", "BLACKOUT");
+}
+
+function blackoutFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Blackout</span>: Draw two cards.`);
+  drawCard();
+  drawCard();
+}
+
+// Count Nefaria — Ambush/Escape: unless all 5 classes revealed among all heroes, wound.
+async function countNefariaAmbush() {
+  const cardsYouHave = [
+    ...playerHand,
+    ...playerArtifacts,
+    ...cardsPlayedThisTurn.filter(c => !c.isCopied && !c.sidekickToDestroy && !c.markedForDeletion && !c.isSimulation),
+  ];
+  const CLASSES = ["Strength", "Instinct", "Covert", "Tech", "Range"];
+  const found = new Set();
+  for (const card of cardsYouHave) {
+    if (card.classes) {
+      for (const cls of card.classes) {
+        if (CLASSES.includes(cls)) found.add(cls);
+      }
+    }
+  }
+  if (found.size >= 5) {
+    onscreenConsole.log(`Ambush! <span class="console-highlights">Count Nefaria</span>: Your revealed cards include all 5 Hero Classes. No Wound.`);
+  } else {
+    onscreenConsole.log(`Ambush! <span class="console-highlights">Count Nefaria</span>: Your cards are missing ${5 - found.size} Hero Class(es). Gaining a Wound.`);
+    await drawWound();
+  }
+}
+
+async function countNefariaEscape() {
+  onscreenConsole.log(`Escape! <span class="console-highlights">Count Nefaria</span> escaped!`);
+  await countNefariaAmbush();
+}
+
+// Dome of Darkforce (Location) — When you fight a villain here, reveal Range or discard.
+// Fight (defeating the Location itself): Draw two cards.
+async function domeOfDarkforceFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Dome of Darkforce</span>: Draw two cards.`);
+  drawCard();
+  drawCard();
+}
+
+// Klaw — Ambush: capture a Tech or Range Hero cost <=5 from HQ. Fight: Gain that hero.
+async function klawAmbush(klaw) {
+  const hqCards = typeof hq !== "undefined" ? hq : [];
+  let capturedIdx = -1;
+  for (let i = 0; i < hqCards.length; i++) {
+    const card = hqCards[i];
+    if (card && card.type === "Hero" && card.cost <= 5 &&
+        card.classes && (card.classes.includes("Tech") || card.classes.includes("Range"))) {
+      capturedIdx = i;
+      break;
+    }
+  }
+  if (capturedIdx === -1) {
+    onscreenConsole.log(`Ambush! <span class="console-highlights">Klaw</span>: No eligible Hero in HQ to capture.`);
+    return;
+  }
+  const captured = hqCards[capturedIdx];
+  if (!klaw.capturedHero) klaw.capturedHero = [];
+  klaw.capturedHero.push(captured);
+  hqCards[capturedIdx] = null;
+  onscreenConsole.log(`Ambush! <span class="console-highlights">Klaw</span> captured <span class="console-highlights">${captured.name}</span> (cost ${captured.cost}) from the HQ.`);
+  if (typeof goldenRefillHQ === "function" && gameMode === "golden") {
+    goldenRefillHQ(capturedIdx);
+  } else if (heroDeck.length > 0) {
+    hqCards[capturedIdx] = heroDeck.pop();
+  }
+  updateGameBoard();
+}
+
+function klawFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Klaw</span>: Gain the captured Hero.`);
+  for (const villain of city) {
+    if (villain && villain.name === "Klaw" && villain.capturedHero && villain.capturedHero.length > 0) {
+      const hero = villain.capturedHero.pop();
+      playerDiscardPile.push(hero);
+      onscreenConsole.log(`You gained <span class="console-highlights">${hero.name}</span>.`);
+      updateGameBoard();
+      return;
+    }
+  }
+  onscreenConsole.log(`No captured Hero to gain.`);
+}
+
+// Mister Hyde — Fight: KO one of your Heroes.
+function misterHydeFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Mister Hyde</span>: KO one of your Heroes.`);
+  return FightKOHeroYouHave();
+}
+
+// === Dark Avengers ===
+
+// Ares — Last Stand (keyword). Fight: KO one of your Heroes.
+function aresFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Ares</span>: KO one of your Heroes.`);
+  return FightKOHeroYouHave();
+}
+
+// Captain Marvel (Noh-Varr) — Last Stand. Ambush/Escape: if other Dark Avengers in city, wound.
+async function captainMarvelNohVarrAmbush() {
+  const otherDA = city.filter(v => v && v.team === "Dark Avengers" && v.name !== "Captain Marvel (Noh-Varr)");
+  if (otherDA.length > 0) {
+    onscreenConsole.log(`Ambush! <span class="console-highlights">Captain Marvel (Noh-Varr)</span>: Other Dark Avengers in the city. Gaining a Wound.`);
+    await drawWound();
+  } else {
+    onscreenConsole.log(`Ambush! <span class="console-highlights">Captain Marvel (Noh-Varr)</span>: No other Dark Avengers in the city. No effect.`);
+  }
+}
+
+async function captainMarvelNohVarrEscape() {
+  onscreenConsole.log(`Escape! <span class="console-highlights">Captain Marvel (Noh-Varr)</span> escaped!`);
+  const otherDA = city.filter(v => v && v.team === "Dark Avengers");
+  if (otherDA.length > 0) {
+    onscreenConsole.log(`Other Dark Avengers in the city. Gaining a Wound.`);
+    await drawWound();
+  }
+}
+
+// Dark Hawkeye (Bullseye) — Last Stand. Fight: KO one of your Heroes.
+async function darkHawkeyeFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Dark Hawkeye (Bullseye)</span>: KO one of your Heroes.`);
+  await FightKOHeroYouHave();
+}
+
+// Dark Ms. Marvel (Moonstone) — Last Stand. Fight: "each other player" effect — solo skip.
+function darkMsMarvelFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Dark Ms. Marvel (Moonstone)</span>: "Each other player" effect skipped in solo.`);
+}
+
+// Dark Spider-Man (Scorpion) — Double Last Stand. Fight: Reveal top 2, KO one cost <=2.
+async function darkSpiderManFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Dark Spider-Man (Scorpion)</span>: Reveal top two cards of your deck.`);
+  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  const revealed = [];
+  for (let i = 0; i < 2 && playerDeck.length > 0; i++) {
+    revealed.push(playerDeck.pop());
+  }
+  if (revealed.length === 0) {
+    onscreenConsole.log(`No cards to reveal.`);
+    return;
+  }
+  const koAble = revealed.filter(c => (c.cost || 0) <= 2);
+  const names = revealed.map(c => `${c.name} (cost ${c.cost || 0})`).join(", ");
+  onscreenConsole.log(`Revealed: ${names}.`);
+  if (koAble.length > 0) {
+    const toKO = koAble[0];
+    koPile.push(toKO);
+    const remaining = revealed.filter(c => c !== toKO);
+    for (const c of remaining) playerDeck.push(c);
+    onscreenConsole.log(`KO'd <span class="console-highlights">${toKO.name}</span> (cost ${toKO.cost}). Put the rest back.`);
+  } else {
+    for (const c of revealed.reverse()) playerDeck.push(c);
+    onscreenConsole.log(`No card costs 2 or less. Put them back.`);
+  }
+  updateGameBoard();
+}
+
+// Dark Wolverine (Daken) — Last Stand. Ambush: reveal Instinct or wound.
+// Escape: same + reshuffle Daken back into villain deck.
+async function darkWolverineAmbush() {
+  onscreenConsole.log(`Ambush! <span class="console-highlights">Dark Wolverine (Daken)</span>: Reveal an <img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero or gain a Wound.`);
+  await revealClassOrWound("Instinct", "Instinct.svg", "DARK WOLVERINE");
+}
+
+async function darkWolverineEscape(daken) {
+  onscreenConsole.log(`Escape! <span class="console-highlights">Dark Wolverine (Daken)</span>: Reveal an <img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero or gain a Wound, then shuffle back into Villain Deck.`);
+  await revealClassOrWound("Instinct", "Instinct.svg", "DARK WOLVERINE");
+  villainDeck.push(daken);
+  villainDeck = shuffle(villainDeck);
+  onscreenConsole.log(`<span class="console-highlights">Dark Wolverine (Daken)</span> shuffled back into the Villain Deck.`);
+}
+
+// Sentry — Fight: KO up to two from discard (only as The Void). Escape: wound.
+async function sentryFight() {
+  const sentryIdx = city.findIndex(v => v && v.name === "Sentry");
+  const isVoid = sentryIdx === 1 || sentryIdx === 3;
+  if (isVoid) {
+    onscreenConsole.log(`Fight! <span class="console-highlights">The Void</span>: KO up to two cards from your discard pile.`);
+    for (let i = 0; i < 2; i++) {
+      if (playerDiscardPile.length === 0) break;
+      playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
+      const card = playerDiscardPile.shift();
+      koPile.push(card);
+      onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
+    }
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`Fight! <span class="console-highlights">Sentry</span>: No fight effect (not The Void).`);
+  }
+}
+
+async function sentryEscape() {
+  onscreenConsole.log(`Escape! <span class="console-highlights">Sentry</span>: Gaining a Wound.`);
+  await drawWound();
+}
+
+// Sentry's Watchtower (Location) — Villains here get Last Stand (in updateVillainAttackValues).
+// Fight: Gain the hero in the HQ space under this.
+function sentrysWatchtowerFight() {
+  const wtIdx = typeof cityLocations !== "undefined"
+    ? cityLocations.findIndex(loc => loc && loc.name === "Sentry's Watchtower")
+    : -1;
+  if (wtIdx !== -1 && hq[wtIdx]) {
+    const hero = hq[wtIdx];
+    playerDiscardPile.push(hero);
+    hq[wtIdx] = heroDeck.length > 0 ? heroDeck.pop() : null;
+    onscreenConsole.log(`Fight! <span class="console-highlights">Sentry's Watchtower</span>: Gained <span class="console-highlights">${hero.name}</span> from the HQ.`);
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`Fight! <span class="console-highlights">Sentry's Watchtower</span>: No hero in the corresponding HQ space.`);
+  }
+}
+
+// === Hood's Gang ===
+
+// Cancer — Dark Memories (attack in updateVillainAttackValues). Ambush/Escape: if discard non-empty, wound.
+async function cancerAmbush() {
+  if (playerDiscardPile.length > 0) {
+    onscreenConsole.log(`Ambush! <span class="console-highlights">Cancer</span>: You have cards in your discard pile. Gaining a Wound.`);
+    await drawWound();
+  } else {
+    onscreenConsole.log(`Ambush! <span class="console-highlights">Cancer</span>: Your discard pile is empty. No effect.`);
+  }
+}
+
+async function cancerEscape() {
+  onscreenConsole.log(`Escape! <span class="console-highlights">Cancer</span> escaped!`);
+  if (playerDiscardPile.length > 0) {
+    onscreenConsole.log(`You have cards in your discard pile. Gaining a Wound.`);
+    await drawWound();
+  }
+}
+
+// Chemistro — Dark Memories. Fight: Exchange a played card with HQ card of same or lower cost.
+async function chemistroFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Chemistro</span>: Exchange a played card with an HQ card of same or lower cost.`);
+  const playedHeroes = cardsPlayedThisTurn.filter(c => c.type === "Hero" && !c.isCopied && !c.markedForDeletion && !c.isSimulation);
+  if (playedHeroes.length === 0) {
+    onscreenConsole.log(`No played Heroes to exchange.`);
+    return;
+  }
+  const bestPlayed = playedHeroes.reduce((a, b) => (a.cost || 0) >= (b.cost || 0) ? a : b);
+  const hqCards = typeof hq !== "undefined" ? hq : [];
+  let bestHQIdx = -1;
+  let bestHQCost = -1;
+  for (let i = 0; i < hqCards.length; i++) {
+    if (hqCards[i] && hqCards[i].cost <= bestPlayed.cost && hqCards[i].cost > bestHQCost) {
+      bestHQIdx = i;
+      bestHQCost = hqCards[i].cost;
+    }
+  }
+  if (bestHQIdx === -1) {
+    onscreenConsole.log(`No HQ card of cost <=${bestPlayed.cost} to swap.`);
+    return;
+  }
+  const gained = hqCards[bestHQIdx];
+  hqCards[bestHQIdx] = bestPlayed;
+  playerDiscardPile.push(gained);
+  const idx = cardsPlayedThisTurn.indexOf(bestPlayed);
+  if (idx !== -1) cardsPlayedThisTurn.splice(idx, 1);
+  onscreenConsole.log(`Exchanged <span class="console-highlights">${bestPlayed.name}</span> (cost ${bestPlayed.cost}) for <span class="console-highlights">${gained.name}</span> (cost ${gained.cost}).`);
+  updateGameBoard();
+}
+
+// Madam Masque — Dark Memories. Ambush: guess type, if wrong play it. Fight: KO a hero.
+async function madamMasqueAmbush() {
+  if (villainDeck.length === 0) {
+    onscreenConsole.log(`Ambush! <span class="console-highlights">Madam Masque</span>: Villain Deck is empty.`);
+    return;
+  }
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton, extraButton } = showHeroAbilityMayPopup(
+      `<span class="console-highlights">Madam Masque</span> Ambush! Guess the top card of the Villain Deck:`,
+      "Villain",
+      "Bystander",
+      "Strike / Twist",
+      true,
+    );
+    document.querySelector(".info-or-choice-popup-title").textContent = "MADAM MASQUE";
+    function handleGuess(guess) {
+      closeInfoChoicePopup();
+      const topCard = villainDeck[villainDeck.length - 1];
+      const cardType = topCard.type || "Unknown";
+      let correct = false;
+      if (guess === "Villain" && (cardType === "Villain" || cardType === "Location")) correct = true;
+      if (guess === "Bystander" && cardType === "Bystander") correct = true;
+      if (guess === "Strike" && cardType === "Master Strike") correct = true;
+      if (guess === "Twist" && cardType === "Scheme Twist") correct = true;
+      onscreenConsole.log(`You guessed "${guess}". Top card: <span class="console-highlights">${topCard.name || cardType}</span> (${cardType}).`);
+      if (correct) {
+        onscreenConsole.log(`Correct! No penalty.`);
+      } else {
+        onscreenConsole.log(`Wrong! Playing that card from the Villain Deck.`);
+        if (typeof processVillainCard === "function") {
+          processVillainCard();
+        }
+      }
+      resolve();
+    }
+    confirmButton.onclick = () => handleGuess("Villain");
+    denyButton.onclick = () => handleGuess("Bystander");
+    extraButton.onclick = function () {
+      closeInfoChoicePopup();
+      const { confirmButton: strikeBtn, denyButton: twistBtn } = showHeroAbilityMayPopup(
+        `Strike or Twist?`, "Master Strike", "Scheme Twist",
+      );
+      strikeBtn.onclick = () => handleGuess("Strike");
+      twistBtn.onclick = () => handleGuess("Twist");
+    };
+  });
+}
+
+async function madamMasqueFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Madam Masque</span>: KO one of your Heroes.`);
+  await FightKOHeroYouHave();
+}
+
+// The Brothers Grimm — Must discard two identical cards to fight. Fight: KO from discard.
+async function brothersGrimmFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">The Brothers Grimm</span>: You may KO a card from your discard pile.`);
+  if (playerDiscardPile.length === 0) {
+    onscreenConsole.log(`No cards in discard pile.`);
+    return;
+  }
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `KO a card from your discard pile?`,
+      "KO a Card",
+      "Skip",
+    );
+    confirmButton.onclick = function () {
+      closeInfoChoicePopup();
+      playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
+      const card = playerDiscardPile.shift();
+      koPile.push(card);
+      onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+      resolve();
+    };
+    denyButton.onclick = function () {
+      closeInfoChoicePopup();
+      resolve();
+    };
+  });
+}
+
+// The Dark Dimension (Location) — Villains here get Dark Memories (in updateVillainAttackValues).
+// Fight: Take another turn after this one.
+function theDarkDimensionFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">The Dark Dimension</span>: Take another turn after this one!`);
+  // Extra turn flag — to be fully wired when extra-turn mechanism is implemented
+}
+
+// === Lethal Legion ===
+
+// Carnival of Wonders (Location) — "each other player" triggered effect — solo skip.
+function carnivalOfWondersFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Carnival of Wonders</span> defeated.`);
+}
+
+// Laser Maze (Location) — triggered: reveal Range or wound (handled by Location trigger system).
+function laserMazeFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Laser Maze</span> defeated.`);
+}
+
+// Living Laser — +3 while "Maze" Location in city (in updateVillainAttackValues).
+// Fight/Escape: reveal Range or wound.
+async function livingLaserFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">Living Laser</span>: Reveal a <img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero or gain a Wound.`);
+  await revealClassOrWound("Range", "Range.svg", "LIVING LASER");
+}
+
+async function livingLaserEscape() {
+  onscreenConsole.log(`Escape! <span class="console-highlights">Living Laser</span>: Reveal a <img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero or gain a Wound.`);
+  await revealClassOrWound("Range", "Range.svg", "LIVING LASER");
+}
+
+// M'Baku — +3 while "Cult" Location in city. Fight/Escape: reveal hand, discard Tech.
+function mbakuFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">M'Baku</span>: Discard a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> card from hand.`);
+  const techCards = playerHand.filter(c => c.classes && c.classes.includes("Tech"));
+  if (techCards.length > 0) {
+    const card = techCards[0];
+    playerHand.splice(playerHand.indexOf(card), 1);
+    playerDiscardPile.push(card);
+    onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`No <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> cards to discard.`);
+  }
+}
+
+function mbakuEscape() {
+  onscreenConsole.log(`Escape! <span class="console-highlights">M'Baku</span>: Discard a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> card from hand.`);
+  const techCards = playerHand.filter(c => c.classes && c.classes.includes("Tech"));
+  if (techCards.length > 0) {
+    const card = techCards[0];
+    playerHand.splice(playerHand.indexOf(card), 1);
+    playerDiscardPile.push(card);
+    onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`No <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> cards to discard.`);
+  }
+}
+
+// Power Man (Erik Josten) — +3 while "Prison" in city. Escape: VP villain to escape or wound.
+async function powerManEscape() {
+  onscreenConsole.log(`Escape! <span class="console-highlights">Power Man (Erik Josten)</span>: Put a Villain from VP into Escape Pile or gain a Wound.`);
+  const villainsInVP = victoryPile.filter(c => c.type === "Villain");
+  if (villainsInVP.length === 0) {
+    onscreenConsole.log(`No Villains in Victory Pile. Gaining a Wound.`);
+    await drawWound();
+    return;
+  }
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Put a Villain from VP into the Escape Pile, or gain a Wound?`,
+      "Lose a Villain",
+      "Gain Wound",
+    );
+    confirmButton.onclick = function () {
+      closeInfoChoicePopup();
+      const idx = victoryPile.findIndex(c => c.type === "Villain");
+      if (idx !== -1) {
+        const v = victoryPile.splice(idx, 1)[0];
+        escapePile.push(v);
+        onscreenConsole.log(`<span class="console-highlights">${v.name}</span> moved to the Escape Pile.`);
+        updateGameBoard();
+      }
+      resolve();
+    };
+    denyButton.onclick = async function () {
+      closeInfoChoicePopup();
+      await drawWound();
+      resolve();
+    };
+  });
+}
+
+// Swordsman — +3 while "Carnival" in city. Ambush: capture bystanders.
+async function swordsmanAmbush(swordsman) {
+  onscreenConsole.log(`Ambush! <span class="console-highlights">Swordsman</span>: Swordsman and each Location capture a Bystander.`);
+  if (bystanderDeck.length > 0) {
+    const bystander = bystanderDeck.pop();
+    const swordsmanIdx = city.findIndex(c => c === swordsman);
+    if (swordsmanIdx !== -1) {
+      await villainEffectAttachBystanderToVillain(swordsmanIdx, bystander);
+    }
+  }
+  if (typeof cityLocations !== "undefined") {
+    for (let i = 0; i < cityLocations.length; i++) {
+      if (cityLocations[i] && bystanderDeck.length > 0) {
+        const bystander = bystanderDeck.pop();
+        onscreenConsole.log(`<span class="console-highlights">${cityLocations[i].name}</span> captured a Bystander.`);
+        if (!cityLocations[i].capturedBystanders) cityLocations[i].capturedBystanders = [];
+        cityLocations[i].capturedBystanders.push(bystander);
+      }
+    }
+  }
+  updateGameBoard();
+}
+
+// "The Raft" Prison (Location) — triggered: VP villain to escape (handled by trigger system).
+function theRaftPrisonFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">"The Raft" Prison</span> defeated.`);
+}
+
+// White Gorilla Cult (Location) — triggered: discard Tech (handled by trigger system).
+function whiteGorillaCultFight() {
+  onscreenConsole.log(`Fight! <span class="console-highlights">White Gorilla Cult</span> defeated.`);
+}
+
 // --- SCHEME TWIST EFFECTS ---
 
 // --- MASTERMIND EFFECTS ---
