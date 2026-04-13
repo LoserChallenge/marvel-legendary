@@ -1651,26 +1651,48 @@ async function openHydraRevolutionTwist() {
 async function theKorvacSagaTwist() {
   revelationsTwistCount++;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! Discard down to four cards or KO a Bystander from your Victory Pile.`);
-  if (playerHand.length > 4) {
-    while (playerHand.length > 4) {
-      const card = playerHand.pop();
-      playerDiscardPile.push(card);
-      onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
-    }
-  } else {
-    const bystanders = victoryPile.filter(c => c.type === "Bystander");
-    if (bystanders.length > 0) {
-      const b = bystanders[0];
-      victoryPile.splice(victoryPile.indexOf(b), 1);
-      koPile.push(b);
-      onscreenConsole.log(`KO'd a Bystander from Victory Pile.`);
-    } else {
-      onscreenConsole.log(`No Bystanders in VP and 4 or fewer cards in hand.`);
-    }
-  }
-  onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
-  transformScheme();
-  updateGameBoard();
+  return new Promise((resolve) => {
+    const handInfo = playerHand.length > 4
+      ? `Discard to 4 (discard ${playerHand.length - 4} card${playerHand.length - 4 !== 1 ? "s" : ""})`
+      : `Discard to 4 (hand already at ${playerHand.length})`;
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Korvac Twist: Choose — discard down to 4 cards in hand, or KO a Bystander from your Victory Pile.`,
+      handInfo,
+      "KO Bystander",
+    );
+    confirmButton.onclick = function () {
+      closeInfoChoicePopup();
+      if (playerHand.length > 4) {
+        while (playerHand.length > 4) {
+          const card = playerHand.pop();
+          playerDiscardPile.push(card);
+          onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+        }
+      } else {
+        onscreenConsole.log(`Hand already at 4 or fewer — no discard needed.`);
+      }
+      onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
+      transformScheme();
+      updateGameBoard();
+      resolve();
+    };
+    denyButton.onclick = function () {
+      closeInfoChoicePopup();
+      const bystanders = victoryPile.filter(c => c.type === "Bystander");
+      if (bystanders.length > 0) {
+        const b = bystanders[0];
+        victoryPile.splice(victoryPile.indexOf(b), 1);
+        koPile.push(b);
+        onscreenConsole.log(`KO'd a Bystander from Victory Pile.`);
+      } else {
+        onscreenConsole.log(`No Bystanders in Victory Pile to KO.`);
+      }
+      onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
+      transformScheme();
+      updateGameBoard();
+      resolve();
+    };
+  });
 }
 
 // Korvac Revealed (Side B) Twist:
@@ -1730,7 +1752,7 @@ async function grimReaperStrike() {
       graveyardBonus: 2,
     };
     if (typeof placeLocation === "function") {
-      placeLocation(graveyard);
+      await placeLocation(graveyard);
     }
   }
 }
@@ -1754,7 +1776,7 @@ async function epicGrimReaperStrike() {
       graveyardBonus: 3,
     };
     if (typeof placeLocation === "function") {
-      placeLocation(graveyard);
+      await placeLocation(graveyard);
     }
     // Check for 3+ Locations
     const locationCount = cityLocations.filter(loc => loc !== null).length;
@@ -1767,13 +1789,13 @@ async function epicGrimReaperStrike() {
 
 // Grim Reaper Tactics — all 4 become Locations when fought
 
-function grimReaperCarnivalOfConcussions() {
+async function grimReaperCarnivalOfConcussions() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Carnival of Concussions</span>: Draw three cards.`);
   drawCard(); drawCard(); drawCard();
   // Becomes a Location: "Whenever you fight a Villain here, each other player KOs a Bystander from VP."
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
-    placeLocation({
+    await placeLocation({
       name: "Carnival of Concussions",
       type: "Location",
       attack: 0,
@@ -1789,7 +1811,7 @@ function grimReaperCarnivalOfConcussions() {
   }
 }
 
-function grimReaperCultOfSkulls() {
+async function grimReaperCultOfSkulls() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Cult of Skulls</span>: KO up to two cards from your discard pile.`);
   for (let i = 0; i < 2 && playerDiscardPile.length > 0; i++) {
     playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
@@ -1800,7 +1822,7 @@ function grimReaperCultOfSkulls() {
   updateGameBoard();
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
-    placeLocation({
+    await placeLocation({
       name: "Cult of Skulls",
       type: "Location",
       attack: 0,
@@ -1816,7 +1838,7 @@ function grimReaperCultOfSkulls() {
   }
 }
 
-function grimReaperMazeOfBones() {
+async function grimReaperMazeOfBones() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Maze of Bones</span>: Look at the top four cards of your deck. KO any number, put the rest back.`);
   // Simplified: KO all cost-0 cards from top 4, keep the rest
   const revealed = [];
@@ -1835,7 +1857,7 @@ function grimReaperMazeOfBones() {
   updateGameBoard();
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
-    placeLocation({
+    await placeLocation({
       name: "Maze of Bones",
       type: "Location",
       attack: 0,
@@ -1851,14 +1873,14 @@ function grimReaperMazeOfBones() {
   }
 }
 
-function grimReaperPrisonOfCoffins() {
+async function grimReaperPrisonOfCoffins() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Prison of Coffins</span>: You get +5 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
   totalRecruitPoints += 5;
   cumulativeRecruitPoints += 5;
   updateGameBoard();
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
-    placeLocation({
+    await placeLocation({
       name: "Prison of Coffins",
       type: "Location",
       attack: 0,
@@ -1932,13 +1954,13 @@ function mandarinCirclesUnbroken() {
   for (let i = 0; i < ringCount; i++) drawCard();
 }
 
-function mandarinDragonOfHeavenSpaceship() {
+async function mandarinDragonOfHeavenSpaceship() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Dragon of Heaven Spaceship</span>: KO up to two of your Heroes.`);
   // Simplified: KO up to 2 heroes
   // Full implementation would present a card-choice popup
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
-    placeLocation({
+    await placeLocation({
       name: "Dragon of Heaven Spaceship",
       type: "Location",
       attack: 0,
@@ -1959,12 +1981,12 @@ function mandarinDragonOfHeavenSpaceshipLocationFight() {
   return FightKOHeroYouHave();
 }
 
-function mandarinIntertwiningPowers() {
+async function mandarinIntertwiningPowers() {
   // "Each other player" without 2 Rings gains wound — in solo, check yourself
   const ringCount = victoryPile.filter(c => c.team === "Mandarin's Rings").length;
   if (ringCount < 2) {
     onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Intertwining Powers</span>: You have fewer than 2 Rings in VP. Gaining a Wound.`);
-    drawWound();
+    await drawWound();
   } else {
     onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Intertwining Powers</span>: You have ${ringCount} Rings — no penalty.`);
   }
@@ -2074,7 +2096,7 @@ function theHoodPaeanToDormammu() {
   updateGameBoard();
 }
 
-function theHoodWarehouse() {
+async function theHoodWarehouse() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">The Hood's Warehouse</span>: Rescue 4 Bystanders.`);
   for (let i = 0; i < 4; i++) {
     if (bystanderDeck.length > 0) {
@@ -2086,7 +2108,7 @@ function theHoodWarehouse() {
   updateGameBoard();
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
-    placeLocation({
+    await placeLocation({
       name: "The Hood's Warehouse",
       type: "Location",
       attack: 0,

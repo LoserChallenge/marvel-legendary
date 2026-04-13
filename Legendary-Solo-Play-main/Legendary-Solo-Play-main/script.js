@@ -11452,7 +11452,7 @@ function showAttackButton(cityIndex, location = "city") {
     }
 
     // Update the button text and style
-    attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"</span>`;
+    attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"></span>`;
     attackButton.style.display = "block";
 
     // Handle button click with proper async/await and error handling
@@ -11563,7 +11563,7 @@ function showHQAttackButton(index) {
     }
 
     // Update the button text and style
-    attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"</span>`;
+    attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"></span>`;
     attackButton.style.display = "block";
 
     // Handle button click with proper async/await and error handling
@@ -11656,7 +11656,7 @@ function showLocationAttackButton(cityIndex) {
   }
 
   // Update the button text and style
-  attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"</span>`;
+  attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"></span>`;
   attackButton.style.display = "block";
 
   // Handle button click
