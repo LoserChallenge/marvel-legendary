@@ -45,6 +45,7 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 - Game is hosted on GitHub Pages at: `https://LoserChallenge.github.io/marvel-legendary/`
 - Push to `master` branch deploys automatically (~1 min delay; hard refresh `Ctrl+Shift+R` to bust cache)
 - **Service Worker cache:** After pushing code changes, bump `CACHE_NAME` in `sw.js` (e.g. `'legendary-v3'` → `'legendary-v4'`). Without this, users' browsers will keep serving the old cached files. This is the #1 cause of "changes don't show on GitHub Pages."
+- **`FILES_TO_CACHE` in `sw.js`:** When adding a new expansion JS file, also add its path to the `FILES_TO_CACHE` array — bumping `CACHE_NAME` alone is not enough; the file won't be served offline/PWA without an explicit entry
 - Rules PDFs (105MB) are gitignored — local only
 - Core Set card images are in `Visual Assets/Heroes/Reskinned Core/` (not a subfolder named "Core Set")
 
@@ -73,13 +74,68 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 
 - Grid columns using `1fr` do not shrink below content size by default — use `minmax(0, 1fr)` and `min-width: 0` on children when text must truncate rather than push other columns off-screen
 
+## onscreenConsole vs console Gotcha
+
+- **`onscreenConsole.log()`** is the game's **in-game message panel** that players see during play. Use it for every game event — card plays, villain moves, ability activations, Locations entering the city, anything the player needs to know about.
+- **`console.log()`** is the **browser's developer tools** console (F12). It's invisible to players and should only appear in dev-only instrumentation that gets removed before a feature ships. Treat any `console.log` in game logic as a red flag.
+- **Rule:** when writing game logic, reach for `onscreenConsole.log()` first. If you find yourself typing `console.log()` for something a player would want to see, stop — it's a bug.
+- **Highlight syntax:** wrap card/hero/villain names in `<span class="console-highlights">${name}</span>` to render them in the game's highlight colour. Canonical pattern at `script.js:5138-5140` (villain announcement).
+- **Caught by:** 2026-04-12 Revelations playtest. `placeLocation()` at `script.js:601` used `console.log`, so Locations entered the city with zero on-screen announcement. Fixed 2026-04-13 (Fix 1D).
+
 ## Async Gotchas
 
 - When making a card ability function `async`, grep for ALL its call sites and add `await` there too — callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (this was missed for `heroSkrulled` callers in health check phase 2 and caught by code review).
+- `placeLocation()` in `script.js` is `async` (line 584) — any expansion function calling it must use `await placeLocation(...)` and be declared `async` itself; missing `await` causes a race condition when the city is full (overflow popup fires and forgets before the player chooses)
+
+## Villain Card Cloning Gotcha
+
+- Villain cards are cloned when placed into the `city[]` array by `processRegularVillainCard()` — custom properties added by ambush effects (e.g. `capturedHero`) are NOT preserved on the city copy. Ambush functions that need to attach state must find the card in `city[]` after placement and modify the city copy directly.
+
+## transformScheme() Limitation
+
+- `transformScheme()` in `script.js` only swaps the scheme image/name/object — it does NOT resize the city. Schemes that change city size (Earthquake/Tsunami) need a separate `resizeCityForScheme(newSize)` call. As of Phase 4 playtest (2026-04-12), this function does not exist yet and is part of the fix plan.
 
 ## generateVillainDeck Type Gotcha
 
 - `generateVillainDeck()` overwrites every card's `type` to `"Villain"` — new card types (e.g. Location) need a preservation check: `const cardType = modifiedCard.type === "Location" ? "Location" : "Villain";` (already added on location-system branch)
+
+## Duplicate updateHighlights() Gotcha
+
+- `script.js` contains TWO `function updateHighlights()` declarations — the second overwrites the first in JS, but both must be kept in sync since either may become active after refactoring. When modifying city villain affordability checks or fight button logic, grep for all `updateHighlights` definitions and patch both.
+
+## cardDatabase.js CRLF Gotcha
+
+- `cardDatabase.js` uses CRLF line endings — any Node script doing string replacement must normalize (`db.replace(/\r\n/g, '\n')`) or markers won't match. Restore CRLF on write.
+
+## cardDatabase.js Class/Color Reference
+
+- Hero classes in the DB use: `"Strength"`, `"Instinct"`, `"Covert"`, `"Tech"`, `"Range"` (NOT "Ranged")
+- Canonical source: `script.js` line ~13778 `const CLASSES = [...]`
+- Color mapping: Strength=Green, Instinct=Yellow, Covert=Red, Tech=Black, Range=Blue
+- Always verify against the DB before bulk inserts — inventory files use different terminology
+
+## Villain Mechanic Flags
+
+- **`usesRecruitToFight: true`** — add to villain DB entry for recruit-only fight cost (e.g. Mister Hyde); both `updateHighlights()` declarations gate affordability on this flag; missing it silently disables the entire mechanic with no error
+
+## Villain Attack Modifier Pipeline
+
+- **Modified villain/henchman attack values live in `attackFromMastermind` / `attackFromScheme` / `attackFromOwnEffects` / `attackFromHeroEffects` / `attackFromShards` fields**, NOT in `card.attack`. The display overlay (`script.js:~8534`) and fight-cost calculation (`recalculateVillainAttack()` at `script.js:11706`) both read only these modifier fields — writing to `card.attack` directly is invisible because the base number comes from the printed card art.
+- **Canonical precedent:** the `mastermind.alwaysLeadsBonus` check at `script.js:9937`. Add new mastermind/scheme/own-effect villain bonuses inside `updateVillainAttackValues()` following that pattern.
+- **Duplicate function pattern (like `updateHighlights`):** `updateVillainAttackValues()` (city, line 9921) and `updateHQVillainAttackValues()` (HQ, line 10137) both need identical modifier logic — patch both in parallel.
+- **The overlay is conditional:** `if (totalAttackModifiers !== 0)` at `script.js:~8533` — if nothing sets a modifier field, no overlay is drawn and the player sees only the card art's printed number.
+- Caught by: Fix 1C Part B failed the 2026-04-13 Revelations playtest because it mutated `card.attack` at setup time instead of using this pipeline; the fight logic worked but the card displayed its base art value.
+
+## Expansion Effect Function Patterns
+
+- Hero abilities: `async function heroNameCardTitle() { ... }` — must match `unconditionalAbility`/`conditionalAbility` in cardDatabase.js exactly
+- Villain effects: `function villainNameAmbush/Fight/Escape(villainCard)` — villain card passed as arg when needed
+- Choice popups: `const { confirmButton, denyButton } = showHeroAbilityMayPopup(text, label1, label2)` → wire `onclick`, call `closeInfoChoicePopup()` + `resolve()`
+- Wound effects: call `drawWound()` (handles invulnerability) not `defaultWoundDraw()`
+- KO hero: reuse existing `FightKOHeroYouHave()` — presents card-choice popup
+- KO from discard/hand (player chooses): use `card-choice-popup` pattern (see `KO1To4FromDiscard()` in `cardAbilities.js:11814`). Do NOT use `showHeroAbilityMayPopup` — that's only for Yes/No on a known card, not for selecting from a pool.
+- Retrieve from discard (player chooses): same `card-choice-popup` pattern, moving to hand instead of KO pile
+- Evil wins: add `case "conditionName":` to the switch in `script.js` `checkEvilWins` (~line 9065)
 
 ## City Card Click Handler Pattern
 
@@ -105,11 +161,16 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `cardDatabase.js` assigns `window.henchmen = henchmen` etc. at the end — stub `window` in the vm context: `const context = { window: {} };` or the script crashes with "window is not defined"
 - Reusable extraction script: `scripts/extract-hero-data.js <FolderName>` — pass the image folder name (e.g. `"Dark City"`, `"GotG"`, `"PtTR"`) to extract hero data for any expansion
 
+## Randomize Button Event Gotcha
+
+- `randomizeMastermind()`, `randomizeScheme()`, etc. set radio `.checked = true` programmatically — this does NOT fire DOM `change` events. Any new logic added via `addEventListener('change', ...)` on setup screen forms must ALSO be called directly inside the corresponding `randomize*()` function, or it won't trigger when users click Randomize.
+
 ## Mastermind Code Gotchas
 
 - Mastermind names in `cardDatabase.js` must be matched exactly — `"The Supreme Intelligence of the Kree"` not `"Supreme Intelligence"`. Wrong names silently return `undefined` from `masterminds.find()`.
 - `showConfirmChoicesPopup` receives a stub `{ name: selectedMastermind }` from its caller (~line 3514) — not a full mastermind object. Code inside needing `mastermind.alwaysLeads` etc. must call `masterminds.find(m => m.name === mastermind.name)` internally.
 - `getSelectedMastermind()` already exists in `script.js` — use it instead of manual DOM + `masterminds.find()` lookups in setup screen functions.
+- **Epic masterminds are a runtime object-spread overlay, not a separate DB entry.** `script.js:868` returns `{ ...baseMastermind, ...baseMastermind.epic }` when the Epic checkbox is checked — runtime `mastermind.name` becomes `"Epic Mandarin"` (etc.) and all overlaid fields (`attack`, `masterStrike`, `image`) take their epic values. Detect via `mastermind.name === "Epic X"`.
 
 ## Out of Scope
 
@@ -118,8 +179,6 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 
 ## Reference Files
 
-- `revisions-additions.md` — prioritised list of planned UI/setup screen changes
-- `card-directory.pdf` — full card list for all expansions with faction symbols
 - `rules/` — PDF rulesheets for all expansions. Read tool PDF support works when VS Code is launched with the full user PATH (so `pdftoppm` is accessible). It's intermittent: try `Read` first; if it fails with a pdftoppm error, **stop and tell the user** to fully close and reopen VS Code (not just reload window), then retry. Do not use pdftotext or any other workaround.
 - `docs/card-inventory/final/` — finalized card inventory files; source of truth for audits. 10 finalized (Into the Cosmos 2026-04-05).
 - `docs/card-inventory/card-reading-rules.md` — card image reading rules, DB authority, inventory template notes, expansion-specific card types
@@ -135,9 +194,10 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 1. ✅ UI revisions, Golden Solo villain fix, health check (phases 1+2), card effect auditor — all merged to master by 2026-03-31
 2. **Expansion content** — complete inventories for all expansions (both tracks), then implement one at a time
    - **Two inventory tracks — see `docs/expansion-pipeline-status.md` for full status and per-expansion notes.** Track A (new expansions): stage → inventory (PDF-primary) → verify → user review → move to `final/`. Track B (in-game expansions): inventory (DB-primary) → verify → user review → move to `final/`.
-   - **Current position (2026-04-06):** 10 expansions finalized in `card-inventory/final/` (Into the Cosmos complete). Pass 1 complete, awaiting Pass 2: weapon-x, shield. Staged and awaiting Pass 1: messiah-complex, shadows-of-nightmare, the-new-mutants, world-war-hulk. All expansions now staged.
+   - **Current position:** See `docs/expansion-pipeline-status.md` for full pipeline status. Active focus: Revelations Phase 4 (fix plan + playtest, on `revelations` branch).
    - `/analyze-expansion` → `/new-expansion` pipeline is ready. Run `/analyze-expansion` first (produces mechanics reference), then `/new-expansion` (multi-phase code integration with progress tracking).
-   - **Revelations:** `/new-expansion` active (started 2026-04-06). Infrastructure-first build order: dynamic city refactor (worktree) → Location system → small infrastructure bundle → content phases. Progress at `docs/expansion-progress/revelations.md`. Next step: Step 3 (small infrastructure bundle). Steps 1-2 complete on worktree branches (not merged — merge when full expansion is ready).
+   - **Revelations:** Phases 1-3 complete. Phase 4 in progress (fix plan + playtest). All work on `revelations` branch (`.worktrees/revelations`). Fix plan: `docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md` (inside worktree). Full status and issue table: `docs/expansion-progress/revelations.md`.
+3. **Project optimization fixes** — 5 workflow fixes identified 2026-04-14, plan at `docs/superpowers/plans/2026-04-14-project-optimization-fixes.md`. P1/P3/P4 have no blockers. **P2 blocked:** confirm which of Revelations fixes 1A/1B/1C are applied. **P5 blocked:** choose Option A (warning hook) or Option B (flip sync direction) for CLAUDE.md/worktree sync.
 
 ## Visual Reference Setup ✅ Complete
 
@@ -180,6 +240,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 **Skills (other):**
 - `/golden-solo-fixer` — executes remaining Golden Solo compatibility audit fixes
 - `/deploy` — pre-push checklist + push to master + GitHub Pages verification
+- **`/write-plan` default-location gotcha:** Superpowers' `writing-plans` skill drops output at `~/.claude/plans/{auto-slug}.md` by default — a **global** path with a machine-generated name (e.g. `temporal-coalescing-kettle.md`). For project work, override with an explicit in-repo path like `docs/superpowers/plans/YYYY-MM-DD-descriptive-name.md` inside the active worktree, or move+rename the file immediately after creation and update any references.
 
 **Subagents:**
 - `codebase-navigator` — targeted code searches without flooding context
@@ -189,11 +250,12 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - `card-effect-auditor` — compares card reference data against code implementations
 
 **References:**
-- `docs/card-inventory/final/` — per-expansion card data and effect text, source of truth for audits. 8 finalized (2026-04-04). X-Men in `drafts/` awaiting Pass 2.
+- `docs/card-inventory/final/` — per-expansion card data and effect text, source of truth for audits. 10 finalized (Into the Cosmos 2026-04-05). X-Men in `drafts/` awaiting Pass 2.
 - `docs/card-effect-audit-results-2026-03-31.md` — first audit run (65 issues, but **not reliable** — ran against old reference files). Re-run ready.
 
 **Other:**
 - Git worktrees: `.worktrees/` is gitignored; feature branches at `.worktrees/<branch-name>`
+- **Branch strategy for expansions:** One long-lived branch per expansion (e.g., `revelations`), accumulating all work. Merge to master only when the expansion is fully complete. Do NOT create separate branches per step or phase.
 - GitHub MCP installed — check deployment status, issues, Actions logs without leaving chat
 
 ## Workflow Preferences
@@ -203,6 +265,13 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - Propose a plan and get approval before editing any files
 - Use the `codebase-navigator` subagent for searching large files
 - Explain all terminal steps in plain English
+- **When executing a fix plan written in a prior session, verify each fix's stated root cause empirically before implementing.** Apply Phase 1 of systematic-debugging to the plan's hypothesis, not just to the original bug. Prior-session plans can be based on incomplete playtest observation and may misdiagnose — don't trust-and-apply.
+
+## Worktree-vs-Master Edit Rule
+
+- **Branch-specific doc edits** (new gotchas from a branch's playtest, progress files, fix plans, current-work descriptions) → edit the **worktree's copy**. They travel upstream naturally via branch merge.
+- **Global / cross-branch edits** (new universal patterns, rules that apply everywhere) → edit **master's copy** so new branches cut from master inherit them. Sync worktree after with `cp CLAUDE.md .worktrees/<branch>/CLAUDE.md`.
+- Prior sessions have repeatedly let worktree learnings leak into master — when starting a session that touches `CLAUDE.md` or `docs/expansion-progress/`, `diff` the master and worktree copies early to detect drift.
 
 ## Scheme Hero Requirements Infrastructure
 
