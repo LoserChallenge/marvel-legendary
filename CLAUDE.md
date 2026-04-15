@@ -272,6 +272,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - **Branch-specific doc edits** (new gotchas from a branch's playtest, progress files, fix plans, current-work descriptions) → edit the **worktree's copy**. They travel upstream naturally via branch merge.
 - **Global / cross-branch edits** (new universal patterns, rules that apply everywhere) → edit **master's copy** so new branches cut from master inherit them. Sync worktree after with `cp CLAUDE.md .worktrees/<branch>/CLAUDE.md`.
 - Prior sessions have repeatedly let worktree learnings leak into master — when starting a session that touches `CLAUDE.md` or `docs/expansion-progress/`, `diff` the master and worktree copies early to detect drift.
+- **During active expansion work:** treat the worktree's CLAUDE.md as the live copy. Master's copy is intentionally stale until merge — do NOT sync mid-branch. The expansion merge checklist (in `/new-expansion`) includes a CLAUDE.md sync step.
 
 ## Scheme Hero Requirements Infrastructure
 

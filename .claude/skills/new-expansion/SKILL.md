@@ -206,6 +206,14 @@ Walk the user through what to look for during the test game.
 
 ### Update progress file: Phase 4 ✅, Status → Complete
 
+### Merge checklist (run before merging to master)
+
+Before merging the expansion branch:
+- [ ] All Phase 4 issues resolved and retested
+- [ ] `sw.js` `CACHE_NAME` bumped (e.g. `legendary-v4` → `legendary-v5`)
+- [ ] New expansion JS file added to `FILES_TO_CACHE` in `sw.js`
+- [ ] **Sync CLAUDE.md:** copy worktree's CLAUDE.md to master — `cp .worktrees/[branch]/CLAUDE.md CLAUDE.md` — so new branches cut from master inherit all gotchas added during this expansion's work
+
 ---
 
 ## Progress Tracking
