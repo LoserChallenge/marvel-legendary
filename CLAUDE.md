@@ -265,7 +265,8 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - Propose a plan and get approval before editing any files
 - Use the `codebase-navigator` subagent for searching large files
 - Explain all terminal steps in plain English
-- **When executing a fix plan written in a prior session, verify each fix's stated root cause empirically before implementing.** Apply Phase 1 of systematic-debugging to the plan's hypothesis, not just to the original bug. Prior-session plans can be based on incomplete playtest observation and may misdiagnose — don't trust-and-apply.
+- **When executing a fix plan written in a prior session, verify each fix's stated root cause empirically before implementing.**
+- **When executing a multi-step doc/config plan, check current file state (both master and worktree) before assuming all steps are pending** — prior sessions may have already applied some steps. Apply Phase 1 of systematic-debugging to the plan's hypothesis, not just to the original bug. Prior-session plans can be based on incomplete playtest observation and may misdiagnose — don't trust-and-apply.
 
 ## Worktree-vs-Master Edit Rule
 
