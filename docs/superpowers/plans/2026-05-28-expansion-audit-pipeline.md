@@ -484,6 +484,7 @@ For each <TYPE> card in the inventory, run all six checks:
 - **(d) Cross-card interaction safety** — modifies shared state cleanly; handles the case where another card already mutated it; handles empty deck/HQ/city edges.
 - **(e) Player-choice correctness** — card text "may" / "choose" / "if you do" must map to code that PRESENTS the choice (correct popup type) rather than auto-picking or silently skipping. Conditional choices ("you may KO a Bystander") must be gated on the player actually being able to do it.
 - **(f) Base-rules compliance** — turn structure, attack-pairing (every `totalAttackPoints +=` has a matching `cumulativeAttackPoints +=`), `updateGameBoard()` called after attack changes.
+- **(g) Count & variant completeness** — the number of this card type in `cardDatabase.js` matches the **inventory's** stated count, and the inventory's variant pattern is correctly represented. Check against the inventory, NOT a standard-pattern assumption — counts deviate by set (most sets: 8 villain cards / 4 villains = 2 each; most henchmen: 10 identical copies — but exceptions exist, e.g. Ten Rings = 10 unique cards). Flag missing cards, wrong copy counts, unique-vs-duplicate mismatches, non-standard group splits.
 
 <!-- TYPE-SPECIFIC SPECIALIZATIONS -->
 
@@ -493,7 +494,7 @@ Report ONLY issues. For each:
 
 ```
 CARD: <name> (<TYPE> — <expansion>)
-CHECK: a | b | c | d | e | f | <specialization name>
+CHECK: a | b | c | d | e | f | g | <specialization name>
 SEVERITY: HIGH | MEDIUM | LOW
 ISSUE: <one-line description>
 EXPECTED: <what the inventory/rules says>
@@ -583,6 +584,7 @@ Specialization block:
 - **Attack-modifier pipeline** — modified attack values live in `attackFromMastermind` / `attackFromScheme` / `attackFromOwnEffects` / `attackFromHeroEffects` / `attackFromShards`, NEVER `card.attack` (the base number comes from card art). Writing to `card.attack` is invisible. New bonuses follow the `mastermind.alwaysLeadsBonus` precedent inside BOTH `updateVillainAttackValues()` (city) AND `updateHQVillainAttackValues()` (HQ).
 - **City placement** — villains entering the city use `enterCityFromRight()` / the correct placement path; respect city ordering and overflow.
 - **Post-copy state preservation** — custom properties set at ambush time (e.g. `capturedHero`) must be in the `createVillainCopy()` whitelist (`script.js:12209`), or the fight effect receives a stripped copy. Fight-effect functions must read from the copy PARAMETER, not iterate `city[]` (it's nulled before the fight effect runs).
+- **Count/variant (check g focus)** — verify the villain group split matches the inventory. Standard is 8 cards / 4 villains (2 each), but some sets deviate; trust the inventory's recorded composition, not the standard pattern.
 ```
 
 - [ ] **Step 2: Structural self-check** — read back; confirm name, six base checks, villain specialization (attack pipeline + createVillainCopy whitelist), output block.
@@ -622,6 +624,7 @@ Specialization block:
 - **`usesRecruitToFight` flag** — henchmen with a recruit-only fight cost (e.g. Mister Hyde) need `usesRecruitToFight: true` in the DB entry. Both `updateHighlights()` declarations gate affordability on this flag; a missing flag silently disables the entire mechanic with no error.
 - **Duplicate `updateHighlights()` hazard** — `script.js` has TWO `function updateHighlights()` declarations. Affordability/fight-button logic for henchmen must be consistent in BOTH; grep for all definitions.
 - **Ambush effects** — henchmen ambush patterns resemble villains but use henchman function names; confirm wiring.
+- **Count/variant (check g focus)** — verify the copy structure matches the inventory. Standard is 10 identical copies of one henchman, but some groups (e.g. Ten Rings) are 10 *unique* cards; trust the inventory.
 ```
 
 - [ ] **Step 2: Structural self-check** — read back; confirm name, six base checks, henchmen specialization (`usesRecruitToFight` + duplicate updateHighlights), output block.
