@@ -45,6 +45,7 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 - Game is hosted on GitHub Pages at: `https://LoserChallenge.github.io/marvel-legendary/`
 - Push to `master` branch deploys automatically (~1 min delay; hard refresh `Ctrl+Shift+R` to bust cache)
 - **Service Worker cache:** After pushing code changes, bump `CACHE_NAME` in `sw.js` (e.g. `'legendary-v3'` → `'legendary-v4'`). Without this, users' browsers will keep serving the old cached files. This is the #1 cause of "changes don't show on GitHub Pages."
+- **`FILES_TO_CACHE` in `sw.js`:** When adding a new expansion JS file, also add its path to the `FILES_TO_CACHE` array — bumping `CACHE_NAME` alone is not enough; the file won't be served offline/PWA without an explicit entry
 - Rules PDFs (105MB) are gitignored — local only
 - Core Set card images are in `Visual Assets/Heroes/Reskinned Core/` (not a subfolder named "Core Set")
 
@@ -73,13 +74,86 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 
 - Grid columns using `1fr` do not shrink below content size by default — use `minmax(0, 1fr)` and `min-width: 0` on children when text must truncate rather than push other columns off-screen
 
+## onscreenConsole vs console Gotcha
+
+- **`onscreenConsole.log()`** is the game's **in-game message panel** that players see during play. Use it for every game event — card plays, villain moves, ability activations, Locations entering the city, anything the player needs to know about.
+- **`console.log()`** is the **browser's developer tools** console (F12). It's invisible to players and should only appear in dev-only instrumentation that gets removed before a feature ships. Treat any `console.log` in game logic as a red flag.
+- **Rule:** when writing game logic, reach for `onscreenConsole.log()` first. If you find yourself typing `console.log()` for something a player would want to see, stop — it's a bug.
+- **Highlight syntax:** wrap card/hero/villain names in `<span class="console-highlights">${name}</span>` to render them in the game's highlight colour. Canonical pattern at `script.js:5138-5140` (villain announcement).
+- **Caught by:** 2026-04-12 Revelations playtest. `placeLocation()` at `script.js:601` used `console.log`, so Locations entered the city with zero on-screen announcement. Fixed 2026-04-13 (Fix 1D).
+
 ## Async Gotchas
 
 - When making a card ability function `async`, grep for ALL its call sites and add `await` there too — callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (this was missed for `heroSkrulled` callers in health check phase 2 and caught by code review).
+- `placeLocation()` in `script.js` is `async` (line 584) — any expansion function calling it must use `await placeLocation(...)` and be declared `async` itself; missing `await` causes a race condition when the city is full (overflow popup fires and forgets before the player chooses)
+
+## Villain Card Cloning Gotcha
+
+- Villain cards are NOT cloned during ambush placement — `processRegularVillainCard()` at `script.js:5140` does `city[sewersIndex] = villainCard` as a direct reference, so ambush mutations like `villainCard.capturedHero = [...]` persist on the city copy automatically.
+- The real copy happens at fight time: `createVillainCopy()` at `script.js:12209` is a hand-rolled whitelist copier that defeatVillain() passes to fight-effect functions. **Any custom state added at ambush time must be added to the `createVillainCopy()` whitelist**, or the fight effect receives a stripped copy. `city[cityIndex]` is also nulled before the fight effect runs, so fight-effect functions cannot fall back to iterating `city[]` — they must read from the villainCopy parameter passed in.
+- Pattern for arrays: follow the `bystander: [...(villainCard.bystander || [])]` line in `createVillainCopy()`.
+- Caught by: Klaw capture (Revelations Phase 4 playtest 2026-04-12). `capturedHero` was set correctly on the city copy during ambush, but `createVillainCopy()` dropped it before `klawFight()` ran. Fixed 2026-04-14 by adding `capturedHero` to the whitelist and rewriting `klawFight(klaw)` to use its parameter.
+
+## transformScheme() Limitation
+
+- `transformScheme()` in `script.js` only swaps the scheme image/name/object — it does NOT resize the city. Schemes that change city size (Earthquake/Tsunami) need a separate `resizeCityForScheme(newSize)` call. As of Phase 4 playtest (2026-04-12), this function does not exist yet and is part of the fix plan.
+- **Selector gotcha (caught 2026-05-28):** `#scheme-place` contains TWO `<img>` elements — the always-hidden BabyHope token (`<div id="scheme-token" style="display:none;">` in `index.html`) AND the visible scheme card image appended by `initGame()` with class `card-image`. Generic selectors like `#scheme-place img` match the BabyHope token FIRST (document order) and silently mutate an invisible element, leaving the visible scheme card unchanged. Always target the visible card explicitly: `#scheme-place img.card-image`. Same pattern likely exists in other game cells with hidden token elements — verify selector specificity whenever you're updating an in-game card image.
+- **`selectedScheme` global gotcha (caught 2026-05-28):** Most scheme-reading code in `script.js` uses a *local* pattern (`const selectedScheme = schemes.find(...)` from the setup-screen radio button), so the GLOBAL `selectedScheme` is NOT pre-populated by setup. `transformScheme()` (and any other code that wants to track "current scheme" across transforms) must lazy-init `window.selectedScheme` from the DOM radio on first use, then read/write the global on subsequent calls. Without the lazy init, the first call throws `ReferenceError: selectedScheme is not defined` and the upstream try/catch swallows it silently — the player sees nothing happen.
+
+## Browser Cache Discipline for Local Playwright Testing
+
+- Chromium aggressively caches `script.js` (and other static files) when served by Python `http.server`. The Service Worker is not active in local-serve mode (registration 404s because of GitHub Pages path-prefix mismatch), but the browser's HTTP cache alone is enough to serve stale code through normal `Ctrl+R` page refreshes.
+- **Hard refresh isn't always enough.** `Ctrl+Shift+R` typically works, but the most reliable cache flush in Chromium is: **F12 → right-click the toolbar refresh button → "Empty Cache and Hard Reload"**. Recommend this to Paul whenever a fix has just been applied and a real-game playtest is the verification step.
+- For Playwright sessions: if a code-on-disk fix isn't reflected in `<function>.toString()`, monkey-patch the new implementation into `window.<funcName>` via `browser_evaluate` to verify the LOGIC, then ask Paul to do a full cache flush when he tests interactively.
+- **Always check dev-tools console for errors when verifying a fix.** A function that fails silently upstream (caught by try/catch with `console.error`) produces no on-screen-console signal but leaves a clear trace in F12 → Console. Caught 2026-05-28 — transformScheme threw `ReferenceError` for weeks and nobody noticed because the wrapping try/catch only printed to dev tools.
+
+## Implicit-Global Trap in Eval-Based Tests
+
+- Caught 2026-05-28 during Playwright diagnostic of `transformScheme()`. The function reads a non-existent global (`selectedScheme`) and throws in production. My diagnostic test assigned `selectedScheme = schemes.find(...)` inside `browser_evaluate` — in non-strict mode this creates an implicit global, masking the missing-initialization bug. Test passed; real game still crashed.
+- Rule: when testing functions that read globals, **wipe `window.<globalName>` before each test invocation** to force the cold-start path. Use `window.<name> = undefined; delete window.<name>;` to reset cleanly. Don't write `globalName = value` — that creates implicit globals in non-strict scripts and hides initialization bugs.
+- Also: when a test passes but the real game still fails, the test is wrong before the production code is. Run cold tests (no implicit setup) and check dev-tools console for errors after every invocation.
 
 ## generateVillainDeck Type Gotcha
 
 - `generateVillainDeck()` overwrites every card's `type` to `"Villain"` — new card types (e.g. Location) need a preservation check: `const cardType = modifiedCard.type === "Location" ? "Location" : "Villain";` (already added on location-system branch)
+
+## Duplicate updateHighlights() Gotcha
+
+- `script.js` contains TWO `function updateHighlights()` declarations — the second overwrites the first in JS, but both must be kept in sync since either may become active after refactoring. When modifying city villain affordability checks or fight button logic, grep for all `updateHighlights` definitions and patch both.
+
+## cardDatabase.js CRLF Gotcha
+
+- `cardDatabase.js` uses CRLF line endings — any Node script doing string replacement must normalize (`db.replace(/\r\n/g, '\n')`) or markers won't match. Restore CRLF on write.
+
+## cardDatabase.js Class/Color Reference
+
+- Hero classes in the DB use: `"Strength"`, `"Instinct"`, `"Covert"`, `"Tech"`, `"Range"` (NOT "Ranged")
+- Canonical source: `script.js` line ~13778 `const CLASSES = [...]`
+- Color mapping: Strength=Green, Instinct=Yellow, Covert=Red, Tech=Black, Range=Blue
+- Always verify against the DB before bulk inserts — inventory files use different terminology
+
+## Villain Mechanic Flags
+
+- **`usesRecruitToFight: true`** — add to villain DB entry for recruit-only fight cost (e.g. Mister Hyde); both `updateHighlights()` declarations gate affordability on this flag; missing it silently disables the entire mechanic with no error
+
+## Villain Attack Modifier Pipeline
+
+- **Modified villain/henchman attack values live in `attackFromMastermind` / `attackFromScheme` / `attackFromOwnEffects` / `attackFromHeroEffects` / `attackFromShards` fields**, NOT in `card.attack`. The display overlay (`script.js:~8534`) and fight-cost calculation (`recalculateVillainAttack()` at `script.js:11706`) both read only these modifier fields — writing to `card.attack` directly is invisible because the base number comes from the printed card art.
+- **Canonical precedent:** the `mastermind.alwaysLeadsBonus` check at `script.js:9937`. Add new mastermind/scheme/own-effect villain bonuses inside `updateVillainAttackValues()` following that pattern.
+- **Duplicate function pattern (like `updateHighlights`):** `updateVillainAttackValues()` (city, line 9921) and `updateHQVillainAttackValues()` (HQ, line 10137) both need identical modifier logic — patch both in parallel.
+- **The overlay is conditional:** `if (totalAttackModifiers !== 0)` at `script.js:~8533` — if nothing sets a modifier field, no overlay is drawn and the player sees only the card art's printed number.
+- Caught by: Fix 1C Part B failed the 2026-04-13 Revelations playtest because it mutated `card.attack` at setup time instead of using this pipeline; the fight logic worked but the card displayed its base art value.
+
+## Expansion Effect Function Patterns
+
+- Hero abilities: `async function heroNameCardTitle() { ... }` — must match `unconditionalAbility`/`conditionalAbility` in cardDatabase.js exactly
+- Villain effects: `function villainNameAmbush/Fight/Escape(villainCard)` — villain card passed as arg when needed
+- Choice popups: `const { confirmButton, denyButton } = showHeroAbilityMayPopup(text, label1, label2)` → wire `onclick`, call `closeInfoChoicePopup()` + `resolve()`
+- Wound effects: call `drawWound()` (handles invulnerability) not `defaultWoundDraw()`
+- KO hero: reuse existing `FightKOHeroYouHave()` — presents card-choice popup
+- KO from discard/hand (player chooses): use `card-choice-popup` pattern (see `KO1To4FromDiscard()` in `cardAbilities.js:11814`). Do NOT use `showHeroAbilityMayPopup` — that's only for Yes/No on a known card, not for selecting from a pool.
+- Retrieve from discard (player chooses): same `card-choice-popup` pattern, moving to hand instead of KO pile
+- Evil wins: add `case "conditionName":` to the switch in `script.js` `checkEvilWins` (~line 9065)
 
 ## City Card Click Handler Pattern
 
@@ -105,11 +179,16 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `cardDatabase.js` assigns `window.henchmen = henchmen` etc. at the end — stub `window` in the vm context: `const context = { window: {} };` or the script crashes with "window is not defined"
 - Reusable extraction script: `scripts/extract-hero-data.js <FolderName>` — pass the image folder name (e.g. `"Dark City"`, `"GotG"`, `"PtTR"`) to extract hero data for any expansion
 
+## Randomize Button Event Gotcha
+
+- `randomizeMastermind()`, `randomizeScheme()`, etc. set radio `.checked = true` programmatically — this does NOT fire DOM `change` events. Any new logic added via `addEventListener('change', ...)` on setup screen forms must ALSO be called directly inside the corresponding `randomize*()` function, or it won't trigger when users click Randomize.
+
 ## Mastermind Code Gotchas
 
 - Mastermind names in `cardDatabase.js` must be matched exactly — `"The Supreme Intelligence of the Kree"` not `"Supreme Intelligence"`. Wrong names silently return `undefined` from `masterminds.find()`.
 - `showConfirmChoicesPopup` receives a stub `{ name: selectedMastermind }` from its caller (~line 3514) — not a full mastermind object. Code inside needing `mastermind.alwaysLeads` etc. must call `masterminds.find(m => m.name === mastermind.name)` internally.
 - `getSelectedMastermind()` already exists in `script.js` — use it instead of manual DOM + `masterminds.find()` lookups in setup screen functions.
+- **Epic masterminds are a runtime object-spread overlay, not a separate DB entry.** `script.js:868` returns `{ ...baseMastermind, ...baseMastermind.epic }` when the Epic checkbox is checked — runtime `mastermind.name` becomes `"Epic Mandarin"` (etc.) and all overlaid fields (`attack`, `masterStrike`, `image`) take their epic values. Detect via `mastermind.name === "Epic X"`.
 
 ## Out of Scope
 
@@ -118,8 +197,6 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 
 ## Reference Files
 
-- `revisions-additions.md` — prioritised list of planned UI/setup screen changes
-- `card-directory.pdf` — full card list for all expansions with faction symbols
 - `rules/` — PDF rulesheets for all expansions. Read tool PDF support works when VS Code is launched with the full user PATH (so `pdftoppm` is accessible). It's intermittent: try `Read` first; if it fails with a pdftoppm error, **stop and tell the user** to fully close and reopen VS Code (not just reload window), then retry. Do not use pdftotext or any other workaround.
 - `docs/card-inventory/final/` — finalized card inventory files; source of truth for audits. 10 finalized (Into the Cosmos 2026-04-05).
 - `docs/card-inventory/card-reading-rules.md` — card image reading rules, DB authority, inventory template notes, expansion-specific card types
@@ -135,9 +212,10 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 1. ✅ UI revisions, Golden Solo villain fix, health check (phases 1+2), card effect auditor — all merged to master by 2026-03-31
 2. **Expansion content** — complete inventories for all expansions (both tracks), then implement one at a time
    - **Two inventory tracks — see `docs/expansion-pipeline-status.md` for full status and per-expansion notes.** Track A (new expansions): stage → inventory (PDF-primary) → verify → user review → move to `final/`. Track B (in-game expansions): inventory (DB-primary) → verify → user review → move to `final/`.
-   - **Current position (2026-04-06):** 10 expansions finalized in `card-inventory/final/` (Into the Cosmos complete). Pass 1 complete, awaiting Pass 2: weapon-x, shield. Staged and awaiting Pass 1: messiah-complex, shadows-of-nightmare, the-new-mutants, world-war-hulk. All expansions now staged.
+   - **Current position:** See `docs/expansion-pipeline-status.md` for full pipeline status. Active focus: Revelations Phase 4 (fix plan + playtest, on `revelations` branch).
    - `/analyze-expansion` → `/new-expansion` pipeline is ready. Run `/analyze-expansion` first (produces mechanics reference), then `/new-expansion` (multi-phase code integration with progress tracking).
-   - **Revelations:** `/new-expansion` active (started 2026-04-06). Infrastructure-first build order: dynamic city refactor (worktree) → Location system → small infrastructure bundle → content phases. Progress at `docs/expansion-progress/revelations.md`. Next step: Step 3 (small infrastructure bundle). Steps 1-2 complete on worktree branches (not merged — merge when full expansion is ready).
+   - **Revelations:** Phases 1-3 complete. Phase 4 in progress. All work on `revelations` branch (`.worktrees/revelations`). Fix plan: `docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md`. Full status: `docs/expansion-progress/revelations.md`.
+     - **Phase 4 progress (2026-04-15):** Tier 1 fixes 1B/1C/1D/1E/1F all complete. 1A (scheme transform + city resize) pending — needs empirical diagnostic before implementing. Next: Tier 2 popup fixes starting with 2A (KO-from-discard helper → reused by 2B/2D/2E), then 2C (Mandarin strike placement refactor).
 
 ## Visual Reference Setup ✅ Complete
 
@@ -178,23 +256,33 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - `/new-expansion` — multi-phase code integration with progress tracking in `docs/expansion-progress/`
 
 **Skills (other):**
+- `/game-test` — Playwright orchestrator. Drives the live game in a real browser for verification (post-fix), diagnostic (pre-implementation scoping), reproduction, or regression. Handles HTTP-server setup, 1920×1080 viewport, state injection, screenshots, and results tracking. Reach for it on any bug-list work where deterministic state-injection beats manual playtest.
 - `/golden-solo-fixer` — executes remaining Golden Solo compatibility audit fixes
 - `/deploy` — pre-push checklist + push to master + GitHub Pages verification
+- **`/write-plan` default-location gotcha:** Superpowers' `writing-plans` skill drops output at `~/.claude/plans/{auto-slug}.md` by default — a **global** path with a machine-generated name (e.g. `temporal-coalescing-kettle.md`). For project work, override with an explicit in-repo path like `docs/superpowers/plans/YYYY-MM-DD-descriptive-name.md` inside the active worktree, or move+rename the file immediately after creation and update any references.
 
 **Subagents:**
 - `codebase-navigator` — targeted code searches without flooding context
 - `audit-tracker` — scans card files for remaining compatibility fixes
 - `revision-tracker` — scans HTML/JS for UI revision progress
-- `expansion-validator` — validates expansion JS against 7 Golden Solo rules; run as Phase 4 of `/new-expansion`
-- `card-effect-auditor` — compares card reference data against code implementations
+- `expansion-validator` — validates expansion JS against 7 Golden Solo rules; run inside `/expansion-audit`
+- **Expansion audit pipeline** (run via `/expansion-audit`, see `docs/superpowers/specs/2026-05-28-expansion-audit-pipeline-design.md`):
+  - `engine-integration-auditor` — discovers engine touchpoints + finds state-propagation gaps (E-N IDs)
+  - `pattern-reuse-scout` — finds prior-art implementations of new mechanics (runs in `/analyze-expansion`)
+  - `keyword-consistency-auditor` — keyword implemented-once / consistent-across-types / scoped
+  - `hero-card-auditor`, `villain-card-auditor`, `henchmen-card-auditor`, `mastermind-card-auditor`, `scheme-card-auditor`, `misc-card-auditor` — per-card-type audit (text-vs-code, engine, mode, cross-card, choices, base rules)
+
+**MCP Servers:**
+- **Playwright MCP** — Microsoft `@playwright/mcp@latest`, local-scope (this project only). Drives a real Chromium browser: click, fill, screenshot, read DOM, evaluate JS in the page. **Use for:** bug verification where a specific game state reproduces the issue — inject state via `browser_evaluate` (skip setup, pre-stack decks, jump to a UI state), then verify via DOM / onscreenConsole / screenshot. Bug-backlog triage, regression checks, deterministic reproductions. **Don't use for:** subjective UX feel, randomness-dependent multi-turn flows, anything needing real play instincts. **Setup quirks:** `file://` is blocked — launch via a local Python HTTP server pointed at the game's directory; default viewport is narrow (~400px = mobile layout), set 1920×1080 at session start; `sw.js` 404 console error on local-serve is expected noise (path-prefix mismatch with GitHub Pages), not a bug. Full install history + deeper gotchas: `D:\Claude Code\cc-helper\docs\cc-guide.md` → Playwright MCP entry.
+- **GitHub MCP** — check deployment status, issues, Actions logs without leaving chat.
 
 **References:**
-- `docs/card-inventory/final/` — per-expansion card data and effect text, source of truth for audits. 8 finalized (2026-04-04). X-Men in `drafts/` awaiting Pass 2.
+- `docs/card-inventory/final/` — per-expansion card data and effect text, source of truth for audits. 10 finalized (Into the Cosmos 2026-04-05). X-Men in `drafts/` awaiting Pass 2.
 - `docs/card-effect-audit-results-2026-03-31.md` — first audit run (65 issues, but **not reliable** — ran against old reference files). Re-run ready.
 
 **Other:**
 - Git worktrees: `.worktrees/` is gitignored; feature branches at `.worktrees/<branch-name>`
-- GitHub MCP installed — check deployment status, issues, Actions logs without leaving chat
+- **Branch strategy for expansions:** One long-lived branch per expansion (e.g., `revelations`), accumulating all work. Merge to master only when the expansion is fully complete. Do NOT create separate branches per step or phase.
 
 ## Workflow Preferences
 
@@ -203,6 +291,14 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - Propose a plan and get approval before editing any files
 - Use the `codebase-navigator` subagent for searching large files
 - Explain all terminal steps in plain English
+- **When executing a fix plan written in a prior session, verify each fix's stated root cause empirically before implementing.** Apply Phase 1 of systematic-debugging to the plan's hypothesis, not just to the original bug. Prior-session plans can be based on incomplete playtest observation and may misdiagnose — don't trust-and-apply.
+
+## Worktree-vs-Master Edit Rule
+
+- **Branch-specific doc edits** (new gotchas from a branch's playtest, progress files, fix plans, current-work descriptions) → edit the **worktree's copy**. They travel upstream naturally via branch merge.
+- **Global / cross-branch edits** (new universal patterns, rules that apply everywhere) → edit **master's copy** so new branches cut from master inherit them. Sync worktree after with `cp CLAUDE.md .worktrees/<branch>/CLAUDE.md`.
+- Prior sessions have repeatedly let worktree learnings leak into master — when starting a session that touches `CLAUDE.md` or `docs/expansion-progress/`, `diff` the master and worktree copies early to detect drift.
+- **During active expansion work:** treat the worktree's CLAUDE.md as the live copy. Master's copy is intentionally stale until merge — do NOT sync mid-branch. The expansion merge checklist (in `/new-expansion`) includes a CLAUDE.md sync step.
 
 ## Scheme Hero Requirements Infrastructure
 
@@ -222,6 +318,10 @@ heroRequirements: {
 - Spec: `docs/superpowers/specs/2026-04-05-scheme-hero-requirements-design.md`
 - **Status**: Merged to master (2026-04-06). No current schemes use `heroRequirements` yet — infrastructure ready for expansion schemes
 
+**Villain-side scheme overrides:** `getEffectiveSetupRequirements()` in `script.js:3248` is the single source of truth for setup validation. It combines scheme fields (`requiredVillains`, `specificVillainRequirement`, `extraVillainGroups`) with game-mode rules (Golden Solo base = 2 villain groups) and mastermind `alwaysLeads`. Setup display, start-game validator, and checkbox auto-lock all read from it — no caller bypasses it. New scheme-specific villain overrides should extend this function, not the call sites.
+
+- **`extraVillainGroups: N`** (added 2026-04-15 for Revelations Earthquake/Tsunami) — Golden Solo adds N extra villain groups on top of the base 2. What If? Solo ignores this field (uses `requiredVillains` directly). Applied in `getEffectiveSetupRequirements()` Golden Solo branch only.
+
 ## Golden Solo Implementation
 
 Complete and stable. Mode flag: `gameMode` (`'whatif'` | `'golden'`). Full history, architectural rules, and testing checklist: `docs/golden-solo-history.md`
@@ -234,3 +334,4 @@ Details in `docs/known-issues.md`. Summary:
 - **Hero name truncation** on narrow screens — accepted, revisit in next UI pass
 - **Kree-Skrull War villain count** — rules decision needed (What If? Solo 1-group cap vs. scheme's 2-group requirement)
 - **"Other player" effects** — inconsistent solo handling; full review deferred until all inventories are finalized (will be addressed by `/analyze-expansion`)
+- **Villain/Mastermind overlay UX pass** — bystanders and captured heroes currently shrink to small thumbnails on the villain/mastermind card. Refactor to match the Location fan-out pattern (full-size cards shifted in position to mimic physical tabletop stacking). Cross-cutting — touches base game, every expansion. Defer until Revelations merges.
