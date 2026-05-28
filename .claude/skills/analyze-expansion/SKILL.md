@@ -157,10 +157,27 @@ Sources: [rules PDF filename], [inventory filename]
 
 ---
 
+## Prior Art & Reuse Candidates
+
+[Populated by pattern-reuse-scout in Step 5 — for each new mechanic: existing implementations with file:line, how they work, REUSE/ADAPT/BUILD NEW recommendation]
+
+---
+
 ## Open Questions
 
 [Anything unresolved — for user to think about or test with physical cards before implementation begins]
 ```
+
+---
+
+## Step 5: Pattern Reuse Scan
+
+After the mechanics doc is saved, dispatch the `pattern-reuse-scout` subagent for this expansion. It reads the mechanics doc, finds existing codebase implementations of each new mechanic, and appends a `## Prior Art & Reuse Candidates` section to the doc.
+
+Present the reuse recommendations to the user in plain English:
+> "Before we implement, here's what already exists that we can reuse: [mechanic] → [existing scheme/card] already does this. I'd recommend reusing it rather than building from scratch."
+
+This makes reuse decisions BEFORE implementation, not after — the implementer (in `/new-expansion`) reads this section in Phase 1.
 
 ---
 
