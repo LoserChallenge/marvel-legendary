@@ -294,12 +294,13 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - Explain all terminal steps in plain English
 - **When executing a fix plan written in a prior session, verify each fix's stated root cause empirically before implementing.** Apply Phase 1 of systematic-debugging to the plan's hypothesis, not just to the original bug. Prior-session plans can be based on incomplete playtest observation and may misdiagnose — don't trust-and-apply.
 
-## Worktree-vs-Master Edit Rule
+## Session Roles & Folder Discipline (worktree)
 
-- **Branch-specific doc edits** (new gotchas from a branch's playtest, progress files, fix plans, current-work descriptions) → edit the **worktree's copy**. They travel upstream naturally via branch merge.
-- **Global / cross-branch edits** (new universal patterns, rules that apply everywhere) → edit **master's copy** so new branches cut from master inherit them. Sync worktree after with `cp CLAUDE.md .worktrees/<branch>/CLAUDE.md`.
-- Prior sessions have repeatedly let worktree learnings leak into master — when starting a session that touches `CLAUDE.md` or `docs/expansion-progress/`, `diff` the master and worktree copies early to detect drift.
-- **During active expansion work:** treat the worktree's CLAUDE.md as the live copy. Master's copy is intentionally stale until merge — do NOT sync mid-branch. The expansion merge checklist (in `/new-expansion`) includes a CLAUDE.md sync step.
+- You are in the **EXPANSION WORKTREE** — the worker/dev copy. All expansion development happens HERE.
+- The main project folder runs coordinator/director sessions (master = the stable, shippable game). Do NOT reach into the main folder from here (no `git -C` into it); if the main folder is needed, a session is opened there directly.
+- Commit before you stop — commits are save points; commit work-in-progress freely even if broken; never leave uncommitted work (the worktree isolates it from master).
+- This worktree's CLAUDE.md is the live copy during the expansion.
+- Full canonical rules live in master's CLAUDE.md under "Session Roles & Folder Discipline (READ FIRST)" — preserve them when reconciling CLAUDE.md at merge.
 
 ## Scheme Hero Requirements Infrastructure
 
