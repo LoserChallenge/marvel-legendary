@@ -739,10 +739,24 @@ function generateCityHTML() {
     labelsContainer.appendChild(labelDiv);
   }
 
-  // --- Adjust grid columns for city size ---
-  const grid = document.querySelector('.grid');
-  const totalColumns = Math.max(citySize + 3, 8);
-  grid.style.gridTemplateColumns = `repeat(${totalColumns}, 1fr)`;
+  // --- Lay the city cells + labels out as their own sub-grids ---
+  // The board is ONE shared 8-column grid (.grid, repeat(8,1fr)); every row is
+  // display:contents so its cells auto-flow into that grid, and each row is tuned to
+  // contribute exactly 8 items. The city band occupies the middle 5 columns (cols 3-7 —
+  // same as hq-wrapper / player-card-zone `grid-column: span 5`). Widening the SHARED
+  // grid to fit a >5-space city re-wraps EVERY row and shoves the header off-screen
+  // (the citySize>5 path was dormant until the Earthquake scheme; that's the bug this
+  // replaces). Instead, make each container a sub-grid that holds N cells inside the
+  // same fixed 5-column span. minmax(0,1fr) lets the narrower cells shrink rather than
+  // overflow (CSS Grid Overflow Gotcha); gap: 3px matches `.grid`. Spaces and labels use
+  // the same span + cell count, so cards stay column-aligned with their labels.
+  [spacesContainer, labelsContainer].forEach((container) => {
+    const cellCount = container.children.length;
+    container.style.display = 'grid';
+    container.style.gridColumn = '3 / span 5';
+    container.style.gridTemplateColumns = `repeat(${cellCount}, minmax(0, 1fr))`;
+    container.style.gap = '3px';
+  });
 }
 var hq1ReserveRecruit = 0;
 var hq2ReserveRecruit = 0;
