@@ -170,3 +170,9 @@ Cross-reference `docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md`:
 - **Already known / in-progress:** Cluster A + B's Earthquake/Tsunami city resize = **pending Fix 1A** (scheme transform + city resize). E-4 is part of this.
 - **Likely genuinely new (not in the Phase 4 plan):** Cluster C (Location trigger field-name mismatch + undefined trigger functions), Cluster D (villain/Location/mastermind keyword attack scaling unwired), Cluster E (conditionType "None" hero superpowers), Cluster F (log-only hero abilities + `bystanderStack` typo), Cluster H (Mandarin Rings What-If split).
 - **Action:** walk these with Paul, confirm code-wrong vs reference-wrong per card, tag Fix Now / Defer / Reject.
+
+---
+
+## Deferred polish / follow-up (non-blocking)
+
+- **Destroyed city-space placeholder art** (low / deferred polish) — Destroyed cells in the Earthquake/Tsunami "Drains the Ocean / Crushes the Coast" scheme (rendered via `destroyedSpaces`, overlay drawn in `updateGameBoard`) currently reuse the **Galactus Master Strike** card image as the "destroyed space" overlay — borrowed from an unrelated scheme. Functionally fine; reads as thematically wrong. **Want:** a more generic destroyed-space visual, or one unique to this scheme. Not blocking the expansion. Surfaced during the 1A playtest (2026-05-28).
