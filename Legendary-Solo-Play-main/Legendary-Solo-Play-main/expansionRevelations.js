@@ -142,6 +142,710 @@ function applyLastStand(multiplier = 1) {
   return bonus;
 }
 
+// --- SHARED POPUP HELPERS ---
+
+// Multi-card KO-from-discard popup. Used by Revelations effects that say
+// "KO [up to N] cards from your discard pile" (may-skip). Replaces the old
+// Yes/No + auto-pick-cheapest anti-pattern with a proper card-choice-popup.
+// maxCount defaults to 1. When > 1, selecting beyond max uses FIFO (oldest
+// selection drops), matching the canonical KO1To4FromDiscard pattern.
+async function koUpToNFromDiscardPile(sourceName, maxCount = 1) {
+  updateGameBoard();
+  return new Promise((resolve) => {
+    if (playerDiscardPile.length === 0) {
+      onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: No cards in discard pile to KO.`);
+      resolve();
+      return;
+    }
+
+    const discardCardsWithIndex = playerDiscardPile.map((card, index) => ({ ...card, originalIndex: index }));
+    genericCardSort(discardCardsWithIndex);
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+
+    const plural = maxCount === 1 ? "a Card" : `up to ${maxCount} Cards`;
+    titleElement.textContent = `KO ${plural} from Discard`;
+
+    function renderInstructions(selectedCards) {
+      instructionsElement.textContent = "";
+      const sourceSpan = document.createElement("span");
+      sourceSpan.className = "console-highlights";
+      sourceSpan.textContent = sourceName;
+      instructionsElement.appendChild(sourceSpan);
+      if (selectedCards.length === 0) {
+        const suffix = maxCount === 1
+          ? ": Choose a card from your discard pile to KO."
+          : `: Choose up to ${maxCount} cards from your discard pile to KO.`;
+        instructionsElement.appendChild(document.createTextNode(suffix));
+      } else {
+        instructionsElement.appendChild(document.createTextNode(": Selected "));
+        selectedCards.forEach((c, i) => {
+          if (i > 0) instructionsElement.appendChild(document.createTextNode(", "));
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "console-highlights";
+          nameSpan.textContent = c.name;
+          instructionsElement.appendChild(nameSpan);
+        });
+        instructionsElement.appendChild(document.createTextNode(` (${selectedCards.length}/${maxCount}).`));
+      }
+    }
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    const selectedCards = [];
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+
+    function updateConfirmLabel() {
+      if (selectedCards.length === 0) {
+        confirmButton.textContent = maxCount === 1 ? "KO CARD" : "KO CARDS";
+        confirmButton.disabled = true;
+      } else {
+        confirmButton.textContent = `KO ${selectedCards.length} CARD${selectedCards.length !== 1 ? "S" : ""}`;
+        confirmButton.disabled = false;
+      }
+    }
+
+    otherChoiceButton.style.display = "none";
+    noThanksButton.textContent = "NO THANKS";
+    noThanksButton.style.display = "inline-block";
+    noThanksButton.disabled = false;
+
+    renderInstructions(selectedCards);
+    updateConfirmLabel();
+
+    discardCardsWithIndex.forEach((card) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-original-index", card.originalIndex);
+
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = card.image;
+        previewImage.alt = card.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        const idx = selectedCards.findIndex((c) => c.originalIndex === card.originalIndex);
+        if (idx > -1) {
+          selectedCards.splice(idx, 1);
+          cardImage.classList.remove("selected");
+        } else {
+          if (selectedCards.length >= maxCount) {
+            // FIFO: drop the oldest selection
+            const oldest = selectedCards.shift();
+            const oldestEl = selectionRow1.querySelector(`[data-original-index="${oldest.originalIndex}"] img`);
+            if (oldestEl) oldestEl.classList.remove("selected");
+          }
+          selectedCards.push(card);
+          cardImage.classList.add("selected");
+        }
+        renderInstructions(selectedCards);
+        updateConfirmLabel();
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    if (discardCardsWithIndex.length > 20) {
+      selectionRow1.classList.add("multi-row", "three-row");
+      document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "75%";
+      document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "40%";
+      selectionRow1.style.gap = "0.3vw";
+    } else if (discardCardsWithIndex.length > 10) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.remove("three-row");
+      document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+      document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "25%";
+    } else {
+      selectionRow1.classList.remove("multi-row", "three-row");
+    }
+
+    setupDragScrolling(selectionRow1);
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedCards.length === 0) return;
+      setTimeout(() => {
+        // Splice in descending original-index order to keep remaining indices valid
+        const toRemove = [...selectedCards].sort((a, b) => b.originalIndex - a.originalIndex);
+        toRemove.forEach((c) => {
+          const removed = playerDiscardPile.splice(c.originalIndex, 1)[0];
+          koPile.push(removed);
+          onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: KO'd <span class="console-highlights">${removed.name}</span>.`);
+          koBonuses();
+        });
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    noThanksButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setTimeout(() => {
+        onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: Chose not to KO a card.`);
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+// Single-card retrieve-from-discard-to-hand popup. Used by effects that say
+// "Put a card from your discard pile into your hand." No KO, no koBonuses.
+async function takeOneFromDiscardToHand(sourceName) {
+  updateGameBoard();
+  return new Promise((resolve) => {
+    if (playerDiscardPile.length === 0) {
+      onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: No cards in discard pile to take.`);
+      resolve();
+      return;
+    }
+
+    const discardCardsWithIndex = playerDiscardPile.map((card, index) => ({ ...card, originalIndex: index }));
+    genericCardSort(discardCardsWithIndex);
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+
+    titleElement.textContent = "Take a Card from Discard to Hand";
+    instructionsElement.textContent = "";
+    const sourceSpan = document.createElement("span");
+    sourceSpan.className = "console-highlights";
+    sourceSpan.textContent = sourceName;
+    instructionsElement.appendChild(sourceSpan);
+    instructionsElement.appendChild(document.createTextNode(": Choose a card from your discard pile to put into your hand."));
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedCard = null;
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+
+    confirmButton.textContent = "TAKE CARD";
+    confirmButton.disabled = true;
+    otherChoiceButton.style.display = "none";
+    noThanksButton.textContent = "NO THANKS";
+    noThanksButton.style.display = "inline-block";
+    noThanksButton.disabled = false;
+
+    discardCardsWithIndex.forEach((card) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-original-index", card.originalIndex);
+
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = card.image;
+        previewImage.alt = card.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        selectionRow1.querySelectorAll("img.selected").forEach((img) => img.classList.remove("selected"));
+        if (selectedCard && selectedCard.originalIndex === card.originalIndex) {
+          selectedCard = null;
+          confirmButton.disabled = true;
+        } else {
+          selectedCard = card;
+          cardImage.classList.add("selected");
+          confirmButton.disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    if (discardCardsWithIndex.length > 20) {
+      selectionRow1.classList.add("multi-row", "three-row");
+      document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "75%";
+      document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "40%";
+      selectionRow1.style.gap = "0.3vw";
+    } else if (discardCardsWithIndex.length > 10) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.remove("three-row");
+      document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+      document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "25%";
+    } else {
+      selectionRow1.classList.remove("multi-row", "three-row");
+    }
+
+    setupDragScrolling(selectionRow1);
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!selectedCard) return;
+      setTimeout(() => {
+        const removed = playerDiscardPile.splice(selectedCard.originalIndex, 1)[0];
+        playerHand.push(removed);
+        onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: Took <span class="console-highlights">${removed.name}</span> into your hand.`);
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    noThanksButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setTimeout(() => {
+        onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: Chose not to take a card.`);
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+// Reveal top N of the player deck; player KOs any subset, the rest go back on
+// top in original (top-down) order. Reshuffles discard if the deck is empty.
+// Used by effects like Maze of Bones ("Look at top 4, KO any number").
+async function revealTopNKOAny(sourceName, revealCount) {
+  updateGameBoard();
+  return new Promise((resolve) => {
+    // Reshuffle discard into deck if deck can't cover revealCount
+    if (playerDeck.length < revealCount && playerDiscardPile.length > 0) {
+      playerDeck = shuffle(playerDiscardPile.concat(playerDeck));
+      playerDiscardPile = [];
+    }
+
+    const revealed = [];
+    for (let i = 0; i < revealCount && playerDeck.length > 0; i++) {
+      revealed.push(playerDeck.pop());
+    }
+
+    if (revealed.length === 0) {
+      onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: Deck is empty, nothing to reveal.`);
+      resolve();
+      return;
+    }
+
+    // revealed[0] is top of deck (popped first), revealed[last] is deepest
+    const revealedWithIndex = revealed.map((card, index) => ({ ...card, revealIndex: index }));
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+
+    titleElement.textContent = `Reveal Top ${revealed.length} — KO Any`;
+
+    function renderInstructions(selectedCards) {
+      instructionsElement.textContent = "";
+      const sourceSpan = document.createElement("span");
+      sourceSpan.className = "console-highlights";
+      sourceSpan.textContent = sourceName;
+      instructionsElement.appendChild(sourceSpan);
+      if (selectedCards.length === 0) {
+        instructionsElement.appendChild(document.createTextNode(`: Choose any number of these cards to KO; the rest return to the top of your deck.`));
+      } else {
+        instructionsElement.appendChild(document.createTextNode(": Selected "));
+        selectedCards.forEach((c, i) => {
+          if (i > 0) instructionsElement.appendChild(document.createTextNode(", "));
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "console-highlights";
+          nameSpan.textContent = c.name;
+          instructionsElement.appendChild(nameSpan);
+        });
+        instructionsElement.appendChild(document.createTextNode(` (${selectedCards.length}).`));
+      }
+    }
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    const selectedCards = [];
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+
+    function updateConfirmLabel() {
+      if (selectedCards.length === 0) {
+        confirmButton.textContent = "PUT ALL BACK";
+      } else {
+        confirmButton.textContent = `KO ${selectedCards.length} CARD${selectedCards.length !== 1 ? "S" : ""}`;
+      }
+      confirmButton.disabled = false;
+    }
+
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    renderInstructions(selectedCards);
+    updateConfirmLabel();
+
+    // Display in reveal order (top of deck first)
+    revealedWithIndex.forEach((card) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-reveal-index", card.revealIndex);
+
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = card.image;
+        previewImage.alt = card.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        const idx = selectedCards.findIndex((c) => c.revealIndex === card.revealIndex);
+        if (idx > -1) {
+          selectedCards.splice(idx, 1);
+          cardImage.classList.remove("selected");
+        } else {
+          selectedCards.push(card);
+          cardImage.classList.add("selected");
+        }
+        renderInstructions(selectedCards);
+        updateConfirmLabel();
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    setupDragScrolling(selectionRow1);
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setTimeout(() => {
+        const selectedIndices = new Set(selectedCards.map((c) => c.revealIndex));
+        // KO selected cards
+        revealed.forEach((card, i) => {
+          if (selectedIndices.has(i)) {
+            koPile.push(card);
+            onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: KO'd <span class="console-highlights">${card.name}</span>.`);
+            koBonuses();
+          }
+        });
+        // Put unselected back on top in original order:
+        // revealed[0] was popped first (was top) → it should be on top after.
+        // Deck top == end of array, so push in reverse reveal order.
+        for (let i = revealed.length - 1; i >= 0; i--) {
+          if (!selectedIndices.has(i)) {
+            playerDeck.push(revealed[i]);
+          }
+        }
+        const keptCount = revealed.length - selectedCards.length;
+        if (keptCount > 0) {
+          onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: Put ${keptCount} card${keptCount !== 1 ? "s" : ""} back on top of your deck.`);
+        }
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+// Multi-select KO-of-your-heroes popup. Scans artifacts + hand + played cards
+// (same sources as FightKOHeroYouHave), lets the player KO up to maxCount
+// with a NO THANKS skip option. Played cards are marked with markedToDestroy
+// so the turn-end cleanup handles them; hand/artifact cards are spliced + KO'd.
+async function koUpToNHeroesYouHave(sourceName, maxCount) {
+  updateGameBoard();
+  return new Promise((resolve) => {
+    const artifactHeroes = playerArtifacts.filter((card) => card.type === "Hero");
+    const handHeroes = playerHand.filter((card) => card.type === "Hero");
+    const playedHeroes = cardsPlayedThisTurn.filter(
+      (card) =>
+        card.type === "Hero" &&
+        card.isCopied !== true &&
+        card.sidekickToDestroy !== true &&
+        !card.markedForDeletion &&
+        !card.isSimulation
+    );
+
+    if (artifactHeroes.length === 0 && handHeroes.length === 0 && playedHeroes.length === 0) {
+      onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: No Heroes available to KO.`);
+      resolve();
+      return;
+    }
+
+    genericCardSort(artifactHeroes);
+    genericCardSort(handHeroes);
+    genericCardSort(playedHeroes);
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const selectionRow2 = document.querySelector(".card-choice-popup-selectionrow2");
+    const selectionRow1Label = document.querySelector(".card-choice-popup-selectionrow1label");
+    const selectionRow2Label = document.querySelector(".card-choice-popup-selectionrow2label");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+
+    titleElement.textContent = `KO up to ${maxCount} Hero${maxCount !== 1 ? "es" : ""}`;
+
+    selectionRow1Label.style.display = "block";
+    selectionRow2Label.style.display = "block";
+    selectionRow2.style.display = "flex";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "block";
+    selectionRow1Label.textContent = "Artifacts & Hand";
+    selectionRow2Label.textContent = "Played Cards";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.style.height = "";
+    selectionRow2.style.height = "";
+    selectionRow1.textContent = "";
+    selectionRow2.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "40%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "0";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "none";
+
+    setupIndependentScrollGradients(selectionRow1, selectionRow2);
+
+    // selectedEntries: [{card, location, imageEl}]
+    const selectedEntries = [];
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+
+    function renderInstructions() {
+      instructionsElement.textContent = "";
+      const sourceSpan = document.createElement("span");
+      sourceSpan.className = "console-highlights";
+      sourceSpan.textContent = sourceName;
+      instructionsElement.appendChild(sourceSpan);
+      if (selectedEntries.length === 0) {
+        instructionsElement.appendChild(document.createTextNode(`: Select up to ${maxCount} Hero${maxCount !== 1 ? "es" : ""} to KO, or skip.`));
+      } else {
+        instructionsElement.appendChild(document.createTextNode(": Selected "));
+        selectedEntries.forEach((e, i) => {
+          if (i > 0) instructionsElement.appendChild(document.createTextNode(", "));
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "console-highlights";
+          nameSpan.textContent = e.card.name;
+          instructionsElement.appendChild(nameSpan);
+        });
+        instructionsElement.appendChild(document.createTextNode(` (${selectedEntries.length}/${maxCount}).`));
+      }
+    }
+
+    function updateConfirmLabel() {
+      if (selectedEntries.length === 0) {
+        confirmButton.textContent = `KO HERO${maxCount !== 1 ? "ES" : ""}`;
+        confirmButton.disabled = true;
+      } else {
+        confirmButton.textContent = `KO ${selectedEntries.length} HERO${selectedEntries.length !== 1 ? "ES" : ""}`;
+        confirmButton.disabled = false;
+      }
+    }
+
+    otherChoiceButton.style.display = "none";
+    noThanksButton.textContent = "NO THANKS";
+    noThanksButton.style.display = "inline-block";
+    noThanksButton.disabled = false;
+
+    function createCardElement(card, location, row) {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-card-id", card.id);
+      cardElement.setAttribute("data-location", location);
+
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = card.image;
+        previewImage.alt = card.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        const idx = selectedEntries.findIndex((e) => e.card.id === card.id && e.location === location);
+        if (idx > -1) {
+          selectedEntries.splice(idx, 1);
+          cardImage.classList.remove("selected");
+        } else {
+          if (selectedEntries.length >= maxCount) {
+            // FIFO: drop oldest
+            const oldest = selectedEntries.shift();
+            oldest.imageEl.classList.remove("selected");
+          }
+          selectedEntries.push({ card, location, imageEl: cardImage });
+          cardImage.classList.add("selected");
+        }
+        renderInstructions();
+        updateConfirmLabel();
+      });
+
+      cardElement.appendChild(cardImage);
+      row.appendChild(cardElement);
+    }
+
+    if (artifactHeroes.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+    artifactHeroes.forEach((card) => createCardElement(card, "artifacts", selectionRow1));
+
+    if (handHeroes.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+    handHeroes.forEach((card) => createCardElement(card, "hand", selectionRow1));
+
+    playedHeroes.forEach((card) => createCardElement(card, "played", selectionRow2));
+
+    setupDragScrolling(selectionRow1);
+    setupDragScrolling(selectionRow2);
+
+    renderInstructions();
+    updateConfirmLabel();
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedEntries.length === 0) return;
+      setTimeout(() => {
+        selectedEntries.forEach(({ card, location }) => {
+          if (location === "artifacts") {
+            const i = playerArtifacts.findIndex((c) => c.id === card.id);
+            if (i !== -1) playerArtifacts.splice(i, 1);
+            koPile.push(card);
+          } else if (location === "hand") {
+            const i = playerHand.findIndex((c) => c.id === card.id);
+            if (i !== -1) playerHand.splice(i, 1);
+            koPile.push(card);
+          } else if (location === "played") {
+            card.markedToDestroy = true;
+            koPile.push(card);
+          }
+          onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: KO'd <span class="console-highlights">${card.name}</span>.`);
+          koBonuses();
+        });
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    noThanksButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setTimeout(() => {
+        onscreenConsole.log(`<span class="console-highlights">${sourceName}</span>: Chose not to KO any Heroes.`);
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
 // --- HERO CARD ABILITIES ---
 
 // === Captain Marvel, Agent of S.H.I.E.L.D. ===
@@ -935,31 +1639,7 @@ function warMachineHypersonicCannon() {
 }
 
 async function warMachineHypersonicCannonSuper() {
-  if (playerDiscardPile.length === 0) {
-    onscreenConsole.log(`<span class="console-highlights">Hypersonic Cannon</span> superpower: No cards in discard pile to KO.`);
-    return;
-  }
-  return new Promise((resolve) => {
-    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-      `KO a card from your discard pile?`,
-      "KO a Card",
-      "Skip",
-    );
-    confirmButton.onclick = function () {
-      closeInfoChoicePopup();
-      // KO lowest-cost card as a simple heuristic
-      playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
-      const card = playerDiscardPile.shift();
-      koPile.push(card);
-      onscreenConsole.log(`<span class="console-highlights">Hypersonic Cannon</span> superpower: KO'd <span class="console-highlights">${card.name}</span>.`);
-      updateGameBoard();
-      resolve();
-    };
-    denyButton.onclick = function () {
-      closeInfoChoicePopup();
-      resolve();
-    };
-  });
+  await koUpToNFromDiscardPile("Hypersonic Cannon", 1);
 }
 
 // Overwhelming Firepower (Rare) — Whenever you defeat a Villain or Mastermind this turn,
@@ -990,7 +1670,8 @@ function revealClassOrWound(className, iconFile, villainName) {
       "Reveal Hero",
       "Gain Wound",
     );
-    document.querySelector(".info-or-choice-popup-title").textContent = villainName;
+    const t1 = document.querySelector(".info-or-choice-popup-title");
+    if (t1) t1.textContent = villainName;
     confirmButton.onclick = () => {
       closeInfoChoicePopup();
       onscreenConsole.log(`You revealed a <img src="Visual Assets/Icons/${iconFile}" alt="${className} Icon" class="console-card-icons"> Hero.`);
@@ -1028,7 +1709,8 @@ function revealClassOrDiscard(className, iconFile, villainName) {
       "Reveal Hero",
       "Discard a Card",
     );
-    document.querySelector(".info-or-choice-popup-title").textContent = villainName;
+    const t2 = document.querySelector(".info-or-choice-popup-title");
+    if (t2) t2.textContent = villainName;
     confirmButton.onclick = () => {
       closeInfoChoicePopup();
       onscreenConsole.log(`You revealed a <img src="Visual Assets/Icons/${iconFile}" alt="${className} Icon" class="console-card-icons"> Hero.`);
@@ -1127,16 +1809,14 @@ async function klawAmbush(klaw) {
   updateGameBoard();
 }
 
-function klawFight() {
+function klawFight(klaw) {
   onscreenConsole.log(`Fight! <span class="console-highlights">Klaw</span>: Gain the captured Hero.`);
-  for (const villain of city) {
-    if (villain && villain.name === "Klaw" && villain.capturedHero && villain.capturedHero.length > 0) {
-      const hero = villain.capturedHero.pop();
-      playerDiscardPile.push(hero);
-      onscreenConsole.log(`You gained <span class="console-highlights">${hero.name}</span>.`);
-      updateGameBoard();
-      return;
-    }
+  if (klaw && klaw.capturedHero && klaw.capturedHero.length > 0) {
+    const hero = klaw.capturedHero.pop();
+    playerDiscardPile.push(hero);
+    onscreenConsole.log(`You gained <span class="console-highlights">${hero.name}</span>.`);
+    updateGameBoard();
+    return;
   }
   onscreenConsole.log(`No captured Hero to gain.`);
 }
@@ -1238,14 +1918,7 @@ async function sentryFight() {
   const isVoid = sentryIdx === 1 || sentryIdx === 3;
   if (isVoid) {
     onscreenConsole.log(`Fight! <span class="console-highlights">The Void</span>: KO up to two cards from your discard pile.`);
-    for (let i = 0; i < 2; i++) {
-      if (playerDiscardPile.length === 0) break;
-      playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
-      const card = playerDiscardPile.shift();
-      koPile.push(card);
-      onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
-    }
-    updateGameBoard();
+    await koUpToNFromDiscardPile("The Void", 2);
   } else {
     onscreenConsole.log(`Fight! <span class="console-highlights">Sentry</span>: No fight effect (not The Void).`);
   }
@@ -1316,6 +1989,10 @@ async function chemistroFight() {
     return;
   }
   const gained = hqCards[bestHQIdx];
+  if (gameMode === "golden") {
+    onscreenConsole.log(`Chemistro Fight: Exchange effect not supported in Golden Solo mode.`);
+    return;
+  }
   hqCards[bestHQIdx] = bestPlayed;
   playerDiscardPile.push(gained);
   const idx = cardsPlayedThisTurn.indexOf(bestPlayed);
@@ -1338,7 +2015,8 @@ async function madamMasqueAmbush() {
       "Strike / Twist",
       true,
     );
-    document.querySelector(".info-or-choice-popup-title").textContent = "MADAM MASQUE";
+    const t3 = document.querySelector(".info-or-choice-popup-title");
+    if (t3) t3.textContent = "MADAM MASQUE";
     function handleGuess(guess) {
       closeInfoChoicePopup();
       const topCard = villainDeck[villainDeck.length - 1];
@@ -1380,30 +2058,7 @@ async function madamMasqueFight() {
 // The Brothers Grimm — Must discard two identical cards to fight. Fight: KO from discard.
 async function brothersGrimmFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">The Brothers Grimm</span>: You may KO a card from your discard pile.`);
-  if (playerDiscardPile.length === 0) {
-    onscreenConsole.log(`No cards in discard pile.`);
-    return;
-  }
-  return new Promise((resolve) => {
-    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-      `KO a card from your discard pile?`,
-      "KO a Card",
-      "Skip",
-    );
-    confirmButton.onclick = function () {
-      closeInfoChoicePopup();
-      playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
-      const card = playerDiscardPile.shift();
-      koPile.push(card);
-      onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
-      updateGameBoard();
-      resolve();
-    };
-    denyButton.onclick = function () {
-      closeInfoChoicePopup();
-      resolve();
-    };
-  });
+  await koUpToNFromDiscardPile("The Brothers Grimm", 1);
 }
 
 // The Dark Dimension (Location) — Villains here get Dark Memories (in updateVillainAttackValues).
@@ -1575,7 +2230,12 @@ async function houseOfMTwist() {
     if (hqCards[i] && hqCards[i].type === "Hero" && hqCards[i].team !== "X-Men") {
       onscreenConsole.log(`KO'd <span class="console-highlights">${hqCards[i].name}</span> from HQ.`);
       koPile.push(hqCards[i]);
-      hqCards[i] = heroDeck.length > 0 ? heroDeck.pop() : null;
+      if (typeof goldenRefillHQ === "function" && gameMode === "golden") {
+        hqCards[i] = null;
+        goldenRefillHQ(i);
+      } else {
+        hqCards[i] = heroDeck.length > 0 ? heroDeck.pop() : null;
+      }
     }
   }
   // Check for 2+ Scarlet Witch in city
@@ -1601,7 +2261,12 @@ async function noMoreMutantsTwist() {
     if (hqCards[i] && hqCards[i].type === "Hero" && hqCards[i].team === "X-Men") {
       onscreenConsole.log(`KO'd <span class="console-highlights">${hqCards[i].name}</span> from HQ.`);
       koPile.push(hqCards[i]);
-      hqCards[i] = heroDeck.length > 0 ? heroDeck.pop() : null;
+      if (typeof goldenRefillHQ === "function" && gameMode === "golden") {
+        hqCards[i] = null;
+        goldenRefillHQ(i);
+      } else {
+        hqCards[i] = heroDeck.length > 0 ? heroDeck.pop() : null;
+      }
     }
   }
   onscreenConsole.log(`Playing another card from the Villain Deck.`);
@@ -1813,13 +2478,7 @@ async function grimReaperCarnivalOfConcussions() {
 
 async function grimReaperCultOfSkulls() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Cult of Skulls</span>: KO up to two cards from your discard pile.`);
-  for (let i = 0; i < 2 && playerDiscardPile.length > 0; i++) {
-    playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
-    const card = playerDiscardPile.shift();
-    koPile.push(card);
-    onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
-  }
-  updateGameBoard();
+  await koUpToNFromDiscardPile("Cult of Skulls", 2);
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
     await placeLocation({
@@ -1840,21 +2499,7 @@ async function grimReaperCultOfSkulls() {
 
 async function grimReaperMazeOfBones() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Maze of Bones</span>: Look at the top four cards of your deck. KO any number, put the rest back.`);
-  // Simplified: KO all cost-0 cards from top 4, keep the rest
-  const revealed = [];
-  for (let i = 0; i < 4 && playerDeck.length > 0; i++) {
-    revealed.push(playerDeck.pop());
-  }
-  const toKO = revealed.filter(c => (c.cost || 0) === 0);
-  const toKeep = revealed.filter(c => (c.cost || 0) > 0);
-  for (const c of toKO) {
-    koPile.push(c);
-    onscreenConsole.log(`KO'd <span class="console-highlights">${c.name}</span>.`);
-  }
-  for (const c of toKeep.reverse()) {
-    playerDeck.push(c);
-  }
-  updateGameBoard();
+  await revealTopNKOAny("Maze of Bones", 4);
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
     await placeLocation({
@@ -1898,52 +2543,151 @@ async function grimReaperPrisonOfCoffins() {
 
 // === Mandarin ===
 
-// Master Strike (Normal): each player puts a Ring from VP into city, or gains wound.
-async function mandarinStrike() {
-  const rings = victoryPile.filter(c => c.team === "Mandarin's Rings");
-  if (rings.length > 0) {
-    const ring = rings[0];
-    const idx = victoryPile.indexOf(ring);
-    victoryPile.splice(idx, 1);
-    // Place ring back in city via villain deck processing
-    onscreenConsole.log(`Master Strike! <span class="console-highlights">${ring.name}</span> returns from your Victory Pile to the city.`);
-    // Add to city directly
-    for (let i = city.length - 1; i >= 0; i--) {
-      if (!city[i]) {
-        city[i] = ring;
-        break;
-      }
+// Picker: if multiple Mandarin's Rings are in Victory Pile, show a card-choice
+// popup for the player to pick which one returns. If only one, auto-pick.
+// Splices the chosen ring from victoryPile and returns it, or null if none exist.
+function pickRingFromVictoryPile(titleLabel) {
+  return new Promise((resolve) => {
+    const ringIndices = [];
+    victoryPile.forEach((c, i) => {
+      if (c && c.team === "Mandarin's Rings") ringIndices.push(i);
+    });
+    if (ringIndices.length === 0) {
+      resolve(null);
+      return;
     }
-    updateGameBoard();
-  } else {
-    onscreenConsole.log(`Master Strike! You have no Mandarin's Rings in your Victory Pile. Gaining a Wound.`);
-    await drawWound();
-  }
+    if (ringIndices.length === 1) {
+      const ring = victoryPile.splice(ringIndices[0], 1)[0];
+      resolve(ring);
+      return;
+    }
+
+    const rings = ringIndices.map((vpIdx) => ({ ...victoryPile[vpIdx], vpIndex: vpIdx }));
+    genericCardSort(rings);
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+
+    titleElement.textContent = titleLabel;
+    instructionsElement.textContent = "Choose a Mandarin's Ring to return to the city.";
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selected = null;
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+    confirmButton.textContent = "RETURN RING";
+    confirmButton.disabled = true;
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    rings.forEach((ring) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-vp-index", ring.vpIndex);
+
+      const cardImage = document.createElement("img");
+      cardImage.src = ring.image;
+      cardImage.alt = ring.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = ring.image;
+        previewImage.alt = ring.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        selectionRow1.querySelectorAll("img.selected").forEach((img) => img.classList.remove("selected"));
+        if (selected && selected.vpIndex === ring.vpIndex) {
+          selected = null;
+          confirmButton.disabled = true;
+        } else {
+          selected = ring;
+          cardImage.classList.add("selected");
+          confirmButton.disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    setupDragScrolling(selectionRow1);
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!selected) return;
+      setTimeout(() => {
+        const ring = victoryPile.splice(selected.vpIndex, 1)[0];
+        closeCardChoicePopup();
+        resolve(ring);
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
 }
 
-// Master Strike (Epic): same but wound goes on top of deck.
+// Master Strike (Normal): put a Ring from VP into city (player chooses if 2+),
+// or gain a Wound. Uses enterCityFromRight so placement matches normal villain
+// draws (Sewers entry, shift left, escape overflow) and ambush does NOT re-fire.
+async function mandarinStrike() {
+  const hasRings = victoryPile.some((c) => c && c.team === "Mandarin's Rings");
+  if (!hasRings) {
+    onscreenConsole.log(`Master Strike! You have no Mandarin's Rings in your Victory Pile. Gaining a Wound.`);
+    await drawWound();
+    return;
+  }
+  const ring = await pickRingFromVictoryPile("Master Strike — Return a Ring");
+  if (!ring) return;
+  onscreenConsole.log(`Master Strike! <span class="console-highlights">${ring.name}</span> returns from your Victory Pile to the city.`);
+  await enterCityFromRight(ring);
+  updateGameBoard();
+}
+
+// Master Strike (Epic): same as normal, but wound goes on top of deck.
 async function epicMandarinStrike() {
-  const rings = victoryPile.filter(c => c.team === "Mandarin's Rings");
-  if (rings.length > 0) {
-    const ring = rings[0];
-    const idx = victoryPile.indexOf(ring);
-    victoryPile.splice(idx, 1);
-    onscreenConsole.log(`Epic Master Strike! <span class="console-highlights">${ring.name}</span> returns from your Victory Pile to the city.`);
-    for (let i = city.length - 1; i >= 0; i--) {
-      if (!city[i]) {
-        city[i] = ring;
-        break;
-      }
-    }
-    updateGameBoard();
-  } else {
+  const hasRings = victoryPile.some((c) => c && c.team === "Mandarin's Rings");
+  if (!hasRings) {
     onscreenConsole.log(`Epic Master Strike! No Rings in VP. Gaining a Wound to the top of your deck.`);
     if (woundDeck.length > 0) {
       const wound = woundDeck.pop();
       playerDeck.push(wound);
       onscreenConsole.log(`Wound placed on top of your deck.`);
+      updateGameBoard();
     }
+    return;
   }
+  const ring = await pickRingFromVictoryPile("Epic Master Strike — Return a Ring");
+  if (!ring) return;
+  onscreenConsole.log(`Epic Master Strike! <span class="console-highlights">${ring.name}</span> returns from your Victory Pile to the city.`);
+  await enterCityFromRight(ring);
+  updateGameBoard();
 }
 
 // Mandarin Tactics
@@ -1956,8 +2700,7 @@ function mandarinCirclesUnbroken() {
 
 async function mandarinDragonOfHeavenSpaceship() {
   onscreenConsole.log(`Tactic Fight! <span class="console-highlights">Dragon of Heaven Spaceship</span>: KO up to two of your Heroes.`);
-  // Simplified: KO up to 2 heroes
-  // Full implementation would present a card-choice popup
+  await koUpToNHeroesYouHave("Dragon of Heaven Spaceship", 2);
   onscreenConsole.log(`This Tactic enters the city as a Location.`);
   if (typeof placeLocation === "function") {
     await placeLocation({
@@ -1976,9 +2719,9 @@ async function mandarinDragonOfHeavenSpaceship() {
   }
 }
 
-function mandarinDragonOfHeavenSpaceshipLocationFight() {
+async function mandarinDragonOfHeavenSpaceshipLocationFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Dragon of Heaven Spaceship</span> Location: KO up to two of your Heroes.`);
-  return FightKOHeroYouHave();
+  await koUpToNHeroesYouHave("Dragon of Heaven Spaceship (Location)", 2);
 }
 
 async function mandarinIntertwiningPowers() {
@@ -2145,25 +2888,7 @@ function mandarinRingDaimonic() {
 // Incandescence, The Flame Blast — Fight: KO a card from discard.
 async function mandarinRingIncandescence() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Incandescence, The Flame Blast</span>: You may KO a card from your discard pile.`);
-  if (playerDiscardPile.length === 0) {
-    onscreenConsole.log(`No cards in discard pile.`);
-    return;
-  }
-  return new Promise((resolve) => {
-    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-      `KO a card from your discard pile?`, "KO a Card", "Skip",
-    );
-    confirmButton.onclick = function () {
-      closeInfoChoicePopup();
-      playerDiscardPile.sort((a, b) => (a.cost || 0) - (b.cost || 0));
-      const card = playerDiscardPile.shift();
-      koPile.push(card);
-      onscreenConsole.log(`KO'd <span class="console-highlights">${card.name}</span>.`);
-      updateGameBoard();
-      resolve();
-    };
-    denyButton.onclick = function () { closeInfoChoicePopup(); resolve(); };
-  });
+  await koUpToNFromDiscardPile("Incandescence, The Flame Blast", 1);
 }
 
 // Influence, The Impact Beam — Fight: +1 Recruit.
@@ -2272,16 +2997,8 @@ async function mandarinRingNightbringer() {
 // Remaker, The Matter Rearranger — Fight: Choose a card from discard, put it in your hand.
 // (Solo adaptation: "player on your right" -> yourself)
 async function mandarinRingRemaker() {
-  if (playerDiscardPile.length === 0) {
-    onscreenConsole.log(`Fight! <span class="console-highlights">Remaker</span>: No cards in discard pile.`);
-    return;
-  }
-  // Pick highest-cost card from discard to hand
-  playerDiscardPile.sort((a, b) => (b.cost || 0) - (a.cost || 0));
-  const card = playerDiscardPile.shift();
-  playerHand.push(card);
-  onscreenConsole.log(`Fight! <span class="console-highlights">Remaker, The Matter Rearranger</span>: Put <span class="console-highlights">${card.name}</span> from discard into your hand.`);
-  updateGameBoard();
+  onscreenConsole.log(`Fight! <span class="console-highlights">Remaker, The Matter Rearranger</span>: You may put a card from your discard pile into your hand.`);
+  await takeOneFromDiscardToHand("Remaker, The Matter Rearranger");
 }
 
 // Spectral, The Disintegration Beam — Fight: KO one of your Heroes.

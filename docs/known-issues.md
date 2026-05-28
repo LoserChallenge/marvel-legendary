@@ -35,3 +35,15 @@ Accepted for now; revisit in next UI pass.
 **What's needed:** After all expansion inventories are complete, do a single pass across all expansions to catalogue every "other player" / "each other player" / "each player" card, then decide case-by-case how each should behave in Golden Solo.
 
 **Status:** Deferred — waiting until all expansion inventories are finalized so the full list is available. Will be addressed naturally by `/analyze-expansion` as each expansion is processed.
+
+---
+
+## Villain/Mastermind overlay UX pass
+
+**Problem:** Bystanders and captured heroes currently display as small thumbnails overlaid on the villain/mastermind card. This works functionally but doesn't match how physical cards look on the table.
+
+**Desired behavior:** Refactor to use the Location fan-out pattern (full-size cards shifted in position to look stacked, mimicking physical tabletop card placement). The Location system already implements this CSS pattern — extend it to bystander and captured-hero overlays.
+
+**Scope:** Cross-cutting — affects the base game bystander-on-villain display, Skrull captures, Klaw captures, and any future captured-card mechanic across all expansions.
+
+**Status:** Deferred — log as a standalone UX pass after Revelations merges. Klaw currently has no visual indicator for captured heroes (functional only via console messages).

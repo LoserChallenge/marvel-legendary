@@ -598,7 +598,9 @@ async function placeLocation(locationCard) {
   }
 
   cityLocations[targetIndex] = locationCard;
-  console.log(`Location "${locationCard.name}" placed above ${citySpaceLabels[targetIndex]}.`);
+  onscreenConsole.log(
+    `<span class="console-highlights">${locationCard.name}</span> enters the city above ${citySpaceLabels[targetIndex]}.`,
+  );
   updateGameBoard();
 }
 
@@ -2135,7 +2137,25 @@ function randomizeScheme() {
 }
 
 function transformScheme() {
-  const targetName = selectedScheme.transformsInto;
+  // `selectedScheme` is the runtime "current scheme" global. Other code paths in
+  // script.js use a local pattern (`const selectedScheme = schemes.find(...)` from the
+  // setup-screen radio button), so the global isn't pre-populated by setup. Lazily
+  // initialize it from the DOM radio on the first call here — every subsequent call
+  // reads the global that transformScheme itself sets at the end. Caught 2026-05-28:
+  // without lazy init, the first invocation threw `ReferenceError: selectedScheme is
+  // not defined` on the line below and the whole transform chain silently failed.
+  if (typeof window.selectedScheme === 'undefined' || !window.selectedScheme) {
+    const schemeRadio = document.querySelector('#scheme-section input[type=radio]:checked');
+    if (schemeRadio) {
+      window.selectedScheme = schemes.find(s => s.name === schemeRadio.value);
+    }
+  }
+  if (!window.selectedScheme) {
+    console.error("transformScheme(): no current scheme could be determined.");
+    return;
+  }
+
+  const targetName = window.selectedScheme.transformsInto;
   if (!targetName) {
     console.warn("transformScheme() called but current scheme has no transformsInto field.");
     return;
@@ -2147,10 +2167,15 @@ function transformScheme() {
     return;
   }
 
-  selectedScheme = newScheme;
+  window.selectedScheme = newScheme;
 
-  // Update the in-game scheme image
-  const schemeImg = document.querySelector('#scheme-place img');
+  // Update the in-game scheme image.
+  // Note: #scheme-place contains TWO <img> elements — the always-hidden BabyHope token
+  // (added in index.html at <div id="scheme-token">) and the visible scheme card image
+  // appended by initGame() with class "card-image". querySelector('#scheme-place img')
+  // would return BabyHope first (document order) and silently mutate the wrong element,
+  // leaving the visible scheme card unchanged. Always target the .card-image class here.
+  const schemeImg = document.querySelector('#scheme-place img.card-image');
   if (schemeImg) {
     schemeImg.src = newScheme.image;
     schemeImg.alt = newScheme.name;
@@ -3261,7 +3286,7 @@ function getEffectiveSetupRequirements(scheme, mastermind, gameMode) {
   }
 
   // Golden Solo
-  const goldenRequiredVillains = 2;
+  const goldenRequiredVillains = 2 + (scheme.extraVillainGroups || 0);
   const lockedVillains = [...schemeLockedVillains];
 
   // Add mastermind's Always Leads if it's a villain group and there's a free slot
@@ -4763,6 +4788,7 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   );
 
   bystanderDeck = buildBystanderDeck();
+  shieldDeck = [...shieldOfficers];
 
   let selectedExpansions = getSelectedExpansions();
 
@@ -5122,52 +5148,59 @@ async function drawVillainCard() {
 // ---------------------------------
 // Regular villain placement & movement (guarded)
 // ---------------------------------
-async function processRegularVillainCard(villainCard) {
-  console.log("processRegularVillainCard called for:", villainCard.name);
-  console.log(
-    "Current city state before placement:",
-    JSON.stringify(city.map((c) => (c ? c.name : null))),
-  );
-  const sewersIndex = city.length - 1;
 
-  // Save the previous occupant of the sewers BEFORE placing the new villain
+// Placement-only helper: places `card` in the rightmost (sewers) slot and
+// shifts existing villains one space left, escaping the leftmost if the
+// city is full. Used by processRegularVillainCard AND by effects that
+// return a villain/henchman to the city WITHOUT re-triggering ambush
+// (e.g. Mandarin Master Strike returning a Ring from Victory Pile).
+async function enterCityFromRight(card) {
+  const sewersIndex = city.length - 1;
   const previousSewersCard = city[sewersIndex] || null;
 
-  // Place new villain
-  city[sewersIndex] = villainCard;
+  city[sewersIndex] = card;
   onscreenConsole.log(
-    `<span class="console-highlights">${villainCard.name}</span> enters the city.`,
+    `<span class="console-highlights">${card.name}</span> enters the city.`,
   );
 
   const destroyedCount = destroyedSpaces.filter(Boolean).length;
 
   if (destroyedCount > 0) {
     await processMovementWithDestroyedSpaces(previousSewersCard);
-  } else {
-    // Standard movement logic
-    let previousCard = previousSewersCard;
-    for (let j = sewersIndex - 1; j >= 0; j--) {
-      if (previousCard !== null && city[j] === null) {
-        city[j] = previousCard;
-        previousCard = null;
-        break;
-      } else if (previousCard !== null) {
-        const temp = city[j];
-        city[j] = previousCard;
-        previousCard = temp;
+    return;
+  }
 
-        if (j === 0 && previousCard) {
-          await new Promise((resolve) => {
-            showPopup("Villain Escape", previousCard, resolve);
-          });
-          await handleVillainEscape(previousCard);
-          addHRToTopWithInnerHTML();
-          previousCard = null;
-        }
+  let previousCard = previousSewersCard;
+  for (let j = sewersIndex - 1; j >= 0; j--) {
+    if (previousCard !== null && city[j] === null) {
+      city[j] = previousCard;
+      previousCard = null;
+      break;
+    } else if (previousCard !== null) {
+      const temp = city[j];
+      city[j] = previousCard;
+      previousCard = temp;
+
+      if (j === 0 && previousCard) {
+        await new Promise((resolve) => {
+          showPopup("Villain Escape", previousCard, resolve);
+        });
+        await handleVillainEscape(previousCard);
+        addHRToTopWithInnerHTML();
+        previousCard = null;
       }
-      // If previousCard is null, continue to finish the loop without mutation
     }
   }
+}
+
+async function processRegularVillainCard(villainCard) {
+  console.log("processRegularVillainCard called for:", villainCard.name);
+  console.log(
+    "Current city state before placement:",
+    JSON.stringify(city.map((c) => (c ? c.name : null))),
+  );
+
+  await enterCityFromRight(villainCard);
 
   // Arrival popup if no ambush
   if (!villainCard.ambushEffect || villainCard.ambushEffect === "None") {
@@ -8528,11 +8561,18 @@ if (stackedTwistNextToMastermind > 0) {
         currentTempBuff -
         villainShattered;
 
+      if (city[i].team === "Mandarin's Rings") {
+        console.log("[FIX1C-DIAG] CITY RENDER Ring", city[i].name, "| attackFromMastermind field:", city[i].attackFromMastermind, "| totalAttackModifiers:", totalAttackModifiers, "| base attack:", city[i].attack, "| will draw overlay?", totalAttackModifiers !== 0);
+      }
+
       if (totalAttackModifiers !== 0) {
         const villainOverlayAttack = document.createElement("div");
         villainOverlayAttack.className = "attack-overlay";
         villainOverlayAttack.innerHTML = city[i].attack + totalAttackModifiers;
         cardContainer.appendChild(villainOverlayAttack);
+        if (city[i].team === "Mandarin's Rings") {
+          console.log("[FIX1C-DIAG] OVERLAY DRAWN for Ring", city[i].name, "| innerHTML value:", villainOverlayAttack.innerHTML, "| appended to:", cardContainer.className);
+        }
       }
 
       if (
@@ -9930,10 +9970,22 @@ function updateVillainAttackValues(villain, i) {
   villain.attackFromHeroEffects = 0;
   villain.attackFromShards = 0;
 
+  if (villain.team === "Mandarin's Rings") {
+    console.log("[FIX1C-DIAG] updateVillainAttackValues called for Ring", villain.name, "| mastermind.name:", mastermind.name, "| city index:", i);
+  }
+
   //Attack From Mastermind Effects
 
   if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
     villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack || 0;
+  }
+
+  if (
+    (mastermind.name === "Mandarin" || mastermind.name === "Epic Mandarin") &&
+    villain.team === "Mandarin's Rings"
+  ) {
+    villain.attackFromMastermind = mastermind.name === "Epic Mandarin" ? 2 : 1;
+    console.log("[FIX1C-DIAG] Mandarin Ring branch FIRED for", villain.name, "| set attackFromMastermind to:", villain.attackFromMastermind);
   }
 
   //Attack From Scheme Effects
@@ -10149,6 +10201,13 @@ function updateHQVillainAttackValues(villain) {
 
   if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
     villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack || 0;
+  }
+
+  if (
+    (mastermind.name === "Mandarin" || mastermind.name === "Epic Mandarin") &&
+    villain.team === "Mandarin's Rings"
+  ) {
+    villain.attackFromMastermind = mastermind.name === "Epic Mandarin" ? 2 : 1;
   }
 
   //Attack From Scheme Effects
@@ -12214,7 +12273,8 @@ function createVillainCopy(villainCard) {
     alwaysLeads: villainCard.alwaysLeads,
     goblinToHeroAttackValue: villainCard.goblinToHeroAttackValue,
     goblinQueen: villainCard.goblinQueen,
-    shards: villainCard.shards
+    shards: villainCard.shards,
+    capturedHero: villainCard.capturedHero ? [...villainCard.capturedHero] : undefined
   };
 }
 
@@ -14709,6 +14769,7 @@ if (mastermind.shards && mastermind.shards > 0 && !mastermind.noShardBonus) {
   
   // Initialize attackFromGems to 0 for all masterminds
   mastermind.attackFromGems = 0;
+  mastermind.attackFromRings = 0;
 
 if (mastermind.name === "Thanos") {
 
@@ -14731,12 +14792,20 @@ if (mastermind.name === "Thanos") {
 
   mastermind.attackFromGems = villainsInVP * 2;
  }
-  
+
 }
+
+  if (mastermind.name === "Mandarin" || mastermind.name === "Epic Mandarin") {
+    const ringCount = victoryPile.filter(
+      (card) => card.team === "Mandarin's Rings",
+    ).length;
+    const isEpic = mastermind.name === "Epic Mandarin";
+    mastermind.attackFromRings = ringCount * (isEpic ? 6 : 3);
+  }
 
   // Start with the mastermind's base attack value
   let mastermindAttack =
-    mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards - mastermind.attackFromGems;
+    mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards - mastermind.attackFromGems - mastermind.attackFromRings;
 
   // Ensure mastermindAttack doesn't drop below 0
   if (mastermindAttack < 0) {

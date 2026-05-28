@@ -132,6 +132,16 @@ const shieldOfficers = [
     { id: 'SHIELD30', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
     { id: 'SHIELD31', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
     { id: 'SHIELD32', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD33', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD34', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD35', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD36', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD37', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD38', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD39', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD40', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD41', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
+    { id: 'SHIELD42', type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [], attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey", unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp" },
 ]
 
 const schemes = [
@@ -626,6 +636,7 @@ const schemes = [
     endGame: "earthquakeEvilWins",
     twistEffect: "earthquakeDrainsTheOceanTwist",
     requiredVillains: 2,
+    extraVillainGroups: 1,
     requiredHenchmen: 1,
     requiredHeroes: 3,
     variableTwist: false,
@@ -642,6 +653,7 @@ const schemes = [
     endGame: "earthquakeEvilWins",
     twistEffect: "tsunamiCrushesTheCoastTwist",
     requiredVillains: 2,
+    extraVillainGroups: 1,
     requiredHenchmen: 1,
     requiredHeroes: 3,
     variableTwist: false,
