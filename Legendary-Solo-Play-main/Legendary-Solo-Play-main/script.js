@@ -5807,7 +5807,7 @@ function handleSchemeTwist(schemeTwistCard) {
   playSFX("scheme-twist");
   updateGameBoard();
   return new Promise(async (resolve) => {
-    const selectedScheme = getSelectedScheme();
+    const selectedScheme = getActiveScheme();
     if (selectedScheme.name !== "Replace Earth's Leaders with Killbots" && selectedScheme.name !== "The Kree-Skrull War") {
       koPile.push(schemeTwistCard);
     }
@@ -5861,7 +5861,7 @@ function handleSchemeTwist(schemeTwistCard) {
 async function handlePlutoniumSchemeTwist(villainCard) {
   playSFX("scheme-twist");
   updateGameBoard();
-  const selectedScheme = getSelectedScheme();
+  const selectedScheme = getActiveScheme();
   schemeTwistCount += 1;
 
   // Log twist message
@@ -9044,12 +9044,9 @@ if (stackedTwistNextToMastermind > 0) {
     lastTurnMessageShown = true; // Prevent future logs
   } else {
     // Check Scheme end game conditions
-    const selectedSchemeName = document.querySelector(
-      "#scheme-section input[type=radio]:checked",
-    ).value;
-    const selectedScheme = schemes.find(
-      (scheme) => scheme.name === selectedSchemeName,
-    );
+    // Use getActiveScheme() so the loss condition follows a Transform (E-5):
+    // House of M -> "No More Mutants" changes endGame, and the DOM radio is stale.
+    const selectedScheme = getActiveScheme();
     const selectedSchemeEndGame = selectedScheme
       ? selectedScheme.endGame
       : null;
@@ -9958,10 +9955,8 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
 
 function updateVillainAttackValues(villain, i) {
   const mastermind = getSelectedMastermind();
-  const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
+  // getActiveScheme() so scheme-based attack bonuses follow a Transform (E-6).
+  const scheme = getActiveScheme();
   const currentPermBuff = cityPermBuff[i];
 
   villain.attackFromMastermind = 0;
@@ -10186,10 +10181,9 @@ function recalculateHQVillainAttack(villainCard) {
 
 function updateHQVillainAttackValues(villain) {
   const mastermind = getSelectedMastermind();
-  const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
+  // getActiveScheme() so scheme-based attack bonuses follow a Transform (E-6).
+  // HQ twin of updateVillainAttackValues — keep both in sync (duplicate-fn hazard).
+  const scheme = getActiveScheme();
 
   villain.attackFromMastermind = 0;
   villain.attackFromScheme = 0;
@@ -14053,6 +14047,20 @@ function getSelectedScheme() {
     "#scheme-section input[type=radio]:checked",
   )?.value;
   return schemes.find((s) => s.name === schemeName);
+}
+
+// Returns the CURRENTLY-ACTIVE scheme, following any in-game transform.
+// transformScheme() updates window.selectedScheme; setup-screen readers use the
+// DOM radio (which never changes), so post-transform they go stale (E-1/E-5/E-6).
+// Use this — not getSelectedScheme() / the inline DOM query — anywhere that must
+// see the current side after a scheme Transforms (twist dispatch, evil-wins check,
+// villain attack-value calcs). Lazy-inits the global from the DOM radio on first
+// use so it is correct even before any transform has happened.
+function getActiveScheme() {
+  if (typeof window.selectedScheme === "undefined" || !window.selectedScheme) {
+    window.selectedScheme = getSelectedScheme();
+  }
+  return window.selectedScheme;
 }
 
 async function showHeroKOPopup(villain) {
