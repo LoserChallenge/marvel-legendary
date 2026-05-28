@@ -660,6 +660,52 @@ async function handleLocationOverflow(newLocation) {
   updateGameBoard();
 }
 
+// Earthquake/Tsunami city resize (E-4), Model B: flag spaces destroyed/active rather
+// than reallocating the city arrays. The whole destroyed-space engine already reads
+// destroyedSpaces[] live every frame — villain movement (processMovementWithDestroyedSpaces),
+// the destroyed overlay drawn in updateGameBoard(), and the burrow/draw guards — so
+// toggling a space back and forth is safe (no monotonic assumption anywhere).
+// `activeSpaceIndices`: the indices that REMAIN active; every other index is destroyed.
+//   Tsunami (shrink to 3): [4, 5, 6]   Earthquake (restore to 7): [0,1,2,3,4,5,6]
+// Newly-destroyed spaces escape their villain/henchman occupant (left-to-right, per the
+// Tsunami card text — attached bystanders ride along via handleVillainEscape) and KO any
+// Location there. Restored spaces just clear the flag.
+async function resizeCityForScheme(activeSpaceIndices) {
+  const activeSet = new Set(activeSpaceIndices);
+  for (let i = 0; i < citySize; i++) {
+    const shouldBeActive = activeSet.has(i);
+    const isDestroyed = destroyedSpaces[i] === true;
+
+    if (!shouldBeActive && !isDestroyed) {
+      // Escape any villain/henchman occupying the space being destroyed.
+      if (city[i]) {
+        const occupant = city[i];
+        city[i] = null;
+        onscreenConsole.log(
+          `<span class="console-highlights">${occupant.name}</span> escapes as ${citySpaceLabels[i]} is destroyed!`,
+        );
+        await new Promise((resolve) => {
+          showPopup("Villain Escape", occupant, resolve);
+        });
+        await handleVillainEscape(occupant); // pushes to escapedVillainsDeck + increments count once
+        addHRToTopWithInnerHTML();
+      }
+      // KO any Location sitting in the destroyed space.
+      if (cityLocations[i]) {
+        onscreenConsole.log(
+          `<span class="console-highlights">${cityLocations[i].name}</span> is destroyed along with ${citySpaceLabels[i]}.`,
+        );
+        koPile.push(cityLocations[i]);
+        cityLocations[i] = null;
+      }
+      destroyedSpaces[i] = true;
+    } else if (shouldBeActive && isDestroyed) {
+      destroyedSpaces[i] = false; // restored (Tsunami -> Earthquake)
+    }
+  }
+  updateGameBoard();
+}
+
 function generateCityHTML() {
   // --- City space cells ---
   const spacesContainer = document.getElementById('city-spaces-container');
@@ -4773,6 +4819,21 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   goldenFirstRound = true; // reset for new game
   isFirstTurn = true;
   finalBlowDelivered = false;
+
+  // City size per scheme. Schemes may declare a `citySpaces` array (e.g. Earthquake's
+  // 7-space "Low Tide" layout); otherwise use the default 5. Set this explicitly every
+  // game so a prior 7-space game resets back to 5 — citySize/citySpaces are persistent
+  // globals. (scheme is the scheme OBJECT passed from onBeginGame; tolerate a name too.)
+  const _schemeObj =
+    scheme && typeof scheme === "object" ? scheme : schemes.find((s) => s.name === scheme);
+  if (_schemeObj && Array.isArray(_schemeObj.citySpaces)) {
+    citySpaces = _schemeObj.citySpaces;
+    citySize = _schemeObj.citySpaces.length;
+  } else {
+    citySpaces = CITY_SPACE_DEFAULTS;
+    citySize = 5;
+  }
+
   initCityArrays();
   generateCityHTML();
   console.log("Initializing game with:");

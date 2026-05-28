@@ -642,6 +642,20 @@ const schemes = [
     variableTwist: false,
     twistText: `The tide rushes in. This Scheme Transforms.`,
     transformsInto: "Tsunami Crushes the Coast",
+    // Earthquake (Side A) = 7 city spaces: two extra "Low Tide" ocean-floor spaces on
+    // the LEFT (per card text). Setup reads this in initGame() to size the city.
+    // The Tsunami transform destroys indices 0-3 (both Low Tide + Bridge + Streets),
+    // leaving 4,5,6 (Rooftops/Bank/Sewers) = 3 spaces. Low Tide visuals are a
+    // functional default (existing bg + "Low Tide" label); reskin later if desired.
+    citySpaces: [
+      { label: "Low Tide",    bg: "Bridge.webp",   bgPos: "top" },
+      { label: "Low Tide",    bg: "Bridge.webp",   bgPos: "top" },
+      { label: "The Bridge",  bg: "Bridge.webp",   bgPos: "top" },
+      { label: "The Streets", bg: "Streets.webp",  bgPos: "center" },
+      { label: "The Rooftops",bg: "Rooftops.webp", bgPos: "top" },
+      { label: "The Bank",    bg: "Bank.webp",     bgPos: "center" },
+      { label: "The Sewers",  bg: "Sewers.webp",   bgPos: "center" },
+    ],
     image: "Visual Assets/Schemes/Revelations_EarthquakeDrainsTheOcean.webp",
   },
   {

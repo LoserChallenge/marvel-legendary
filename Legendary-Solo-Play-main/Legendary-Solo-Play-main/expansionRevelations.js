@@ -2199,11 +2199,13 @@ let revelationsTwistCount = 0;
 async function earthquakeDrainsTheOceanTwist() {
   revelationsTwistCount++;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! The tide rushes in. Transforming to <span class="console-highlights">Tsunami Crushes the Coast</span>.`);
-  // Tsunami: Low Tide, Bridge, and Streets destroyed. City shrinks to 3 spaces.
-  // Villains in destroyed spaces escape.
   transformScheme();
-  // City size change will be handled by the dynamic city system
-  onscreenConsole.log(`City spaces reduced. Villains in destroyed spaces escape!`);
+  // Tsunami: the two Low Tide spaces + Bridge + Streets (indices 0-3) are destroyed,
+  // leaving Rooftops/Bank/Sewers (4,5,6) = 3 spaces. Occupants escape, left-to-right.
+  onscreenConsole.log(`The coast floods — city spaces are destroyed. Villains in destroyed spaces escape!`);
+  if (typeof resizeCityForScheme === "function") {
+    await resizeCityForScheme([4, 5, 6]);
+  }
 }
 
 // Tsunami (Side B) Twist: The tide rushes out. Transform back, then play another villain card.
@@ -2211,8 +2213,11 @@ async function tsunamiCrushesTheCoastTwist() {
   revelationsTwistCount++;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! The tide rushes out. Transforming back to <span class="console-highlights">Earthquake Drains the Ocean</span>.`);
   transformScheme();
-  // City expands back to 7 spaces
+  // The tide recedes: all 7 spaces are restored to active.
   onscreenConsole.log(`City spaces restored. Playing another card from the Villain Deck.`);
+  if (typeof resizeCityForScheme === "function") {
+    await resizeCityForScheme([0, 1, 2, 3, 4, 5, 6]);
+  }
   if (typeof processVillainCard === "function") {
     await processVillainCard();
   }
