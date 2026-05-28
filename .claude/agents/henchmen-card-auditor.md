@@ -26,6 +26,7 @@ For each henchman card in the inventory, run all six checks:
 - **(d) Cross-card interaction safety** — modifies shared state cleanly; handles the case where another card already mutated it; handles empty deck/HQ/city edges.
 - **(e) Player-choice correctness** — card text "may" / "choose" / "if you do" must map to code that PRESENTS the choice (correct popup type) rather than auto-picking or silently skipping. Conditional choices ("you may KO a Bystander") must be gated on the player actually being able to do it.
 - **(f) Base-rules compliance** — turn structure, attack-pairing (every `totalAttackPoints +=` has a matching `cumulativeAttackPoints +=`), `updateGameBoard()` called after attack changes.
+- **(g) Count & variant completeness** — the number of this card type in `cardDatabase.js` matches the **inventory's** stated count, and the inventory's variant pattern is correctly represented. Check against the inventory, NOT a standard-pattern assumption — counts deviate by set. Flag missing cards, wrong copy counts, unique-vs-duplicate mismatches.
 
 ## Henchmen-Specific Specializations
 
@@ -33,6 +34,7 @@ For each henchman card in the inventory, run all six checks:
 - **`usesRecruitToFight` flag** — henchmen with a recruit-only fight cost (e.g. Mister Hyde) need `usesRecruitToFight: true` in the DB entry. Both `updateHighlights()` declarations gate affordability on this flag; a missing flag silently disables the entire mechanic with no error.
 - **Duplicate `updateHighlights()` hazard** — `script.js` has TWO `function updateHighlights()` declarations. Affordability/fight-button logic for henchmen must be consistent in BOTH; grep for all definitions.
 - **Ambush effects** — henchmen ambush patterns resemble villains but use henchman function names; confirm wiring.
+- **Count/variant (check g focus)** — verify the copy structure matches the inventory. Standard is 10 identical copies of one henchman, but some groups (e.g. Ten Rings) are 10 *unique* cards; trust the inventory, not the standard pattern.
 
 ## Output Format
 
@@ -40,7 +42,7 @@ Report ONLY issues. For each:
 
 ```
 CARD: <name> (henchman — <expansion>)
-CHECK: a | b | c | d | e | f | <specialization name>
+CHECK: a | b | c | d | e | f | g | <specialization name>
 SEVERITY: HIGH | MEDIUM | LOW
 ISSUE: <one-line description>
 EXPECTED: <what the inventory/rules says>

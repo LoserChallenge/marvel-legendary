@@ -26,6 +26,7 @@ For each villain card in the inventory, run all six checks:
 - **(d) Cross-card interaction safety** — modifies shared state cleanly; handles the case where another card already mutated it; handles empty deck/HQ/city edges.
 - **(e) Player-choice correctness** — card text "may" / "choose" / "if you do" must map to code that PRESENTS the choice (correct popup type) rather than auto-picking or silently skipping. Conditional choices ("you may KO a Bystander") must be gated on the player actually being able to do it.
 - **(f) Base-rules compliance** — turn structure, attack-pairing (every `totalAttackPoints +=` has a matching `cumulativeAttackPoints +=`), `updateGameBoard()` called after attack changes.
+- **(g) Count & variant completeness** — the number of this card type in `cardDatabase.js` matches the **inventory's** stated count, and the inventory's variant pattern is correctly represented. Check against the inventory, NOT a standard-pattern assumption — counts deviate by set. Flag missing cards, wrong copy counts, non-standard group splits.
 
 ## Villain-Specific Specializations
 
@@ -33,6 +34,7 @@ For each villain card in the inventory, run all six checks:
 - **Attack-modifier pipeline** — modified attack values live in `attackFromMastermind` / `attackFromScheme` / `attackFromOwnEffects` / `attackFromHeroEffects` / `attackFromShards`, NEVER `card.attack` (the base number comes from card art). Writing to `card.attack` is invisible. New bonuses follow the `mastermind.alwaysLeadsBonus` precedent inside BOTH `updateVillainAttackValues()` (city) AND `updateHQVillainAttackValues()` (HQ).
 - **City placement** — villains entering the city use `enterCityFromRight()` / the correct placement path; respect city ordering and overflow.
 - **Post-copy state preservation** — custom properties set at ambush time (e.g. `capturedHero`) must be in the `createVillainCopy()` whitelist (`script.js:12209`), or the fight effect receives a stripped copy. Fight-effect functions must read from the copy PARAMETER, not iterate `city[]` (it's nulled before the fight effect runs).
+- **Count/variant (check g focus)** — verify the villain group split matches the inventory. Standard is 8 cards / 4 villains (2 each), but some sets deviate; trust the inventory's recorded composition, not the standard pattern.
 
 ## Output Format
 
@@ -40,7 +42,7 @@ Report ONLY issues. For each:
 
 ```
 CARD: <name> (villain — <expansion>)
-CHECK: a | b | c | d | e | f | <specialization name>
+CHECK: a | b | c | d | e | f | g | <specialization name>
 SEVERITY: HIGH | MEDIUM | LOW
 ISSUE: <one-line description>
 EXPECTED: <what the inventory/rules says>
