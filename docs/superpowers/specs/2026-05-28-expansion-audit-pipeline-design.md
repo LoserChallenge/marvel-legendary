@@ -6,7 +6,7 @@
 
 ## Goal
 
-Surface entire categories of expansion bugs proactively, before merge to master, rather than via playtest. Cover all card types, all engine integrations, and all cross-card interactions. Become part of `/new-expansion` as the standard gate.
+Surface entire categories of expansion bugs proactively, before merge to master, rather than via playtest. Cover all card types, all engine integrations, all cross-card interactions, and all keyword/mechanic consistency. Become part of `/new-expansion` as the standard gate.
 
 ## Architecture
 
@@ -26,9 +26,10 @@ Two integration points into the expansion workflow:
     ├── hero-card-auditor            ┐
     ├── villain-card-auditor         │
     ├── henchmen-card-auditor        │
-    ├── mastermind-card-auditor      ├── parallel
+    ├── mastermind-card-auditor      ├── parallel  (six card-type auditors)
     ├── scheme-card-auditor          │
-    └── misc-card-auditor            ┘
+    ├── misc-card-auditor            ┘
+    └── keyword-consistency-auditor  ── parallel  (cross-cutting; runs in the same batch)
             └── orchestrator consolidates → findings catalog → triage with Paul
 ```
 
@@ -36,7 +37,8 @@ Two integration points into the expansion workflow:
 - `pattern-reuse-scout` runs at the end of `/analyze-expansion` so reuse happens *during* implementation, not as post-build rework. Its output is appended to the mechanics reference doc, which the implementer already reads in `/new-expansion` Phase 1.
 - `engine-integration-auditor` runs first inside `/expansion-audit` because its output (known systemic gaps with IDs `E-1`, `E-2`, …) is passed as prompt context to each card-type auditor. They cross-reference it when checking each card and tag related findings.
 - `expansion-validator` runs next because the 7 file-level rules are fast and orthogonal to card-level checks.
-- The six card-type auditors run in parallel — independent contexts, no shared state — cutting wall time roughly 6×.
+- The six card-type auditors plus `keyword-consistency-auditor` run in parallel — independent contexts, no shared state — cutting wall time roughly 7×.
+- `keyword-consistency-auditor` is cross-cutting (keywords span every card type) but has no dependency on the card-type auditors and they have none on it, so it joins the parallel batch rather than running sequentially. Its angle is complementary: card-type auditors check whether THIS card's keyword effect fires correctly; the keyword auditor checks whether the keyword's core rule is implemented once and behaves consistently across every card type that references it.
 - The orchestrator (the `/expansion-audit` skill itself, not a separate subagent) merges all findings into one severity-tagged catalog so triage happens in one pass.
 
 ## Subagent Specs
@@ -94,7 +96,7 @@ RELATED: <engine-integration finding ID if applicable>
 
 Plus a summary footer: cards audited, issues found by severity, cards that could not be audited (missing function, unclear reference).
 
-### Cross-cutting subagents (three)
+### Cross-cutting subagents (four)
 
 **`pattern-reuse-scout`** — runs as the final step of `/analyze-expansion`
 - **Input:** expansion mechanics reference doc (`docs/expansion-mechanics/<expansion>.md`) just produced by Steps 1–4 of `/analyze-expansion`
@@ -111,6 +113,18 @@ Plus a summary footer: cards audited, issues found by severity, cards that could
 - **Why two passes:** without discovery, the auditor can only find gaps in functions someone already documented. With discovery, new engine functions added in any expansion get caught the first time `/expansion-audit` runs against that expansion, and the reference doc grows organically.
 - **Side benefit:** the engine-touchpoints reference file becomes a living doc of "how state flows in this game"
 
+**`keyword-consistency-auditor`** — runs in the parallel batch inside `/expansion-audit`
+- **Why it exists:** keywords (Bribe, Teleport, Focus, Shards, Artifacts, Versatile, Feast, Wall-crawl, and each expansion's new ones) are cross-cutting *rules*, not card types. The same keyword appears on heroes, villains, henchmen, schemes, and masterminds. The six card-type auditors each see only their own card type, so none can verify that a keyword is implemented once, correctly, and consistently everywhere it appears. This absorbs the retired `card-effect-auditor`'s "Layer 4 — Keyword/Mechanic Consistency."
+- **Input:** mechanics reference doc (lists the expansion's new keywords) + finalized inventory + `cardDatabase.js` + ability/expansion JS files + `script.js`
+- **Process:**
+  1. Enumerate every keyword referenced by the expansion's cards (from the mechanics doc's keyword section + card text in the inventory)
+  2. For each keyword, locate its core rule/handler in code (the single place the keyword's mechanic is defined — e.g., where "Bribe" lets recruit pay a fight cost)
+  3. Verify the keyword's core rule is implemented at all (not just referenced in card text with no engine support)
+  4. Verify every card that references the keyword routes through the same shared handler / consistent logic — flag divergent or duplicated implementations
+  5. Verify keyword scoping — expansion-specific keywords don't unintentionally activate for other expansions' cards, and aren't globally hardcoded when they should be conditional
+- **Output:** per-keyword findings: missing-implementation, inconsistent-across-cards, scoping-leak, with file:line pointers and the list of cards affected. Same severity tagging (HIGH/MEDIUM/LOW) and block format as the card-type auditors.
+- **Boundary vs card-type auditors:** card-type auditor check (a) confirms "this card's Focus effect produces the right result." Keyword auditor confirms "Focus is defined once, and the hero-Focus and villain-Focus paths share that definition rather than diverging." Overlap is intentional and non-redundant — different failure modes.
+
 **`expansion-validator`** — existing subagent, no changes
 - 7 file-level pattern rules (`drawVillainCard`, HQ fill-in-place, async chains, attack pairing, `updateGameBoard()`, DOM null guards, splash/init null guards). Already documented in `.claude/agents/expansion-validator.md`.
 
@@ -124,7 +138,7 @@ Plus a summary footer: cards audited, issues found by severity, cards that could
    - Engine-touchpoints reference file exists at `docs/audit-pipeline/engine-touchpoints.md` (if absent, halt with the message "run engine-integration-auditor in bootstrap mode first" — the auditor's Pass 1 will seed the file)
 2. Run `engine-integration-auditor` → capture output as input artifact (`<expansion>-engine-findings.md` in temp). If the auditor reports new touchpoints discovered, the reference doc is updated in-place before card-type auditors dispatch.
 3. Run `expansion-validator` on the expansion JS → capture output
-4. Parallel-dispatch the six card-type auditors. Each receives engine-integration findings (gap IDs `E-1`, `E-2`, …) and the pattern-reuse-scout catalog (if present in mechanics doc) as prompt context.
+4. Parallel-dispatch the six card-type auditors plus `keyword-consistency-auditor` (seven subagents in one batch). Each card-type auditor receives engine-integration findings (gap IDs `E-1`, `E-2`, …) and the pattern-reuse-scout catalog (if present in mechanics doc) as prompt context. The keyword auditor receives the mechanics doc's keyword section.
 5. Consolidate all findings into `docs/audit-results/<expansion>-<YYYY-MM-DD>.md`
 6. Report the catalog path back, suggest triage as next step
 
@@ -158,15 +172,15 @@ Plus a summary footer: cards audited, issues found by severity, cards that could
 
 **`/new-expansion` — Phase 4 (Validation & Testing) expanded:**
 - Current Phase 4 already invokes `expansion-validator` as a single-pass check
-- Expand to invoke `/expansion-audit` (which includes `expansion-validator` plus the seven additional subagents)
+- Expand to invoke `/expansion-audit` (which includes `expansion-validator` plus eight additional subagents: `engine-integration-auditor`, the six card-type auditors, and `keyword-consistency-auditor`)
 - Triage findings with Paul
 - Resolve all HIGH findings or document deferrals
 - Merge readiness gate: HIGH count = 0 OR every HIGH has a documented Defer rationale
 
 ## Retirements & Cleanups
 
-- Delete `.claude/agents/card-effect-auditor.md` — superseded by six specialized card-type auditors
-- Update root `CLAUDE.md` — Subagents section: replace `card-effect-auditor` entry with the eight new ones (or a pointer to this design doc)
+- Delete `.claude/agents/card-effect-auditor.md` — superseded by six specialized card-type auditors (Layers 1–3) + `keyword-consistency-auditor` (its Layer 4)
+- Update root `CLAUDE.md` — Subagents section: replace `card-effect-auditor` entry with the nine new ones (or a pointer to this design doc)
 - Update `MEMORY.md` entry `project_card_effect_auditor.md` to reflect the supersession
 - Audit `audit-tracker` subagent for references to `card-effect-auditor`; update if any
 - Old audit results file (`docs/card-effect-audit-results-2026-03-31.md`) stays as historical record, no changes
@@ -197,13 +211,14 @@ For the implementation plan (next step):
 1. Create `docs/audit-pipeline/engine-touchpoints.md` with seed entries
 2. Build `engine-integration-auditor` subagent (reads the reference doc, audits propagation)
 3. Build `pattern-reuse-scout` subagent
-4. Build the six card-type auditors (shared base, type-specific specializations)
-5. Build the `/expansion-audit` orchestrator skill
-6. Retire `card-effect-auditor`; update CLAUDE.md, memory, audit-tracker
-7. Update `/analyze-expansion` — add Step 5 (pattern-reuse-scout invocation)
-8. Update `/new-expansion` — expand Phase 4 to invoke `/expansion-audit` instead of just `expansion-validator`
-9. Inaugural run: execute full pipeline on Revelations. **Known caveat:** Revelations is mid-fix (Tier 1 mostly resolved, Tier 2 partially started). The audit runs against current-state code, so the catalog will mix "real new findings" with "findings already known and in-progress." Triage with Paul includes cross-referencing existing fix plan (`docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md`) to dedupe.
-10. Triage Revelations findings with Paul; resume Revelations fixes from the catalog
+4. Build `keyword-consistency-auditor` subagent
+5. Build the six card-type auditors (shared base, type-specific specializations)
+6. Build the `/expansion-audit` orchestrator skill
+7. Retire `card-effect-auditor`; update CLAUDE.md, memory, audit-tracker
+8. Update `/analyze-expansion` — add Step 5 (pattern-reuse-scout invocation)
+9. Update `/new-expansion` — expand Phase 4 to invoke `/expansion-audit` instead of just `expansion-validator`
+10. Inaugural run: execute full pipeline on Revelations. **Known caveat:** Revelations is mid-fix (Tier 1 mostly resolved, Tier 2 partially started). The audit runs against current-state code, so the catalog will mix "real new findings" with "findings already known and in-progress." Triage with Paul includes cross-referencing existing fix plan (`docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md`) to dedupe.
+11. Triage Revelations findings with Paul; resume Revelations fixes from the catalog
 
 ## Open Items Deferred to Implementation Plan
 
