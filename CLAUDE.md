@@ -238,6 +238,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - `/new-expansion` — multi-phase code integration with progress tracking in `docs/expansion-progress/`
 
 **Skills (other):**
+- `/game-test` — Playwright orchestrator. Drives the live game in a real browser for verification (post-fix), diagnostic (pre-implementation scoping), reproduction, or regression. Handles HTTP-server setup, 1920×1080 viewport, state injection, screenshots, and results tracking. Reach for it on any bug-list work where deterministic state-injection beats manual playtest.
 - `/golden-solo-fixer` — executes remaining Golden Solo compatibility audit fixes
 - `/deploy` — pre-push checklist + push to master + GitHub Pages verification
 - **`/write-plan` default-location gotcha:** Superpowers' `writing-plans` skill drops output at `~/.claude/plans/{auto-slug}.md` by default — a **global** path with a machine-generated name (e.g. `temporal-coalescing-kettle.md`). For project work, override with an explicit in-repo path like `docs/superpowers/plans/YYYY-MM-DD-descriptive-name.md` inside the active worktree, or move+rename the file immediately after creation and update any references.
@@ -249,6 +250,10 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - `expansion-validator` — validates expansion JS against 7 Golden Solo rules; run as Phase 4 of `/new-expansion`
 - `card-effect-auditor` — compares card reference data against code implementations
 
+**MCP Servers:**
+- **Playwright MCP** — Microsoft `@playwright/mcp@latest`, local-scope (this project only). Drives a real Chromium browser: click, fill, screenshot, read DOM, evaluate JS in the page. **Use for:** bug verification where a specific game state reproduces the issue — inject state via `browser_evaluate` (skip setup, pre-stack decks, jump to a UI state), then verify via DOM / onscreenConsole / screenshot. Bug-backlog triage, regression checks, deterministic reproductions. **Don't use for:** subjective UX feel, randomness-dependent multi-turn flows, anything needing real play instincts. **Setup quirks:** `file://` is blocked — launch via a local Python HTTP server pointed at the game's directory; default viewport is narrow (~400px = mobile layout), set 1920×1080 at session start; `sw.js` 404 console error on local-serve is expected noise (path-prefix mismatch with GitHub Pages), not a bug. Full install history + deeper gotchas: `D:\Claude Code\cc-helper\docs\cc-guide.md` → Playwright MCP entry.
+- **GitHub MCP** — check deployment status, issues, Actions logs without leaving chat.
+
 **References:**
 - `docs/card-inventory/final/` — per-expansion card data and effect text, source of truth for audits. 10 finalized (Into the Cosmos 2026-04-05). X-Men in `drafts/` awaiting Pass 2.
 - `docs/card-effect-audit-results-2026-03-31.md` — first audit run (65 issues, but **not reliable** — ran against old reference files). Re-run ready.
@@ -256,7 +261,6 @@ Staging structure, file naming conventions, staging process steps, card inventor
 **Other:**
 - Git worktrees: `.worktrees/` is gitignored; feature branches at `.worktrees/<branch-name>`
 - **Branch strategy for expansions:** One long-lived branch per expansion (e.g., `revelations`), accumulating all work. Merge to master only when the expansion is fully complete. Do NOT create separate branches per step or phase.
-- GitHub MCP installed — check deployment status, issues, Actions logs without leaving chat
 
 ## Workflow Preferences
 
@@ -268,12 +272,20 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - **When executing a fix plan written in a prior session, verify each fix's stated root cause empirically before implementing.**
 - **When executing a multi-step doc/config plan, check current file state (both master and worktree) before assuming all steps are pending** — prior sessions may have already applied some steps. Apply Phase 1 of systematic-debugging to the plan's hypothesis, not just to the original bug. Prior-session plans can be based on incomplete playtest observation and may misdiagnose — don't trust-and-apply.
 
-## Worktree-vs-Master Edit Rule
+## Session Roles & Folder Discipline (READ FIRST)
 
-- **Branch-specific doc edits** (new gotchas from a branch's playtest, progress files, fix plans, current-work descriptions) → edit the **worktree's copy**. They travel upstream naturally via branch merge.
-- **Global / cross-branch edits** (new universal patterns, rules that apply everywhere) → edit **master's copy** so new branches cut from master inherit them. Sync worktree after with `cp CLAUDE.md .worktrees/<branch>/CLAUDE.md`.
-- Prior sessions have repeatedly let worktree learnings leak into master — when starting a session that touches `CLAUDE.md` or `docs/expansion-progress/`, `diff` the master and worktree copies early to detect drift.
-- **During active expansion work:** treat the worktree's CLAUDE.md as the live copy. Master's copy is intentionally stale until merge — do NOT sync mid-branch. The expansion merge checklist (in `/new-expansion`) includes a CLAUDE.md sync step.
+This project runs as **two folders with two roles** during an active expansion. Getting this wrong is the #1 source of confusion and lost/uncommitted work — follow it exactly.
+
+**The two folders:**
+- **Main folder (this one) = `master` = the finished, stable, shippable game.** Sessions opened here are **COORDINATORS / DIRECTORS** during an active expansion: plan, dispatch prompts to worker sessions, and do project-wide or master-only work. **Do NOT do expansion game-dev here.**
+- **Worktree folder = the active expansion branch = ALL expansion development** (e.g. `.worktrees\revelations`). The worker session lives here.
+
+**The rules:**
+1. **One session works ONLY in the folder it was opened in.** NEVER reach across folders with `git -C <other folder>` or relative paths into the other tree. Need the other folder? Open a session in it.
+2. **Open a worktree via the Desktop folder picker** pointed at the worktree path (e.g. `.worktrees\revelations`) — **NOT the branch switcher.** The branch switcher tries to switch the main folder's branch and triggers the "uncommitted changes on master" warning; never do that.
+3. **Commit before you stop.** On a feature branch, commits are save points — commit work-in-progress freely and often, even if broken or incomplete (the worktree isolates it from `master`). **Never end a session with uncommitted work.**
+4. **Verify location at session start:** run `git rev-parse --show-toplevel` and `git branch --show-current`; confirm you're where you intend before working.
+5. **CLAUDE.md during an expansion:** the worktree's copy is the live one for branch-specific content; this master copy is frozen and reconciled at merge. This "Session Roles & Folder Discipline" section is the canonical copy — preserve it when reconciling CLAUDE.md at merge.
 
 ## Scheme Hero Requirements Infrastructure
 
