@@ -252,8 +252,9 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - `/stage-expansion` — organizes and renames files in a raw staging folder
 - `/inventory-creator` — builds Pass 1 card inventory file; any expansion, full or partial scope
 - `/inventory-verifier` — Pass 2 independent verification in a fresh session
-- `/analyze-expansion` — collaborative rules analysis; produces mechanics reference in `docs/expansion-mechanics/`
-- `/new-expansion` — multi-phase code integration with progress tracking in `docs/expansion-progress/`
+- `/analyze-expansion` — collaborative rules analysis; produces mechanics reference in `docs/expansion-mechanics/`; final step dispatches `pattern-reuse-scout`
+- `/new-expansion` — multi-phase code integration with progress tracking in `docs/expansion-progress/`; Phase 4 runs `/expansion-audit`
+- `/expansion-audit` — pre-merge audit pipeline: dispatches `engine-integration-auditor` → `expansion-validator` → 6 card-type auditors + `keyword-consistency-auditor`, consolidates findings to `docs/audit-results/`. Spec: `docs/superpowers/specs/2026-05-28-expansion-audit-pipeline-design.md`
 
 **Skills (other):**
 - `/game-test` — Playwright orchestrator. Drives the live game in a real browser for verification (post-fix), diagnostic (pre-implementation scoping), reproduction, or regression. Handles HTTP-server setup, 1920×1080 viewport, state injection, screenshots, and results tracking. Reach for it on any bug-list work where deterministic state-injection beats manual playtest.
