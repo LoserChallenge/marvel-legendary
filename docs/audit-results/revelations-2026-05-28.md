@@ -156,6 +156,15 @@ Two new touchpoints proposed by the engine-integration-auditor (NOT yet appended
 
 ---
 
+## Triage decisions (2026-05-28, Paul)
+
+Source of truth for effects = the finalized, Pass-2-verified inventory (`docs/card-inventory/final/revelations.md`). All clusters are **code-wrong** unless the inventory text itself is found wrong on spot-check.
+
+- **Chemistro Fight effect** (Cluster-adjacent MED) → **FIX**. No reason to gate it to one mode; make it work in both Golden Solo and What If?.
+- **Auto-pick vs. present-choice** (Korvac KO-bystander, Nightbringer, Speed "Break the Sound Barrier", Zero, Korvac discard, etc.) → **FIX ALL**. Any card text saying "choose" / "may" / non-mandatory must present the choice to the player; the game must never auto-resolve it.
+- **"Each other player" effects** (Dark Hawkeye "then choose one", Dark Ms. Marvel) → **DEFER**. Roll into the existing standing "other player effects in solo" review (`docs/known-issues.md`). Add any other each-other-player Revelations cards to that list as found.
+- All other clusters (A–H) → code-wrong, fix per recommended order.
+
 ## Dedup vs. existing fix plan (do before triage)
 Cross-reference `docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md`:
 - **Already known / in-progress:** Cluster A + B's Earthquake/Tsunami city resize = **pending Fix 1A** (scheme transform + city resize). E-4 is part of this.
