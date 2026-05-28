@@ -65,14 +65,15 @@ All six share a base spec; each adds type-specific specializations.
 | (d) Cross-card interaction safety | Modifies shared state cleanly; handles cases where another card already mutated it; empty-deck/HQ/city edges |
 | (e) Player-choice correctness | "may"/"choose"/"if you do" → code presents the choice (right popup type) instead of auto-picking or silently skipping |
 | (f) Base-rules compliance | Turn structure, twist dispatch, attack-pairing (`totalAttackPoints` + `cumulativeAttackPoints`), `updateGameBoard()` after attack changes |
+| (g) Count & variant completeness | The number of this card type present in `cardDatabase.js` matches the **inventory's** stated count, and the inventory's variant pattern is correctly represented in code. **Check against the inventory, never against a standard-pattern assumption** — card counts deviate by set (most sets: 8 villain cards across 4 villains = 2 each, but some sets differ; most henchmen groups: 10 identical copies, but some — e.g. Revelations Ten Rings — are 10 *unique* cards). The inventory records the real composition, so "code matches inventory" handles every variant automatically. Flag: missing cards, wrong copy counts, unique-vs-duplicate mismatches, non-standard group splits not reflected in code. |
 
 **Type-specific specializations:**
 
 | Auditor | Specialty |
 |---|---|
 | `hero-card-auditor` | Ability-function structure, async chains, `unconditionalAbility`/`conditionalAbility` wiring in DB, class/team correctness |
-| `villain-card-auditor` | Ambush/fight/escape function signatures, attack-modifier pipeline (`attackFromMastermind`/`attackFromScheme`/`attackFromOwnEffects` fields — never `card.attack`), city placement, post-clone state preservation (city-copy ambush state) |
-| `henchmen-card-auditor` | Fixed-attack patterns, `usesRecruitToFight` flag wiring, both `updateHighlights()` declarations patched in parallel |
+| `villain-card-auditor` | Ambush/fight/escape function signatures, attack-modifier pipeline (`attackFromMastermind`/`attackFromScheme`/`attackFromOwnEffects` fields — never `card.attack`), city placement, post-clone state preservation (city-copy ambush state). **Count/variant: verify the villain group split matches the inventory — standard is 8 cards / 4 villains (2 each), but some sets differ.** |
+| `henchmen-card-auditor` | Fixed-attack patterns, `usesRecruitToFight` flag wiring, both `updateHighlights()` declarations patched in parallel. **Count/variant: verify copy structure matches the inventory — standard is 10 identical copies, but some groups (e.g. Ten Rings) are 10 unique cards.** |
 | `mastermind-card-auditor` | Tactics order, `alwaysLeads` bonus, Epic overlay (runtime object-spread, `mastermind.name === 'Epic X'` detection), Master Strike effects, mastermind-name-exact-match in lookups |
 | `scheme-card-auditor` | Setup directives (House of M case — does init code execute the setup?), twist effects, transforms (does `transformScheme` propagate to all readers?), evil-wins switch case, hero requirements wiring, city-resize for schemes that change city size |
 | `misc-card-auditor` | Wounds (invulnerability), Locations (`placeLocation` async, `enterCityFromRight`, `generateVillainDeck` type-preservation), Artifacts/Shards, Bystander special effects, Sidekicks, any expansion-specific one-offs |
