@@ -4458,7 +4458,12 @@ async function promptNegateFightEffectWithMrFantastic(villainCopy, villainCard) 
           `You used <span class="console-highlights">Mr. Fantastic – Ultimate Nullifier</span> to cancel a fight effect.`,
         );
         closeInfoChoicePopup();
-        if (villainCard.team === "Infinity Gems") {
+        // Infinity Gems villains get flagged nullified so the gem effect doesn't re-apply.
+        // Guard the access: this prompt is also invoked with NO villainCard arg (Mastermind
+        // Tactics — script.js resolveTacticEffects — and other no-arg fight paths), where
+        // reading .team on undefined would crash on confirm. Tactics have no team, so the
+        // Infinity-Gems branch correctly does nothing for them.
+        if (villainCard?.team === "Infinity Gems") {
           villainCard.nullified = true;
         }
         resolve(true); // negate
