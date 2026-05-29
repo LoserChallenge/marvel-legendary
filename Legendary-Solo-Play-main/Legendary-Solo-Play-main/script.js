@@ -11785,7 +11785,10 @@ function getLocationEffectiveAttack(cityIndex) {
 // path uses (updateHighlights / defeatVillain): recruit-as-attack (Thor "God of Thunder" →
 // recruitUsedToAttack), Negative Zone swap, and reserved attack for the space. (PT-6 fix.)
 function getAvailableAttackForFight(cityIndex) {
-  const isMastermindSlot = cityIndex === 5;
+  // The mastermind reserve is a separate scalar; city spaces are indices 0..citySize-1. Any index
+  // at/after citySize is the mastermind sentinel. Using citySize (not a hardcoded 5) keeps this
+  // correct in large cities (Earthquake/Tsunami, citySize 6-7) where index 5+ are real spaces. (H1)
+  const isMastermindSlot = cityIndex >= citySize;
   const reserved =
     (isMastermindSlot ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
   let pool;
@@ -11802,7 +11805,7 @@ function getAvailableAttackForFight(cityIndex) {
 // counter-popup villains use; otherwise reserved attack first, then attack (or recruit under Negative
 // Zone). Async because the popup is awaited.
 async function payLocationAttackCost(cityIndex, cost) {
-  const isMastermindSlot = cityIndex === 5;
+  const isMastermindSlot = cityIndex >= citySize; // mastermind sentinel = index past the city array (H1)
   const reservedAvail = () =>
     (isMastermindSlot ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
   const spendReserved = (amt) => {
@@ -11833,8 +11836,10 @@ async function payLocationAttackCost(cityIndex, cost) {
     if (reservedUsed > 0) spendReserved(reservedUsed);
     totalAttackPoints -= cost - reservedUsed;
   }
-  // Final Showdown attack tracking — preserve prior defeatLocation behavior.
-  cumulativeAttackPoints -= cost;
+  // NOTE: do NOT decrement cumulativeAttackPoints here. It is only ever incremented (attack generated
+  // this turn) and reset at turn start — it has no read site in the current codebase, and the
+  // villain-fight path never decrements it. Removing the subtraction is hygiene that aligns the
+  // Location path with the villain path; net-neutral to current behavior. (L2)
 }
 
 function showLocationAttackButton(cityIndex) {
@@ -12034,6 +12039,10 @@ async function defeatLocation(cityIndex, attackCost) {
   // Negative-Zone recruit, like villains. Awaited (the popup is async).
   await payLocationAttackCost(cityIndex, attackCost);
 
+  // Refresh the reserved-attack overlay — payLocationAttackCost may have spent reserved points, and
+  // the villain-fight path does this too (defeatVillain). Without it the reserve readout goes stale. (M2)
+  updateReserveAttackAndRecruit();
+
   // Move to Victory Pile
   victoryPile.push(locationCard);
   onscreenConsole.log(
@@ -12122,8 +12131,10 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
           let attackNeeded = result.attackUsed || 0;
           let recruitNeeded = result.recruitUsed || 0;
 
-          // Use reserved attack points for this location first
-          const reservedAttackAvailable = (cityIndex === 5 ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
+          // Use reserved attack points for this location first.
+          // Mastermind sentinel = index past the city array (citySize), NOT a hardcoded 5 — in large
+          // cities (Earthquake/Tsunami) index 5+ are real city spaces. (H1 twin fix)
+          const reservedAttackAvailable = (cityIndex >= citySize ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
           const reservedAttackUsed = Math.min(
             attackNeeded,
             reservedAttackAvailable,
@@ -12131,7 +12142,7 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
 
           // Deduct from reserved points
           if (reservedAttackUsed > 0) {
-            if (cityIndex === 5) {
+            if (cityIndex >= citySize) {
               mastermindReserveAttack -= reservedAttackUsed;
             } else {
               cityReserveAttack[cityIndex] -= reservedAttackUsed;
@@ -12148,14 +12159,15 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
           );
         } else {
           if (!negativeZoneAttackAndRecruit) {
-            const reservedAttackAvailable = (cityIndex === 5 ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
+            // Mastermind sentinel = index past the city array (citySize), not a hardcoded 5. (H1 twin fix)
+            const reservedAttackAvailable = (cityIndex >= citySize ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
             const reservedAttackUsed = Math.min(
               villainAttack,
               reservedAttackAvailable,
             );
 
             if (reservedAttackUsed > 0) {
-              if (cityIndex === 5) {
+              if (cityIndex >= citySize) {
                 mastermindReserveAttack -= reservedAttackUsed;
               } else {
                 cityReserveAttack[cityIndex] -= reservedAttackUsed;

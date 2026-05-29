@@ -1970,8 +1970,11 @@ async function sentryEscape() {
   await drawWound();
 }
 
-// Sentry's Watchtower (Location) — Villains here get Last Stand (in updateVillainAttackValues).
-// Fight: Gain the hero in the HQ space under this.
+// Sentry's Watchtower (Location) — Fight: Gain the hero in the HQ space under this.
+// TODO (Cluster D Batch 4 — NOT YET IMPLEMENTED): "Villains here get Last Stand" is unwired.
+// revelationsVillainOwnAttack only reads each villain's OWN keywords; it does NOT detect a
+// Sentry's Watchtower sharing the space, so the Last Stand grant never fires. When implemented it
+// must go through attackFromOwnEffects (the attack-modifier pipeline), not card.attack.
 function sentrysWatchtowerFight() {
   const wtIdx = typeof cityLocations !== "undefined"
     ? cityLocations.findIndex(loc => loc && loc.name === "Sentry's Watchtower")
@@ -3020,7 +3023,8 @@ function whiteGorillaCultTrigger() {
 // --- HENCHMEN EFFECTS ---
 
 // === HYDRA Base (Henchman Location) ===
-// +2 Attack while a Villain is in the same space — handled in updateVillainAttackValues.
+// +2 Attack while a Villain is in the same space — handled via the Location's bonusWhileVillain
+// field + getLocationEffectiveAttack (E-3 refactor), NOT in updateVillainAttackValues.
 // Fight: KO one of your Heroes.
 function hydraBaseFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">HYDRA Base</span>: KO one of your Heroes.`);
