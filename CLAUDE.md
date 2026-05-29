@@ -69,6 +69,8 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 - Browsers on `https://` treat uncaught JS errors more strictly than `file://` — errors that silently fail locally can crash the loading screen on GitHub Pages
 - `initCosmicBackground()` and `initSplash()` in `expansionGuardiansOfTheGalaxy.js` assume DOM elements that don't exist — both have null guards added; any future expansion splash code must do the same
 - `drawVillainCard()` must NOT be called inside `initGame()` — it shows a popup requiring player input, causing a deadlock while the loading screen is still visible. It is called in `onBeginGame()` after the loader hides (~line 3571)
+- **Game-test serve-path trap (worktree work):** when serving the game for `/game-test`/Playwright from a worktree, root the HTTP server at the WORKTREE's game directory using a path relative to the worktree root — NEVER an absolute path. An absolute path can resolve to the MAIN folder (`master`) and silently serve stale code without the branch's changes, so you verify against the wrong code and get false confidence. Confirm the served build has your changes before trusting any result.
+- **State-injection binding trap:** `citySize`, `cityReserveAttack`, `totalAttackPoints`, `cumulativeAttackPoints` are top-level `let` (NOT window-aliased); only `mastermindReserveAttack` is `var` on `window`. Inject test state via bare assignments (`citySize = 7`) to hit the lexical bindings — `window.citySize = 7` won't take.
 
 ## CSS Grid Overflow Gotcha
 
