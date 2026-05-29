@@ -111,16 +111,57 @@ function applyDarkMemories(multiplier = 1) {
 /**
  * Last Stand — count empty city spaces (spaces with no villain).
  * A space with a Location above it but no villain still counts as empty.
+ * A destroyed / non-existent space (1A: destroyedSpaces[i] === true) does NOT count.
  * Returns a number 0 to citySize.
  */
 function calculateLastStand() {
   let emptyCount = 0;
   for (let i = 0; i < city.length; i++) {
-    if (!city[i] || city[i] === null) {
+    const isDestroyed = typeof destroyedSpaces !== "undefined" && destroyedSpaces[i] === true;
+    if ((!city[i] || city[i] === null) && !isDestroyed) {
       emptyCount++;
     }
   }
   return emptyCount;
+}
+
+/**
+ * Revelations keyword / Location attack bonus for a CITY or HQ villain.
+ * Effects: Last Stand (+1/empty space, Double x2), Dark Memories (+1/unique discard class
+ * capped 5, Double x2), Lethal Legion (+3 while this villain's ONE exact-name Location is
+ * in the city — Grim Reaper's similarly-named tactic-Locations do NOT count).
+ * Returns the own-effect attack bonus (0 if this villain has none).
+ * Consumed by BOTH updateVillainAttackValues twins (duplicate-fn hazard — keep callers in sync).
+ */
+function revelationsVillainOwnAttack(villain) {
+  const kw = villain.keywords || [];
+  if (kw.includes("Double Last Stand")) return calculateLastStand() * 2;
+  if (kw.includes("Last Stand")) return calculateLastStand();
+  if (kw.includes("Double Dark Memories")) return calculateDarkMemories() * 2;
+  if (kw.includes("Dark Memories")) return calculateDarkMemories();
+  // Lethal Legion +3-while-Location: case-insensitive KEYWORD substring match against
+  // cityLocations[] names. Grim Reaper "Always Leads: Lethal Legion" puts both the Lethal
+  // Legion's own Locations AND Grim Reaper's tactic-Locations in play together, and BOTH
+  // legitimately satisfy the trigger (the printed villain text quotes a keyword, e.g. "'Maze'
+  // Location", not a full card name). So Living Laser's "Maze" matches Laser Maze AND Maze of Bones.
+  const LETHAL_LEGION_KEYWORD = {
+    "Living Laser": "maze",
+    "M'Baku": "cult",
+    "Power Man (Erik Josten)": "prison",
+    "Swordsman": "carnival",
+  };
+  const keyword = LETHAL_LEGION_KEYWORD[villain.name];
+  if (
+    keyword &&
+    typeof cityLocations !== "undefined" &&
+    Array.isArray(cityLocations) &&
+    cityLocations.some(
+      (loc) => loc && typeof loc.name === "string" && loc.name.toLowerCase().includes(keyword),
+    )
+  ) {
+    return 3;
+  }
+  return 0;
 }
 
 /**

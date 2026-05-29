@@ -8636,18 +8636,11 @@ if (stackedTwistNextToMastermind > 0) {
         currentTempBuff -
         villainShattered;
 
-      if (city[i].team === "Mandarin's Rings") {
-        console.log("[FIX1C-DIAG] CITY RENDER Ring", city[i].name, "| attackFromMastermind field:", city[i].attackFromMastermind, "| totalAttackModifiers:", totalAttackModifiers, "| base attack:", city[i].attack, "| will draw overlay?", totalAttackModifiers !== 0);
-      }
-
       if (totalAttackModifiers !== 0) {
         const villainOverlayAttack = document.createElement("div");
         villainOverlayAttack.className = "attack-overlay";
         villainOverlayAttack.innerHTML = city[i].attack + totalAttackModifiers;
         cardContainer.appendChild(villainOverlayAttack);
-        if (city[i].team === "Mandarin's Rings") {
-          console.log("[FIX1C-DIAG] OVERLAY DRAWN for Ring", city[i].name, "| innerHTML value:", villainOverlayAttack.innerHTML, "| appended to:", cardContainer.className);
-        }
       }
 
       if (
@@ -10040,10 +10033,6 @@ function updateVillainAttackValues(villain, i) {
   villain.attackFromHeroEffects = 0;
   villain.attackFromShards = 0;
 
-  if (villain.team === "Mandarin's Rings") {
-    console.log("[FIX1C-DIAG] updateVillainAttackValues called for Ring", villain.name, "| mastermind.name:", mastermind.name, "| city index:", i);
-  }
-
   //Attack From Mastermind Effects
 
   if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
@@ -10055,7 +10044,6 @@ function updateVillainAttackValues(villain, i) {
     villain.team === "Mandarin's Rings"
   ) {
     villain.attackFromMastermind = mastermind.name === "Epic Mandarin" ? 2 : 1;
-    console.log("[FIX1C-DIAG] Mandarin Ring branch FIRED for", villain.name, "| set attackFromMastermind to:", villain.attackFromMastermind);
   }
 
   //Attack From Scheme Effects
@@ -10199,6 +10187,21 @@ function updateVillainAttackValues(villain, i) {
 
   if (villain.name === "Captain Atlas") {
     villain.attackFromOwnEffects = mastermind.shards || 0;
+  }
+
+  // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1, effects 1-3) ---
+  // Last Stand, Dark Memories, Lethal Legion +3-while-Location. Recomputes every render.
+  if (typeof revelationsVillainOwnAttack === "function") {
+    const revOwn = revelationsVillainOwnAttack(villain);
+    if (revOwn > 0) {
+      villain.attackFromOwnEffects = revOwn;
+    }
+  }
+
+  // Sentry → "The Void": +5 Attack while in the Streets (index 1) or Bank (index 3).
+  // Same position determination as sentryFight()/isVoid. Name-swap display deferred.
+  if (villain.name === "Sentry" && (i === 1 || i === 3)) {
+    villain.attackFromOwnEffects = 5;
   }
 
   //Attack from Shards
@@ -10416,6 +10419,16 @@ function updateHQVillainAttackValues(villain) {
       (obj) => obj && obj.type === "Villain",
     ).length;
     villain.attackFromOwnEffects = villainCount * 2;
+  }
+
+  // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1, effects 1-3; HQ twin) ---
+  // Mirror of the city updateVillainAttackValues block — keep both in sync (duplicate-fn hazard).
+  // Sentry +5 is city-only (position-dependent) and is NOT replicated here.
+  if (typeof revelationsVillainOwnAttack === "function") {
+    const revOwn = revelationsVillainOwnAttack(villain);
+    if (revOwn > 0) {
+      villain.attackFromOwnEffects = revOwn;
+    }
   }
 
   //Attack from Shards
