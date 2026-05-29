@@ -163,7 +163,9 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 
 Detailed rules for reading card data from images, DB authority hierarchy, inventory template format, quantity gotchas, and expansion-specific new card types (X-Men, S.H.I.E.L.D.) — see `docs/card-inventory/card-reading-rules.md`.
 
-**Key rule (inlined because it applies to all card work):** `cardDatabase.js` is authoritative for structured fields (class, team, cost, values). Card images are ONLY for effect text. Never guess from icons or context — flag uncertain data for human spot-check.
+**Key rule (inlined because it applies to all card work):** The expansion **inventory is the official source for card CONTENT** — attack, VP, cost, effect text, what each card does. Canonical files: `expansions/[name]/[name]-reference.md` (BGG-derived reference) and `docs/card-inventory/final/[name].md` (finalized inventory). Read card content from the inventory, **NEVER from card images** — images are a last resort only for effect text the inventory genuinely lacks; never read numbers off card art, never guess from icons. If `cardDatabase.js` disagrees with the inventory on a value (e.g. a stale or zeroed attack/VP), **the inventory wins — correct the DB.** `cardDatabase.js` stays authoritative ONLY for field FORMAT/conventions — exact class-name strings (`"Range"` not `"Ranged"`), color mapping, field structure; don't import the inventory's terminology verbatim. Flag genuinely uncertain data for human spot-check.
+
+**Coordinators:** route worker sessions and subagents to the inventory files as the authoritative source for any card-data question. Never point them at card images for card numbers or effects. *(Why: an image-read subagent misread a Mastermind Tactic's 6 VP as a recruit cost and reported VP 0 — the inventory had it right.)*
 
 ## Attack-Granting Function Pattern
 
@@ -300,6 +302,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - The main project folder runs coordinator/director sessions (master = the stable, shippable game). Do NOT reach into the main folder from here (no `git -C` into it); if the main folder is needed, a session is opened there directly.
 - Commit before you stop — commits are save points; commit work-in-progress freely even if broken; never leave uncommitted work (the worktree isolates it from master).
 - This worktree's CLAUDE.md is the live copy during the expansion.
+- **Card data comes from the inventory, not card images.** For any card-data question (attack/VP/cost/effect text), route workers and subagents to the expansion inventory files — see "Card Reading & Inventory Rules" below. Never let a worker or subagent read structured card numbers off card art.
 - Full canonical rules live in master's CLAUDE.md under "Session Roles & Folder Discipline (READ FIRST)" — preserve them when reconciling CLAUDE.md at merge.
 
 ## Scheme Hero Requirements Infrastructure
