@@ -2001,6 +2001,7 @@ const henchmen = [
     originalAttack: 2,
     victoryPoints: 1,
     fightEffect: "hydraBaseFight",
+    bonusWhileVillain: 2,
     classes: [],
     keywords: [],
     image: "Visual Assets/Henchmen/Revelations_HydraBase.webp",

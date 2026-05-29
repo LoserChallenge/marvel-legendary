@@ -8520,9 +8520,20 @@ if (stackedTwistNextToMastermind > 0) {
       locationImg.classList.add("card-image");
       locationContainer.appendChild(locationImg);
 
-      // Location affordability check
-      if (totalAttackPoints >= locationCard.attack) {
+      // Location affordability check — use EFFECTIVE attack (base + bonusWhileVillain when a
+      // villain shares this space) so the highlight matches the real fight cost (E-3 fix).
+      const effectiveLocationAttack = getLocationEffectiveAttack(i);
+      if (totalAttackPoints >= effectiveLocationAttack) {
         locationContainer.classList.add("attackable");
+      }
+
+      // Location attack overlay — show the bonused value when a while-villain bonus is active,
+      // mirroring the villain attack-overlay pattern.
+      if (effectiveLocationAttack !== locationCard.attack) {
+        const locationAttackOverlay = document.createElement("div");
+        locationAttackOverlay.className = "attack-overlay location-attack-overlay";
+        locationAttackOverlay.textContent = effectiveLocationAttack;
+        locationContainer.appendChild(locationAttackOverlay);
       }
 
       // Location click handler — calls showLocationAttackButton (Task 5)
@@ -11758,6 +11769,17 @@ function showHQAttackButton(index) {
   }
 }
 
+// Effective attack cost of the Location at cityIndex: base + bonusWhileVillain while a Villain
+// shares the same city space ("while there's a Villain here"). Generalizes the former HYDRA-Base
+// subtype==="Henchman" +2 into a single engine-read field (E-3). Returns 0 if no Location there.
+function getLocationEffectiveAttack(cityIndex) {
+  const loc = cityLocations[cityIndex];
+  if (!loc) return 0;
+  const villainPresent = city[cityIndex] !== null && city[cityIndex] !== undefined;
+  const bonus = villainPresent && loc.bonusWhileVillain ? loc.bonusWhileVillain : 0;
+  return Math.max(0, (loc.attack || 0) + bonus);
+}
+
 function showLocationAttackButton(cityIndex) {
   const locationCard = cityLocations[cityIndex];
   if (!locationCard) return;
@@ -11765,16 +11787,8 @@ function showLocationAttackButton(cityIndex) {
   const cityCell = document.querySelector(`#city-${cityIndex + 1}`);
   if (!cityCell) return;
 
-  // Calculate effective attack cost
-  let effectiveAttack = locationCard.attack;
-  // HYDRA Base subtype: +2 while a villain is present in the same space
-  if (locationCard.subtype === "Henchman" && city[cityIndex] !== null) {
-    effectiveAttack += 2;
-  }
-
-  if (effectiveAttack < 0) {
-    effectiveAttack = 0;
-  }
+  // Effective attack cost: base + bonusWhileVillain when a villain shares this space.
+  const effectiveAttack = getLocationEffectiveAttack(cityIndex);
 
   // Check affordability — Locations use Attack only (no Bribe, no recruit-to-fight)
   if (totalAttackPoints < effectiveAttack) {

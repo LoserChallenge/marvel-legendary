@@ -2460,7 +2460,7 @@ async function grimReaperStrike() {
       keywords: [],
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_GrimReaper.webp",
-      graveyardBonus: 2,
+      bonusWhileVillain: 2,
     };
     if (typeof placeLocation === "function") {
       await placeLocation(graveyard);
@@ -2484,7 +2484,7 @@ async function epicGrimReaperStrike() {
       keywords: [],
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_GrimReaper_Epic.webp",
-      graveyardBonus: 3,
+      bonusWhileVillain: 3,
     };
     if (typeof placeLocation === "function") {
       await placeLocation(graveyard);
