@@ -602,6 +602,12 @@ async function placeLocation(locationCard) {
     `<span class="console-highlights">${locationCard.name}</span> enters the city above ${citySpaceLabels[targetIndex]}.`,
   );
   updateGameBoard();
+  // PT-1: announce the Location's arrival with a draw popup, parallel to villains. Normal-placement
+  // path only — the overflow branch above returns early and prompts via showOperationSelectionPopup,
+  // so it must not double-popup. All placeLocation callers are async + awaited, so this sequences.
+  await new Promise((resolve) => {
+    showPopup("Location Arrival", locationCard, resolve);
+  });
 }
 
 async function handleLocationOverflow(newLocation) {
@@ -6702,6 +6708,13 @@ function showPopup(type, drawnCard, confirmCallback) {
     popupTitle.innerText = `Villain`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city.`;
+    popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+    confirmBtn.innerText = getRandomConfirmText();
+  } else if (type === "Location Arrival") {
+    playSFX("villain-entry");
+    popupTitle.innerText = `Location`;
+    popupImage.style.display = "block";
+    popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city as a Location.`;
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "X-Cutioner Hero to Villain") {
