@@ -15741,6 +15741,15 @@ async function resolveTacticEffects(tacticCard) {
   (!tacticCard.name || tacticCard.name !== "Mysterio Mastermind Tactic")
 ) {
       negate = await promptNegateFightEffectWithMrFantastic();
+      // M1 (PT-8 negate edge): a transform-tactic's VP push was suppressed at revealMastermindTactic
+      // because its fightEffect normally places the scoring Location. If the fight effect is negated
+      // (Mr. Fantastic — Ultimate Nullifier cancels the ability, not the card's VP), no Location is
+      // placed, so the tactic must instead score its VP via the Victory Pile — exactly like a normal
+      // defeated tactic (whose push at 15676 is unconditional). The transform stays cancelled (the
+      // !negate guard below skips the fightEffect).
+      if (negate && tacticCard.transformsToLocation) {
+        victoryPile.push(tacticCard);
+      }
       checkMastermindState();
       resolve();
     }
