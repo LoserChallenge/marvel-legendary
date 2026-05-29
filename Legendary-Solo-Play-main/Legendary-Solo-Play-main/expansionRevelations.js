@@ -2476,7 +2476,7 @@ async function grimReaperCarnivalOfConcussions() {
       keywords: [],
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_GrimReaper_CarnivalOfConcussions.webp",
-      locationTrigger: "carnivalOfConcussionsTrigger",
+      triggeredAbility: "carnivalOfConcussionsTrigger",
     });
   }
 }
@@ -2497,7 +2497,7 @@ async function grimReaperCultOfSkulls() {
       keywords: [],
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_GrimReaper_CultOfSkulls.webp",
-      locationTrigger: "cultOfSkullsTrigger",
+      triggeredAbility: "cultOfSkullsTrigger",
     });
   }
 }
@@ -2518,7 +2518,7 @@ async function grimReaperMazeOfBones() {
       keywords: [],
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_GrimReaper_MazeOfBones.webp",
-      locationTrigger: "mazeOfBonesTrigger",
+      triggeredAbility: "mazeOfBonesTrigger",
     });
   }
 }
@@ -2541,7 +2541,7 @@ async function grimReaperPrisonOfCoffins() {
       keywords: [],
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_GrimReaper_PrisonOfCoffins.webp",
-      locationTrigger: "prisonOfCoffinsTrigger",
+      triggeredAbility: "prisonOfCoffinsTrigger",
     });
   }
 }
@@ -2719,7 +2719,7 @@ async function mandarinDragonOfHeavenSpaceship() {
       keywords: [],
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_Mandarin_DragonOfHeavenSpaceship.webp",
-      locationTrigger: "dragonOfHeavenTrigger",
+      triggeredAbility: "dragonOfHeavenTrigger",
     });
   }
 }
@@ -2867,9 +2867,109 @@ async function theHoodWarehouse() {
       keywords: [],
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_TheHood_TheHoodsWarehouse.webp",
-      locationTrigger: "hoodsWarehouseTrigger",
+      triggeredAbility: "hoodsWarehouseTrigger",
     });
   }
+}
+
+// === Location "Whenever you fight a Villain here" triggered abilities ===
+// The engine fires window[location.triggeredAbility](locationCard, cityIndex) from
+// defeatVillain() (script.js) after a Villain sharing this Location's city space is defeated.
+// 10 of the 11 Revelations Location triggers are "each other player ..." effects. In solo there
+// are no other players, so — per the project's standing other-player convention (deferred to the
+// project-wide other-player review) — they announce that the trigger fired, quote the verbatim
+// card effect, and skip. Only The Hood's Warehouse affects the solo player directly.
+
+const RANGE_ICON = `<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons">`;
+const TECH_ICON = `<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons">`;
+
+// Shared announce-and-skip helper for the 10 "each other player" Location triggers.
+function announceOtherPlayerLocationTrigger(name, effectText) {
+  onscreenConsole.log(
+    `<span class="console-highlights">${name}</span> triggers — "${effectText}" No other players in solo — skipped.`,
+  );
+}
+
+// --- Grim Reaper Tactic Locations ---
+function carnivalOfConcussionsTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "Carnival of Concussions",
+    "Whenever you fight a Villain here, each other player KOs a Bystander from their Victory Pile.",
+  );
+}
+
+function cultOfSkullsTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "Cult of Skulls",
+    "Whenever you fight a Villain here, each other player reveals their hand and discards a non-grey card.",
+  );
+}
+
+function mazeOfBonesTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "Maze of Bones",
+    "Whenever you fight a Villain here, each other player gains a Wound.",
+  );
+}
+
+function prisonOfCoffinsTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "Prison of Coffins",
+    "Whenever you fight a Villain here, each other player puts a Villain from their Victory Pile into the Escape Pile.",
+  );
+}
+
+// --- Mandarin Tactic Location ---
+function dragonOfHeavenTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "Dragon of Heaven Spaceship",
+    "Whenever you fight a Villain here, each other player reveals their hand and KOs one of their non-grey Heroes.",
+  );
+}
+
+// --- The Hood Tactic Location (LIVE: affects the solo player) ---
+async function hoodsWarehouseTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">The Hood's Warehouse</span> triggers — When you fight a Villain here, play another card from the Villain Deck.`,
+  );
+  await processVillainCard();
+}
+
+// --- Army of Evil group Location ---
+function domeOfDarkforceTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "Dome of Darkforce",
+    `Whenever you fight a Villain here, each other player reveals a ${RANGE_ICON} Hero or discards a card.`,
+  );
+}
+
+// --- Lethal Legion group Locations ---
+function carnivalOfWondersTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "Carnival of Wonders",
+    "Whenever you fight a Villain here, each other player chooses a Bystander from their Victory Pile to be captured by Carnival of Wonders.",
+  );
+}
+
+function laserMazeTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "Laser Maze",
+    `Whenever you fight a Villain here, each other player reveals a ${RANGE_ICON} Hero or gains a Wound.`,
+  );
+}
+
+function raftPrisonTrigger() {
+  announceOtherPlayerLocationTrigger(
+    `"The Raft" Prison`,
+    "Whenever you fight a Villain here, each other player puts a Villain from their Victory Pile into the Escape Pile or gains a Wound.",
+  );
+}
+
+function whiteGorillaCultTrigger() {
+  announceOtherPlayerLocationTrigger(
+    "White Gorilla Cult",
+    `Whenever you fight a Villain here, each other player reveals their hand and discards a ${TECH_ICON} card.`,
+  );
 }
 
 // --- HENCHMEN EFFECTS ---

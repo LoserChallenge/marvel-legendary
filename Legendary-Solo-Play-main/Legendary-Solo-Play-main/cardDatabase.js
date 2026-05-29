@@ -3930,6 +3930,7 @@ const villains = [
         alwaysLeads: "false",
         keywords: [],
         image: "Visual Assets/Villains/Revelations_ArmyOfEvil_DomeOfDarkforce.webp",
+        triggeredAbility: "domeOfDarkforceTrigger",
       },
       {
         id: 87,
@@ -4285,6 +4286,7 @@ const villains = [
         alwaysLeads: "false",
         keywords: [],
         image: "Visual Assets/Villains/Revelations_LethalLegion_CarnivalOfWonders.webp",
+        triggeredAbility: "carnivalOfWondersTrigger",
       },
       {
         id: 103,
@@ -4306,6 +4308,7 @@ const villains = [
         alwaysLeads: "false",
         keywords: [],
         image: "Visual Assets/Villains/Revelations_LethalLegion_LaserMaze.webp",
+        triggeredAbility: "laserMazeTrigger",
       },
       {
         id: 104,
@@ -4411,6 +4414,7 @@ const villains = [
         alwaysLeads: "false",
         keywords: [],
         image: "Visual Assets/Villains/Revelations_LethalLegion_TheRaftPrison.webp",
+        triggeredAbility: "raftPrisonTrigger",
       },
       {
         id: 109,
@@ -4432,6 +4436,7 @@ const villains = [
         alwaysLeads: "false",
         keywords: [],
         image: "Visual Assets/Villains/Revelations_LethalLegion_WhiteGorillaCult.webp",
+        triggeredAbility: "whiteGorillaCultTrigger",
       },
     ],
   }
