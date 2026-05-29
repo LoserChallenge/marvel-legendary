@@ -8521,9 +8521,10 @@ if (stackedTwistNextToMastermind > 0) {
       locationContainer.appendChild(locationImg);
 
       // Location affordability check — use EFFECTIVE attack (base + bonusWhileVillain when a
-      // villain shares this space) so the highlight matches the real fight cost (E-3 fix).
+      // villain shares this space) vs the recruit-as-attack-aware pool (PT-6), so the highlight
+      // matches the real fight cost AND honors Thor / Negative Zone / reserved like villains.
       const effectiveLocationAttack = getLocationEffectiveAttack(i);
-      if (totalAttackPoints >= effectiveLocationAttack) {
+      if (getAvailableAttackForFight(i) >= effectiveLocationAttack) {
         locationContainer.classList.add("attackable");
       }
 
@@ -11780,6 +11781,62 @@ function getLocationEffectiveAttack(cityIndex) {
   return Math.max(0, (loc.attack || 0) + bonus);
 }
 
+// Points spendable as ATTACK against a fight at cityIndex, honoring the same rules the villain
+// path uses (updateHighlights / defeatVillain): recruit-as-attack (Thor "God of Thunder" →
+// recruitUsedToAttack), Negative Zone swap, and reserved attack for the space. (PT-6 fix.)
+function getAvailableAttackForFight(cityIndex) {
+  const isMastermindSlot = cityIndex === 5;
+  const reserved =
+    (isMastermindSlot ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
+  let pool;
+  if (negativeZoneAttackAndRecruit) {
+    pool = totalRecruitPoints; // Negative Zone: recruit pays as attack
+  } else {
+    pool = totalAttackPoints + (recruitUsedToAttack ? totalRecruitPoints : 0);
+  }
+  return pool + reserved;
+}
+
+// Deduct `cost` for a Location fight at cityIndex, mirroring the defeatVillain payment path exactly:
+// when recruit-as-attack is active (Thor), the player chooses the attack/recruit split via the SAME
+// counter-popup villains use; otherwise reserved attack first, then attack (or recruit under Negative
+// Zone). Async because the popup is awaited.
+async function payLocationAttackCost(cityIndex, cost) {
+  const isMastermindSlot = cityIndex === 5;
+  const reservedAvail = () =>
+    (isMastermindSlot ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
+  const spendReserved = (amt) => {
+    if (isMastermindSlot) mastermindReserveAttack -= amt;
+    else cityReserveAttack[cityIndex] -= amt;
+  };
+
+  if (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) {
+    // Player chooses the attack/recruit split (matches the villain counter-popup path).
+    const locationCard = cityLocations[cityIndex];
+    const result = await showCounterPopup(locationCard, cost);
+    let attackNeeded = result.attackUsed || 0;
+    const recruitNeeded = result.recruitUsed || 0;
+    const reservedUsed = Math.min(attackNeeded, reservedAvail());
+    if (reservedUsed > 0) {
+      spendReserved(reservedUsed);
+      attackNeeded -= reservedUsed;
+    }
+    totalAttackPoints -= attackNeeded;
+    totalRecruitPoints -= recruitNeeded;
+    onscreenConsole.log(
+      `You used ${result.attackUsed} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and ${result.recruitUsed} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${locationCard.name}</span>.`,
+    );
+  } else if (negativeZoneAttackAndRecruit) {
+    totalRecruitPoints -= cost;
+  } else {
+    const reservedUsed = Math.min(cost, reservedAvail());
+    if (reservedUsed > 0) spendReserved(reservedUsed);
+    totalAttackPoints -= cost - reservedUsed;
+  }
+  // Final Showdown attack tracking — preserve prior defeatLocation behavior.
+  cumulativeAttackPoints -= cost;
+}
+
 function showLocationAttackButton(cityIndex) {
   const locationCard = cityLocations[cityIndex];
   if (!locationCard) return;
@@ -11790,8 +11847,8 @@ function showLocationAttackButton(cityIndex) {
   // Effective attack cost: base + bonusWhileVillain when a villain shares this space.
   const effectiveAttack = getLocationEffectiveAttack(cityIndex);
 
-  // Check affordability — Locations use Attack only (no Bribe, no recruit-to-fight)
-  if (totalAttackPoints < effectiveAttack) {
+  // Check affordability — honor recruit-as-attack / Negative Zone / reserved like the villain path.
+  if (getAvailableAttackForFight(cityIndex) < effectiveAttack) {
     onscreenConsole.log(
       `You need ${effectiveAttack} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight <span class="console-highlights">${locationCard.name}</span>.`,
     );
@@ -11973,9 +12030,9 @@ async function defeatLocation(cityIndex, attackCost) {
     animationPromise = animateDefeatFromRect(locationImg.src, rect);
   }
 
-  // Deduct attack points
-  totalAttackPoints -= attackCost;
-  cumulativeAttackPoints -= attackCost;
+  // Deduct cost — counter-popup split when recruit-as-attack active, else reserved → attack /
+  // Negative-Zone recruit, like villains. Awaited (the popup is async).
+  await payLocationAttackCost(cityIndex, attackCost);
 
   // Move to Victory Pile
   victoryPile.push(locationCard);
