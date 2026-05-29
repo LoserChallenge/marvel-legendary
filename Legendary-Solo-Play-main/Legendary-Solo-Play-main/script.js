@@ -8533,6 +8533,17 @@ if (stackedTwistNextToMastermind > 0) {
       locationImg.classList.add("card-image");
       locationContainer.appendChild(locationImg);
 
+      // PT-2: captured-bystander overlay — some abilities (e.g. Swordsman's ambush) attach Bystanders
+      // to a Location. Show a count + thumbnail (reusing the villain bystander-overlay styling) so the
+      // player can see them; they're rescued to the Victory Pile when this Location is defeated.
+      // Minimal functional version — the deferred Villain/Mastermind overlay UX pass will refine it.
+      if (Array.isArray(locationCard.capturedBystanders) && locationCard.capturedBystanders.length > 0) {
+        const capOverlay = document.createElement("div");
+        capOverlay.className = "bystanders-overlay";
+        capOverlay.innerHTML = `<span class="bystanderOverlayNumber">${locationCard.capturedBystanders.length}</span><img src="${locationCard.capturedBystanders[0].image}" alt="Captured Bystander" class="villain-bystander">`;
+        locationContainer.appendChild(capOverlay);
+      }
+
       // Location affordability check — use EFFECTIVE attack (base + bonusWhileVillain when a
       // villain shares this space) vs the recruit-as-attack-aware pool (PT-6), so the highlight
       // matches the real fight cost AND honors Thor / Negative Zone / reserved like villains.
@@ -12065,6 +12076,23 @@ async function defeatLocation(cityIndex, attackCost) {
   onscreenConsole.log(
     `Defeated Location <span class="console-highlights">${locationCard.name}</span> at ${citySpaceLabels[cityIndex]}. Worth ${locationCard.victoryPoints} VP.`,
   );
+
+  // PT-2: rescue any Bystanders this Location captured (e.g. via Swordsman's ambush). Mirrors the
+  // villain rescue path (collectDefeatOperations): push to victoryPile + bystanderBonuses + rescue
+  // ability. cityLocations[] is NOT cloned, so capturedBystanders set at ambush persists on this live
+  // object — without this block they'd be silently destroyed when the Location is defeated.
+  if (Array.isArray(locationCard.capturedBystanders) && locationCard.capturedBystanders.length > 0) {
+    for (const bystander of locationCard.capturedBystanders) {
+      if (!bystander) continue;
+      onscreenConsole.log(
+        `<span class="console-highlights">${bystander.name}</span> rescued from <span class="console-highlights">${locationCard.name}</span>.`,
+      );
+      victoryPile.push(bystander);
+      bystanderBonuses();
+      await rescueBystanderAbility(bystander);
+    }
+    locationCard.capturedBystanders = [];
+  }
 
   // Execute fight effect if present
   if (locationCard.fightEffect && typeof window[locationCard.fightEffect] === "function") {
