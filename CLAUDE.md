@@ -303,6 +303,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - Commit before you stop — commits are save points; commit work-in-progress freely even if broken; never leave uncommitted work (the worktree isolates it from master).
 - This worktree's CLAUDE.md is the live copy during the expansion.
 - **Card data comes from the inventory, not card images.** For any card-data question (attack/VP/cost/effect text), route workers and subagents to the expansion inventory files — see "Card Reading & Inventory Rules" below. Never let a worker or subagent read structured card numbers off card art.
+- **Independent review is a required gate, not optional self-check.** The implementing session's own verification (e.g. `/game-test`) is never sufficient alone — cold-read review must be subagent-delegated (its reviewers run in fresh context). Coordinators bake into EACH fix-group's done-criteria: run `expansion-validator` (on touched expansion files) + `/code-review` on the diff before calling the group done. Before merge: full pass — `expansion-validator` + `/code-review` (high) + `sandbox-review` (separate session) + user playtest. Don't skip these because a fix "looks small."
 - Full canonical rules live in master's CLAUDE.md under "Session Roles & Folder Discipline (READ FIRST)" — preserve them when reconciling CLAUDE.md at merge.
 
 ## Scheme Hero Requirements Infrastructure
