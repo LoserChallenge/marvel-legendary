@@ -562,18 +562,22 @@ Attack: 9+ | VP: 6
 **Carnival of Concussions** (Tactic → Location)
 Fight: If this was not already a Location, draw three cards, and this card enters the city as a Location with this ability:
   Whenever you fight a Villain here, each other player KOs a Bystander from their Victory Pile.
+As Location — Attack: 8 | VP: 6
 
 **Cult of Skulls** (Tactic → Location)
 Fight: If this was not already a Location, KO up to two cards from your discard pile, and this card enters the city as a Location with this ability:
   Whenever you fight a Villain here, each other player reveals their hand and discards a non-grey card.
+As Location — Attack: 8 | VP: 6
 
 **Maze of Bones** (Tactic → Location)
 Fight: If this was not already a Location, look at the top four cards of your deck, KO any number of them, and put the rest back in any order. Then this card enters the city as a Location with this ability:
   Whenever you fight a Villain here, each other player gains a Wound.
+As Location — Attack: 8 | VP: 6
 
 **Prison of Coffins** (Tactic → Location)
 Fight: If this was not already a Location, you get +5 Recruit, and this card enters the city as a Location with this ability:
   Whenever you fight a Villain here, each other player puts a Villain from their Victory Pile into the Escape Pile.
+As Location — Attack: 8 | VP: 6
 
 ---
 
@@ -602,6 +606,7 @@ Fight: If this was not already a Location, KO up to two of your Heroes, and this
 *As Location:*
   Whenever you fight a Villain here, each other player reveals their hand and KOs one of their non-grey Heroes.
   Fight: KO up to two of your Heroes.
+As Location — Attack: 9 | VP: 6
 
 **Intertwining Powers** (Tactic)
 Fight: Each other player without at least two Mandarin's Rings in their Victory Pile gains a Wound.
@@ -637,6 +642,7 @@ Fight: Each other player discards their deck.
 **The Hood's Warehouse** (Tactic → Location)
 Fight: If this was not already a Location, rescue 4 Bystanders, and this card enters the city as a Location with this ability:
   When you fight a Villain here, play another card from the Villain Deck.
+As Location — Attack: 9 | VP: 6
 
 ---
 
