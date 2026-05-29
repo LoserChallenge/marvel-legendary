@@ -11676,7 +11676,10 @@ function addCardOverlays(cardContainer, card, index, location = 'city') {
   // Add location attack overlays if applicable (only for city)
   if (location === 'city') {
     const locationAttackValue = cityLocationAttack[index] || 0;
-    if (locationAttackValue !== 0) {
+    // PT-5: only show the space attack modifier (e.g. Storm's −2) when a Villain occupies the space —
+    // it applies to Villains, not Locations (the Location cost never reads cityLocationAttack). Mirrors
+    // the twin gate in script.js's board render.
+    if (locationAttackValue !== 0 && city[index]) {
       const locationElement = document.querySelector(
         `#city-label-${index}`,
       );

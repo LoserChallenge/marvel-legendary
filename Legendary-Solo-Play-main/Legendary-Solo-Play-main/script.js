@@ -8593,7 +8593,11 @@ if (stackedTwistNextToMastermind > 0) {
         );
         if (existingOverlay) existingOverlay.remove();
 
-        if (locationAttackValue !== 0) {
+        // PT-5: the city-space attack modifier (e.g. Storm's −2) applies to VILLAINS in the space, not
+        // Locations — the Location's own cost (getLocationEffectiveAttack) never reads cityLocationAttack.
+        // Only show the label when a Villain occupies the space, so a Location alone there isn't misread
+        // as receiving the modifier.
+        if (locationAttackValue !== 0 && city[i]) {
           const attackElement = document.createElement("div");
           attackElement.className = "location-attack-changes";
           attackElement.innerHTML = `<p>${locationAttackValue} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
