@@ -2332,7 +2332,9 @@ let hydraOfficersNextToScheme = 0;
 async function secretHydraCorruptionTwist() {
   revelationsTwistCount++;
   // Count twists in KO pile
-  const twistsInKO = koPile.filter(c => c.type === "Scheme Twist").length + 1;
+  // The engine (handleSchemeTwist, script.js:5887) pushes this twist to koPile BEFORE the effect
+  // runs, so the filter already counts "this one" — do NOT add +1 (would double-count). (PT-4 fix.)
+  const twistsInKO = koPile.filter(c => c.type === "Scheme Twist").length;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! ${twistsInKO} Twist(s) in KO pile (including this one).`);
   hydraOfficersNextToScheme += twistsInKO;
   onscreenConsole.log(`${hydraOfficersNextToScheme} S.H.I.E.L.D. Officers now next to the Scheme.`);
@@ -2343,7 +2345,9 @@ async function secretHydraCorruptionTwist() {
 // Open HYDRA (Side B) Twist: Same officer placement, then transform back if evil hasn't won.
 async function openHydraRevolutionTwist() {
   revelationsTwistCount++;
-  const twistsInKO = koPile.filter(c => c.type === "Scheme Twist").length + 1;
+  // The engine (handleSchemeTwist, script.js:5887) pushes this twist to koPile BEFORE the effect
+  // runs, so the filter already counts "this one" — do NOT add +1 (would double-count). (PT-4 fix.)
+  const twistsInKO = koPile.filter(c => c.type === "Scheme Twist").length;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! ${twistsInKO} Twist(s) in KO pile. Adding Officers.`);
   hydraOfficersNextToScheme += twistsInKO;
   onscreenConsole.log(`${hydraOfficersNextToScheme} S.H.I.E.L.D. Officers now next to the Scheme.`);
