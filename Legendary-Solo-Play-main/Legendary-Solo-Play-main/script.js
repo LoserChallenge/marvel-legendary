@@ -14866,6 +14866,7 @@ if (mastermind.shards && mastermind.shards > 0 && !mastermind.noShardBonus) {
   // Initialize attackFromGems to 0 for all masterminds
   mastermind.attackFromGems = 0;
   mastermind.attackFromRings = 0;
+  mastermind.attackFromOwnEffects = 0;
 
 if (mastermind.name === "Thanos") {
 
@@ -14899,9 +14900,32 @@ if (mastermind.name === "Thanos") {
     mastermind.attackFromRings = ringCount * (isEpic ? 6 : 3);
   }
 
+  // --- Revelations mastermind attack-scaling (Cluster D Batch 2, effects 5 & 6) ---
+  // Grim Reaper: +1 (Epic +2) per Location-slot occupant in the city. cityLocations[] holds every
+  // Location-slot card incl. HYDRA Base (type "Location", henchmen:true), so a non-null count captures it.
+  if (mastermind.name === "Grim Reaper" || mastermind.name === "Epic Grim Reaper") {
+    const locationCount =
+      typeof cityLocations !== "undefined" && Array.isArray(cityLocations)
+        ? cityLocations.filter((loc) => loc !== null && loc !== undefined).length
+        : 0;
+    mastermind.attackFromOwnEffects =
+      locationCount * (mastermind.name === "Epic Grim Reaper" ? 2 : 1);
+  }
+
+  // The Hood: Dark Memories (Epic = Double). +1 per unique discard class (cap 5), Double x2.
+  if (
+    mastermind.keywords &&
+    (mastermind.keywords.includes("Dark Memories") ||
+      mastermind.keywords.includes("Double Dark Memories")) &&
+    typeof calculateDarkMemories === "function"
+  ) {
+    const mult = mastermind.keywords.includes("Double Dark Memories") ? 2 : 1;
+    mastermind.attackFromOwnEffects = calculateDarkMemories() * mult;
+  }
+
   // Start with the mastermind's base attack value
   let mastermindAttack =
-    mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards - mastermind.attackFromGems - mastermind.attackFromRings;
+    mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards + mastermind.attackFromOwnEffects - mastermind.attackFromGems - mastermind.attackFromRings;
 
   // Ensure mastermindAttack doesn't drop below 0
   if (mastermindAttack < 0) {
