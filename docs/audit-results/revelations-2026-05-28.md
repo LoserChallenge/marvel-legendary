@@ -178,3 +178,26 @@ Cross-reference `docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md`:
 
 - **Destroyed city-space placeholder art** (low / deferred polish) — Destroyed cells in the Earthquake/Tsunami "Drains the Ocean / Crushes the Coast" scheme (rendered via `destroyedSpaces`, overlay drawn in `updateGameBoard`) currently reuse the **Galactus Master Strike** card image as the "destroyed space" overlay — borrowed from an unrelated scheme. Functionally fine; reads as thematically wrong. **Want:** a more generic destroyed-space visual, or one unique to this scheme. Not blocking the expansion. Surfaced during the 1A playtest (2026-05-28).
 - **Sentry / "The Void" name-swap display deferred** (low / deferred polish) — Cluster D Batch 1 shipped Sentry's mechanical "The Void" behaviour: the +5 Attack while in the Streets (city index 1) or Bank (index 3) is wired via `attackFromOwnEffects` in `updateVillainAttackValues`, and the position-conditional Fight effect ("KO up to two cards from your discard pile") was already live in `sentryFight()`. **Not done:** swapping the *displayed name* from "Sentry" to "The Void" while in Bank/Streets (the card art's printed name still shows). Display-only nicety — the overlay reads the card's name from the art, so a name swap needs a separate label-overlay mechanism. Deferred; +5 attack + Fight effect are correct and sufficient for play.
+
+---
+
+## Milestone playtest findings — 2026-05-29
+
+Paul playtested the full Cluster C + D stack (on Batch 3 commit `48988e4`). Worked one at a time; durable capture below.
+
+**CONFIRMED WORKING:**
+- Grim Reaper +1 Attack per Location, counting a HYDRA Base Location (Cluster D Batch 2).
+- HYDRA Base Location +2 Attack while a Villain shares its space (Cluster D Batch 3, generic `bonusWhileVillain`).
+
+**OPEN (one at a time):**
+- **PT-1 — Villain-draw popup doesn't fire for Location/Henchman cards** [type-handling]. HYDRA Base entered the city with no villain-draw popup; board + console were otherwise correct. The draw/popup path likely doesn't branch for `type === "Location"` (or Henchman-Locations).
+- **PT-2 — Swordsman ambush "he and each Location captures a Bystander"** [type-handling / unimplemented]. Only Swordsman captured a Bystander; the Locations in the city did not. The "each Location also captures" half is unimplemented.
+- **PT-3 — HYDRA transforming Scheme, S.H.I.E.L.D. Officer stack** [feature gap]: (a) no on-screen count of Officers stacked by the Scheme; (b) no "pay 3 Recruit → gain a stacked Officer" player action.
+- **PT-4 — Twist count off-by-one** [logic]: 2 Twists in the KO pile but the console said "3 Twist(s)", and Officers were added as if 3. Twist counter over-counts by one.
+- **PT-5 — Storm "Lightning Bolt" (−2 to a Villain on Rooftops) wrongly hit a Location there** [type-handling]: the −2 should be Villain-only; it applied to a Location in the Rooftops space.
+- **PT-6 — Thor "God of Thunder" recruit-as-attack NOT applied to Location fight cost** [affordability]: Thor active (6 Attack + 3 Recruit = 9 available) vs a cost-8 Location → fight was rejected. Location affordability ignores the recruit-as-attack pool.
+- **PT-7 — Location affordability let an 8-cost Location (Carnival of Concussions) be defeated with ~4 points** [affordability — possible Batch 3 regression]. Directly contradicts PT-6; both are affordability bugs, opposite directions.
+- **PT-8 — Carnival of Concussions appears TWICE in Victory Pile after defeat** [cloning]: the tactic→Location transform appears to duplicate the card.
+- **PT-9 (minor) — Defeated Carnival showed "Worth 0 VP"** [verify]: confirm correct VP against the finalized inventory.
+
+(Diagnosis of PT-6 + PT-7 recorded inline in session; fixes pending — to be worked one at a time after Paul's dispatch.)
