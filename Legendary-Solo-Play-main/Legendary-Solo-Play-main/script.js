@@ -15657,8 +15657,12 @@ async function handleMastermindPostDefeat(
 function revealMastermindTactic(mastermind) {
   const tacticCard = mastermind.tactics.pop();
 
-  // Push the tactic to the victory pile
-  victoryPile.push(tacticCard);
+  // Push the tactic to the victory pile — EXCEPT transform-tactics (Revelations tactic→Location),
+  // which do NOT go to the Victory Pile when fought: their fightEffect places a Location in the city
+  // and that ONE card scores its VP once, when the Location is later defeated (PT-8 double-score fix).
+  if (!tacticCard.transformsToLocation) {
+    victoryPile.push(tacticCard);
+  }
   showTacticPopup(tacticCard);
   updateGameBoard();
 }
