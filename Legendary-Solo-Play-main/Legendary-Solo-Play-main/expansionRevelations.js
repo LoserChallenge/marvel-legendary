@@ -2275,7 +2275,11 @@ async function houseOfMTwist() {
   revelationsTwistCount++;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! KO all non-X-Men Heroes from the HQ.`);
   const hqCards = typeof hq !== "undefined" ? hq : [];
-  for (let i = 0; i < hqCards.length; i++) {
+  // Iterate BACKWARD: goldenRefillHQ (golden mode) splices slot i and shifts everything after it
+  // left, so a forward loop's i++ would jump over the hero that slid into slot i and skip it.
+  // Going high→low, splice only touches already-processed indices and pushes the new card at the
+  // end (past the cursor) — pending indices (< i) are untouched, so every qualifier is KO'd. (M3)
+  for (let i = hqCards.length - 1; i >= 0; i--) {
     if (hqCards[i] && hqCards[i].type === "Hero" && hqCards[i].team !== "X-Men") {
       onscreenConsole.log(`KO'd <span class="console-highlights">${hqCards[i].name}</span> from HQ.`);
       koPile.push(hqCards[i]);
@@ -2306,7 +2310,9 @@ async function noMoreMutantsTwist() {
   revelationsTwistCount++;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! KO all X-Men Heroes from the HQ.`);
   const hqCards = typeof hq !== "undefined" ? hq : [];
-  for (let i = 0; i < hqCards.length; i++) {
+  // Iterate BACKWARD — same reason as houseOfMTwist: goldenRefillHQ splices+shifts, so a forward
+  // loop would skip the hero that slides into the just-cleared slot. (M3)
+  for (let i = hqCards.length - 1; i >= 0; i--) {
     if (hqCards[i] && hqCards[i].type === "Hero" && hqCards[i].team === "X-Men") {
       onscreenConsole.log(`KO'd <span class="console-highlights">${hqCards[i].name}</span> from HQ.`);
       koPile.push(hqCards[i]);
