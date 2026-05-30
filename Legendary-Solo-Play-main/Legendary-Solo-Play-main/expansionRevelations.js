@@ -2929,19 +2929,158 @@ async function theHoodWarehouse() {
 // === Location "Whenever you fight a Villain here" triggered abilities ===
 // The engine fires window[location.triggeredAbility](locationCard, cityIndex) from
 // defeatVillain() (script.js) after a Villain sharing this Location's city space is defeated.
-// 10 of the 11 Revelations Location triggers are "each other player ..." effects. In solo there
-// are no other players, so — per the project's standing other-player convention (deferred to the
-// project-wide other-player review) — they announce that the trigger fired, quote the verbatim
-// card effect, and skip. Only The Hood's Warehouse affects the solo player directly.
+// 10 of the 11 Revelations Location triggers are "each other player ..." effects; the Revelations
+// solo rule says these apply to YOU in 1-player solo. They are being converted from the old
+// announce-and-skip to true self-apply, staged by group (GP-3a/b done; GP-3c/d pending). Triggers
+// not yet converted still use announceOtherPlayerLocationTrigger (announce + skip) as an interim.
+// The Hood's Warehouse (the 11th) is not an each-other-player effect — it plays a Villain card.
 
 const RANGE_ICON = `<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons">`;
 const TECH_ICON = `<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons">`;
 
-// Shared announce-and-skip helper for the 10 "each other player" Location triggers.
+// Shared announce-and-skip helper for the not-yet-converted "each other player" Location triggers.
 function announceOtherPlayerLocationTrigger(name, effectText) {
   onscreenConsole.log(
     `<span class="console-highlights">${name}</span> triggers — "${effectText}" No other players in solo — skipped.`,
   );
+}
+
+// Settled non-grey predicate (GP-3, rule 8): a "non-grey" card is anything that is NOT a basic grey
+// S.H.I.E.L.D. card (color "Grey") and NOT a Wound (Wounds count as grey — their color is "None").
+// Matches the inventory ("non-grey card", revelations.md:569) + core-game convention. Intentionally
+// stricter than epicHoodStrike's color==="Grey"-only grey filter (which omits Wounds — deferred M2).
+function isNonGreyCard(c) {
+  return !!c && c.color !== "Grey" && c.type !== "Wound" && c.name !== "Wound";
+}
+
+// GP-3b solo self-apply helper for Location triggers "reveals their hand and discards a <X> card".
+// In 1-player solo "each other player" → you. Reveals your hand (a formality solo), then discards one
+// matching card from hand: nothing if none qualify, auto if exactly one, player-picker if 2+ (per the
+// 2026-05-28 "present choices" triage). `predicate(card)` selects qualifying cards; `descrText` is the
+// human label of what's being discarded (e.g. "a non-grey card"). Returns a Promise; callers await.
+function revealHandDiscardMatching(predicate, label, descrText) {
+  return new Promise((resolve) => {
+    // Caller (the trigger fn) emits the rich announce with the class icon; descrText here is plain
+    // text, safe for textContent in the picker instruction and the no-match / discard log lines.
+    const matchIndices = [];
+    playerHand.forEach((c, i) => { if (c && predicate(c)) matchIndices.push(i); });
+
+    if (matchIndices.length === 0) {
+      onscreenConsole.log(`No ${descrText} in hand — nothing to discard.`);
+      resolve();
+      return;
+    }
+    if (matchIndices.length === 1) {
+      const card = playerHand.splice(matchIndices[0], 1)[0];
+      playerDiscardPile.push(card);
+      onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+      resolve();
+      return;
+    }
+
+    // 2+ qualifying cards → single-select picker (modeled on pickRingFromVictoryPile).
+    const matches = matchIndices.map((i) => ({ ...playerHand[i], handIndex: i }));
+    genericCardSort(matches);
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    if (!cardchoicepopup || !modalOverlay || !selectionRow1 || !titleElement || !instructionsElement) {
+      // Defensive: if the popup DOM is unexpectedly absent, fall back to discarding the first match.
+      const card = playerHand.splice(matchIndices[0], 1)[0];
+      playerDiscardPile.push(card);
+      onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+      resolve();
+      return;
+    }
+
+    titleElement.textContent = label;
+    instructionsElement.textContent = `Choose ${descrText} to discard.`;
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selected = null;
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+    confirmButton.textContent = "DISCARD";
+    confirmButton.disabled = true;
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    matches.forEach((entry) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-hand-index", entry.handIndex);
+
+      const cardImage = document.createElement("img");
+      cardImage.src = entry.image;
+      cardImage.alt = entry.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = entry.image;
+        previewImage.alt = entry.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        selectionRow1.querySelectorAll("img.selected").forEach((img) => img.classList.remove("selected"));
+        if (selected && selected.handIndex === entry.handIndex) {
+          selected = null;
+          confirmButton.disabled = true;
+        } else {
+          selected = entry;
+          cardImage.classList.add("selected");
+          confirmButton.disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    setupDragScrolling(selectionRow1);
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!selected) return;
+      setTimeout(() => {
+        const card = playerHand.splice(selected.handIndex, 1)[0];
+        playerDiscardPile.push(card);
+        onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+        closeCardChoicePopup();
+        updateGameBoard();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
 }
 
 // --- Grim Reaper Tactic Locations ---
@@ -2952,11 +3091,12 @@ function carnivalOfConcussionsTrigger() {
   );
 }
 
-function cultOfSkullsTrigger() {
-  announceOtherPlayerLocationTrigger(
-    "Cult of Skulls",
-    "Whenever you fight a Villain here, each other player reveals their hand and discards a non-grey card.",
+// Solo self-apply (GP-3b): "each other player reveals their hand and discards a non-grey card" → you do it.
+async function cultOfSkullsTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Cult of Skulls</span> triggers — in solo, reveal your hand and discard a non-grey card.`,
   );
+  await revealHandDiscardMatching(isNonGreyCard, "Cult of Skulls", "a non-grey card");
 }
 
 // Solo self-apply (GP-3): "each other player gains a Wound" → you gain a Wound.
@@ -3022,10 +3162,15 @@ function raftPrisonTrigger() {
   );
 }
 
-function whiteGorillaCultTrigger() {
-  announceOtherPlayerLocationTrigger(
+// Solo self-apply (GP-3b): "each other player reveals their hand and discards a Tech card" → you do it.
+async function whiteGorillaCultTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">White Gorilla Cult</span> triggers — in solo, reveal your hand and discard a ${TECH_ICON} card.`,
+  );
+  await revealHandDiscardMatching(
+    (c) => Array.isArray(c.classes) && c.classes.includes("Tech"),
     "White Gorilla Cult",
-    `Whenever you fight a Villain here, each other player reveals their hand and discards a ${TECH_ICON} card.`,
+    "a Tech card",
   );
 }
 
