@@ -2959,11 +2959,12 @@ function cultOfSkullsTrigger() {
   );
 }
 
-function mazeOfBonesTrigger() {
-  announceOtherPlayerLocationTrigger(
-    "Maze of Bones",
-    "Whenever you fight a Villain here, each other player gains a Wound.",
+// Solo self-apply (GP-3): "each other player gains a Wound" → you gain a Wound.
+async function mazeOfBonesTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Maze of Bones</span> triggers — in solo, you gain a Wound.`,
   );
+  await drawWound();
 }
 
 function prisonOfCoffinsTrigger() {
@@ -2990,11 +2991,12 @@ async function hoodsWarehouseTrigger() {
 }
 
 // --- Army of Evil group Location ---
-function domeOfDarkforceTrigger() {
-  announceOtherPlayerLocationTrigger(
-    "Dome of Darkforce",
-    `Whenever you fight a Villain here, each other player reveals a ${RANGE_ICON} Hero or discards a card.`,
+// Solo self-apply (GP-3): "each other player reveals a Range Hero or discards a card" → you do it.
+async function domeOfDarkforceTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Dome of Darkforce</span> triggers — in solo, you reveal a ${RANGE_ICON} Hero or discard a card.`,
   );
+  await revealClassOrDiscard("Range", "Range.svg", "Dome of Darkforce");
 }
 
 // --- Lethal Legion group Locations ---
@@ -3005,11 +3007,12 @@ function carnivalOfWondersTrigger() {
   );
 }
 
-function laserMazeTrigger() {
-  announceOtherPlayerLocationTrigger(
-    "Laser Maze",
-    `Whenever you fight a Villain here, each other player reveals a ${RANGE_ICON} Hero or gains a Wound.`,
+// Solo self-apply (GP-3): "each other player reveals a Range Hero or gains a Wound" → you do it.
+async function laserMazeTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Laser Maze</span> triggers — in solo, you reveal a ${RANGE_ICON} Hero or gain a Wound.`,
   );
+  await revealClassOrWound("Range", "Range.svg", "Laser Maze");
 }
 
 function raftPrisonTrigger() {
