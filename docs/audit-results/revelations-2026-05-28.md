@@ -273,3 +273,86 @@ Cold-read review (subagent-delegated) of the fix campaign diff `6c81aca..HEAD` (
 - **W1 (Sentry's Watchtower "villains here get Last Stand", unimplemented) → Cluster D Batch 4.** Comment relabelled NOT-IMPLEMENTED + TODO in commit `7ff574f`; the keyword-grant itself is scheduled with Batch 4. (Note: `sentrysWatchtowerFight` HQ-refill fill-in-place is the separate Rule-2 item above, still needs a refill-vs-rotate gameplay call.)
 - **Hood's Warehouse / `destroyedSpaces` endgame edge → DEFERRED** (edge-of-edge; same in both modes).
 - **`cumulativeAttackPoints` possibly-dead → VERIFY BEFORE ACTION.** Two reviewers found no read site (only incremented at `script.js:8060`/`10943`, reset `11322`; the L2 fix removed the lone decrement). If a careful sweep confirms zero reads, the "Attack-Granting Function Pattern" gotcha in CLAUDE.md (which currently mandates pairing every `totalAttackPoints +=` with a `cumulativeAttackPoints +=` for Final Showdown) is STALE and should be updated/removed — but DO NOT change attack-granting code or the gotcha until the no-read-site claim is independently verified (a missed read would silently break Final Showdown). Logged for a dedicated verification pass; not scheduled.
+
+---
+
+## Golden Solo milestone playtest findings (GP) — 2026-05-29
+
+Paul's Golden Solo milestone playtest. GP-1, GP-2, GP-6 findings text was NOT included in the worker dispatch — **awaiting the coordinator's verbatim findings** before they can be catalogued. GP-3 / GP-4 / GP-5 documented below from the diagnose-only pass.
+
+> **Placeholder — needs coordinator content:**
+> - **GP-1** — _(not provided in dispatch)_
+> - **GP-2** — _(not provided in dispatch)_
+> - **GP-6** — _(not provided in dispatch)_
+
+### GP-3 — "each other player" LOCATION effects must SELF-APPLY in solo (REVERSAL of shipped Cluster C announce-and-skip)
+
+**Rules basis (DECIDED, scope = LOCATIONS ONLY):** Revelations rulebook + inventory (`docs/card-inventory/final/revelations.md:16`): *"In 1-player solo: 'each other player' effects apply to yourself."* This supersedes Cluster C's announce-and-skip **for Location triggers only**. Non-Location "each other player" effects (villain Fight/Ambush/Escape, mastermind tactics, Master Strikes — Dark Hawkeye, Dark Ms. Marvel, Intertwining Powers, Rings Seek Their True Hand, Demonic Revelation, Focus Magic Through Guns, Paean to Dormammu, etc.) **STAY DEFERRED** to the standing project-wide other-player review (`docs/known-issues.md`). Do NOT touch them.
+
+**Current shipped state (Cluster C):** the trigger dispatch reads `triggeredAbility` correctly (`script.js:12256`, fires after a Villain sharing the Location's space is defeated). All 10 each-other-player Location triggers route to `announceOtherPlayerLocationTrigger()` (`expansionRevelations.js:2941`) — they log the verbatim effect + "No other players in solo — skipped." Only `hoodsWarehouseTrigger` (11th Location trigger) already self-applies ("play another card from the Villain Deck" — not an each-other-player effect; leave it).
+
+**Mode:** the dispatch is mode-agnostic (same in Golden + What If?); both are 1-player, so self-apply is correct for both. No `gameMode` branching needed.
+
+**The 10 triggers → solo self-apply semantics + implementation:**
+
+| # | Location (group) | Verbatim trigger effect | Solo self-apply | Implementation |
+|---|---|---|---|---|
+| 1 | **Dome of Darkforce** (Army of Evil) | reveals a [RANGE] Hero or discards a card | you reveal a Range Hero, else discard a card | **REUSE** `revealClassOrDiscard("Range", "Range.svg", "Dome of Darkforce")` |
+| 2 | **Laser Maze** (Lethal Legion) | reveals a [RANGE] Hero or gains a Wound | you reveal a Range Hero, else gain a Wound | **REUSE** `revealClassOrWound("Range", "Range.svg", "Laser Maze")` |
+| 3 | **Maze of Bones** (Grim Reaper tactic) | gains a Wound | you gain a Wound | **REUSE** `await drawWound()` |
+| 4 | **White Gorilla Cult** (Lethal Legion) | reveals their hand and discards a [TECH] card | reveal hand; discard a Tech card (choose if >1; none → nothing) | **NEW** `revealHandDiscardMatching(pred, label)`, pred = has Tech class |
+| 5 | **Cult of Skulls** (Grim Reaper tactic) | reveals their hand and discards a non-grey card | reveal hand; discard a non-grey card (choose if >1) | **NEW** same helper, pred = non-grey |
+| 6 | **Carnival of Concussions** (Grim Reaper tactic) | KOs a Bystander from their Victory Pile | KO a Bystander from your VP (choose if >1; none → nothing) | **NEW** `koBystanderFromVictoryPile(label)` |
+| 7 | **Prison of Coffins** (Grim Reaper tactic) | puts a Villain from their Victory Pile into the Escape Pile | put a Villain from your VP → Escape Pile (choose if >1) | **NEW** `escapeVillainFromVictoryPile(label)` |
+| 8 | **"The Raft" Prison** (Lethal Legion) | puts a Villain from VP into Escape Pile **or** gains a Wound | choose: escape a Villain from VP, or gain a Wound (no Villain → Wound) | **NEW** `escapeVillainOrWound(label)` (wraps #7 + `drawWound`) |
+| 9 | **Carnival of Wonders** (Lethal Legion) | chooses a Bystander from VP to be captured by Carnival of Wonders | choose a Bystander from your VP; capture it onto this Location | **NEW** `captureBystanderFromVPToLocation(locationCard, label)` — pushes to `locationCard.capturedBystanders` (PT-2 infra; rescued on the Location's own defeat, `script.js:12084`) |
+| 10 | **Dragon of Heaven Spaceship** (Mandarin tactic) | reveals their hand and KOs one of their non-grey Heroes | reveal hand; KO one of your non-grey Heroes (choose; none → nothing) | **ADAPT** `koUpToNHeroesYouHave` → forced 1, non-grey filter (or thin new `koOneNonGreyHeroYouHave`) |
+
+**Existing helpers to reuse** (all in `expansionRevelations.js` unless noted): `revealClassOrWound` (1696), `revealClassOrDiscard` (1730), `drawWound` (`cardAbilities.js:280`), `koUpToNHeroesYouHave` (680), `escapePile.push` pattern (2188/2810), PT-2 `capturedBystanders` array (rescued in `defeatLocation`, `script.js:12084`). All trigger fns become `async`; dispatch at `script.js:12256` already `await`s.
+
+**Open design points to confirm (gameplay/rules judgment — flagged, not assumed):**
+- **"non-grey" predicate** (Cult of Skulls #5, Dragon of Heaven #10): define once and reuse. Catalog M2 (Epic Hood) noted grey-bordered Wounds (`color:"None"`) should count as grey → "non-grey" should EXCLUDE both `color==="Grey"` and Wounds. Confirm single shared predicate.
+- **Choose-vs-auto:** per the 2026-05-28 triage ("present choices, never auto-resolve"), #4–#10 present a picker when >1 eligible card. "KOs a Bystander"/"puts a Villain"/"discards" don't literally say "choose," but the loss is the player's, so a picker is the safe read — confirm.
+
+**Grouping proposal (stage approvals, each through the Rule-7 gate):**
+- **GP-3a (reuse-only, smallest/safest first):** #1 Dome, #2 Laser Maze, #3 Maze of Bones — swap announce-skip → await existing helper. No new helpers.
+- **GP-3b (hand-discard helper):** new `revealHandDiscardMatching` → #4 White Gorilla Cult + #5 Cult of Skulls. (Also closes out GP-4's WGC behaviour question — see below.)
+- **GP-3c (VP-manipulation helpers):** `koBystanderFromVictoryPile`, `escapeVillainFromVictoryPile`, `escapeVillainOrWound` → #6 Carnival of Concussions, #7 Prison of Coffins, #8 The Raft Prison.
+- **GP-3d (bystander-capture + hero-KO):** `captureBystanderFromVPToLocation` (#9 Carnival of Wonders, leans on PT-2) + adapt `koUpToNHeroesYouHave` (#10 Dragon of Heaven).
+- **GP-3e (GP-5 Nullifier wiring):** do LAST — see GP-5.
+
+### GP-4 — White Gorilla Cult "didn't leave the board" until a Tech card was held — ROOT CAUSE: NOT a Tech-coupling bug
+
+**Verdict: the premise is not reproduced. There is no Tech requirement and no Tech-removal coupling anywhere.** Diagnosis (static + empirical `/game-test`, worktree build, 2026-05-29):
+- **DB:** White Gorilla Cult (`cardDatabase.js:4426`) — `attack:6`, `classes:[]`, `fightCondition:"None"`, `fightEffect:"whiteGorillaCultFight"` (log-only), `triggeredAbility:"whiteGorillaCultTrigger"`. **No Tech fight/defeat requirement.** Inventory (`revelations.md:538-540`) agrees — Attack 6, no special cost.
+- **`defeatLocation` (`script.js:12050`):** removal is **unconditional** — `cityLocations[cityIndex] = null` at 12103, after the (log-only) fight effect. No Tech branch, no class check.
+- **Trigger dispatch is in `defeatVillain` only (`script.js:12256`), never in `defeatLocation`** — fighting the Location itself does NOT fire its "fight a Villain here" trigger; fighting a Villain sharing its space does.
+- **Empirical confirm (live worktree build, Golden mode path):** with **no Tech card in hand** and sufficient attack, `defeatLocation(0, 6)` on a standalone White Gorilla Cult → `cityLocations[0]===null` (left the board), card in Victory Pile, attack 50→44. Trigger did NOT fire on self-defeat (`triggerFiredOnLocationSelfDefeat:false`). (A post-removal `updateGameBoard` render error is a harness artifact of minimal state injection, not the game.)
+
+**Most likely explanation of Paul's observation (the Tech correlation is incidental):**
+1. **Affordability** — the only gate to removing the Location is being able to pay its 6 Attack (`showLocationAttackButton` rejects with "You need 6 Attack" and removes nothing if you can't afford it). The Tech-symbol card Paul drew/held simply **supplied the Attack/Recruit points** that let him finally afford the 6-cost fight. "No Tech card" ≈ "not enough points that turn." **This may also be a facet of the open Location-affordability cluster (PT-6 recruit-as-attack not applied / PT-7 over-credit) — worth checking whether his point pool was being mis-counted.** OR
+2. **Expectation mismatch** — if a Villain shared the White Gorilla Cult space, fighting the **Villain** (trigger announces+skips, Villain leaves) correctly leaves the **Location** standing. Paul may have read "Location didn't leave" when the Location simply requires its own separate 6-Attack fight.
+
+**Recommendation:** GP-4 is **not a code bug in removal/Tech-coupling**. To pin which of (1)/(2) Paul hit, one clarifying question: *when it "didn't leave," were you fighting the White Gorilla Cult card itself (paying 6 Attack), or a Villain sitting in its space? And what was your Attack/Recruit total that turn?* If (1) and his pool was mis-counted, it folds into the PT-6/PT-7 affordability work; otherwise GP-4 is correct behaviour. Once GP-3b ships, WGC's trigger will also actually do something (reveal hand + discard a Tech card) — which is a separate axis from its removal.
+
+### GP-5 — Mr. Fantastic's Ultimate Nullifier should be able to cancel a self-applying Location trigger (couldn't when they skipped)
+
+**Why it couldn't before:** an announce-and-skip trigger is a no-op — there's nothing to negate, and the dispatch at `script.js:12256` never invokes the negate prompt. Once GP-3 makes triggers self-apply, negation becomes meaningful.
+
+**Wiring (do in GP-3e, after triggers self-apply):** wrap the trigger dispatch (`script.js:12256-12260`) in the standard negate pattern used elsewhere (`script.js:12530`, `cardAbilitiesDarkCity.js:2483`, etc.):
+```js
+if (cityLocations[cityIndex] && cityLocations[cityIndex].triggeredAbility) {
+  const triggerFn = window[cityLocations[cityIndex].triggeredAbility];
+  if (typeof triggerFn === "function") {
+    let negate = false;
+    if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+      negate = await promptNegateFightEffectWithMrFantastic(cityLocations[cityIndex], cityLocations[cityIndex]);
+    }
+    if (!negate) await triggerFn(cityLocations[cityIndex], cityIndex);
+    else onscreenConsole.log(`... ${cityLocations[cityIndex].name} trigger cancelled by Ultimate Nullifier.`);
+  }
+}
+```
+Mechanically trivial (engine-side, no twin). **Two flags for confirmation:**
+- **RAW nuance:** Ultimate Nullifier text (`fantastic-four.md:190`) = *"If an enemy you fight this turn would have a Fight effect, you may cancel that effect."* The Location trigger fires off fighting a **Villain** in the space but is the **Location's** triggered ability, not the fought enemy's Fight effect — so strict RAW support is debatable. Paul observed it as a problem (expected to be able to Nullify it), so intent is clearly "should work"; implement, but confirm the rules read.
+- **UX:** the negate prompt would pop on **every** Villain defeat in a triggered-Location space. Fine, but worth noting it's per-defeat. `hoodsWarehouseTrigger` (the self-applying non-each-other-player one) should probably be wrapped too if we're making Location triggers negatable as a class — confirm scope (just the 10, or all 11).
