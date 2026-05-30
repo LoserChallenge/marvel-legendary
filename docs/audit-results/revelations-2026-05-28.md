@@ -278,12 +278,18 @@ Cold-read review (subagent-delegated) of the fix campaign diff `6c81aca..HEAD` (
 
 ## Golden Solo milestone playtest findings (GP) — 2026-05-29
 
-Paul's Golden Solo milestone playtest. GP-1, GP-2, GP-6 findings text was NOT included in the worker dispatch — **awaiting the coordinator's verbatim findings** before they can be catalogued. GP-3 / GP-4 / GP-5 documented below from the diagnose-only pass.
+Paul's Golden Solo milestone playtest, one finding at a time. GP-3 / GP-4 / GP-5 diagnosed in the diagnose-only pass; GP-1 / GP-2 / GP-6 from the coordinator's playtest notes (not yet independently investigated — refine wording as each is worked).
 
-> **Placeholder — needs coordinator content:**
-> - **GP-1** — _(not provided in dispatch)_
-> - **GP-2** — _(not provided in dispatch)_
-> - **GP-6** — _(not provided in dispatch)_
+**Implementation order (coordinator green-light 2026-05-29):** GP-3 first, staged GP-3a → GP-3e through the Rule-7 gate. GP-1, GP-2, GP-6 sequenced after (not yet scheduled).
+
+### GP-1 — Ronin "Mysterious Identity": log-only, no choice UI (Cluster F shape)
+Currently logs the class/team-reassignment text but has no selection UI — the actual class/team choice is never wired. Same log-only pattern as Cluster F hero abilities. `expansionRevelations.js:~1306`. Needs the player picker for the color/team reassignment. **Not yet investigated in detail.**
+
+### GP-2 — Grim Reaper Master Strike "Graveyard" Location: display-only overlay bug
+The Graveyard Location renders the **mastermind card image + Attack 8** instead of the **Graveyard image + Attack 7**. The game **honors the correct 7** (fight cost is right); only the overlay/display is wrong. DISPLAY-ONLY. Likely the same family as PT-5 (label/overlay rendering) — the placeLocation'd Graveyard card's image/attack overlay reads the wrong source. **Not yet investigated in detail** (candidate: the Graveyard `placeLocation({...})` call at `expansionRevelations.js:2466`/`2490` — confirm the image + attack passed vs what the overlay renders).
+
+### GP-6 — HYDRA Base: Nullifier didn't nullify it, AND the Nullifier popup wrongly shows "Super Skrull"
+Two bugs: (a) Mr. Fantastic's Ultimate Nullifier did not cancel HYDRA Base's Fight effect; (b) the Nullifier confirm popup displays the wrong card reference ("Super Skrull") — a card-reference/arg bug in the popup. Relates to the Nullifier arg area touched in M1 / Fix A: `script.js:~15743` (tactic negate path) + `expansionFantasticFour.js:~4422`/`~4461` (`promptNegateFightEffectWithMrFantastic` — note the hardcoded `MR_FANTASTIC_IMAGE` at 4423 and the title set at 4441; a wrong card image/name there is the likely (b) culprit). **Not yet investigated in detail.** (Overlaps GP-5's Nullifier work — sequence together if convenient.)
 
 ### GP-3 — "each other player" LOCATION effects must SELF-APPLY in solo (REVERSAL of shipped Cluster C announce-and-skip)
 
@@ -310,9 +316,9 @@ Paul's Golden Solo milestone playtest. GP-1, GP-2, GP-6 findings text was NOT in
 
 **Existing helpers to reuse** (all in `expansionRevelations.js` unless noted): `revealClassOrWound` (1696), `revealClassOrDiscard` (1730), `drawWound` (`cardAbilities.js:280`), `koUpToNHeroesYouHave` (680), `escapePile.push` pattern (2188/2810), PT-2 `capturedBystanders` array (rescued in `defeatLocation`, `script.js:12084`). All trigger fns become `async`; dispatch at `script.js:12256` already `await`s.
 
-**Open design points to confirm (gameplay/rules judgment — flagged, not assumed):**
-- **"non-grey" predicate** (Cult of Skulls #5, Dragon of Heaven #10): define once and reuse. Catalog M2 (Epic Hood) noted grey-bordered Wounds (`color:"None"`) should count as grey → "non-grey" should EXCLUDE both `color==="Grey"` and Wounds. Confirm single shared predicate.
-- **Choose-vs-auto:** per the 2026-05-28 triage ("present choices, never auto-resolve"), #4–#10 present a picker when >1 eligible card. "KOs a Bystander"/"puts a Villain"/"discards" don't literally say "choose," but the loss is the player's, so a picker is the safe read — confirm.
+**Design points — SETTLED (coordinator 2026-05-29):**
+- **"non-grey" predicate** (Cult of Skulls #5, Dragon of Heaven #10): define ONE shared predicate; reuse the existing Epic Hood grey definition already in code if present. Boundary resolved against the Revelations rules PDF (`expansions/revelations/2019_Marvel_Legendary_Revelations_Rules_compressed.pdf`) + inventory per CLAUDE.md rule 8 — default: EXCLUDES grey S.H.I.E.L.D. starting cards and treats Wounds as grey (excluded). Escalate to Paul only if PDF + inventory genuinely leave it open.
+- **Choose-vs-auto:** use a picker (per 2026-05-28 "present choices" triage), even where text reads "KOs/puts/discards." Confirmed.
 
 **Grouping proposal (stage approvals, each through the Rule-7 gate):**
 - **GP-3a (reuse-only, smallest/safest first):** #1 Dome, #2 Laser Maze, #3 Maze of Bones — swap announce-skip → await existing helper. No new helpers.
@@ -335,6 +341,8 @@ Paul's Golden Solo milestone playtest. GP-1, GP-2, GP-6 findings text was NOT in
 
 **Recommendation:** GP-4 is **not a code bug in removal/Tech-coupling**. To pin which of (1)/(2) Paul hit, one clarifying question: *when it "didn't leave," were you fighting the White Gorilla Cult card itself (paying 6 Attack), or a Villain sitting in its space? And what was your Attack/Recruit total that turn?* If (1) and his pool was mis-counted, it folds into the PT-6/PT-7 affordability work; otherwise GP-4 is correct behaviour. Once GP-3b ships, WGC's trigger will also actually do something (reveal hand + discard a Tech card) — which is a separate axis from its removal.
 
+**STATUS: DEFERRED — no code (coordinator 2026-05-29).** Paul thinks he was fighting the Cult card itself but isn't certain. Static + live findings stand (unconditional removal; trigger fires only on `defeatVillain`; reproduced correct removal with zero Tech cards). Re-verify on the next Golden playtest; if it recurs, the candidate cause is the PT-6/PT-7 Location-affordability tangle, NOT Tech-coupling. Not scheduled.
+
 ### GP-5 — Mr. Fantastic's Ultimate Nullifier should be able to cancel a self-applying Location trigger (couldn't when they skipped)
 
 **Why it couldn't before:** an announce-and-skip trigger is a no-op — there's nothing to negate, and the dispatch at `script.js:12256` never invokes the negate prompt. Once GP-3 makes triggers self-apply, negation becomes meaningful.
@@ -353,6 +361,9 @@ if (cityLocations[cityIndex] && cityLocations[cityIndex].triggeredAbility) {
   }
 }
 ```
-Mechanically trivial (engine-side, no twin). **Two flags for confirmation:**
-- **RAW nuance:** Ultimate Nullifier text (`fantastic-four.md:190`) = *"If an enemy you fight this turn would have a Fight effect, you may cancel that effect."* The Location trigger fires off fighting a **Villain** in the space but is the **Location's** triggered ability, not the fought enemy's Fight effect — so strict RAW support is debatable. Paul observed it as a problem (expected to be able to Nullify it), so intent is clearly "should work"; implement, but confirm the rules read.
-- **UX:** the negate prompt would pop on **every** Villain defeat in a triggered-Location space. Fine, but worth noting it's per-defeat. `hoodsWarehouseTrigger` (the self-applying non-each-other-player one) should probably be wrapped too if we're making Location triggers negatable as a class — confirm scope (just the 10, or all 11).
+Mechanically trivial (engine-side, no twin).
+
+**SETTLED (coordinator 2026-05-29):**
+- **Scope = the 10 self-applying each-other-player Location triggers ONLY.** Leave `hoodsWarehouseTrigger` (the 11th) OUT — it plays a Villain card, a different effect class; revisit separately if needed.
+- **RAW nuance noted but OVERRIDDEN by intent** — implement per Paul's "should work" expectation. (Card text `fantastic-four.md:190`: *"If an enemy you fight this turn would have a Fight effect, you may cancel that effect"* — the trigger is the Location's, not the fought Villain's, but intent wins.)
+- **Do GP-3e LAST** (after the 10 triggers self-apply). UX note: prompt pops per Villain-defeat in a triggered-Location space — acceptable.
