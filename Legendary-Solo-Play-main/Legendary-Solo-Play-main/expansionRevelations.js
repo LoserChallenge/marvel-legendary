@@ -3083,12 +3083,194 @@ function revealHandDiscardMatching(predicate, label, descrText) {
   });
 }
 
-// --- Grim Reaper Tactic Locations ---
-function carnivalOfConcussionsTrigger() {
-  announceOtherPlayerLocationTrigger(
-    "Carnival of Concussions",
-    "Whenever you fight a Villain here, each other player KOs a Bystander from their Victory Pile.",
+// GP-3c shared picker: move one Victory-Pile card of `cardType` to a destination pile (via destPush,
+// a callback so it always targets the live global array even if reassigned). 0 eligible → noneMsg +
+// resolve; 1 → auto-move; 2+ → single-select picker (modeled on pickRingFromVictoryPile). actionVerb
+// is the past-tense log lead (e.g. "KO'd", "Moved to the Escape Pile:"). Returns a Promise; await it.
+function moveOneFromVictoryPile(cardType, destPush, label, actionVerb, noneMsg) {
+  return new Promise((resolve) => {
+    const indices = [];
+    victoryPile.forEach((c, i) => { if (c && c.type === cardType) indices.push(i); });
+
+    if (indices.length === 0) {
+      onscreenConsole.log(noneMsg);
+      resolve();
+      return;
+    }
+    if (indices.length === 1) {
+      const card = victoryPile.splice(indices[0], 1)[0];
+      destPush(card);
+      onscreenConsole.log(`${actionVerb} <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+      resolve();
+      return;
+    }
+
+    const choices = indices.map((vpIdx) => ({ ...victoryPile[vpIdx], vpIndex: vpIdx }));
+    genericCardSort(choices);
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    if (!cardchoicepopup || !modalOverlay || !selectionRow1 || !titleElement || !instructionsElement) {
+      // Defensive: popup DOM unexpectedly absent → move the first eligible card and resolve.
+      const card = victoryPile.splice(indices[0], 1)[0];
+      destPush(card);
+      onscreenConsole.log(`${actionVerb} <span class="console-highlights">${card.name}</span>.`);
+      updateGameBoard();
+      resolve();
+      return;
+    }
+
+    titleElement.textContent = label;
+    instructionsElement.textContent = `Choose a ${cardType} from your Victory Pile.`;
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selected = null;
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+    confirmButton.textContent = "CONFIRM";
+    confirmButton.disabled = true;
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    choices.forEach((entry) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-vp-index", entry.vpIndex);
+
+      const cardImage = document.createElement("img");
+      cardImage.src = entry.image;
+      cardImage.alt = entry.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = entry.image;
+        previewImage.alt = entry.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        selectionRow1.querySelectorAll("img.selected").forEach((img) => img.classList.remove("selected"));
+        if (selected && selected.vpIndex === entry.vpIndex) {
+          selected = null;
+          confirmButton.disabled = true;
+        } else {
+          selected = entry;
+          cardImage.classList.add("selected");
+          confirmButton.disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    setupDragScrolling(selectionRow1);
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!selected) return;
+      setTimeout(() => {
+        const card = victoryPile.splice(selected.vpIndex, 1)[0];
+        destPush(card);
+        onscreenConsole.log(`${actionVerb} <span class="console-highlights">${card.name}</span>.`);
+        closeCardChoicePopup();
+        updateGameBoard();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+// GP-3c: KO a Bystander from your Victory Pile (Carnival of Concussions).
+function koBystanderFromVictoryPile(label) {
+  return moveOneFromVictoryPile(
+    "Bystander",
+    (card) => koPile.push(card),
+    label,
+    "KO'd",
+    "No Bystander in your Victory Pile — nothing to KO.",
   );
+}
+
+// GP-3c: put a Villain from your Victory Pile into the Escape Pile (Prison of Coffins).
+// NOTE: the global escape pile is `escapedVillainsDeck` (script.js:778). There is NO `escapePile`
+// global — two pre-existing sites (powerManEscape ~2188, Mandarin ring-escape ~2810) use the
+// undefined `escapePile` and would throw; flagged separately. Use escapedVillainsDeck here.
+function escapeVillainFromVictoryPile(label) {
+  return moveOneFromVictoryPile(
+    "Villain",
+    (card) => escapedVillainsDeck.push(card),
+    label,
+    "Moved to the Escape Pile:",
+    "No Villain in your Victory Pile — nothing to escape.",
+  );
+}
+
+// GP-3c: choose — put a Villain from your Victory Pile into the Escape Pile, OR gain a Wound
+// ("The Raft" Prison). No Villain in VP → forced Wound (mirrors powerManEscape's no-villain path).
+async function escapeVillainOrWound(label) {
+  const hasVillain = victoryPile.some((c) => c && c.type === "Villain");
+  if (!hasVillain) {
+    onscreenConsole.log(`No Villain in your Victory Pile. Gaining a Wound.`);
+    await drawWound();
+    return;
+  }
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Put a Villain from your Victory Pile into the Escape Pile, or gain a Wound?`,
+      "Escape a Villain",
+      "Gain Wound",
+    );
+    const titleEl = document.querySelector(".info-or-choice-popup-title");
+    if (titleEl) titleEl.textContent = label;
+    confirmButton.onclick = async () => {
+      closeInfoChoicePopup();
+      await escapeVillainFromVictoryPile(label); // picker chooses which Villain
+      resolve();
+    };
+    denyButton.onclick = async () => {
+      closeInfoChoicePopup();
+      await drawWound();
+      resolve();
+    };
+  });
+}
+
+// --- Grim Reaper Tactic Locations ---
+// Solo self-apply (GP-3c): "each other player KOs a Bystander from their Victory Pile" → you do it.
+async function carnivalOfConcussionsTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Carnival of Concussions</span> triggers — in solo, KO a Bystander from your Victory Pile.`,
+  );
+  await koBystanderFromVictoryPile("Carnival of Concussions");
 }
 
 // Solo self-apply (GP-3b): "each other player reveals their hand and discards a non-grey card" → you do it.
@@ -3107,11 +3289,12 @@ async function mazeOfBonesTrigger() {
   await drawWound();
 }
 
-function prisonOfCoffinsTrigger() {
-  announceOtherPlayerLocationTrigger(
-    "Prison of Coffins",
-    "Whenever you fight a Villain here, each other player puts a Villain from their Victory Pile into the Escape Pile.",
+// Solo self-apply (GP-3c): "each other player puts a Villain from their Victory Pile into the Escape Pile" → you do it.
+async function prisonOfCoffinsTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Prison of Coffins</span> triggers — in solo, put a Villain from your Victory Pile into the Escape Pile.`,
   );
+  await escapeVillainFromVictoryPile("Prison of Coffins");
 }
 
 // --- Mandarin Tactic Location ---
@@ -3155,11 +3338,12 @@ async function laserMazeTrigger() {
   await revealClassOrWound("Range", "Range.svg", "Laser Maze");
 }
 
-function raftPrisonTrigger() {
-  announceOtherPlayerLocationTrigger(
-    `"The Raft" Prison`,
-    "Whenever you fight a Villain here, each other player puts a Villain from their Victory Pile into the Escape Pile or gains a Wound.",
+// Solo self-apply (GP-3c): "each other player puts a Villain from their Victory Pile into the Escape Pile or gains a Wound" → you do it.
+async function raftPrisonTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">"The Raft" Prison</span> triggers — in solo, put a Villain from your Victory Pile into the Escape Pile or gain a Wound.`,
   );
+  await escapeVillainOrWound(`"The Raft" Prison`);
 }
 
 // Solo self-apply (GP-3b): "each other player reveals their hand and discards a Tech card" → you do it.
