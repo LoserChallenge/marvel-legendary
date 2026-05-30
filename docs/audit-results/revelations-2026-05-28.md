@@ -321,7 +321,7 @@ Two bugs: (a) Mr. Fantastic's Ultimate Nullifier did not cancel HYDRA Base's Fig
 - **Choose-vs-auto:** use a picker (per 2026-05-28 "present choices" triage), even where text reads "KOs/puts/discards." Confirmed.
 
 **Grouping proposal (stage approvals, each through the Rule-7 gate):**
-- **GP-3a (reuse-only, smallest/safest first):** #1 Dome, #2 Laser Maze, #3 Maze of Bones — swap announce-skip → await existing helper. No new helpers.
+- **GP-3a (reuse-only, smallest/safest first):** #1 Dome, #2 Laser Maze, #3 Maze of Bones — swap announce-skip → await existing helper. No new helpers. ✅ **DONE + VERIFIED (commit `1d84e3b`).** Rule-7 gate passed: expansion-validator 7/7, cold-read code review clean, dual-mode `/game-test` (golden+whatif) — Maze→Wound, Dome→auto-discard (no Range) + reveal-popup no-penalty (has Range), Laser Maze→auto-wound. Async chain settles cleanly.
 - **GP-3b (hand-discard helper):** new `revealHandDiscardMatching` → #4 White Gorilla Cult + #5 Cult of Skulls. (Also closes out GP-4's WGC behaviour question — see below.)
 - **GP-3c (VP-manipulation helpers):** `koBystanderFromVictoryPile`, `escapeVillainFromVictoryPile`, `escapeVillainOrWound` → #6 Carnival of Concussions, #7 Prison of Coffins, #8 The Raft Prison.
 - **GP-3d (bystander-capture + hero-KO):** `captureBystanderFromVPToLocation` (#9 Carnival of Wonders, leans on PT-2) + adapt `koUpToNHeroesYouHave` (#10 Dragon of Heaven).
