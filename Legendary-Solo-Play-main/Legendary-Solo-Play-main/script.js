@@ -8554,7 +8554,12 @@ if (stackedTwistNextToMastermind > 0) {
 
       // Location attack overlay — show the bonused value when a while-villain bonus is active,
       // mirroring the villain attack-overlay pattern.
-      if (effectiveLocationAttack !== locationCard.attack) {
+      // GP-2: `forceAttackOverlay` makes the overlay ALWAYS render the effective attack, even when it
+      // equals the base. The Grim Reaper "Graveyard" Location reuses the mastermind card ART (no
+      // dedicated Graveyard image is staged), whose printed attack (8) would otherwise show through
+      // unopposed when effective === base (7) and no overlay is drawn. Forcing the overlay paints the
+      // correct number (7, or 7+bonus with a villain) over the wrong art. Graveyard-scoped only.
+      if (effectiveLocationAttack !== locationCard.attack || locationCard.forceAttackOverlay) {
         const locationAttackOverlay = document.createElement("div");
         locationAttackOverlay.className = "attack-overlay location-attack-overlay";
         locationAttackOverlay.textContent = effectiveLocationAttack;

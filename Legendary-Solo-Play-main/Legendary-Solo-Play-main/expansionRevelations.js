@@ -2474,6 +2474,10 @@ async function grimReaperStrike() {
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_GrimReaper.webp",
       bonusWhileVillain: 2,
+      // GP-2: no dedicated Graveyard art is staged, so this reuses the mastermind card image (which
+      // prints attack 8). forceAttackOverlay makes the city renderer always paint the correct effective
+      // attack (7, or 9 with a villain) over the art. Remove if a real Graveyard image is ever staged.
+      forceAttackOverlay: true,
     };
     if (typeof placeLocation === "function") {
       await placeLocation(graveyard);
@@ -2498,6 +2502,9 @@ async function epicGrimReaperStrike() {
       classes: [],
       image: "Visual Assets/Masterminds/Revelations_GrimReaper_Epic.webp",
       bonusWhileVillain: 3,
+      // GP-2: see grimReaperStrike — reuses the Epic mastermind art (prints 8); force the overlay so
+      // the correct effective attack (8, or 11 with a villain) is painted over it. Remove if Graveyard art ships.
+      forceAttackOverlay: true,
     };
     if (typeof placeLocation === "function") {
       await placeLocation(graveyard);
