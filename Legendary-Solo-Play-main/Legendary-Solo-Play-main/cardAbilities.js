@@ -8623,7 +8623,12 @@ function HenchmenKOHeroYouHave() {
   });
 }
 
-function FightKOHeroYouHave() {
+// `source` is the card causing the KO — a name string (passed by expansion fight-effect wrappers)
+// or the card object the engine passes directly (e.g. Super-Skrull's fightEffect is invoked with the
+// villainCopy). Used only for the picker title. Defaults to a generic label if no source is supplied.
+function FightKOHeroYouHave(source) {
+  const sourceName =
+    (typeof source === "string" ? source : source && source.name) || "KO a Hero";
   onscreenConsole.log(`Fight! KO one of your Heroes.`);
   return new Promise((resolve, reject) => {
     // Get heroes from artifacts, hand, and played cards
@@ -8664,7 +8669,7 @@ function FightKOHeroYouHave() {
     );
 
     // Set popup content
-    titleElement.textContent = "Super-Skrull";
+    titleElement.textContent = sourceName;
     instructionsElement.textContent = "Select a Hero to KO.";
 
     // Show both rows and labels

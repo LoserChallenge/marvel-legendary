@@ -1865,7 +1865,7 @@ function klawFight(klaw) {
 // Mister Hyde — Fight: KO one of your Heroes.
 function misterHydeFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Mister Hyde</span>: KO one of your Heroes.`);
-  return FightKOHeroYouHave();
+  return FightKOHeroYouHave("Mister Hyde");
 }
 
 // === Dark Avengers ===
@@ -1873,7 +1873,7 @@ function misterHydeFight() {
 // Ares — Last Stand (keyword). Fight: KO one of your Heroes.
 function aresFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Ares</span>: KO one of your Heroes.`);
-  return FightKOHeroYouHave();
+  return FightKOHeroYouHave("Ares");
 }
 
 // Captain Marvel (Noh-Varr) — Last Stand. Ambush/Escape: if other Dark Avengers in city, wound.
@@ -1899,7 +1899,7 @@ async function captainMarvelNohVarrEscape() {
 // Dark Hawkeye (Bullseye) — Last Stand. Fight: KO one of your Heroes.
 async function darkHawkeyeFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Dark Hawkeye (Bullseye)</span>: KO one of your Heroes.`);
-  await FightKOHeroYouHave();
+  await FightKOHeroYouHave("Dark Hawkeye (Bullseye)");
 }
 
 // Dark Ms. Marvel (Moonstone) — Last Stand. Fight: "each other player" effect — solo skip.
@@ -2096,7 +2096,7 @@ async function madamMasqueAmbush() {
 
 async function madamMasqueFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Madam Masque</span>: KO one of your Heroes.`);
-  await FightKOHeroYouHave();
+  await FightKOHeroYouHave("Madam Masque");
 }
 
 // The Brothers Grimm — Must discard two identical cards to fight. Fight: KO from discard.
@@ -3529,7 +3529,7 @@ async function whiteGorillaCultTrigger() {
 // Fight: KO one of your Heroes.
 function hydraBaseFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">HYDRA Base</span>: KO one of your Heroes.`);
-  return FightKOHeroYouHave();
+  return FightKOHeroYouHave("HYDRA Base");
 }
 
 // === Mandarin's Rings (10 unique fight effects) ===
@@ -3659,7 +3659,7 @@ async function mandarinRingRemaker() {
 // Spectral, The Disintegration Beam — Fight: KO one of your Heroes.
 function mandarinRingSpectral() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Spectral, The Disintegration Beam</span>: KO one of your Heroes.`);
-  return FightKOHeroYouHave();
+  return FightKOHeroYouHave("Spectral, The Disintegration Beam");
 }
 
 // Spin, The Vortex Beam — Fight: Reveal top 6 of deck, discard all cost-0, put rest back.
