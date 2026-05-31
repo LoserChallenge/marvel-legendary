@@ -12254,9 +12254,35 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
 
   // Check for Location triggered ability in this space
   if (cityLocations[cityIndex] && cityLocations[cityIndex].triggeredAbility) {
-    const triggerFn = window[cityLocations[cityIndex].triggeredAbility];
+    const locationCard = cityLocations[cityIndex];
+    const triggerName = locationCard.triggeredAbility;
+    const triggerFn = window[triggerName];
     if (typeof triggerFn === "function") {
-      await triggerFn(cityLocations[cityIndex], cityIndex);
+      // GP-3e: the 10 self-applying "each other player" Location triggers are cancellable by
+      // Mr. Fantastic's Ultimate Nullifier. hoodsWarehouseTrigger (plays a Villain card — a
+      // different effect class, not an each-other-player effect) is intentionally excluded.
+      // promptNegateFightEffectWithMrFantastic() auto-resolves false (no popup) when the
+      // Nullifier isn't available, so this adds no prompt unless cancellation is actually possible.
+      const NEGATABLE_LOCATION_TRIGGERS = new Set([
+        "domeOfDarkforceTrigger", "laserMazeTrigger", "mazeOfBonesTrigger",
+        "whiteGorillaCultTrigger", "cultOfSkullsTrigger", "carnivalOfConcussionsTrigger",
+        "prisonOfCoffinsTrigger", "raftPrisonTrigger", "carnivalOfWondersTrigger",
+        "dragonOfHeavenTrigger",
+      ]);
+      let negate = false;
+      if (
+        NEGATABLE_LOCATION_TRIGGERS.has(triggerName) &&
+        typeof promptNegateFightEffectWithMrFantastic === "function"
+      ) {
+        negate = await promptNegateFightEffectWithMrFantastic();
+      }
+      if (!negate) {
+        await triggerFn(locationCard, cityIndex);
+      } else {
+        onscreenConsole.log(
+          `<span class="console-highlights">${locationCard.name}</span> trigger cancelled by Mr. Fantastic – Ultimate Nullifier.`,
+        );
+      }
     }
   }
 
