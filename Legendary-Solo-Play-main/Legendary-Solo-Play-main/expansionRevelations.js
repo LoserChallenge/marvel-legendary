@@ -2185,7 +2185,7 @@ async function powerManEscape() {
       const idx = victoryPile.findIndex(c => c.type === "Villain");
       if (idx !== -1) {
         const v = victoryPile.splice(idx, 1)[0];
-        escapePile.push(v);
+        escapedVillainsDeck.push(v);
         onscreenConsole.log(`<span class="console-highlights">${v.name}</span> moved to the Escape Pile.`);
         updateGameBoard();
       }
@@ -2807,7 +2807,7 @@ async function mandarinRingsSeekTheirTrueHand() {
     const ring = rings[0];
     const idx = victoryPile.indexOf(ring);
     victoryPile.splice(idx, 1);
-    escapePile.push(ring);
+    escapedVillainsDeck.push(ring);
     onscreenConsole.log(`<span class="console-highlights">${ring.name}</span> moved from VP to the Escape Pile.`);
     updateGameBoard();
   } else {
@@ -3221,9 +3221,9 @@ function koBystanderFromVictoryPile(label) {
 }
 
 // GP-3c: put a Villain from your Victory Pile into the Escape Pile (Prison of Coffins).
-// NOTE: the global escape pile is `escapedVillainsDeck` (script.js:778). There is NO `escapePile`
-// global — two pre-existing sites (powerManEscape ~2188, Mandarin ring-escape ~2810) use the
-// undefined `escapePile` and would throw; flagged separately. Use escapedVillainsDeck here.
+// NOTE: the global escape pile is `escapedVillainsDeck` (script.js:778) — there is NO `escapePile`.
+// (The two pre-existing `escapePile` typos in powerManEscape + mandarinRingsSeekTheirTrueHand were
+// fixed in the escapePile micro fix-group.)
 function escapeVillainFromVictoryPile(label) {
   return moveOneFromVictoryPile(
     "Villain",
