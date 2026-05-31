@@ -12096,7 +12096,25 @@ async function defeatLocation(cityIndex, attackCost) {
 
   // Execute fight effect if present
   if (locationCard.fightEffect && typeof window[locationCard.fightEffect] === "function") {
-    await window[locationCard.fightEffect](locationCard, cityIndex);
+    // GP-6b: a Location is an enemy you fight, so Mr. Fantastic's Ultimate Nullifier can cancel its
+    // OWN Fight effect (project decision — BROAD scope, pure Locations included; the card says
+    // "enemy", not "Villain"; see docs/rules-notes/revelations.md). This is a DIFFERENT dispatch
+    // from the GP-3e triggeredAbility negate in defeatVillain: that cancels a Location's "each other
+    // player" trigger fired when a Villain in its space is defeated; this cancels the Location's own
+    // fight effect when you fight the Location itself. No double-prompt risk — separate code paths,
+    // separate effects. Called with no args (matches the Tactic precedents; a Location has no
+    // Infinity-Gems team, so the no-arg path is correct).
+    let negate = false;
+    if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+      negate = await promptNegateFightEffectWithMrFantastic();
+    }
+    if (!negate) {
+      await window[locationCard.fightEffect](locationCard, cityIndex);
+    } else {
+      onscreenConsole.log(
+        `<span class="console-highlights">${locationCard.name}</span>'s Fight effect cancelled by Mr. Fantastic – Ultimate Nullifier.`,
+      );
+    }
   }
 
   // Clear from city
