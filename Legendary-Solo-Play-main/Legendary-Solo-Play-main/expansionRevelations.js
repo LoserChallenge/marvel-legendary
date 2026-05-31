@@ -3209,6 +3209,136 @@ function moveOneFromVictoryPile(cardType, destPush, label, actionVerb, noneMsg) 
   });
 }
 
+// GP-3d shared picker (hand twin of moveOneFromVictoryPile): remove one card from your hand matching
+// `predicate` to a destination (via destPush, a callback so it always targets the live global array).
+// 0 eligible → noneMsg + resolve; 1 → auto-move; 2+ → single-select picker (same DOM as the VP twin).
+// actionVerb is the past-tense log lead (e.g. "KO'd"); `instruction` is the picker prompt; optional
+// postAction(card) runs after each move (e.g. koBonuses). Returns a Promise; await it.
+function removeOneFromHand(predicate, destPush, label, instruction, actionVerb, noneMsg, postAction) {
+  return new Promise((resolve) => {
+    const indices = [];
+    playerHand.forEach((c, i) => { if (c && predicate(c)) indices.push(i); });
+
+    if (indices.length === 0) {
+      onscreenConsole.log(noneMsg);
+      resolve();
+      return;
+    }
+    if (indices.length === 1) {
+      const card = playerHand.splice(indices[0], 1)[0];
+      destPush(card);
+      onscreenConsole.log(`${actionVerb} <span class="console-highlights">${card.name}</span>.`);
+      if (postAction) postAction(card);
+      updateGameBoard();
+      resolve();
+      return;
+    }
+
+    const choices = indices.map((handIdx) => ({ ...playerHand[handIdx], handIndex: handIdx }));
+    genericCardSort(choices);
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    if (!cardchoicepopup || !modalOverlay || !selectionRow1 || !titleElement || !instructionsElement) {
+      // Defensive: popup DOM unexpectedly absent → move the first eligible card and resolve.
+      const card = playerHand.splice(indices[0], 1)[0];
+      destPush(card);
+      onscreenConsole.log(`${actionVerb} <span class="console-highlights">${card.name}</span>.`);
+      if (postAction) postAction(card);
+      updateGameBoard();
+      resolve();
+      return;
+    }
+
+    titleElement.textContent = label;
+    instructionsElement.textContent = instruction;
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selected = null;
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+    confirmButton.textContent = "CONFIRM";
+    confirmButton.disabled = true;
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    choices.forEach((entry) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-hand-index", entry.handIndex);
+
+      const cardImage = document.createElement("img");
+      cardImage.src = entry.image;
+      cardImage.alt = entry.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = entry.image;
+        previewImage.alt = entry.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        selectionRow1.querySelectorAll("img.selected").forEach((img) => img.classList.remove("selected"));
+        if (selected && selected.handIndex === entry.handIndex) {
+          selected = null;
+          confirmButton.disabled = true;
+        } else {
+          selected = entry;
+          cardImage.classList.add("selected");
+          confirmButton.disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    setupDragScrolling(selectionRow1);
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!selected) return;
+      setTimeout(() => {
+        const card = playerHand.splice(selected.handIndex, 1)[0];
+        destPush(card);
+        onscreenConsole.log(`${actionVerb} <span class="console-highlights">${card.name}</span>.`);
+        if (postAction) postAction(card);
+        closeCardChoicePopup();
+        updateGameBoard();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
 // GP-3c: KO a Bystander from your Victory Pile (Carnival of Concussions).
 function koBystanderFromVictoryPile(label) {
   return moveOneFromVictoryPile(
@@ -3264,6 +3394,36 @@ async function escapeVillainOrWound(label) {
   });
 }
 
+// GP-3d: capture a Bystander from your Victory Pile onto a Location (Carnival of Wonders #9).
+// Pushes the chosen Bystander to `locationCard.capturedBystanders` (PT-2 infra) — it is rescued back
+// to your Victory Pile when that Location is itself defeated (defeatLocation, script.js:12084).
+function captureBystanderFromVPToLocation(locationCard, label) {
+  if (!Array.isArray(locationCard.capturedBystanders)) locationCard.capturedBystanders = [];
+  return moveOneFromVictoryPile(
+    "Bystander",
+    (card) => locationCard.capturedBystanders.push(card),
+    label,
+    `Captured by ${locationCard.name}:`,
+    "No Bystander in your Victory Pile — nothing to capture.",
+  );
+}
+
+// GP-3d: reveal your hand and KO one non-grey Hero from it (Dragon of Heaven Spaceship #10).
+// Source = HAND only (the "reveals their hand and KOs" construction scopes the KO to the revealed
+// hand — same idiom as Cult of Skulls #5 "reveals their hand and discards", which is hand-scoped).
+// 0 qualifying → nothing; 1 → auto-KO; 2+ → single-select picker. koBonuses() fires per KO.
+function koNonGreyHeroFromHand(label) {
+  return removeOneFromHand(
+    (c) => c.type === "Hero" && isNonGreyCard(c),
+    (card) => koPile.push(card),
+    label,
+    "Choose a non-grey Hero from your hand to KO.",
+    "KO'd",
+    "No non-grey Hero in your hand — nothing to KO.",
+    () => koBonuses(),
+  );
+}
+
 // --- Grim Reaper Tactic Locations ---
 // Solo self-apply (GP-3c): "each other player KOs a Bystander from their Victory Pile" → you do it.
 async function carnivalOfConcussionsTrigger() {
@@ -3298,11 +3458,12 @@ async function prisonOfCoffinsTrigger() {
 }
 
 // --- Mandarin Tactic Location ---
-function dragonOfHeavenTrigger() {
-  announceOtherPlayerLocationTrigger(
-    "Dragon of Heaven Spaceship",
-    "Whenever you fight a Villain here, each other player reveals their hand and KOs one of their non-grey Heroes.",
+// Solo self-apply (GP-3d): "each other player reveals their hand and KOs one of their non-grey Heroes" → you do it.
+async function dragonOfHeavenTrigger() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Dragon of Heaven Spaceship</span> triggers — in solo, reveal your hand and KO one of your non-grey Heroes.`,
   );
+  await koNonGreyHeroFromHand("Dragon of Heaven Spaceship");
 }
 
 // --- The Hood Tactic Location (LIVE: affects the solo player) ---
@@ -3323,11 +3484,13 @@ async function domeOfDarkforceTrigger() {
 }
 
 // --- Lethal Legion group Locations ---
-function carnivalOfWondersTrigger() {
-  announceOtherPlayerLocationTrigger(
-    "Carnival of Wonders",
-    "Whenever you fight a Villain here, each other player chooses a Bystander from their Victory Pile to be captured by Carnival of Wonders.",
+// Solo self-apply (GP-3d): "each other player chooses a Bystander from their Victory Pile to be
+// captured by Carnival of Wonders" → you choose one of yours; it is captured onto this Location.
+async function carnivalOfWondersTrigger(locationCard, cityIndex) {
+  onscreenConsole.log(
+    `<span class="console-highlights">Carnival of Wonders</span> triggers — in solo, choose a Bystander from your Victory Pile to be captured by Carnival of Wonders.`,
   );
+  await captureBystanderFromVPToLocation(locationCard, "Carnival of Wonders");
 }
 
 // Solo self-apply (GP-3): "each other player reveals a Range Hero or gains a Wound" → you do it.
