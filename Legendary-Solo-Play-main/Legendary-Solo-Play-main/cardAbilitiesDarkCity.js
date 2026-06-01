@@ -2423,7 +2423,7 @@ function ghostRiderInfernalChains() {
           `<span class="console-highlights">${demonBystander.name}</span> has been rescued for free.`,
         );
 
-        defeatBonuses();
+        await defeatBonuses();
         bystanderBonuses();
         await rescueBystanderAbility(demonBystander);
       } else if (selectedCityIndex !== null) {
@@ -16411,7 +16411,7 @@ async function rescueDemonGoblin() {
     `<span class="console-highlights">${demonBystander.name}</span> has been rescued.`,
   );
 
-  defeatBonuses();
+  await defeatBonuses();
   bystanderBonuses();
 
   const attackButton = document.querySelector(
@@ -16828,7 +16828,7 @@ async function instantDefeatAttack(cityIndex) {
   // Clear the city slot and add to victory pile
   city[cityIndex] = null;
 
-  defeatBonuses();
+  await defeatBonuses();
 
   // Handle Professor X Mind Control
   if (hasProfessorXMindControl) {

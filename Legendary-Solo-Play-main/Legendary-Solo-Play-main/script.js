@@ -820,6 +820,13 @@ let nextTurnsDraw = 6;
 let cardsToBeDrawnNextTurn = [];
 let rescueExtraBystanders = 0;
 let extraThreeRecruitAvailable = 0;
+// War Machine (Revelations) arm-a-turn defeat triggers — paid out in defeatBonuses() on each
+// villain/mastermind defeat this turn, mirroring the extraThreeRecruitAvailable precedent.
+let militaryComplexRecruit = 0;       // Military-Industrial Complex: +1 Recruit per VILLAIN defeat (count = # copies armed)
+let overwhelmingFirepowerBonus = 0;   // Overwhelming Firepower: draw 1 + rescue 1 per villain OR mastermind defeat (count = # copies armed)
+// Transient: true only for the duration of the single mastermind-defeat defeatBonuses() call
+// (handleMastermindPostDefeat), so the villain-only Military-Industrial payout skips it.
+let isMastermindDefeat = false;
 let schemeTwistCount = 0;
 let turnCount = 1;
 let killbotSchemeTwistCount = 0;
@@ -11472,6 +11479,9 @@ if (card.temporaryTeleport === true) {
   sewerRooftopDefeats = 0;
   sewerRooftopBonusRecruit = 0;
   extraThreeRecruitAvailable = 0;
+  militaryComplexRecruit = 0;
+  overwhelmingFirepowerBonus = 0;
+  isMastermindDefeat = false;
   thingCrimeStopperRescue = false;
   spiderWomanArachnoRecruit = false;
   throgRecruit = false;
@@ -13346,7 +13356,7 @@ async function handlePostDefeat(
     console.log("20. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
-        defeatBonuses();
+        await defeatBonuses();
       }
       currentVillainLocation = null;
       removeCosmicThreatBuff(cityIndex);
@@ -13769,7 +13779,7 @@ async function handleHQPostDefeat(
     console.log("21. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
-        defeatBonuses();
+        await defeatBonuses();
       }
       if (typeof removeHQCosmicThreatBuff === 'function') {
         removeHQCosmicThreatBuff(index);
@@ -14104,7 +14114,7 @@ async function defeatNonPlacedVillain(villainCard) {
     console.log("13. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
-        defeatBonuses();
+        await defeatBonuses();
       }
     } catch (error) {
       console.error("Error in final cleanup:", error);
@@ -15835,8 +15845,15 @@ async function handleMastermindPostDefeat(
   mastermind.bystanders = [];
   mastermind.XCutionerHeroes = [];
 
-  // Apply defeat bonuses
-  defeatBonuses();
+  // Apply defeat bonuses. This is the SOLE mastermind-defeat call site: gate the villain-only
+  // Military-Industrial Complex payout off via isMastermindDefeat (try/finally guarantees the
+  // flag resets even if the awaited rescue rejects). Overwhelming Firepower still fires (both paths).
+  isMastermindDefeat = true;
+  try {
+    await defeatBonuses();
+  } finally {
+    isMastermindDefeat = false;
+  }
   updateMastermindOverlay();
   updateGameBoard();
 

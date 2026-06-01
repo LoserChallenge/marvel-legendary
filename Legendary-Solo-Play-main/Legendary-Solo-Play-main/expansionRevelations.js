@@ -1885,10 +1885,12 @@ async function warMachineSimulatedTargetPractice() {
 }
 
 // Military-Industrial Complex (Common B) — Whenever you defeat a Villain this turn, +1 Recruit.
+// Arms a turn-trigger (militaryComplexRecruit, a count so multiple copies stack). Paid out in
+// defeatBonuses() on each VILLAIN defeat (villain-only — gated off mastermind defeats by the
+// isMastermindDefeat flag). Reset in endTurn (script.js).
 function warMachineMilitaryIndustrialComplex() {
+  militaryComplexRecruit += 1;
   onscreenConsole.log(`<span class="console-highlights">Military-Industrial Complex</span>: Whenever you defeat a Villain this turn, you get +1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
-  // This needs a per-turn flag checked in the fight resolution flow.
-  // For now, log the reminder.
 }
 
 // Hypersonic Cannon (Uncommon) — Hyperspeed 5. Superpower [RANGED]: KO a card from discard.
@@ -1902,9 +1904,11 @@ async function warMachineHypersonicCannonSuper() {
 
 // Overwhelming Firepower (Rare) — Whenever you defeat a Villain or Mastermind this turn,
 // draw a card and rescue a Bystander.
+// Arms a turn-trigger (overwhelmingFirepowerBonus, a count so multiple copies stack). Paid out
+// in defeatBonuses() on EVERY defeat (villain AND mastermind — no gate). Reset in endTurn.
 function warMachineOverwhelmingFirepower() {
+  overwhelmingFirepowerBonus += 1;
   onscreenConsole.log(`<span class="console-highlights">Overwhelming Firepower</span>: Whenever you defeat a Villain or Mastermind this turn, draw a card and rescue a Bystander.`);
-  // Per-turn flag for fight resolution flow.
 }
 
 // --- VILLAIN CARD EFFECTS ---

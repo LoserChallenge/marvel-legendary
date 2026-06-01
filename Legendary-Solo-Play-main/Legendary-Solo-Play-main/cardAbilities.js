@@ -17,13 +17,45 @@ function koBonuses() {
         }
 }
 
-function defeatBonuses() {
+// ASYNC (F-G2): now awaits rescueBystander() for Overwhelming Firepower. Called at 10 sites
+// (1 mastermind: handleMastermindPostDefeat; 9 villain: handlePostDefeat/handleHQPostDefeat/
+// defeatNonPlacedVillain + 6 expansion villain-defeat completions) — ALL are async and ALL now
+// `await defeatBonuses()`. The single mastermind caller wraps the call in
+// `isMastermindDefeat = true; try { await defeatBonuses(); } finally { isMastermindDefeat = false; }`.
+async function defeatBonuses() {
   if (extraThreeRecruitAvailable > 0) {
     totalRecruitPoints += extraThreeRecruitAvailable;
     cumulativeRecruitPoints += extraThreeRecruitAvailable;
     onscreenConsole.log(
       `You defeated a Villain or Mastermind. +${extraThreeRecruitAvailable} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
     );
+  }
+
+  // War Machine "Military-Industrial Complex" (Revelations): +1 Recruit per VILLAIN defeat this
+  // turn. VILLAIN-ONLY — skipped on the mastermind defeat (gated by isMastermindDefeat). Lives
+  // here, not in handlePostDefeat, so it also catches villain defeats triggered through the 6
+  // expansion defeatBonuses() sites (which bypass handlePostDefeat). cumulativeRecruitPoints is
+  // paired with totalRecruitPoints to match the extraThreeRecruitAvailable precedent above.
+  if (militaryComplexRecruit > 0 && !isMastermindDefeat) {
+    totalRecruitPoints += militaryComplexRecruit;
+    cumulativeRecruitPoints += militaryComplexRecruit;
+    onscreenConsole.log(
+      `<span class="console-highlights">Military-Industrial Complex</span>: +${militaryComplexRecruit} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> for defeating a Villain.`,
+    );
+    updateGameBoard();
+  }
+
+  // War Machine "Overwhelming Firepower" (Revelations): draw 1 + rescue 1 Bystander per villain
+  // OR mastermind defeat this turn. Fires on every defeat (both paths) — no mastermind gate.
+  if (overwhelmingFirepowerBonus > 0) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Overwhelming Firepower</span>: drawing ${overwhelmingFirepowerBonus} card${overwhelmingFirepowerBonus > 1 ? "s" : ""} and rescuing ${overwhelmingFirepowerBonus} Bystander${overwhelmingFirepowerBonus > 1 ? "s" : ""}.`,
+    );
+    for (let n = 0; n < overwhelmingFirepowerBonus; n++) {
+      drawCard();
+      await rescueBystander();
+    }
+    updateGameBoard();
   }
 }
 
@@ -6680,7 +6712,7 @@ function showEligibleVillainsOptions(eligibleVillains, shieldCount) {
             `<span class="console-highlights">${demonBystander.name}</span> has been rescued for free.`,
           );
 
-          defeatBonuses();
+          await defeatBonuses();
           bystanderBonuses();
           await rescueBystanderAbility(demonBystander);
         } else if (mastermindSelected) {
@@ -6744,7 +6776,7 @@ function showEligibleVillainsOptions(eligibleVillains, shieldCount) {
         }
       }
 
-      defeatBonuses();
+      await defeatBonuses();
 
       // Handle fight effect if the villain has one
       let fightEffectPromise = Promise.resolve();

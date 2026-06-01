@@ -5746,7 +5746,7 @@ function silverSurferEpicDestiny() {
         }
       }
 
-      defeatBonuses();
+      await defeatBonuses();
 
       // Handle fight effect if the villain has one
       let fightEffectPromise = Promise.resolve();
