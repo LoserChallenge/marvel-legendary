@@ -2627,9 +2627,9 @@ function showHydraSympathizerPrompt() {
   );
   const titleEl = document.querySelector(".info-or-choice-popup-title");
   if (titleEl) titleEl.textContent = "HYDRA SYMPATHIZER";
-  confirmButton.onclick = () => {
+  confirmButton.onclick = async () => {
     closeInfoChoicePopup();
-    gainHydraSympathizer();
+    await gainHydraSympathizer();
   };
   denyButton.onclick = () => {
     closeInfoChoicePopup();
