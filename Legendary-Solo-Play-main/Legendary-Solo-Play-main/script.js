@@ -10402,12 +10402,12 @@ function updateHQVillainAttackValues(villain) {
     villain.attackFromScheme = villain.bystander.length;
   }
 
-  if (
-    scheme.name === "Portals to the Dark Dimension" &&
-    currentPermBuff !== 0
-  ) {
-    villain.attackFromScheme = currentPermBuff;
-  }
+  // NOTE: No "Portals to the Dark Dimension" branch here (unlike the city twin at
+  // updateVillainAttackValues). The Portals perm-buff is CITY-SPACE-scoped — it lives in
+  // cityPermBuff[i] keyed by city index and is granted only to villains in the city. A
+  // villain in HQ (possible via the PtTR mechanic) has no city index and no perm-buff, so
+  // there is nothing to add. The HQ twin also has no `i`/`currentPermBuff` in scope, so
+  // copying the city branch here would throw a ReferenceError. Do NOT "restore symmetry".
 
   if (
     scheme.name === `Replace Earth's Leaders with Killbots` &&
