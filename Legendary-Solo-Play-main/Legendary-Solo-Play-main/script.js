@@ -9742,9 +9742,20 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
     cardContainer.appendChild(darkPortalOverlay);
   }
 
-  // Update attack values for villains
+  // Update attack values for villains.
+  // applyCardOverlays is the HQ render path (only caller passes location "hq", script.js:8145).
+  // Use the HQ twin (updateHQVillainAttackValues) — NOT the city twin — so an HQ villain's
+  // overlay matches its fight cost (recalculateHQVillainAttack → HQ twin) and does NOT pick up
+  // city-only own-effects: the city twin reads `index` as a CITY index, which for an HQ card is
+  // the HQ slot number, wrongly indexing cityLocations[index] and leaking the Sentry's
+  // Watchtower / The Dark Dimension co-location grant (D4-c) and Sentry→Void position bonus into
+  // HQ villains. The HQ twin takes no index, so those city-only effects stay inert. (D4-c fix.)
   if (card.type === "Villain") {
-    updateVillainAttackValues(card, index);
+    if (location === "hq") {
+      updateHQVillainAttackValues(card);
+    } else {
+      updateVillainAttackValues(card, index);
+    }
 
     const attackFromMastermind = card.attackFromMastermind || 0;
     const attackFromScheme = card.attackFromScheme || 0;
@@ -10521,9 +10532,11 @@ function updateHQVillainAttackValues(villain) {
     villain.attackFromOwnEffects += villainCount * 2;
   }
 
-  // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1, effects 1-3; HQ twin) ---
+  // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1 effects 1-3; HQ twin) ---
   // Mirror of the city updateVillainAttackValues block — keep both in sync (duplicate-fn hazard).
-  // Sentry +5 is city-only (position-dependent) and is NOT replicated here.
+  // Called WITHOUT a city index: Sentry +5 (position-dependent) AND the D4-c Watchtower/
+  // Dark-Dimension co-location grant are city-only and intentionally inert here (HQ has no
+  // Locations and no city-space position). Only the own-keyword + Lethal-Legion bonuses apply.
   if (typeof revelationsVillainOwnAttack === "function") {
     const revOwn = revelationsVillainOwnAttack(villain);
     if (revOwn > 0) {
