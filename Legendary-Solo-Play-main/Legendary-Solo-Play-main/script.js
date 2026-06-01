@@ -11349,6 +11349,25 @@ if (card.temporaryTeleport === true) {
 
   selectedCards = [];
   justAddedToDiscard = [];
+  // Revert any "this turn" identity overrides (e.g. Ronin – Mysterious Identity) so the
+  // chosen color/class/team never leak past this turn into discard/KO-pile class/team
+  // reads (e.g. Dark Memories). Sweep every pile a played card may have moved to this
+  // turn — the destroy/discard passes above can splice a card out of cardsPlayedThisTurn,
+  // so a single pass over that array alone could miss one.
+  [cardsPlayedThisTurn, playerDiscardPile, koPile].forEach((pile) => {
+    if (!Array.isArray(pile)) return;
+    pile.forEach((card) => {
+      if (card && card._origStored) {
+        card.classes = card._origClasses;
+        card.color = card._origColor;
+        card.team = card._origTeam;
+        delete card._origClasses;
+        delete card._origColor;
+        delete card._origTeam;
+        delete card._origStored;
+      }
+    });
+  });
   cardsPlayedThisTurn = [];
   totalAttackPoints = 0;
   totalRecruitPoints = 0;

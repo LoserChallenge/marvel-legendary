@@ -1342,14 +1342,178 @@ function quicksilverAroundTheWorldPunchSuper() {
 
 // === Ronin ===
 
-// Mysterious Identity (Common) — As you play this card, you may choose a color
-// and/or a team icon. This card is that color and team icon this turn.
-function roninMysteriousIdentity() {
-  // This ability lets Ronin count as any class/team for superpower conditions.
-  // Implementation: the card's class/team could be changed dynamically.
-  // For now, log the ability — full implementation requires the played-card
-  // condition checker to offer a choice.
-  onscreenConsole.log(`<span class="console-highlights">Mysterious Identity</span>: This card can count as any Hero Class and/or Team this turn for superpower conditions.`);
+// Generic single-pick icon chooser built on the .card-choice-popup tile row (mirrors
+// moveOneFromVictoryPile's DOM handling). `options` = [{ value, label, image }].
+// Resolves to the chosen value, or null if the player presses the keep/skip button.
+function chooseIconOption(title, instruction, options, skipLabel) {
+  return new Promise((resolve) => {
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    if (!cardchoicepopup || !modalOverlay || !selectionRow1 || !titleElement || !instructionsElement) {
+      // Defensive: popup DOM unexpectedly absent → keep current value.
+      resolve(null);
+      return;
+    }
+
+    titleElement.textContent = title;
+    instructionsElement.textContent = instruction;
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selected = null;
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+    confirmButton.textContent = "CONFIRM";
+    confirmButton.disabled = true;
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "inline-block";
+    noThanksButton.textContent = skipLabel;
+
+    options.forEach((opt) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+
+      const cardImage = document.createElement("img");
+      cardImage.src = opt.image;
+      cardImage.alt = opt.label;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = opt.image;
+        previewImage.alt = opt.label;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        selectionRow1.querySelectorAll("img.selected").forEach((img) => img.classList.remove("selected"));
+        if (selected && selected.value === opt.value) {
+          selected = null;
+          confirmButton.disabled = true;
+        } else {
+          selected = opt;
+          cardImage.classList.add("selected");
+          confirmButton.disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    setupDragScrolling(selectionRow1);
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!selected) return;
+      const value = selected.value;
+      setTimeout(() => {
+        closeCardChoicePopup();
+        resolve(value);
+      }, 100);
+    };
+
+    noThanksButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setTimeout(() => {
+        closeCardChoicePopup();
+        resolve(null);
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+// Mysterious Identity (Common) — As you play this card, you may choose a color and/or a
+// team icon. This card is that color and team icon this turn (instead of Covert and
+// Avengers). Optional and independent: pick class only, team only, both, or neither.
+// The choice overwrites this card's classes/color/team on the SAME object that lives in
+// cardsPlayedThisTurn, so OTHER cards played after it see the chosen class/team
+// (isConditionMet uses cardsPlayedThisTurn.slice(0,-1) — it provides for later cards,
+// not itself). Originals are stashed in _orig* markers and restored in endTurn() so the
+// override never leaks past this turn into discard-pile class/team reads.
+async function roninMysteriousIdentity(card) {
+  if (!card) {
+    onscreenConsole.log(`<span class="console-highlights">Mysterious Identity</span>: no card context — ability skipped.`);
+    return;
+  }
+
+  const CLASS_OPTIONS = [
+    { value: "Strength", label: "Strength", image: "Visual Assets/Icons/Strength.svg" },
+    { value: "Instinct", label: "Instinct", image: "Visual Assets/Icons/Instinct.svg" },
+    { value: "Covert", label: "Covert", image: "Visual Assets/Icons/Covert.svg" },
+    { value: "Tech", label: "Tech", image: "Visual Assets/Icons/Tech.svg" },
+    { value: "Range", label: "Range", image: "Visual Assets/Icons/Range.svg" },
+  ];
+  const CLASS_COLOR = { Strength: "Green", Instinct: "Yellow", Covert: "Red", Tech: "Black", Range: "Blue" };
+  const TEAM_OPTIONS = [
+    "Avengers", "Fantastic Four", "Guardians of the Galaxy", "Marvel Knights",
+    "S.H.I.E.L.D.", "Spider Friends", "X-Factor", "X-Force", "X-Men",
+  ].map((t) => ({ value: t, label: t, image: `Visual Assets/Icons/${t}.svg` }));
+
+  onscreenConsole.log(`<span class="console-highlights">Mysterious Identity</span>: you may choose a color and/or a team icon for this card this turn.`);
+
+  // Stash originals ONCE so endTurn() can revert (also guards against re-entry).
+  if (!card._origStored) {
+    card._origClasses = Array.isArray(card.classes) ? [...card.classes] : card.classes;
+    card._origColor = card.color;
+    card._origTeam = card.team;
+    card._origStored = true;
+  }
+
+  const chosenClass = await chooseIconOption(
+    "MYSTERIOUS IDENTITY — COLOR",
+    "Choose a class/color for this card this turn, or keep Covert.",
+    CLASS_OPTIONS,
+    "KEEP COVERT",
+  );
+  if (chosenClass) {
+    card.classes = [chosenClass];
+    card.color = CLASS_COLOR[chosenClass];
+    onscreenConsole.log(`<span class="console-highlights">Mysterious Identity</span>: this card counts as <span class="console-highlights">${chosenClass}</span> this turn.`);
+  }
+
+  const chosenTeam = await chooseIconOption(
+    "MYSTERIOUS IDENTITY — TEAM",
+    "Choose a team for this card this turn, or keep Avengers.",
+    TEAM_OPTIONS,
+    "KEEP AVENGERS",
+  );
+  if (chosenTeam) {
+    card.team = chosenTeam;
+    onscreenConsole.log(`<span class="console-highlights">Mysterious Identity</span>: this card counts as <span class="console-highlights">${chosenTeam}</span> this turn.`);
+  }
+
+  if (!chosenClass && !chosenTeam) {
+    onscreenConsole.log(`<span class="console-highlights">Mysterious Identity</span>: kept Covert and Avengers.`);
+  }
+
+  updateGameBoard();
 }
 
 // Storm of Arrows (Common B) — Hyperspeed 4. Superpower [RANGED]: Draw a card.
