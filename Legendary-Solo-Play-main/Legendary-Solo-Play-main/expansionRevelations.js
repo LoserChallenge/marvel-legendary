@@ -127,23 +127,36 @@ function calculateLastStand() {
 
 /**
  * Revelations keyword / Location attack bonus for a CITY or HQ villain.
- * Effects: Last Stand (+1/empty space, Double x2), Dark Memories (+1/unique discard class
- * capped 5, Double x2), Lethal Legion (+3 while this villain's ONE exact-name Location is
- * in the city — Grim Reaper's similarly-named tactic-Locations do NOT count).
- * Returns the own-effect attack bonus (0 if this villain has none).
+ * Effects (ALL ADDITIVE — a villain can collect several at once; D4-b made
+ * attackFromOwnEffects accumulate so they sum):
+ *   - Own keyword: Last Stand (+1/empty space, Double x2), Dark Memories (+1/unique discard
+ *     class, Double x2).
+ *   - Lethal Legion (+3 while this villain's ONE exact-name Location keyword is in the city).
+ *   - Location GRANT (D4-c): a villain sharing a space (city index i) with Sentry's Watchtower
+ *     gets Last Stand; with The Dark Dimension gets Dark Memories. Inventory: "(Villains who
+ *     already have it get the bonus again.)" — so the grant STACKS on top of the villain's own
+ *     keyword bonus (additive). City-only: cityLocations[i] is index-aligned with city[i]; the
+ *     HQ twin calls this WITHOUT an index (HQ has no Locations) so the grant is inert there.
+ * Returns the summed own-effect attack bonus (0 if none).
  * Consumed by BOTH updateVillainAttackValues twins (duplicate-fn hazard — keep callers in sync).
+ * @param {object} villain
+ * @param {number} [i] - city index of the villain (omit for HQ; grant only applies city-side)
  */
-function revelationsVillainOwnAttack(villain) {
+function revelationsVillainOwnAttack(villain, i) {
   const kw = villain.keywords || [];
-  if (kw.includes("Double Last Stand")) return calculateLastStand() * 2;
-  if (kw.includes("Last Stand")) return calculateLastStand();
-  if (kw.includes("Double Dark Memories")) return calculateDarkMemories() * 2;
-  if (kw.includes("Dark Memories")) return calculateDarkMemories();
-  // Lethal Legion +3-while-Location: case-insensitive KEYWORD substring match against
+  let bonus = 0;
+
+  // --- Own-keyword bonus (mutually exclusive among the four; a villain has at most one) ---
+  if (kw.includes("Double Last Stand")) bonus += calculateLastStand() * 2;
+  else if (kw.includes("Last Stand")) bonus += calculateLastStand();
+  else if (kw.includes("Double Dark Memories")) bonus += calculateDarkMemories() * 2;
+  else if (kw.includes("Dark Memories")) bonus += calculateDarkMemories();
+
+  // --- Lethal Legion +3-while-Location: case-insensitive KEYWORD substring match against
   // cityLocations[] names. Grim Reaper "Always Leads: Lethal Legion" puts both the Lethal
   // Legion's own Locations AND Grim Reaper's tactic-Locations in play together, and BOTH
   // legitimately satisfy the trigger (the printed villain text quotes a keyword, e.g. "'Maze'
-  // Location", not a full card name). So Living Laser's "Maze" matches Laser Maze AND Maze of Bones.
+  // Location", not a full card name). So Living Laser's "Maze" matches Laser Maze AND Maze of Bones. ---
   const LETHAL_LEGION_KEYWORD = {
     "Living Laser": "maze",
     "M'Baku": "cult",
@@ -159,9 +172,24 @@ function revelationsVillainOwnAttack(villain) {
       (loc) => loc && typeof loc.name === "string" && loc.name.toLowerCase().includes(keyword),
     )
   ) {
-    return 3;
+    bonus += 3;
   }
-  return 0;
+
+  // --- Location GRANT (D4-c): the Location sharing this villain's space confers a keyword.
+  // City-only — requires a valid city index AND the index-aligned Location to be present.
+  // Adds on top of any own-keyword bonus above (the "(again)" stacking case). ---
+  if (
+    typeof i === "number" &&
+    typeof cityLocations !== "undefined" &&
+    Array.isArray(cityLocations) &&
+    cityLocations[i]
+  ) {
+    const locName = cityLocations[i].name;
+    if (locName === "Sentry's Watchtower") bonus += calculateLastStand();
+    else if (locName === "The Dark Dimension") bonus += calculateDarkMemories();
+  }
+
+  return bonus;
 }
 
 /**

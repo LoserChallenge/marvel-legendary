@@ -10280,10 +10280,12 @@ function updateVillainAttackValues(villain, i) {
     villain.attackFromOwnEffects += mastermind.shards || 0;
   }
 
-  // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1, effects 1-3) ---
-  // Last Stand, Dark Memories, Lethal Legion +3-while-Location. Recomputes every render.
+  // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1 effects 1-3 + Batch 4
+  // D4-c grant). Last Stand, Dark Memories, Lethal Legion +3-while-Location, AND the
+  // Watchtower/Dark-Dimension co-location grant (city index i passed so the grant can read
+  // cityLocations[i]). Recomputes every render; additive (D4-b). ---
   if (typeof revelationsVillainOwnAttack === "function") {
-    const revOwn = revelationsVillainOwnAttack(villain);
+    const revOwn = revelationsVillainOwnAttack(villain, i);
     if (revOwn > 0) {
       villain.attackFromOwnEffects += revOwn;
     }
