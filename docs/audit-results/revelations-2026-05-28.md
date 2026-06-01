@@ -444,3 +444,53 @@ Mechanically trivial (engine-side, no twin).
 - **Scope = the 10 self-applying each-other-player Location triggers ONLY.** Leave `hoodsWarehouseTrigger` (the 11th) OUT — it plays a Villain card, a different effect class; revisit separately if needed.
 - **RAW nuance noted but OVERRIDDEN by intent** — implement per Paul's "should work" expectation. (Card text `fantastic-four.md:190`: *"If an enemy you fight this turn would have a Fight effect, you may cancel that effect"* — the trigger is the Location's, not the fought Villain's, but intent wins.)
 - **Do GP-3e LAST** (after the 10 triggers self-apply). UX note: prompt pops per Villain-defeat in a triggered-Location space — acceptable.
+
+## Cluster D Batch 4 — Watchtower/Dark Dimension keyword-grants + attackFromOwnEffects additive refactor + W1 (Sentry's Watchtower HQ-refill Rule-2) — 2026-05-31
+
+**🔎 DIAGNOSED + REUSE-FIRST FIX PLAN (diagnose-only, no code). pattern-reuse-scout run; all claims source-verified.**
+
+### Verbatim effects (final inventory `revelations.md`, NOT art)
+- **Sentry's Watchtower** (Location, ×1, Attack 8, VP 5) — `revelations.md:464-465`: *"Villains here get Last Stand. (Villains who already have it get the bonus again.)"* Plus its own Fight (`expansionRevelations.js:2137`): "Gain the Hero in the HQ space under this." The "(again)" parenthetical = the grant STACKS on a villain that already has Last Stand — additive, not replace.
+- **The Dark Dimension** (Location, ×1, Attack 9, VP 5) — `revelations.md:495-496`: *"Villains here get Dark Memories. (Villains who already have it get the bonus again.)"* Plus its own Fight (`expansionRevelations.js:2272`): "Take another turn after this one" — extra-turn mechanism not yet implemented, OUT OF SCOPE (separate gap; the Fight is a log-only stub today).
+- **Last Stand** (`revelations.md:15`): +1 Attack per empty city space (Double = ×2). **Dark Memories** (`revelations.md:14`): +1 Attack per unique Hero Class in discard pile, max +5, grey cards don't count (Double = ×2). Both already implemented on the self-keyword villain side (`calculateLastStand` `expansionRevelations.js:117`, `calculateDarkMemories` `:79`). NOTE: `calculateDarkMemories` returns `found.size` (max 5 classes exist, so functionally capped — fine).
+
+### Feature 1 — Watchtower/Dark Dimension keyword GRANT to co-located villains (ADAPT)
+**Current state:** both Location DB entries (`cardDatabase.js:4142` Watchtower, `:4253` Dark Dimension) have `keywords: []` and `fightEffect` only. The grant ("villains HERE get X") is **completely unwired** — the two fight functions only do their own Fight; nothing confers Last Stand / Dark Memories to villains sharing the space. The TODO at `expansionRevelations.js:2138-2141` already documents this and prescribes the channel (`attackFromOwnEffects`, not `card.attack`).
+**Why no self-keyword path covers it:** `revelationsVillainOwnAttack(villain)` (`expansionRevelations.js:136`) reads only the VILLAIN's own `keywords[]`. There is NO grant-to-others precedent in the codebase. Nearest shape is the Lethal Legion "+3 while a [keyword] Location is in play" branch (`:147-163`) — but that's a GLOBAL `cityLocations.some(...)` name-scan ("is this Location anywhere?"), not a CO-LOCATION check ("is it in MY space, index i?").
+**Index alignment confirmed:** `cityLocations[i]` is positionally aligned with `city[i]` (`placeLocation` writes `cityLocations[targetIndex]`, `script.js:600`). A villain at city index `i` reads `cityLocations[i]?.name`.
+**Fix direction (ADAPT `revelationsVillainOwnAttack`):**
+1. Add an index param: `revelationsVillainOwnAttack(villain, i)`.
+2. Inside, AFTER the villain's own-keyword bonus, add a co-location grant: if `cityLocations[i]?.name === "Sentry's Watchtower"` add `calculateLastStand()`; if `=== "The Dark Dimension"` add `calculateDarkMemories()`. ADD to (not replace) the own bonus, so a Last-Stand villain under the Watchtower gets Last Stand TWICE (matches "(again)").
+3. City twin call site (`script.js:10278`) passes `i` (in scope). HQ twin (`:10510`) — HQ has NO Locations, so the grant is inert there; the function must tolerate a missing index (guard `cityLocations?.[i]`).
+
+### Feature 2 — `attackFromOwnEffects` additive-stacking refactor (NEW pattern — PREREQUISITE for Feature 1)
+**Root cause (CONFIRMED, live not theoretical):** every write of `attackFromOwnEffects` (and the four sibling `attackFrom*` fields) across BOTH twins is OVERWRITE (`= N`), never accumulate. Both twins reset the field to 0 at the top (city `script.js:10115`, HQ `:10351`) then a chain of `if` branches each ASSIGN. Two own-effects on the same villain clobber each other — only the last-matching `if` survives.
+**The clobber is already reachable today:** city twin sets `villain.attackFromOwnEffects = revOwn` (`script.js:10280`), then the **Sentry→Void** branch immediately after sets `villain.attackFromOwnEffects = 5` (`:10287`) when Sentry is in Bank/Streets (`i===1||i===3`). A Sentry has Last Stand (Dark Avengers) → its Last Stand bonus (10280) is WIPED by the Void +5 (10287). Should be Last Stand + 5. Feature 1 makes this worse: a Last-Stand villain UNDER the Watchtower would clobber or be clobbered.
+**Reader side is already additive across fields:** `recalculateVillainAttack`/`recalculateHQVillainAttack` SUM the five `attackFrom*` fields — so cross-field stacking works; only INTRA-field (two effects both writing `attackFromOwnEffects`) is lossy.
+**Fix direction (additive convention for `attackFromOwnEffects`):** convert the relevant own-effects writes from `= N` to `+= N`, keeping reset-to-0 at top as the accumulation baseline. Simplest correct change: make the Revelations `revOwn` block, the Sentry→Void block, and the new Feature-1 grant ADDITIVE (`+= revOwn`, `+= 5`, `+= grant`) so Last Stand + Void + Watchtower-grant all sum. **Patch BOTH twins in parallel** (duplicate-fn hazard) though Void + grant are city-only — keep the convention identical. **Regression caution:** the other ~10 `attackFromOwnEffects = …` branches (Blockbuster, Chimera, Sandman bystander/heroAttack/cost effects, `script.js:10206-10272`) are mutually exclusive per-villain-name today, so flipping to `+=` is safe in isolation (reset-to-0 baseline means `+=` == `=` for a single match) — but verify no villain matches two branches before any blanket flip. **Recommend: additive on the revOwn + Void + grant trio specifically; leave the name-exclusive branches as `=` unless a clean blanket `+=` is verified harmless.** Coordinator call on blast radius.
+**Sequencing:** Feature 2 MUST land before/with Feature 1, or the Watchtower grant clobbers self-Last-Stand.
+
+### W1 — Sentry's Watchtower Fight: ungated HQ fill-in-place = Golden Solo Rule-2 violation (REUSE — clean fix)
+**Confirmed violation:** `sentrysWatchtowerFight()` (`expansionRevelations.js:2149`) does `hq[wtIdx] = heroDeck.length > 0 ? heroDeck.pop() : null;` — ungated direct fill-in-place. Golden Solo Rule 2 requires HQ REFILL to rotate (rightmost via `goldenRefillHQ`), not refill the vacated slot in place.
+**Reuse target (canonical helper EXISTS):** `refillHQSlot(index)` (`script.js:5134`) — docstring: "Always call this instead of the if/else pattern." Internally gates `if (gameMode === GOLDEN_SOLO) return goldenRefillHQ(index);` else fill-in-place + empty-deck popup. Correct gated precedents already in this file at `:2009, :2450, :2483`.
+**Fix:** replace line 2149 with `refillHQSlot(wtIdx);` (drop the manual `heroDeck.pop()` ternary — the helper handles both modes + the empty-deck popup). The "gain the HQ hero to discard" half (`playerDiscardPile.push(hero)` at 2148) is correct and stays; only the refill is wrong.
+**No other ungated fill-in-place siblings** in expansionRevelations.js (capture/twist paths 2009/2450/2483 already gated). W1 is the lone newer offender that bypassed the helper.
+
+### Reuse summary
+| Feature | Verdict | Target |
+|---|---|---|
+| 1. Watchtower/Dark Dimension grant | ADAPT | `revelationsVillainOwnAttack` (`expansionRevelations.js:136`) + co-location check on `cityLocations[i]`; reuse `calculateLastStand`/`calculateDarkMemories` as-is |
+| 2. attackFromOwnEffects additive | NEW convention | `revOwn`+Void(+grant) writes (`script.js:10280/10287` city; `:10513` HQ) `=` to `+=`; both twins |
+| 3. W1 HQ-refill | REUSE | `refillHQSlot(wtIdx)` (`script.js:5134`); replace `expansionRevelations.js:2149` |
+
+### Dual-mode
+- **Grant (F1) + Void (F2):** city-side attack pipeline, no `gameMode` branch — identical both modes. Verify the overlay shows the summed bonus (reads `attackFrom*`, not `card.attack` — CLAUDE.md).
+- **W1 (F3):** the WHOLE point is mode divergence — Golden rotates (`goldenRefillHQ`), What If? fills in place. `refillHQSlot` handles both. Dual-mode verify required.
+
+### Grouping proposal (stage through Rule-7 gate)
+- **D4-a (W1):** standalone, smallest, mode-sensitive — replace one line with `refillHQSlot`. Independent of F1/F2. Good first.
+- **D4-b (additive refactor, F2):** prerequisite for F1. Convert revOwn+Void(+grant) to `+=` in both twins. Verify Sentry-in-Bank-with-Last-Stand now shows Last Stand + 5 (was just 5).
+- **D4-c (grant, F1):** ADAPT `revelationsVillainOwnAttack` to take `i` + co-location grant, AFTER D4-b lands. Verify a Last-Stand villain under the Watchtower gets Last Stand ×2; a Dark-Memories villain under Dark Dimension gets it ×2; a non-keyword villain under either gets the single grant.
+
+### Rules ambiguity for oracle (PDFs not in worktree)
+- **NONE blocking.** Inventory text is explicit on stacking ("get the bonus again"). Minor optional confirm: the grant applies to VILLAINS in the Location's space (not the Location's own attack, and not in HQ where no Locations exist) — resolved by code structure, not genuinely ambiguous. Flag only if coordinator wants oracle confirmation that two different sources (self-keyword + Location grant) both stack — inventory "(again)" strongly implies yes.
