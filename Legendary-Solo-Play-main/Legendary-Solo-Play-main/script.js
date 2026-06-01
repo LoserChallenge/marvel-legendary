@@ -10197,13 +10197,21 @@ function updateVillainAttackValues(villain, i) {
   }
 
   //Attack from Villain Effects - (Skrulls handled within function)
+  // ADDITIVE CONVENTION (D4-b): attackFromOwnEffects is reset to 0 at the top of this
+  // function, then every contribution below ACCUMULATES with += (never =). This removes
+  // order-dependence: a villain that legitimately has two own-effects (e.g. a self-keyword
+  // bonus AND a Location-granted keyword from D4-c) sums them instead of the last write
+  // clobbering the first. The name-branches below are pairwise disjoint today (proven in
+  // the D4-b diagnosis — unique villain names, none revOwn-eligible), so += is equivalent
+  // to = for every current card (0 + X = X); it is the future grant (D4-c) that needs the
+  // accumulation. Keep this convention identical in the HQ twin (updateHQVillainAttackValues).
 
   if (
     villain.name === `Blockbuster` &&
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length * 2;
+    villain.attackFromOwnEffects += villain.bystander.length * 2;
   }
 
   if (
@@ -10211,7 +10219,7 @@ function updateVillainAttackValues(villain, i) {
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length * 3;
+    villain.attackFromOwnEffects += villain.bystander.length * 3;
   }
 
   if (
@@ -10219,7 +10227,7 @@ function updateVillainAttackValues(villain, i) {
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length;
+    villain.attackFromOwnEffects += villain.bystander.length;
   }
 
   if (
@@ -10227,7 +10235,7 @@ function updateVillainAttackValues(villain, i) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (
@@ -10235,7 +10243,7 @@ function updateVillainAttackValues(villain, i) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (
@@ -10243,11 +10251,11 @@ function updateVillainAttackValues(villain, i) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (villain.name === "Doppelganger") {
-    villain.attackFromOwnEffects = hq[i]?.cost || 0;
+    villain.attackFromOwnEffects += hq[i]?.cost || 0;
   }
 
   if (villain.name === "Kraven the Hunter") {
@@ -10258,18 +10266,18 @@ function updateVillainAttackValues(villain, i) {
       .map((card) => card.cost);
 
     const highestCost = heroCosts.length ? Math.max(...heroCosts) : 0;
-    villain.attackFromOwnEffects = highestCost;
+    villain.attackFromOwnEffects += highestCost;
   }
 
   if (villain.name === "Sandman") {
     const villainCount = city.filter(
       (obj) => obj && obj.type === "Villain",
     ).length;
-    villain.attackFromOwnEffects = villainCount * 2;
+    villain.attackFromOwnEffects += villainCount * 2;
   }
 
   if (villain.name === "Captain Atlas") {
-    villain.attackFromOwnEffects = mastermind.shards || 0;
+    villain.attackFromOwnEffects += mastermind.shards || 0;
   }
 
   // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1, effects 1-3) ---
@@ -10277,14 +10285,14 @@ function updateVillainAttackValues(villain, i) {
   if (typeof revelationsVillainOwnAttack === "function") {
     const revOwn = revelationsVillainOwnAttack(villain);
     if (revOwn > 0) {
-      villain.attackFromOwnEffects = revOwn;
+      villain.attackFromOwnEffects += revOwn;
     }
   }
 
   // Sentry → "The Void": +5 Attack while in the Streets (index 1) or Bank (index 3).
   // Same position determination as sentryFight()/isVoid. Name-swap display deferred.
   if (villain.name === "Sentry" && (i === 1 || i === 3)) {
-    villain.attackFromOwnEffects = 5;
+    villain.attackFromOwnEffects += 5;
   }
 
   //Attack from Shards
@@ -10433,13 +10441,18 @@ function updateHQVillainAttackValues(villain) {
   }
 
   //Attack from Villain Effects - (Skrulls handled within function)
+  // ADDITIVE CONVENTION (D4-b): mirrors the city twin (updateVillainAttackValues).
+  // attackFromOwnEffects is reset to 0 above, then every contribution ACCUMULATES with +=
+  // (never =) so multiple own-effects sum instead of clobbering. Keep identical to the
+  // city twin (duplicate-fn hazard). HQ has no Locations, so the D4-c grant + Sentry-Void
+  // (both city-only) are intentionally absent here.
 
   if (
     villain.name === `Blockbuster` &&
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length * 2;
+    villain.attackFromOwnEffects += villain.bystander.length * 2;
   }
 
   if (
@@ -10447,7 +10460,7 @@ function updateHQVillainAttackValues(villain) {
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length * 3;
+    villain.attackFromOwnEffects += villain.bystander.length * 3;
   }
 
   if (
@@ -10455,7 +10468,7 @@ function updateHQVillainAttackValues(villain) {
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length;
+    villain.attackFromOwnEffects += villain.bystander.length;
   }
 
   if (
@@ -10463,7 +10476,7 @@ function updateHQVillainAttackValues(villain) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (
@@ -10471,7 +10484,7 @@ function updateHQVillainAttackValues(villain) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (
@@ -10479,11 +10492,13 @@ function updateHQVillainAttackValues(villain) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (villain.name === "Doppelganger") {
-    villain.attackFromOwnEffects = 0;
+    // HQ Doppelganger has no own-effect bonus (city version reads hq[i].cost; HQ has no
+    // such position). Reset-to-0 above already handles it — explicit no-op for parity.
+    villain.attackFromOwnEffects += 0;
   }
 
   if (villain.name === "Kraven the Hunter") {
@@ -10494,14 +10509,14 @@ function updateHQVillainAttackValues(villain) {
       .map((card) => card.cost);
 
     const highestCost = heroCosts.length ? Math.max(...heroCosts) : 0;
-    villain.attackFromOwnEffects = highestCost;
+    villain.attackFromOwnEffects += highestCost;
   }
 
   if (villain.name === "Sandman") {
     const villainCount = city.filter(
       (obj) => obj && obj.type === "Villain",
     ).length;
-    villain.attackFromOwnEffects = villainCount * 2;
+    villain.attackFromOwnEffects += villainCount * 2;
   }
 
   // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1, effects 1-3; HQ twin) ---
@@ -10510,7 +10525,7 @@ function updateHQVillainAttackValues(villain) {
   if (typeof revelationsVillainOwnAttack === "function") {
     const revOwn = revelationsVillainOwnAttack(villain);
     if (revOwn > 0) {
-      villain.attackFromOwnEffects = revOwn;
+      villain.attackFromOwnEffects += revOwn;
     }
   }
 
