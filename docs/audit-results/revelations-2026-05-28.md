@@ -283,7 +283,29 @@ Paul's Golden Solo milestone playtest, one finding at a time. GP-3 / GP-4 / GP-5
 **Implementation order (coordinator green-light 2026-05-29):** GP-3 first, staged GP-3a → GP-3e through the Rule-7 gate. GP-1, GP-2, GP-6 sequenced after (not yet scheduled).
 
 ### GP-1 — Ronin "Mysterious Identity": log-only, no choice UI (Cluster F shape)
-Currently logs the class/team-reassignment text but has no selection UI — the actual class/team choice is never wired. Same log-only pattern as Cluster F hero abilities. `expansionRevelations.js:~1306`. Needs the player picker for the color/team reassignment. **Not yet investigated in detail.**
+🔎 **DIAGNOSED (diagnose-only, no code). Ready for a fresh worker to implement — full plan below.**
+
+**Verbatim effect** (inventory `revelations.md:313` / `reference.md:214`): *"As you play this card, you may choose a color and/or a team icon. This card is that color and team icon this turn. (instead of Covert and Avengers)."* → OPTIONAL ("may"), AND/OR (color only / team only / both / neither). "Color" = a Hero Class (color↔class; Covert=Red is its default). Replaces the card's printed Covert class + Avengers team FOR THIS TURN ONLY.
+
+**DB** (`cardDatabase.js:11421`, id 209): `classes:["Covert"]`, `team:"Avengers"`, `color:"Red"`, `unconditionalAbility:"roninMysteriousIdentity"`, `conditionType:"None"` (no superpower of its own).
+
+**Current behavior** (`expansionRevelations.js:1347` `roninMysteriousIdentity`): log-only — prints "can count as any Hero Class and/or Team this turn" and presents NO choice, stores nothing. Card always stays Covert/Avengers.
+
+**What consumes the chosen value** (so the fix has real effect): `isConditionMet` (`script.js:11107`), the superpower-condition checker, reads `playedCard.classes` AND `playedCard.team` from `cardsPlayedThisTurn` at eval time, in two condition types — `"playedCards"` (`11120-11125`: counts cards whose `.classes.includes(type)` OR `.team === type`) and `"revealCardTeam"` (`11130`: reads `.team` across hand+played). Also `hasClass` (`script.js:14153`). **Crucial:** `isConditionMet` uses `cardsPlayedThisTurn.slice(0,-1)` — EXCLUDES the card being evaluated — so Mysterious Identity is a CLASS/TEAM PROVIDER for OTHER cards' conditions played *after* it, not for itself. Mechanism works: overwrite the played card's `classes`/`team`/`color` and these consumers read the chosen values dynamically.
+
+**The "this turn" / revert problem (key design point):** NO temporary-class-override precedent exists in the codebase. Played card OBJECTS persist into the discard pile (same objects, not re-instantiated) and `endTurn` (`script.js:11202`) only clears the `cardsPlayedThisTurn` ARRAY at `11352` — it does NOT restore card properties. So mutating `card.classes/team/color` LEAKS past the turn: next-turn discard-class reads (e.g. Dark Memories, which counts Hero Classes in the discard pile) would see the chosen class instead of Covert. The override MUST revert at turn end.
+
+**Reuse scaffolding:** class ("color") picker → the FF Galactus Cosmic Threat 5-class selector (`expansionFantasticFour.js`, "chooseClass" phase ~`1418`/`1586` — renders the 5 Hero Classes into cells); adaptable though heavier than needed (lighter: a `card-choice-popup` of 5 class-icon tiles, or chained `showHeroAbilityMayPopup`; GP-3 single-select picker convention applies). Team picker → NONE exists; needs a small option list. (Cluster F is the SHAPE GP-1 shares — log-only abilities needing wiring — not a built helper; nothing to import from it.)
+
+**FIX PLAN (4 steps):**
+1. `roninMysteriousIdentity` → `async`. Present an OPTIONAL two-part choice: (a) color/class = 5 classes + "keep Covert / skip"; (b) team = a team list + "keep Avengers / skip". "May" + and/or → either, both, or skip entirely.
+2. On choice, store originals once on the played card object (e.g. `card._origClasses/_origTeam/_origColor`) then overwrite `card.classes=[chosenClass]`, `card.color=mappedColor`, `card.team=chosenTeam` on the object in `cardsPlayedThisTurn`. Consumers (`isConditionMet`, `hasClass`) then read the chosen values.
+3. Add a revert pass in `endTurn` BEFORE `cardsPlayedThisTurn` is cleared (`script.js:11352`): for any played card carrying `_orig*` markers, restore `classes/team/color` and delete the markers. Enforces "this turn"; prevents discard-class leakage. (This is the one engine touch.)
+4. `gameMode`: MODE-AGNOSTIC — hero play + condition checks are identical in golden/whatif; no `gameMode` branching. (Dual-mode verification still required per Rule 7.)
+
+**OPEN SCOPE QUESTIONS (coordinator/Paul):** (i) TEAM-CHOICE LIST breadth — card says "a team icon" (any team): offer the full game team list (Avengers, X-Men, Spider Friends, Fantastic Four, Guardians, Marvel Knights, X-Force, S.H.I.E.L.D., …) or a practical subset? Class choice is clearly useful (feeds [class] superpowers); team choice is lower-value in solo. (ii) Whether to ship class-only first and defer team. Verbatim/inventory are settled — this is a UX-scope + slight rules-breadth call; consider rules-oracle (coordinator-side; PDFs not in worktree) for the "any team icon" breadth. **Resolve before implementing.**
+
+Correct file/line is `expansionRevelations.js:1347` (the earlier `~1306` pointer was stale).
 
 ### GP-2 — Grim Reaper Master Strike "Graveyard" Location: display-only overlay bug
 ✅ **DONE + VERIFIED (commit `9dc0567`). Interim code-only fix (Paul's decision — no Graveyard art exists).**
