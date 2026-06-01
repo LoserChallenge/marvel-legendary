@@ -1704,10 +1704,16 @@ function speedAccelerateSuper() {
 }
 
 // Speedy Delivery (Common B) — The next Hero you recruit this turn goes on top of your deck.
+// REUSE: same mechanic as Daredevil "Backflip" (cardAbilitiesDarkCity.js:daredevilBackflip).
+// The shared `backflipRecruit` flag is consumed by all three recruit handlers
+// (recruitHeroConfirmed script.js:18311, plus the sidekick 17701 / officer 17807 twins),
+// each of which routes the next recruit to playerDeck top (revealed=true) and self-resets the
+// flag. endTurn also force-resets it (script.js:11481). Per the existing Daredevil precedent,
+// "Hero you recruit" is treated as "the next card you recruit" (the flag catches sidekicks/
+// officers too) — kept consistent with Backflip rather than narrowing to Hero-only.
 function speedSpeedyDelivery() {
+  backflipRecruit = true;
   onscreenConsole.log(`<span class="console-highlights">Speedy Delivery</span>: The next Hero you recruit this turn goes on top of your deck.`);
-  // This needs a flag that the recruit system checks.
-  // For now, log the reminder — full integration requires a hook in the recruit flow.
 }
 
 // Race to the Rescue (Uncommon) — Choose a Hero Class. Reveal top card of your deck.
