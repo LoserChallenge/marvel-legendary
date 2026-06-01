@@ -2146,7 +2146,10 @@ function sentrysWatchtowerFight() {
   if (wtIdx !== -1 && hq[wtIdx]) {
     const hero = hq[wtIdx];
     playerDiscardPile.push(hero);
-    hq[wtIdx] = heroDeck.length > 0 ? heroDeck.pop() : null;
+    // HQ refill must rotate in Golden Solo (Rule 2), fill-in-place in What If?.
+    // refillHQSlot gates both modes + handles the empty-deck popup — do NOT use a raw
+    // hq[wtIdx] = heroDeck.pop() (ungated fill-in-place violates Golden Solo Rule 2). (W1)
+    refillHQSlot(wtIdx);
     onscreenConsole.log(`Fight! <span class="console-highlights">Sentry's Watchtower</span>: Gained <span class="console-highlights">${hero.name}</span> from the HQ.`);
     updateGameBoard();
   } else {
