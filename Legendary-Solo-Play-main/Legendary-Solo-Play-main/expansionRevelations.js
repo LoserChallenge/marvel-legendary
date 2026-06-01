@@ -1828,41 +1828,60 @@ function speedBreakTheSoundBarrierSuper() {
 
 // Simulated Target Practice (Common) — Superpower [TECH]: You may fight a Henchman
 // from your Victory Pile this turn. If you do, KO it and rescue a Bystander.
+// (Do that Henchman's Fight effect too.)
+//
+// Three fixes vs the previous body:
+//  1. CRASH: the old code popped a non-existent global `bystanderStack` → ReferenceError
+//     that aborted the effect. REUSE the canonical `rescueBystander()` (cardAbilities.js:640):
+//     it pops the real `bystanderDeck`, pushes to victoryPile, runs bystanderBonuses() + the
+//     bystander's own on-rescue ability. (async — awaited below.)
+//  2. CHOICE: old code auto-KO'd the first henchman found. Now presents a picker (triage rule:
+//     never auto-resolve a "you may" choice). REUSE the in-file `chooseIconOption()` tile picker.
+//  3. FIGHT EFFECT: the "(Do that Henchman's Fight effect too.)" clause was dropped entirely.
+//     Now dispatched exactly like the engine does it (collectDefeatOperations, script.js:12663):
+//     createVillainCopy(hench) then `await window[copy.fightEffect](copy)`. VP entries are the
+//     ORIGINAL defeated cards (victoryPile.push(villainCard), NOT a copy), so they retain their
+//     `fightEffect` string — verified empirically. Henchmen are marked `henchmen: true`.
 async function warMachineSimulatedTargetPractice() {
-  const henchmenInVP = victoryPile.filter(c => c.subtype === "Henchman" || (c.henchmen === true));
+  const henchmenInVP = victoryPile.filter(c => c && (c.henchmen === true || c.subtype === "Henchman"));
   if (henchmenInVP.length === 0) {
-    onscreenConsole.log(`<span class="console-highlights">Simulated Target Practice</span> superpower: No Henchmen in Victory Pile.`);
+    onscreenConsole.log(`<span class="console-highlights">Simulated Target Practice</span> superpower: No Henchmen in your Victory Pile.`);
     return;
   }
-  return new Promise((resolve) => {
-    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-      `Fight a Henchman from your Victory Pile, KO it, and rescue a Bystander?`,
-      "Fight Henchman",
-      "Skip",
-    );
-    confirmButton.onclick = function () {
-      closeInfoChoicePopup();
-      // KO first henchman found
-      const idx = victoryPile.findIndex(c => c.subtype === "Henchman" || (c.henchmen === true));
-      if (idx !== -1) {
-        const hench = victoryPile.splice(idx, 1)[0];
-        koPile.push(hench);
-        onscreenConsole.log(`KO'd <span class="console-highlights">${hench.name}</span> from Victory Pile.`);
-        // Rescue a bystander
-        if (bystanderStack.length > 0) {
-          const bystander = bystanderStack.pop();
-          victoryPile.push(bystander);
-          onscreenConsole.log(`Rescued a <span class="console-highlights">Bystander</span>.`);
-        }
-        updateGameBoard();
-      }
-      resolve();
-    };
-    denyButton.onclick = function () {
-      closeInfoChoicePopup();
-      resolve();
-    };
-  });
+
+  const options = henchmenInVP.map((h, i) => ({ value: i, label: h.name, image: h.image }));
+  const choice = await chooseIconOption(
+    "SIMULATED TARGET PRACTICE",
+    "Fight a Henchman from your Victory Pile: KO it, rescue a Bystander, and do its Fight effect. Choose one, or Skip.",
+    options,
+    "Skip",
+  );
+  if (choice === null || choice === undefined) {
+    onscreenConsole.log(`<span class="console-highlights">Simulated Target Practice</span>: declined.`);
+    return;
+  }
+
+  // KO the chosen Henchman out of the Victory Pile (remove by identity — index-safe).
+  const hench = henchmenInVP[choice];
+  const vpIdx = victoryPile.indexOf(hench);
+  if (vpIdx !== -1) victoryPile.splice(vpIdx, 1);
+  koPile.push(hench);
+  onscreenConsole.log(`Fought and KO'd <span class="console-highlights">${hench.name}</span> from your Victory Pile.`);
+
+  // Rescue a Bystander (canonical helper — correct global bystanderDeck → victoryPile).
+  await rescueBystander();
+
+  // Do that Henchman's Fight effect too — mirror the engine's defeat dispatch.
+  if (hench.fightEffect && hench.fightEffect !== "None") {
+    const fightEffectFunction = window[hench.fightEffect];
+    if (typeof fightEffectFunction === "function") {
+      onscreenConsole.log(`Resolving <span class="console-highlights">${hench.name}</span>'s Fight effect.`);
+      const henchCopy = createVillainCopy(hench);
+      await fightEffectFunction(henchCopy);
+    }
+  }
+
+  updateGameBoard();
 }
 
 // Military-Industrial Complex (Common B) — Whenever you defeat a Villain this turn, +1 Recruit.
