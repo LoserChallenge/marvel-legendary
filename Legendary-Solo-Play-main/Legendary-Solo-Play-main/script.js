@@ -4870,6 +4870,10 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
 
   bystanderDeck = buildBystanderDeck();
   shieldDeck = [...shieldOfficers];
+  // Reset HYDRA Officer-stack tracking per game (these globals live in expansionRevelations.js
+  // and are NOT otherwise reset between games). hydraOfficersNextToScheme = Officers moved next
+  // to the Scheme; the shared 30-card stack is shieldDeck itself (reset above). PT-3.
+  if (typeof hydraOfficersNextToScheme !== "undefined") hydraOfficersNextToScheme = 0;
 
   let selectedExpansions = getSelectedExpansions();
 
@@ -8490,6 +8494,30 @@ if (stackedTwistNextToMastermind > 0) {
       console.warn("demon-goblin-deck element not found");
     }
 
+    // HYDRA — S.H.I.E.L.D. Officers stacked next to the Scheme (PT-3). Reuses the scheme-cell
+    // count-badge pattern (cf. demon-goblin-count). Shown whenever any Officer is next to the
+    // Scheme, on either HYDRA side. The badge is the click affordance for the Side-A "pay 3
+    // Recruit → gain a Hydra Sympathizer" action (gated inside showHydraSympathizerPrompt:
+    // Side A only, count>0, affordable).
+    const hydraOfficerDeckImage = document.getElementById("hydra-officer-deck");
+    const hydraOfficerCount = document.getElementById("hydra-officer-count");
+    if (hydraOfficerDeckImage && hydraOfficerCount) {
+      if (typeof hydraOfficersNextToScheme !== "undefined" && hydraOfficersNextToScheme > 0) {
+        hydraOfficerDeckImage.style.display = "flex";
+        hydraOfficerCount.textContent = `${hydraOfficersNextToScheme}`;
+        if (!hydraOfficerDeckImage.dataset.clickBound) {
+          hydraOfficerDeckImage.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (typeof showHydraSympathizerPrompt === "function") showHydraSympathizerPrompt();
+          });
+          hydraOfficerDeckImage.dataset.clickBound = "true";
+        }
+      } else {
+        hydraOfficerDeckImage.style.display = "none";
+        hydraOfficerCount.textContent = ``;
+      }
+    }
+
     const tempBuffOverlayMastermind = document.getElementById(
       "mastermind-temp-buff",
     );
@@ -9566,10 +9594,20 @@ if (selectedSchemeEndGame) {
 
         case "secretHydraEvilWins":
         case "openHydraEvilWins":
+          // Evil wins when 15 Officers are next to the Scheme OR the shared S.H.I.E.L.D.
+          // Officer stack (shieldDeck — also the normal recruit pool) runs out. Both the
+          // scheme Twists and normal recruiting deplete shieldDeck, so an empty stack is a
+          // real reachable loss (oracle 2026-05-31, PT-3). Only treat an empty stack as a
+          // loss while the HYDRA scheme is actually in play (this case guarantees that).
           if (typeof hydraOfficersNextToScheme !== "undefined" && hydraOfficersNextToScheme >= 15) {
             finalTwist = true;
             document.getElementById("defeat-context").textContent =
               `15 S.H.I.E.L.D. Officers are next to the Scheme. HYDRA's infiltration is complete.`;
+            showDefeatPopup();
+          } else if (shieldDeck.length === 0) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `The S.H.I.E.L.D. Officer Stack has run out. HYDRA's infiltration is complete.`;
             showDefeatPopup();
           }
           break;
@@ -10702,6 +10740,12 @@ function updateEvilWinsTracker() {
 
     case "Unite the Shards":
       evilWinsText.innerHTML = `${shardSupply} ${shardSupply === 1 ? "Shard" : "Shards"} Left. Mastermind has ${mastermind.shards || 0}/10`;
+      break;
+
+    case "Secret HYDRA Corruption":
+      // Evil wins at 15 Officers next to the Scheme OR the shared Officer stack (shieldDeck)
+      // empty. Show both the next-to-scheme progress and the remaining stack. PT-3.
+      evilWinsText.innerHTML = `${typeof hydraOfficersNextToScheme !== "undefined" ? hydraOfficersNextToScheme : 0}/15 Officers Next to Scheme · ${shieldDeck.length} in Stack`;
       break;
 
     default:

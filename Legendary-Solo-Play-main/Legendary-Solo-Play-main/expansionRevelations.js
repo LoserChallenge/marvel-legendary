@@ -2500,6 +2500,22 @@ async function noMoreMutantsTwist() {
 // Track officers placed next to scheme
 let hydraOfficersNextToScheme = 0;
 
+// Move N real Officer cards from the shared S.H.I.E.L.D. Officer stack (shieldDeck — the
+// SAME 30-card pool the player recruits from) to "next to the Scheme". Per the Revelations
+// rules (oracle 2026-05-31): there is ONE stack of 30 Officers; the scheme and normal
+// recruiting compete for it. We pop REAL cards from shieldDeck (so the stack genuinely
+// depletes) and track the next-to-scheme pile as the integer hydraOfficersNextToScheme.
+// Returns how many were actually moved (bounded by what remains in the stack).
+function moveOfficersNextToScheme(requested) {
+  let moved = 0;
+  for (let i = 0; i < requested && shieldDeck.length > 0; i++) {
+    shieldDeck.pop();
+    hydraOfficersNextToScheme++;
+    moved++;
+  }
+  return moved;
+}
+
 // Secret HYDRA (Side A) Twist: For each twist in KO pile (including this one),
 // put an Officer next to scheme. Then transform.
 async function secretHydraCorruptionTwist() {
@@ -2509,8 +2525,11 @@ async function secretHydraCorruptionTwist() {
   // runs, so the filter already counts "this one" — do NOT add +1 (would double-count). (PT-4 fix.)
   const twistsInKO = koPile.filter(c => c.type === "Scheme Twist").length;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! ${twistsInKO} Twist(s) in KO pile (including this one).`);
-  hydraOfficersNextToScheme += twistsInKO;
-  onscreenConsole.log(`${hydraOfficersNextToScheme} S.H.I.E.L.D. Officers now next to the Scheme.`);
+  const moved = moveOfficersNextToScheme(twistsInKO);
+  onscreenConsole.log(`Put ${moved} S.H.I.E.L.D. Officer(s) next to the Scheme (${hydraOfficersNextToScheme} total; ${shieldDeck.length} left in the stack).`);
+  // Per card text Side A always transforms after placing Officers; the Evil-Wins system
+  // (script.js updateGameBoard, both >=15 and stack-empty branches) detects a loss on the
+  // next board refresh regardless of side, so no inline win-gate is needed here.
   onscreenConsole.log(`Transforming to <span class="console-highlights">Open HYDRA Revolution</span>.`);
   transformScheme();
 }
@@ -2522,15 +2541,99 @@ async function openHydraRevolutionTwist() {
   // runs, so the filter already counts "this one" — do NOT add +1 (would double-count). (PT-4 fix.)
   const twistsInKO = koPile.filter(c => c.type === "Scheme Twist").length;
   onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! ${twistsInKO} Twist(s) in KO pile. Adding Officers.`);
-  hydraOfficersNextToScheme += twistsInKO;
-  onscreenConsole.log(`${hydraOfficersNextToScheme} S.H.I.E.L.D. Officers now next to the Scheme.`);
-  if (hydraOfficersNextToScheme >= 15) {
-    onscreenConsole.log(`15+ Officers next to Scheme. Evil Wins!`);
-    // Evil wins will be checked by the endGame system
+  const moved = moveOfficersNextToScheme(twistsInKO);
+  onscreenConsole.log(`Put ${moved} S.H.I.E.L.D. Officer(s) next to the Scheme (${hydraOfficersNextToScheme} total; ${shieldDeck.length} left in the stack).`);
+  // Side B transforms back ONLY if Evil hasn't won. Evil wins when there are >=15 Officers
+  // next to the Scheme OR the shared Officer stack (shieldDeck) has run out. The Evil-Wins
+  // system shows the defeat popup; here we just skip the transform in that case.
+  if (hydraOfficersNextToScheme >= 15 || shieldDeck.length === 0) {
+    onscreenConsole.log(`HYDRA's infiltration is complete. Evil Wins!`);
+    // Evil wins is confirmed/shown by the endGame system (updateGameBoard).
   } else {
     onscreenConsole.log(`Transforming back to <span class="console-highlights">Secret HYDRA Corruption</span>.`);
     transformScheme();
   }
+}
+
+// Mint a S.H.I.E.L.D. Officer card. Officers are 30 identical fungible copies, so a clone of
+// the template is indistinguishable from the specific card sitting next to the Scheme — this
+// materialises a next-to-scheme Officer when the player gains one (the integer tracks how many
+// are there; we don't store the individual objects). Defensive fallback if shieldOfficers is
+// somehow unavailable.
+function makeShieldOfficer() {
+  if (typeof shieldOfficers !== "undefined" && Array.isArray(shieldOfficers) && shieldOfficers.length > 0) {
+    return { ...shieldOfficers[0] };
+  }
+  return {
+    type: "Hero", name: "S.H.I.E.L.D. Officer", team: "S.H.I.E.L.D.", classes: [],
+    attack: 0, recruit: 2, attackIcon: false, recruitIcon: true, cost: 3, color: "Grey",
+    unconditionalAbility: "None", keywords: [], image: "Visual Assets/Heroes/SHIELD/shieldofficer.webp",
+  };
+}
+
+// Side-A special rule: "Officers stacked next to this Scheme are 'Hydra Sympathizers.' You may
+// pay 3 Recruit to have the player of your choice gain one as a Hero." Solo: the player of your
+// choice is yourself → gain the Officer to your discard pile. SIDE-A ONLY (the rule is printed on
+// Secret HYDRA Corruption); on Side B the Officers are "Hydra Traitor" Villains instead (Cluster B).
+// Mirrors recruitOfficer (script.js): check affordability → gain to discard → spend 3 Recruit.
+async function gainHydraSympathizer() {
+  const COST = 3;
+  const activeScheme = getActiveScheme();
+  if (!activeScheme || activeScheme.name !== "Secret HYDRA Corruption") {
+    return false; // Side-A only
+  }
+  if (typeof hydraOfficersNextToScheme === "undefined" || hydraOfficersNextToScheme <= 0) {
+    onscreenConsole.log("No Hydra Sympathizers are next to the Scheme.");
+    return false;
+  }
+  if (!canAffordRecruitCost(COST)) {
+    logRecruitCostMessage(COST, 'gain a <span class="console-highlights">Hydra Sympathizer</span>');
+    return false;
+  }
+
+  const officer = makeShieldOfficer();
+  hydraOfficersNextToScheme--;
+  playerDiscardPile.push(officer);
+  onscreenConsole.log(`Hydra Sympathizer gained! <span class="console-highlights">${officer.name}</span> added to your discard pile. (${hydraOfficersNextToScheme} left next to the Scheme.)`);
+
+  const ok = spendRecruitCost(COST);
+  if (!ok) {
+    // Defensive rollback (affordability was pre-checked, so this should never fire).
+    hydraOfficersNextToScheme++;
+    playerDiscardPile.pop();
+    return false;
+  }
+
+  if (typeof playSFX === "function") playSFX("recruit");
+  healingPossible = false;
+  updateGameBoard();
+  return true;
+}
+
+// Click affordance on the next-to-scheme Officer badge: confirm the optional "pay 3 Recruit"
+// before gaining (the rule is "you MAY pay"). Guards keep it Side-A-only, count>0, affordable.
+function showHydraSympathizerPrompt() {
+  const activeScheme = getActiveScheme();
+  if (!activeScheme || activeScheme.name !== "Secret HYDRA Corruption") return;
+  if (typeof hydraOfficersNextToScheme === "undefined" || hydraOfficersNextToScheme <= 0) return;
+  if (!canAffordRecruitCost(3)) {
+    logRecruitCostMessage(3, 'gain a <span class="console-highlights">Hydra Sympathizer</span>');
+    return;
+  }
+  const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+    `Pay 3 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to gain a <span class="console-highlights">Hydra Sympathizer</span> (S.H.I.E.L.D. Officer) to your discard pile?`,
+    "Pay 3",
+    "Cancel",
+  );
+  const titleEl = document.querySelector(".info-or-choice-popup-title");
+  if (titleEl) titleEl.textContent = "HYDRA SYMPATHIZER";
+  confirmButton.onclick = () => {
+    closeInfoChoicePopup();
+    gainHydraSympathizer();
+  };
+  denyButton.onclick = () => {
+    closeInfoChoicePopup();
+  };
 }
 
 // === The Korvac Saga / Korvac Revealed ===

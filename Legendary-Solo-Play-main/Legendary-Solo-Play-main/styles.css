@@ -4694,6 +4694,39 @@ button:disabled:hover {
   cursor: pointer;
 }
 
+/* HYDRA Officer-stack badge (PT-3) — scheme-cell count badge mirroring #demon-goblin-deck,
+   using the S.H.I.E.L.D. Officer card art and offset to the LEFT edge so it does not overlap
+   the demon-goblin badge (which sits to the right). Clickable: pay 3 Recruit to gain one. */
+#hydra-officer-deck {
+  position: absolute;
+  width: 10%;
+  height: 10%;
+  display: flex;
+  background-image: url("Visual Assets/Heroes/SHIELD/shieldofficer.webp");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 1;
+  margin-left: -9.5%;
+  cursor: pointer;
+}
+
+#hydra-officer-count {
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  margin-right: auto;
+  color: #ffffff;
+  font-family: var(--heading-font);
+  font-size: var(--heading-size);
+  text-transform: var(--text-transform);
+  letter-spacing: var(--letter-spacing);
+  margin-bottom: auto;
+  filter: drop-shadow(0vh 0vh 1.1vh red);
+  cursor: pointer;
+}
+
 .city-cell .XCutioner-overlay {
   position: absolute;
   top: 0;
