@@ -488,7 +488,7 @@ Mechanically trivial (engine-side, no twin).
 - **W1 (F3):** the WHOLE point is mode divergence — Golden rotates (`goldenRefillHQ`), What If? fills in place. `refillHQSlot` handles both. Dual-mode verify required.
 
 ### Grouping proposal (stage through Rule-7 gate)
-- **D4-a (W1):** standalone, smallest, mode-sensitive — replace one line with `refillHQSlot`. Independent of F1/F2. Good first.
+- **D4-a (W1):** ✅ **DONE + VERIFIED (commit `2bccffa`).** `sentrysWatchtowerFight` now calls `refillHQSlot(wtIdx)`. Rule-7 gate: expansion-validator **7/7 PASS** (Rule 2 clean, no other ungated sites); cold-read **CORRECT** (flagged a PRE-EXISTING, currently-unreachable city-index-vs-HQ-index mapping concern — `hq[wtIdx]` truthy guard means `refillHQSlot` only reached for valid HQ slots 0-4; NOT introduced here, noted for a future multi-space-city audit); dual-mode live `/game-test` vs served build all PASS — Golden ROTATES (`[A,B,C,D,E]`→gain C→`[A,B,D,E,NEW]`, slot spliced + NEW rightmost, len 5), What If? FILLS-IN-PLACE (slot 2→NEW = `[A,B,NEW,D,E]`), empty-slot-under-Watchtower = no-op. Gain-to-discard half unchanged.
 - **D4-b (additive refactor, F2):** prerequisite for F1. Convert revOwn+Void(+grant) to `+=` in both twins. Verify Sentry-in-Bank-with-Last-Stand now shows Last Stand + 5 (was just 5).
 - **D4-c (grant, F1):** ADAPT `revelationsVillainOwnAttack` to take `i` + co-location grant, AFTER D4-b lands. Verify a Last-Stand villain under the Watchtower gets Last Stand ×2; a Dark-Memories villain under Dark Dimension gets it ×2; a non-keyword villain under either gets the single grant.
 
