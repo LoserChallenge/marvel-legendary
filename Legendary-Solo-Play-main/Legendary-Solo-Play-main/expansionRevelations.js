@@ -1573,6 +1573,67 @@ function roninBroodingFurySuper() {
 
 // === Scarlet Witch ===
 
+// "Play a copy of a card this turn" helper (Hex Bolt, Chaos Magic).
+// Generalized form of chameleonFight (expansionPaintTheTownRed.js): pushes a phantom clone
+// into cardsPlayedThisTurn, grants its Attack + Recruit, and fires its abilities via the
+// shared copy-executor. The phantom is swept at endTurn (markedForDeletion + isSimulation),
+// so it never enters the discard pile; isCopied excludes it from "cards you have" class
+// pools. The real `card` (still in its pile) is never mutated — we deep-clone it first.
+// Pushing BEFORE executing lets the copied superpower see class symbols already played this
+// turn (rules ruling: docs/rules-notes/revelations.md — resolve-now, reads prior symbols).
+async function playCopyOfCard(card) {
+  const cardCopy = JSON.parse(JSON.stringify(card));
+  delete cardCopy.originalAttributes;
+  delete cardCopy.markedToDestroy;
+  cardCopy.markedForDeletion = true;
+  cardCopy.isSimulation = true;
+  cardCopy.isCopied = true;
+  cardsPlayedThisTurn.push(cardCopy);
+
+  totalAttackPoints += cardCopy.attack || 0;
+  totalRecruitPoints += cardCopy.recruit || 0;
+  cumulativeAttackPoints += cardCopy.attack || 0;
+  cumulativeRecruitPoints += cardCopy.recruit || 0;
+
+  onscreenConsole.log(
+    `Played a copy of <span class="console-highlights">${cardCopy.name}</span>: +${cardCopy.attack || 0}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> +${cardCopy.recruit || 0}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
+  );
+  updateGameBoard();
+
+  await executeAbilityWithSpecialCases(cardCopy, "copy", {
+    skipStats: true, // stats already added above
+    autoActivate: true, // play-a-copy fires the copied superpower if its condition is met
+  });
+  updateGameBoard();
+}
+
+// Yes/No gate: "Play a copy of <card> this turn?" with the card's art previewed.
+function askPlayCopy(card) {
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Play a copy of <span class="bold-spans">${card.name}</span> this turn?`,
+      "Play Copy",
+      "No Thanks",
+    );
+    const previewArea = document.querySelector(".info-or-choice-popup-preview");
+    if (previewArea && card.image) {
+      previewArea.style.backgroundImage = `url('${card.image}')`;
+      previewArea.style.backgroundSize = "contain";
+      previewArea.style.backgroundRepeat = "no-repeat";
+      previewArea.style.backgroundPosition = "center";
+      previewArea.style.display = "block";
+    }
+    confirmButton.onclick = function () {
+      closeInfoChoicePopup();
+      resolve(true);
+    };
+    denyButton.onclick = function () {
+      closeInfoChoicePopup();
+      resolve(false);
+    };
+  });
+}
+
 // Hex Bolt (Common) — Superpower [RANGED]: Discard the top card of any player's deck.
 // You may play a copy of that card this turn.
 // In solo: discard top of your own deck, may play a copy.
@@ -1589,6 +1650,13 @@ async function scarletWitchHexBolt() {
   playerDiscardPile.push(card);
   onscreenConsole.log(`<span class="console-highlights">Hex Bolt</span> superpower: Discarded <span class="console-highlights">${card.name}</span> from top of deck. You may play a copy of it this turn.`);
   updateGameBoard();
+  // The discarded card stays in the discard pile; play only a phantom copy of it.
+  const wantCopy = await askPlayCopy(card);
+  if (wantCopy) {
+    await playCopyOfCard(card);
+  } else {
+    onscreenConsole.log(`<span class="console-highlights">Hex Bolt</span>: Declined to play a copy.`);
+  }
 }
 
 // Alter Reality (Common B) — Reveal top card of your deck. Discard it or put it back.
@@ -1631,13 +1699,25 @@ function scarletWitchAlterRealitySuper() {
 
 // Chaos Magic (Uncommon) — Reveal top card of Hero Deck. You may play a copy this turn.
 // When you do, put that card on the bottom of the Hero Deck.
-function scarletWitchChaosMagic() {
+async function scarletWitchChaosMagic() {
   if (heroDeck.length === 0) {
     onscreenConsole.log(`<span class="console-highlights">Chaos Magic</span>: Hero Deck is empty.`);
     return;
   }
   const topCard = heroDeck[heroDeck.length - 1];
-  onscreenConsole.log(`<span class="console-highlights">Chaos Magic</span>: Revealed <span class="console-highlights">${topCard.name}</span> from Hero Deck. You may play a copy this turn (put it on the bottom of the Hero Deck after).`);
+  onscreenConsole.log(`<span class="console-highlights">Chaos Magic</span>: Revealed <span class="console-highlights">${topCard.name}</span> from the Hero Deck.`);
+  const wantCopy = await askPlayCopy(topCard);
+  if (wantCopy) {
+    // Remove the real revealed card from the top, play a phantom copy of it,
+    // then place the real card on the BOTTOM of the Hero Deck.
+    const realCard = heroDeck.pop();
+    await playCopyOfCard(realCard);
+    heroDeck.unshift(realCard);
+    onscreenConsole.log(`<span class="console-highlights">Chaos Magic</span>: Placed <span class="console-highlights">${realCard.name}</span> on the bottom of the Hero Deck.`);
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(`<span class="console-highlights">Chaos Magic</span>: Left <span class="console-highlights">${topCard.name}</span> on top of the Hero Deck.`);
+  }
 }
 
 // Warp Time and Space (Rare) — Reveal top 3 cards of Hero Deck. Put one in your hand.
