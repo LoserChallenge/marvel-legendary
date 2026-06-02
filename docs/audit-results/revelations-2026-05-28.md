@@ -190,6 +190,15 @@ Cross-reference `docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md`:
 
 ---
 
+## Fold into CLAUDE.md at merge
+
+Durable facts/patterns surfaced during the Cluster F campaign that belong in the worktree/master CLAUDE.md when Revelations merges. Reconcile these into the relevant CLAUDE.md sections.
+
+- **Recruit-Granting Function Pattern** (recruit twin of the documented "Attack-Granting Function Pattern") — every function that grants Recruit must update BOTH `totalRecruitPoints` (current-turn display) AND `cumulativeRecruitPoints` (Final Showdown / Ultimate Victory tracking — ultimate victory = combined recruit+attack ≥ strength+4). Reset both per-turn in `endTurn`. Canonical precedents: `extraThreeRecruitAvailable` payout in `defeatBonuses()` (`cardAbilities.js:22-23`), Military-Industrial Complex payout (F-G2). Missing the cumulative side silently breaks Final Showdown recruit tracking. (Surfaced F-G2, 2026-06-01 — corrected an interim "recruit needs no cumulative" assumption.)
+- **Chromium stale-cache: cardAbilities.js especially** — for local Playwright / interactive playtests, Chromium serves the large `cardAbilities.js` (650KB) from persistent disk cache even on a NEW server port AND a fresh browser process (worse than the already-documented general stale-cache gotcha). `script.js` / `expansionRevelations.js` revalidated fresh in the same session; `cardAbilities.js` did not. **For Paul's interactive playtests:** after any change touching `cardAbilities.js`, use F12 → right-click the refresh button → "Empty Cache and Hard Reload"; a plain `Ctrl+Shift+R` may NOT suffice for that file. **For automated verification:** when `<fn>.toString()` shows stale code, eval-install the real on-disk function (brace-extract from a `fetch(url, {cache:'no-store'})`) over the stale one to test true on-disk logic. (Surfaced F-G2, 2026-06-01.)
+
+---
+
 ## Milestone playtest findings — 2026-05-29
 
 Paul playtested the full Cluster C + D stack (on Batch 3 commit `48988e4`). Worked one at a time; durable capture below.
