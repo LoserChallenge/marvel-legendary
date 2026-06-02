@@ -1252,14 +1252,17 @@ async function photonUltravioletRadiationSuper() {
 // Light the Way (Uncommon) — You get +1 Attack for each card you discarded from
 // your hand this turn.
 function photonLightTheWay() {
-  // Count cards discarded from hand this turn — tracked via justAddedToDiscard
-  // or a similar mechanism. For now, use a simplified approach:
-  // Count played cards that had a discard effect (approximation)
-  const discardedCount = justAddedToDiscard.length;
+  // +1 Attack per card discarded from your hand this turn. Counted via hand-membership
+  // (cardsInHandThisTurn, script.js): cards that entered your hand this turn AND are now in the
+  // discard pile = cards you discarded from hand. Played cards live in cardsPlayedThisTurn (not
+  // the discard pile) during the play phase, so they are correctly NOT counted here.
+  const discardedCount = [...cardsInHandThisTurn].filter((c) =>
+    playerDiscardPile.includes(c),
+  ).length;
   if (discardedCount > 0) {
     totalAttackPoints += discardedCount;
     cumulativeAttackPoints += discardedCount;
-    onscreenConsole.log(`<span class="console-highlights">Light the Way</span>: +${discardedCount} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> (${discardedCount} cards discarded this turn).`);
+    onscreenConsole.log(`<span class="console-highlights">Light the Way</span>: +${discardedCount} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> (${discardedCount} card${discardedCount > 1 ? "s" : ""} discarded from hand this turn).`);
     updateGameBoard();
   } else {
     onscreenConsole.log(`<span class="console-highlights">Light the Way</span>: No cards discarded from hand this turn.`);

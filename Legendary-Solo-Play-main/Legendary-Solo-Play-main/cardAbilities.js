@@ -107,6 +107,7 @@ function extraDraw(hero) {
   playSFX("card-draw");
   const card = playerDeck.pop();
   playerHand.push(card);
+  cardsInHandThisTurn.add(card); // Photon "Light the Way" tracking (mid-turn extra draws)
   extraCardsDrawnThisTurn++;
   console.log(
     "Card drawn. Total cards drawn this turn: ",

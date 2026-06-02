@@ -773,6 +773,16 @@ let playerHand = [];
 let playerDeck = [];
 let playerDiscardPile = [];
 let justAddedToDiscard = [];
+// Photon "Light the Way" (Revelations) support — the set of cards that entered your hand THIS turn:
+// the opening-hand snapshot (taken after all turn-start drawing) PLUS each mid-turn drawCard()/
+// extraDraw(). A Set so repeated adds never double-count. Light the Way = how many of these are now
+// in playerDiscardPile = "cards you discarded from your hand this turn". Reset in endTurn.
+// KNOWN GAP (accepted for an Uncommon, see catalog deferred): a card placed into hand by a DIRECT
+// playerHand.push (NOT via drawCard/extraDraw — e.g. Scarlet Witch "Warp Time and Space" retrieving
+// to hand) and then discarded the same turn is not tracked here; closing it would mean routing those
+// push sites through this Set. Also rare: a discarded card reshuffled back into the deck mid-turn
+// leaves playerDiscardPile and stops counting.
+let cardsInHandThisTurn = new Set();
 let cardsPlayedThisTurn = [];
 let koPile = [];
 let escapedVillainsDeck = [];
@@ -10797,6 +10807,7 @@ function drawCard() {
   }
   const card = playerDeck.pop();
   playerHand.push(card);
+  cardsInHandThisTurn.add(card); // Photon "Light the Way" tracking (mid-turn + opening-hand draws)
   console.log("Card drawn");
   updateGameBoard();
 }
@@ -11430,6 +11441,7 @@ if (card.temporaryTeleport === true) {
 
   selectedCards = [];
   justAddedToDiscard = [];
+  cardsInHandThisTurn = new Set(); // Photon "Light the Way": clear hand-membership tracking for the new turn
   // Revert any "this turn" identity overrides (e.g. Ronin – Mysterious Identity) so the
   // chosen color/class/team never leak past this turn into discard/KO-pile class/team
   // reads (e.g. Dark Memories). Sweep every pile a played card may have moved to this
@@ -11580,6 +11592,11 @@ if (card.temporaryTeleport === true) {
 
     galactusForceOfEternityDraw = false;
   }
+
+  // Photon "Light the Way": snapshot the COMPLETE opening hand after all turn-start drawing (this
+  // catches cards added via the cardsToBeDrawnNextTurn direct-push path in drawOne, not just
+  // drawCard). The Set dedups against any already added by the drawCard hook during the loop.
+  playerHand.forEach((c) => cardsInHandThisTurn.add(c));
 
   sortPlayerCards();
 
