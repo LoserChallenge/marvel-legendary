@@ -1199,7 +1199,82 @@ async function hellcatDemonSightSuper() {
 // This is a reactive ability that triggers from hand — the unconditionalAbility
 // just prints a reminder since the actual interception happens in villain processing.
 function hellcatSecondChanceAtLife() {
-  onscreenConsole.log(`<span class="console-highlights">Second Chance at Life</span> is in play. If a Master Strike or Scheme Twist occurs, you may discard this to cancel it.`);
+  onscreenConsole.log(`<span class="console-highlights">Second Chance at Life</span>: while this card is in your hand, you may discard it to cancel a Master Strike or Scheme Twist when one would occur.`);
+}
+
+// Reactive from-hand interceptor for "Second Chance at Life" (Hellcat, Rare).
+// Called at the top of the Master Strike / Scheme Twist engine handlers (script.js),
+// BEFORE the strike/twist is KO'd or its effect runs. If Hellcat is in hand and the
+// player elects to use it: discard Hellcat, draw three cards, then shuffle the
+// strike/twist card back into the Villain Deck draw pile — fully aborting the occurrence
+// (so it never resolves, never enters koPile, and counts toward no twist tally).
+// Returns true if the occurrence was cancelled (caller must resolve/return without
+// running the strike/twist), false otherwise (caller proceeds normally).
+async function offerSecondChanceReaction(villainCard, kind) {
+  const hellcat = playerHand.find(
+    (c) => c.name === "Hellcat - Second Chance at Life",
+  );
+  if (!hellcat) return false;
+
+  const accepted = await askToDiscardSecondChance(hellcat, kind);
+  if (!accepted) return false;
+
+  // Discard Hellcat from hand (plain discard — not an invulnerability-return card).
+  const idx = playerHand.findIndex((c) => c === hellcat);
+  if (idx !== -1) playerHand.splice(idx, 1);
+  playerDiscardPile.push(hellcat);
+
+  // Draw three cards, THEN shuffle the cancelled Strike/Twist back into the Villain
+  // Deck draw pile (order matches the card text).
+  drawCard();
+  drawCard();
+  drawCard();
+  villainDeck.push(villainCard);
+  shuffle(villainDeck);
+
+  onscreenConsole.log(
+    `<span class="console-highlights">Second Chance at Life</span>: discarded to cancel the ${kind}. Drew three cards; the ${kind} was shuffled back into the Villain Deck.`,
+  );
+  updateGameBoard();
+  return true;
+}
+
+// Yes/No popup for Second Chance at Life — mirrors askToDiscardCable (script.js).
+async function askToDiscardSecondChance(card, kind) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `A <span class="console-highlights">${kind}</span> is about to occur. Discard <span class="console-highlights">${card.name}</span> to cancel it, draw three cards, and shuffle it back into the Villain Deck?`,
+        "Yes",
+        "No",
+      );
+
+      // Title is a plain constant string — textContent (not innerHTML) is equivalent and safe.
+      const titleEl = document.querySelector(".info-or-choice-popup-title");
+      if (titleEl) titleEl.textContent = "Hellcat - Second Chance at Life";
+
+      const previewArea = document.querySelector(
+        ".info-or-choice-popup-preview",
+      );
+      if (previewArea && card.image) {
+        previewArea.style.backgroundImage = `url('${card.image}')`;
+        previewArea.style.backgroundSize = "contain";
+        previewArea.style.backgroundRepeat = "no-repeat";
+        previewArea.style.backgroundPosition = "center";
+        previewArea.style.display = "block";
+      }
+
+      confirmButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(true);
+      };
+
+      denyButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(false);
+      };
+    }, 10);
+  });
 }
 
 // === Photon ===

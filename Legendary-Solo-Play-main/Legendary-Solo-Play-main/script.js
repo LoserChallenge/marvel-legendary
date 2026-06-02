@@ -5798,6 +5798,13 @@ function handleMasterStrike(masterStrikeCard) {
       return; // This prevents the Master Strike effect from running
     }
 
+    // Second Chance at Life (Hellcat) — reactive from-hand cancel BEFORE the strike
+    // resolves. If accepted, the strike never KOs and never runs its effect.
+    if (await offerSecondChanceReaction(masterStrikeCard, "Master Strike")) {
+      resolve();
+      return;
+    }
+
     // Then always handle the Master Strike effect
     await handleMasterStrikeEffect(masterStrikeCard);
 
@@ -5909,6 +5916,15 @@ function handleSchemeTwist(schemeTwistCard) {
   playSFX("scheme-twist");
   updateGameBoard();
   return new Promise(async (resolve) => {
+    // Second Chance at Life (Hellcat) — reactive from-hand cancel BEFORE the twist is
+    // KO'd, tallied, or its effect runs. Intercepting here keeps the twist out of
+    // koPile (so every koPile-based tally is unaffected) and out of revelationsTwistCount
+    // (incremented inside the twist effect, which never runs).
+    if (await offerSecondChanceReaction(schemeTwistCard, "Scheme Twist")) {
+      resolve();
+      return;
+    }
+
     const selectedScheme = getActiveScheme();
     if (selectedScheme.name !== "Replace Earth's Leaders with Killbots" && selectedScheme.name !== "The Kree-Skrull War") {
       koPile.push(schemeTwistCard);
@@ -5961,6 +5977,11 @@ function handleSchemeTwist(schemeTwistCard) {
 }
 
 async function handlePlutoniumSchemeTwist(villainCard) {
+  // Second Chance at Life (Hellcat) — a Plutonium Scheme Twist is still a Scheme Twist;
+  // offer the reactive from-hand cancel BEFORE it resolves.
+  if (await offerSecondChanceReaction(villainCard, "Scheme Twist")) {
+    return;
+  }
   playSFX("scheme-twist");
   updateGameBoard();
   const selectedScheme = getActiveScheme();
