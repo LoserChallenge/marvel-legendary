@@ -2242,9 +2242,14 @@ function klawFight(klaw) {
 }
 
 // Mister Hyde — Fight: KO one of your Heroes.
-function misterHydeFight() {
-  onscreenConsole.log(`Fight! <span class="console-highlights">Mister Hyde</span>: KO one of your Heroes.`);
-  return FightKOHeroYouHave("Mister Hyde");
+// In The Bank or The Streets he is "Dr. Calvin Zabo" (and was fought with Recruit); elsewhere
+// "Mister Hyde". usesRecruitToFight is the position-derived flag, copied onto the fight copy by
+// createVillainCopy, so the displayed identity always matches the cost actually charged. Display
+// only — card.name is NOT mutated (it is the findIndex identity key). Card-face art swap deferred.
+function misterHydeFight(villainCopy) {
+  const displayName = villainCopy && villainCopy.usesRecruitToFight ? "Dr. Calvin Zabo" : "Mister Hyde";
+  onscreenConsole.log(`Fight! <span class="console-highlights">${displayName}</span>: KO one of your Heroes.`);
+  return FightKOHeroYouHave(displayName);
 }
 
 // === Dark Avengers ===
@@ -2335,7 +2340,7 @@ async function darkWolverineEscape(daken) {
 // Sentry — Fight: KO up to two from discard (only as The Void). Escape: wound.
 async function sentryFight() {
   const sentryIdx = city.findIndex(v => v && v.name === "Sentry");
-  const isVoid = sentryIdx === 1 || sentryIdx === 3;
+  const isVoid = isBankOrStreets(sentryIdx);
   if (isVoid) {
     onscreenConsole.log(`Fight! <span class="console-highlights">The Void</span>: KO up to two cards from your discard pile.`);
     await koUpToNFromDiscardPile("The Void", 2);

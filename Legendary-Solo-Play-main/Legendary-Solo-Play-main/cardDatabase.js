@@ -3971,7 +3971,6 @@ const villains = [
         attack: 6,
         originalAttack: 6,
         victoryPoints: 4,
-        usesRecruitToFight: true,
         ambushEffect: "None",
         fightEffect: "misterHydeFight",
         escapeEffect: "None",

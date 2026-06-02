@@ -10153,6 +10153,20 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
   }
 }
 
+// Resize-safe test for "is this city index The Streets or The Bank?". Uses LABEL lookup
+// against citySpaceLabels rather than the literal indices 1/3 — those are correct only in the
+// default 5-space layout and break under Earthquake/Tsunami city resize, which rebuilds
+// citySpaceLabels with Streets/Bank at different positions. Single source of truth for both
+// Sentry ("The Void" +5) and Mister Hyde ("Dr. Calvin Zabo" recruit-fight) position tests.
+// Degrades safely: if a label is absent (indexOf → -1) it can never match a real index (≥0),
+// so the result is false (→ Attack / not-Void), the correct default.
+function isBankOrStreets(idx) {
+  if (idx == null || idx < 0) return false;
+  const streetsIdx = citySpaceLabels.indexOf("The Streets");
+  const bankIdx = citySpaceLabels.indexOf("The Bank");
+  return idx === streetsIdx || idx === bankIdx;
+}
+
 function updateVillainAttackValues(villain, i) {
   const mastermind = getSelectedMastermind();
   // getActiveScheme() so scheme-based attack bonuses follow a Transform (E-6).
@@ -10340,10 +10354,24 @@ function updateVillainAttackValues(villain, i) {
     }
   }
 
-  // Sentry → "The Void": +5 Attack while in the Streets (index 1) or Bank (index 3).
-  // Same position determination as sentryFight()/isVoid. Name-swap display deferred.
-  if (villain.name === "Sentry" && (i === 1 || i === 3)) {
+  // Sentry → "The Void": +5 Attack while in The Streets or The Bank.
+  // Same position determination as sentryFight()/isVoid, now via the resize-safe helper.
+  // Name-swap display deferred.
+  if (villain.name === "Sentry" && isBankOrStreets(i)) {
     villain.attackFromOwnEffects += 5;
+  }
+
+  // Mister Hyde → "Dr. Calvin Zabo": while in The Bank or The Streets he is fought with
+  // Recruit instead of Attack. Setting this flag here (every render, true OR false) makes the
+  // three CITY cost read-sites position-aware with zero edits to them: the two updateHighlights
+  // twins (affordability) and the city defeat-cost deduction. recalculateVillainAttack recomputes
+  // this via updateVillainAttackValues(card, cityIndex) BEFORE each read, and createVillainCopy
+  // carries it onto the fight copy for the display name. Unconditional assignment (not a +=
+  // accumulator) so the flag flips back to false when Hyde leaves Bank/Streets. The fourth read-
+  // site — the HQ defeat-cost deduction — is handled by the parallel block in the HQ twin
+  // (updateHQVillainAttackValues), which forces the flag false (HQ has no Bank/Streets position).
+  if (villain.name === "Mister Hyde") {
+    villain.usesRecruitToFight = isBankOrStreets(i);
   }
 
   //Attack from Shards
@@ -10580,6 +10608,15 @@ function updateHQVillainAttackValues(villain) {
     if (revOwn > 0) {
       villain.attackFromOwnEffects += revOwn;
     }
+  }
+
+  // Mister Hyde → "Dr. Calvin Zabo" is a CITY-position effect (Bank/Streets). The HQ has no
+  // city-space position, so a Hyde that lands in the HQ (e.g. a Paint the Town Red villain-to-HQ
+  // swap) is always plain Mister Hyde, fought with Attack. Force the flag false here so the HQ
+  // defeat-cost read can't inherit a stale `true` from his last city render (parallel-twin
+  // invariant — mirror of the city block in updateVillainAttackValues, kept inert like Sentry +5).
+  if (villain.name === "Mister Hyde") {
+    villain.usesRecruitToFight = false;
   }
 
   //Attack from Shards
@@ -12674,7 +12711,12 @@ function createVillainCopy(villainCard) {
     goblinToHeroAttackValue: villainCard.goblinToHeroAttackValue,
     goblinQueen: villainCard.goblinQueen,
     shards: villainCard.shards,
-    capturedHero: villainCard.capturedHero ? [...villainCard.capturedHero] : undefined
+    capturedHero: villainCard.capturedHero ? [...villainCard.capturedHero] : undefined,
+    // Mister Hyde: carry the position-derived recruit-fight flag onto the fight copy so the
+    // fight-effect can show "Dr. Calvin Zabo" vs "Mister Hyde". Captured from the last render
+    // (correct — position can't change between render and the defeat click). NOT mutated onto
+    // card.name (that is the findIndex identity key and would corrupt lookups).
+    usesRecruitToFight: villainCard.usesRecruitToFight
   };
 }
 
