@@ -105,7 +105,7 @@ In **What If? Solo**, if Mandarin's Rings is randomly chosen as the "special hen
 **Villains**
 - **Dark Hawkeye (Bullseye)** — the "Then choose one" branch is dropped with no log (acceptable solo each-other-player skip, but silent). `expansionRevelations.js:1859`.
 - **Swordsman** — Bystanders captured onto Locations stored on `cityLocations[i].capturedBystanders`, never read/rescued and not in `createVillainCopy()` whitelist → lost. `1859`/`script.js:12277`.
-- **Chemistro** — Fight effect early-returns "not supported in Golden Solo" → does nothing in one of two supported modes. **Gameplay decision needed.** `1992`.
+- **Chemistro** — Fight effect early-returns "not supported in Golden Solo" → does nothing in one of two supported modes. **Gameplay decision needed.** `1992`. **✅ RESOLVED (2026-06-02).** Rewrote `chemistroFight()` as a two-step interactive choice + added `chemistroPickPlayedCard()` / `chemistroPickHQCard()` helpers; removed the Golden-mode stub (unfinished placeholder, no rules basis — HQ is identical in both modes). MANDATORY when a legal exchange exists (no "may"): player picks both the played card and the HQ card (cost ≤ chosen played card). Swap fills the vacated HQ slot with the played card (NO deck refill) + splices it from `cardsPlayedThisTurn` (prevents end-of-turn double-discard). Reused prodigyCopyPowers (step-1) + invadeTheDailyBugleNewsHQTwist (step-2) scaffolds. Gated: expansion-validator 0 issues, cold-read /code-review ship-ready, dual-mode /game-test PASS (golden + whatif identical; cases a / b1 / b2 all green vs fresh on-disk). **Choice conversion was FOLDED IN here — the auto-pick→present-choice batch SKIPS Chemistro.**
 
 **Henchmen**
 - **Nightbringer** — "you **may** defeat a Villain" auto-resolves (no choice/opt-out); and "(Do its Fight effect)" never runs. `expansionRevelations.js:2980-2993`.
@@ -162,7 +162,7 @@ Two new touchpoints proposed by the engine-integration-auditor (NOT yet appended
 Source of truth for effects = the finalized, Pass-2-verified inventory (`docs/card-inventory/final/revelations.md`). All clusters are **code-wrong** unless the inventory text itself is found wrong on spot-check.
 
 - **Chemistro Fight effect** (Cluster-adjacent MED) → **FIX**. No reason to gate it to one mode; make it work in both Golden Solo and What If?.
-- **Auto-pick vs. present-choice** (Korvac KO-bystander, Nightbringer, Speed "Break the Sound Barrier", Zero, Korvac discard, etc.) → **FIX ALL**. Any card text saying "choose" / "may" / non-mandatory must present the choice to the player; the game must never auto-resolve it.
+- **Auto-pick vs. present-choice** (Korvac KO-bystander, Nightbringer, Speed "Break the Sound Barrier", Zero, Korvac discard, etc.) → **FIX ALL**. Any card text saying "choose" / "may" / non-mandatory must present the choice to the player; the game must never auto-resolve it. *(Chemistro's choice conversion was folded into its own fix on 2026-06-02 — EXCLUDE it from this batch.)*
 - **"Each other player" effects** (Dark Hawkeye "then choose one", Dark Ms. Marvel) → **DEFER**. Roll into the existing standing "other player effects in solo" review (`docs/known-issues.md`). Add any other each-other-player Revelations cards to that list as found.
 - All other clusters (A–H) → code-wrong, fix per recommended order.
 

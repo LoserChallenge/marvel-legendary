@@ -2397,39 +2397,368 @@ async function cancerEscape() {
   }
 }
 
-// Chemistro — Dark Memories. Fight: Exchange a played card with HQ card of same or lower cost.
+// Chemistro — Dark Memories. Fight: Exchange a card you played this turn with a card in
+// the HQ that has the same or lower cost. (The card you gained goes to your discard pile.)
+// MANDATORY when a legal exchange exists (card has no "may"); player chooses BOTH the played
+// card and the HQ card. Works identically in Golden Solo and What If? — HQ is the same in both
+// modes, and the swap FILLS the vacated HQ slot with the played card (no deck refill), so the
+// Golden-vs-What-If refill rotation never applies here.
 async function chemistroFight() {
-  onscreenConsole.log(`Fight! <span class="console-highlights">Chemistro</span>: Exchange a played card with an HQ card of same or lower cost.`);
-  const playedHeroes = cardsPlayedThisTurn.filter(c => c.type === "Hero" && !c.isCopied && !c.markedForDeletion && !c.isSimulation);
-  if (playedHeroes.length === 0) {
-    onscreenConsole.log(`No played Heroes to exchange.`);
+  onscreenConsole.log(`Fight! <span class="console-highlights">Chemistro</span>: Exchange a card you played this turn with an HQ card of the same or lower cost.`);
+
+  // Eligible played cards — full flag filter (matches prodigyCopyPowers / recruitHeroConfirmed).
+  const playedCards = cardsPlayedThisTurn.filter(
+    (card) =>
+      card &&
+      card.type === "Hero" &&
+      !card.isCopied &&
+      !card.isSimulation &&
+      !card.markedForDeletion &&
+      !card.markedToDestroy &&
+      !card.sidekickToDestroy,
+  );
+  if (playedCards.length === 0) {
+    onscreenConsole.log(`No cards played this turn to exchange — no effect.`);
     return;
   }
-  const bestPlayed = playedHeroes.reduce((a, b) => (a.cost || 0) >= (b.cost || 0) ? a : b);
-  const hqCards = typeof hq !== "undefined" ? hq : [];
-  let bestHQIdx = -1;
-  let bestHQCost = -1;
-  for (let i = 0; i < hqCards.length; i++) {
-    if (hqCards[i] && hqCards[i].cost <= bestPlayed.cost && hqCards[i].cost > bestHQCost) {
-      bestHQIdx = i;
-      bestHQCost = hqCards[i].cost;
+
+  // Eligible HQ targets: Hero-type, not a destroyed slot. (Villains in HQ via PtTR are excluded.)
+  const hqExplosions = [hqExplosion1, hqExplosion2, hqExplosion3, hqExplosion4, hqExplosion5];
+  const hqHeroCosts = hq
+    .map((h, i) => (h && h.type === "Hero" && (hqExplosions[i] || 0) < 6 ? (h.cost || 0) : null))
+    .filter((c) => c !== null);
+  if (hqHeroCosts.length === 0) {
+    onscreenConsole.log(`No Hero in the HQ to exchange — no effect.`);
+    return;
+  }
+
+  // A played card is exchangeable only if at least one HQ Hero has cost <= it. Restricting
+  // step 1 to these cards guarantees step 2 always has a valid target (keeps "mandatory" safe).
+  const minHQCost = Math.min(...hqHeroCosts);
+  const exchangeablePlayed = playedCards.filter((c) => (c.cost || 0) >= minHQCost);
+  if (exchangeablePlayed.length === 0) {
+    onscreenConsole.log(`No HQ card has a low enough cost to exchange — no exchange possible.`);
+    return;
+  }
+
+  // Step 1 — player picks a card they played this turn.
+  const chosenPlayed = await chemistroPickPlayedCard(exchangeablePlayed);
+  if (!chosenPlayed) return; // safety; mandatory flow always resolves with a card
+
+  // Step 2 — player picks an HQ card of cost <= chosenPlayed.cost; the swap is performed there.
+  await chemistroPickHQCard(chosenPlayed);
+}
+
+// Chemistro Step 1 popup — pick one played card (mandatory, no opt-out). Mirrors the
+// .card-choice-popup scaffold used by prodigyCopyPowers(). Resolves with the chosen card object.
+function chemistroPickPlayedCard(exchangeablePlayed) {
+  return new Promise((resolve) => {
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const selectionRow1Container = document.querySelector(".card-choice-popup-selectionrow1-container");
+    const selectionRow1Label = document.querySelector(".card-choice-popup-selectionrow1label");
+    const selectionRow2 = document.querySelector(".card-choice-popup-selectionrow2");
+    const selectionRow2Label = document.querySelector(".card-choice-popup-selectionrow2label");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    const closeX = document.querySelector(".card-choice-popup-closebutton");
+    const popup = document.querySelector(".card-choice-popup");
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+
+    titleElement.textContent = "CHEMISTRO — EXCHANGE";
+    instructionsElement.textContent =
+      "Choose a card you played this turn to exchange into the HQ:";
+
+    selectionRow1Label.style.display = "none";
+    selectionRow2Label.style.display = "none";
+    selectionRow2.style.display = "none";
+    closeX.style.display = "none";
+
+    selectionRow1Container.style.height = "50%";
+    selectionRow1Container.style.top = "50%";
+    selectionRow1Container.style.transform = "translateY(-50%)";
+
+    selectionRow1.innerHTML = "";
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    confirmButton.disabled = true;
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none"; // mandatory — no opt-out
+
+    let selectedIndex = null;
+    let selectedCardImg = null;
+    let isDragging = false;
+
+    setupIndependentScrollGradients(selectionRow1, null);
+    setupDragScrolling(selectionRow1);
+
+    exchangeablePlayed.forEach((card, idx) => {
+      const cardEl = document.createElement("div");
+      cardEl.className = "popup-card";
+      cardEl.setAttribute("data-played-index", String(idx));
+
+      const img = document.createElement("img");
+      img.src = card.image;
+      img.alt = card.name;
+      img.className = "popup-card-image";
+
+      const handleHover = () => {
+        if (isDragging) return;
+        previewElement.innerHTML = "";
+        const pImg = document.createElement("img");
+        pImg.src = card.image;
+        pImg.alt = card.name;
+        pImg.className = "popup-card-preview-image";
+        previewElement.appendChild(pImg);
+        if (selectedIndex === null) previewElement.style.backgroundColor = "var(--accent)";
+      };
+      const handleHoverOut = () => {
+        if (isDragging) return;
+        if (selectedIndex === null) {
+          setTimeout(() => {
+            if (!selectionRow1.querySelector(":hover") && !isDragging) {
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardEl.addEventListener("mouseover", handleHover);
+      cardEl.addEventListener("mouseout", handleHoverOut);
+      cardEl.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        const thisIdx = Number(cardEl.getAttribute("data-played-index"));
+        if (selectedIndex === thisIdx) {
+          selectedIndex = null;
+          if (selectedCardImg) selectedCardImg.classList.remove("selected");
+          selectedCardImg = null;
+          previewElement.innerHTML = "";
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+          confirmButton.disabled = true;
+        } else {
+          if (selectedCardImg) selectedCardImg.classList.remove("selected");
+          selectedIndex = thisIdx;
+          selectedCardImg = img;
+          img.classList.add("selected");
+          previewElement.innerHTML = "";
+          const pImg = document.createElement("img");
+          pImg.src = card.image;
+          pImg.alt = card.name;
+          pImg.className = "popup-card-preview-image";
+          previewElement.appendChild(pImg);
+          previewElement.style.backgroundColor = "var(--accent)";
+          confirmButton.disabled = false;
+        }
+      });
+
+      cardEl.appendChild(img);
+      selectionRow1.appendChild(cardEl);
+    });
+
+    if (exchangeablePlayed.length > 5) {
+      selectionRow1.classList.remove("multi-row", "three-row");
+      selectionRow1Container.style.height = "42%";
+      selectionRow1Container.style.top = "25%";
+    } else {
+      selectionRow1.classList.remove("multi-row", "three-row");
+      selectionRow1Container.style.height = "50%";
+      selectionRow1Container.style.top = "28%";
     }
-  }
-  if (bestHQIdx === -1) {
-    onscreenConsole.log(`No HQ card of cost <=${bestPlayed.cost} to swap.`);
-    return;
-  }
-  const gained = hqCards[bestHQIdx];
-  if (gameMode === "golden") {
-    onscreenConsole.log(`Chemistro Fight: Exchange effect not supported in Golden Solo mode.`);
-    return;
-  }
-  hqCards[bestHQIdx] = bestPlayed;
-  playerDiscardPile.push(gained);
-  const idx = cardsPlayedThisTurn.indexOf(bestPlayed);
-  if (idx !== -1) cardsPlayedThisTurn.splice(idx, 1);
-  onscreenConsole.log(`Exchanged <span class="console-highlights">${bestPlayed.name}</span> (cost ${bestPlayed.cost}) for <span class="console-highlights">${gained.name}</span> (cost ${gained.cost}).`);
+
+    confirmButton.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (selectedIndex === null) return;
+      const chosen = exchangeablePlayed[selectedIndex];
+      closeCardChoicePopup();
+      resolve(chosen);
+    };
+
+    modalOverlay.style.display = "block";
+    popup.style.display = "block";
+  });
+}
+
+// Chemistro Step 2 popup — pick the HQ card to gain (cost <= chosenPlayed.cost) and perform the
+// swap. Mirrors the .card-choice-city-hq-popup scaffold used by invadeTheDailyBugleNewsHQTwist().
+// The swap fills the vacated HQ slot with chosenPlayed — deliberately NO refillHQSlot().
+function chemistroPickHQCard(chosenPlayed) {
   updateGameBoard();
+  return new Promise((resolve) => {
+    const popup = document.querySelector(".card-choice-city-hq-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const previewElement = document.querySelector(".card-choice-city-hq-popup-preview");
+    const titleElement = document.querySelector(".card-choice-city-hq-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-city-hq-popup-instructions");
+
+    titleElement.textContent = "CHEMISTRO — EXCHANGE";
+    instructionsElement.textContent =
+      `Choose an HQ card of cost ${chosenPlayed.cost} or less. ${chosenPlayed.name} takes its place; the gained card goes to your discard pile.`;
+
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedHQIndex = null;
+    let selectedCell = null;
+
+    const hqSlots = [1, 2, 3, 4, 5];
+    const explosionValues = [hqExplosion1, hqExplosion2, hqExplosion3, hqExplosion4, hqExplosion5];
+
+    hqSlots.forEach((slot, index) => {
+      const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+      const cardImage = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+      const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+      const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+
+      const hero = hq[index];
+      const explosionValue = explosionValues[index] || 0;
+
+      if (explosionValue > 0) {
+        explosion.style.display = "block";
+        explosionCount.style.display = "block";
+        explosionCount.textContent = explosionValue;
+        if (explosionValue >= 6) {
+          explosion.classList.add("max-explosions");
+          cell.classList.add("destroyed");
+        } else {
+          explosion.classList.remove("max-explosions");
+          cell.classList.remove("destroyed");
+        }
+      }
+
+      document.getElementById(`hq-city-table-city-hq-${slot}-label`).textContent = `HQ-${slot}`;
+      cell.classList.remove("selected");
+
+      if (hero) {
+        cardImage.src = hero.image;
+        cardImage.alt = hero.name;
+
+        const isEligible =
+          hero.type === "Hero" && (hero.cost || 0) <= chosenPlayed.cost && explosionValue < 6;
+
+        if (!isEligible) {
+          cardImage.classList.add("greyed-out");
+          cardImage.style.cursor = "not-allowed";
+          cardImage.onclick = null;
+          cardImage.onmouseover = null;
+          cardImage.onmouseout = null;
+        } else {
+          cardImage.classList.remove("greyed-out");
+          cardImage.style.cursor = "pointer";
+
+          cardImage.onclick = (e) => {
+            e.stopPropagation();
+            if (selectedHQIndex === index) {
+              selectedHQIndex = null;
+              cell.classList.remove("selected");
+              selectedCell = null;
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+              document.getElementById("card-choice-city-hq-popup-confirm").disabled = true;
+            } else {
+              if (selectedCell) selectedCell.classList.remove("selected");
+              selectedHQIndex = index;
+              selectedCell = cell;
+              cell.classList.add("selected");
+              previewElement.innerHTML = "";
+              const previewImage = document.createElement("img");
+              previewImage.src = hero.image;
+              previewImage.alt = hero.name;
+              previewImage.className = "popup-card-preview-image";
+              previewElement.appendChild(previewImage);
+              previewElement.style.backgroundColor = "var(--accent)";
+              document.getElementById("card-choice-city-hq-popup-confirm").disabled = false;
+            }
+          };
+
+          cardImage.onmouseover = () => {
+            if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+            previewElement.innerHTML = "";
+            const previewImage = document.createElement("img");
+            previewImage.src = hero.image;
+            previewImage.alt = hero.name;
+            previewImage.className = "popup-card-preview-image";
+            previewElement.appendChild(previewImage);
+            if (selectedHQIndex === null) previewElement.style.backgroundColor = "var(--accent)";
+          };
+          cardImage.onmouseout = () => {
+            if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+            if (selectedHQIndex === null) {
+              setTimeout(() => {
+                const hoveredCard = document.querySelector(
+                  ".city-hq-chosen-card-image:hover:not(.greyed-out)",
+                );
+                if (!hoveredCard) {
+                  previewElement.innerHTML = "";
+                  previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+                }
+              }, 50);
+            }
+          };
+        }
+      } else {
+        cardImage.src = "Visual Assets/CardBack.webp";
+        cardImage.alt = "Empty HQ Slot";
+        cardImage.classList.add("greyed-out");
+        cardImage.style.cursor = "not-allowed";
+        cardImage.onclick = null;
+        cardImage.onmouseover = null;
+        cardImage.onmouseout = null;
+      }
+    });
+
+    // Safety net — the orchestrator already guarantees >=1 eligible HQ card.
+    const eligibleHQ = hq.filter(
+      (h, i) => h && h.type === "Hero" && (h.cost || 0) <= chosenPlayed.cost && (explosionValues[i] || 0) < 6,
+    );
+    if (eligibleHQ.length === 0) {
+      onscreenConsole.log(`No eligible HQ card to exchange — no effect.`);
+      resolve();
+      return;
+    }
+
+    const confirmButton = document.getElementById("card-choice-city-hq-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-city-hq-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-city-hq-popup-nothanks");
+
+    confirmButton.disabled = true;
+    confirmButton.textContent = "EXCHANGE";
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none"; // mandatory — no opt-out
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedHQIndex === null) return;
+
+      setTimeout(() => {
+        const gained = hq[selectedHQIndex];
+        // Swap: played card fills the vacated HQ slot; gained HQ card goes to discard.
+        hq[selectedHQIndex] = chosenPlayed;
+        playerDiscardPile.push(gained);
+        const idx = cardsPlayedThisTurn.indexOf(chosenPlayed);
+        if (idx !== -1) cardsPlayedThisTurn.splice(idx, 1);
+        onscreenConsole.log(
+          `Exchanged <span class="console-highlights">${chosenPlayed.name}</span> (cost ${chosenPlayed.cost}) into the HQ for <span class="console-highlights">${gained.name}</span> (cost ${gained.cost}), which goes to your discard pile.`,
+        );
+        closeHQCityCardChoicePopup();
+        updateGameBoard();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    popup.style.display = "block";
+  });
 }
 
 // Madam Masque — Dark Memories. Ambush: guess type, if wrong play it. Fight: KO a hero.
