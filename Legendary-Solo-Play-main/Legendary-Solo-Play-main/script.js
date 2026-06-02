@@ -4359,8 +4359,25 @@ function generateVillainDeck(
                 image: "Visual Assets/Other/organizedCrimeMaggiaGoons.webp",
               });
             }
+          } else if (henchman.cards) {
+            // What If? special henchman whose group has UNIQUE per-card data (Mandarin's Rings —
+            // the only such henchman in the DB). Rulebook (What If? p.24): the special henchman
+            // uses exactly 4 of its cards — 2 into the Villain Deck + 2 set aside — and the
+            // remaining 6 are NOT used. Group selection is random (p.24) and the cards are 1-copy-
+            // each, so which 4 is rulebook-silent → take a random 4 of the unique cards, split 2/2.
+            // Reuse the canonical {...henchman, ...card} merge (same as the Golden + non-special
+            // What If? loops) so each ring keeps its own name/fightEffect/image; the bare template
+            // alone has fightEffect "None" + a placeholder name/image (that was the bug). Identical-
+            // copy groups fall through to the template path in the else below.
+            const chosenCards = fisherYatesShuffle([...henchman.cards]).slice(0, 4);
+            chosenCards.slice(0, 2).forEach((card) => {
+              deck.push({ ...henchman, ...card, subtype: "Henchman" });
+            });
+            chosenCards.slice(2, 4).forEach((card) => {
+              henchmenToPlaceOnTop.push({ ...henchman, ...card, subtype: "Henchman" });
+            });
           } else {
-            // Normal rules: add 2 normal copies to the deck
+            // Normal rules (identical-copy henchman group): add 2 normal copies to the deck
             for (let i = 0; i < 2; i++) {
               deck.push({ ...henchman, subtype: "Henchman" });
             }
