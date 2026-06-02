@@ -142,3 +142,11 @@ Ordered easiest → hardest.
 2. 1A diagnostic before any 1A implementation work.
 3. Bucket 2 screenshots in one batch for Paul to review async.
 4. Bucket 3 items only after fixes land + Paul has time to sit down for a real game.
+
+---
+
+## F-G4 — Scarlet Witch play-a-copy (commit c20ee07) — ✅ VERIFIED 2026-06-01 (dual-mode)
+
+Verified against fresh on-disk source (no-store fetch + live-fn match confirmed, not stale cache). Both `gameMode` golden + whatif:
+- **Chaos Magic:** copy grants +atk/+rec on total AND cumulative; real revealed card removed from top and placed on heroDeck bottom (`heroDeck[0]`); deck length preserved; phantom in `cardsPlayedThisTurn` flagged isCopied+markedForDeletion+isSimulation; endTurn sweep removes phantom and it does NOT enter `playerDiscardPile` (golden). Decline ("No Thanks") leaves card on top, grants nothing, no phantom.
+- **Hex Bolt symbol-timing:** with a prior Range card played → copied [RANGED] superpower FIRES; with no prior Range and the copy's OWN class = Range → superpower does NOT fire (copy can't self-satisfy; `isConditionMet` slices off the last-pushed phantom). Unconditional ability always fires; real discarded card stays in discard.
