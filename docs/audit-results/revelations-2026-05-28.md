@@ -521,3 +521,12 @@ Mechanically trivial (engine-side, no twin).
 
 ### Rules ambiguity for oracle (PDFs not in worktree)
 - **NONE blocking.** Inventory text is explicit on stacking ("get the bonus again"). Minor optional confirm: the grant applies to VILLAINS in the Location's space (not the Location's own attack, and not in HQ where no Locations exist) — resolved by code structure, not genuinely ambiguous. Flag only if coordinator wants oracle confirmation that two different sources (self-keyword + Location grant) both stack — inventory "(again)" strongly implies yes.
+
+---
+
+## Auto-pick batch — deferred side-notes (logged, not this batch)
+
+Logged during the auto-pick→present-choice batch (G1 `39429ad`, G2 `58474df`, G3 `31aa40a`, G5 `1d0fab9`). Coordinator-accepted as deferred; do NOT fix now.
+
+- **Popup-dedup candidate (DEFERRED):** three near-identical `.card-choice-popup` multi-select bodies now exist — `speedPickCardsToDraw` (G3), `discardDownToN` (G5), `moveOneFromVictoryPile` (single-select sibling). If a 4th multi-select appears, extract a shared `openCardChoicePopup(config)` scaffold. Not worth refactoring inside this batch.
+- **updateGameBoard/drawCard test-stubbing (DEFERRED — playtest flag):** G2/G3/G5 live verification stubbed `updateGameBoard` (and `drawCard` for G2) because the stripped/un-started test page lacks full game-board state for the UI-refresh path (same class as the Chemistro deep-clone-real-cards note). Card LOGIC verified solid via state injection, but the real UI-refresh path for these 4 cards (Photon Infrared+Ultraviolet, Speed, Korvac twist) isn't exercised by the test harness → flag for a quick look in Paul's milestone playtest. Not a blocker.
