@@ -4839,7 +4839,20 @@ async function mandarinRingLightning() {
   });
 }
 
-// Nightbringer, The Black Light — Fight: Reveal top 3 of villain deck, may defeat a villain worth 2VP or less.
+// Nightbringer, The Black Light — Fight: Reveal top three of the Villain Deck. You MAY defeat a
+// Villain worth 2VP or less (do its Fight effect). Put the rest back in any order.
+// - "may" + player-chosen target (opt-out) via revelationsPickOneCard(allowNoThanks).
+// - Defeat = push the ORIGINAL villain to the Victory Pile (preserves VP + fightEffect), then fire
+//   defeatBonuses() ("whenever you defeat a Villain" triggers — Military-Industrial Complex,
+//   Overwhelming Firepower; rules-oracle: a reveal-defeat is a genuine defeat). It reads only
+//   flag-globals (no city state), so it sits OUTSIDE the location guard.
+// - The villain's Fight effect is dispatched OFF the city pipeline (engine's collectDefeatOperations
+//   pattern: createVillainCopy + await window[fightEffect](copy)). A deck-revealed villain has NO
+//   city position, so currentVillainLocation is null'd for the dispatch (position-keyed villain
+//   effects — sewersWound / rooftopsOrBridgeKOs / streetsOrBridgeBystanders / wildsideFight — then
+//   take their "outside special location" branch) and restored after.
+// - "Put the rest back in any order": simple top-order (solo payoff of a reorder picker ≈ 0; logged
+//   as a known fidelity gap in the audit catalog).
 async function mandarinRingNightbringer() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Nightbringer, The Black Light</span>: Reveal top three cards of the Villain Deck.`);
   if (villainDeck.length === 0) {
@@ -4853,17 +4866,43 @@ async function mandarinRingNightbringer() {
   const eligible = revealed.filter(c => c.type === "Villain" && (c.victoryPoints || 0) <= 2);
   const names = revealed.map(c => `${c.name} (${c.type}, ${c.victoryPoints || 0}VP)`).join(", ");
   onscreenConsole.log(`Revealed: ${names}.`);
+
+  let target = null;
   if (eligible.length > 0) {
-    const target = eligible[0];
-    const remaining = revealed.filter(c => c !== target);
-    victoryPile.push(target);
-    onscreenConsole.log(`Defeated <span class="console-highlights">${target.name}</span> (${target.victoryPoints}VP)!`);
-    // Put rest back on top
-    for (const c of remaining.reverse()) villainDeck.push(c);
+    target = await revelationsPickOneCard(eligible, {
+      title: "NIGHTBRINGER, THE BLACK LIGHT",
+      instructions: "You may defeat a Villain worth 2VP or less (do its Fight effect). Choose one, or No Thanks:",
+      allowNoThanks: true,
+    });
   } else {
-    onscreenConsole.log(`No eligible Villain (2VP or less). Put them all back.`);
-    for (const c of revealed.reverse()) villainDeck.push(c);
+    onscreenConsole.log(`No eligible Villain (2VP or less).`);
   }
+
+  let remaining = revealed;
+  if (target) {
+    remaining = revealed.filter(c => c !== target);
+    // Defeat reward: push the ORIGINAL object (NOT a copy) — preserves VP for Final Showdown and the
+    // fightEffect string for the dispatch below.
+    victoryPile.push(target);
+    onscreenConsole.log(`Defeated <span class="console-highlights">${target.name}</span> (${target.victoryPoints || 0}VP)!`);
+    // "Whenever you defeat a Villain" triggers — outside the location guard (flag-globals only).
+    await defeatBonuses();
+    // Do its Fight effect, off the city pipeline, with currentVillainLocation neutralized.
+    if (target.fightEffect && target.fightEffect !== "None" && typeof window[target.fightEffect] === "function") {
+      const savedLocation = currentVillainLocation;
+      currentVillainLocation = null;
+      try {
+        onscreenConsole.log(`Resolving <span class="console-highlights">${target.name}</span>'s Fight effect.`);
+        const villainCopy = createVillainCopy(target);
+        await window[target.fightEffect](villainCopy);
+      } finally {
+        currentVillainLocation = savedLocation;
+      }
+    }
+  }
+
+  // Put the rest back on top, in revealed order (originally-top card ends up on top again).
+  for (const c of remaining.reverse()) villainDeck.push(c);
   updateGameBoard();
 }
 
