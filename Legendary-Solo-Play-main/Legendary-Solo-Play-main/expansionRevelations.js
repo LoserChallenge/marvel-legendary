@@ -3484,33 +3484,19 @@ async function theKorvacSagaTwist() {
       handInfo,
       "KO Bystander",
     );
-    confirmButton.onclick = function () {
+    confirmButton.onclick = async function () {
       closeInfoChoicePopup();
-      if (playerHand.length > 4) {
-        while (playerHand.length > 4) {
-          const card = playerHand.pop();
-          playerDiscardPile.push(card);
-          onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
-        }
-      } else {
-        onscreenConsole.log(`Hand already at 4 or fewer — no discard needed.`);
-      }
+      // Discard-down-to-4: player chooses WHICH cards to discard.
+      await discardDownToN(4, "KORVAC SAGA — DISCARD TO 4");
       onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
       transformScheme();
       updateGameBoard();
       resolve();
     };
-    denyButton.onclick = function () {
+    denyButton.onclick = async function () {
       closeInfoChoicePopup();
-      const bystanders = victoryPile.filter(c => c.type === "Bystander");
-      if (bystanders.length > 0) {
-        const b = bystanders[0];
-        victoryPile.splice(victoryPile.indexOf(b), 1);
-        koPile.push(b);
-        onscreenConsole.log(`KO'd a Bystander from Victory Pile.`);
-      } else {
-        onscreenConsole.log(`No Bystanders in Victory Pile to KO.`);
-      }
+      // KO a Bystander from the Victory Pile: player chooses WHICH (auto when only one).
+      await koBystanderFromVictoryPile("KORVAC SAGA — KO A BYSTANDER");
       onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
       transformScheme();
       updateGameBoard();
@@ -4455,6 +4441,131 @@ function koBystanderFromVictoryPile(label) {
     "KO'd",
     "No Bystander in your Victory Pile — nothing to KO.",
   );
+}
+
+// Discard down to `targetSize` cards in hand — player chooses WHICH to discard (multi-select,
+// exactly handLen-targetSize). Built on the .card-choice-popup multi-select scaffold (cf.
+// speedPickCardsToDraw); selection tracks card OBJECTS (collision-safe with duplicate cards,
+// unlike the id-based X-Men twin). Discards via checkDiscardForInvulnerability — the engine-correct
+// discard path the X-Men Master Strike / Clone Saga discard-to-N twins use — re-adding any card the
+// player keeps via discard-invulnerability (e.g. Cyclops "Unending Energy"). No-op when already
+// at/under the target. Returns a Promise; await it.
+function discardDownToN(targetSize, label) {
+  return new Promise((resolve) => {
+    const toDiscard = playerHand.length - targetSize;
+    if (toDiscard <= 0) {
+      onscreenConsole.log(`Hand already at ${targetSize} or fewer — no discard needed.`);
+      resolve();
+      return;
+    }
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    const popup = document.querySelector(".card-choice-popup");
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+
+    titleElement.textContent = label;
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    const selected = []; // card objects, collision-safe by identity
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    function refresh() {
+      const remaining = toDiscard - selected.length;
+      instructionsElement.textContent =
+        `Choose ${toDiscard} card${toDiscard !== 1 ? "s" : ""} to discard (leaving ${targetSize} in hand). ${selected.length}/${toDiscard} selected.`;
+      confirmButton.textContent = remaining > 0 ? `SELECT ${remaining} MORE` : `DISCARD ${toDiscard}`;
+      confirmButton.disabled = selected.length !== toDiscard;
+    }
+
+    const sortedHand = [...playerHand];
+    genericCardSort(sortedHand);
+
+    sortedHand.forEach((card) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = card.image;
+        previewImage.alt = card.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        const idx = selected.indexOf(card);
+        if (idx > -1) {
+          selected.splice(idx, 1);
+          cardImage.classList.remove("selected");
+        } else {
+          if (selected.length >= toDiscard) return; // cap — clicks past `toDiscard` are ignored
+          selected.push(card);
+          cardImage.classList.add("selected");
+        }
+        refresh();
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    setupDragScrolling(selectionRow1);
+    refresh();
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selected.length !== toDiscard) return;
+      closeCardChoicePopup();
+      setTimeout(async () => {
+        const names = [];
+        for (const card of selected) {
+          const index = playerHand.indexOf(card);
+          if (index !== -1) {
+            playerHand.splice(index, 1);
+            names.push(card.name);
+            const { returned } = await checkDiscardForInvulnerability(card);
+            if (returned.length) playerHand.push(...returned);
+          }
+        }
+        if (names.length) {
+          onscreenConsole.log(`Discarded ${names.map(n => `<span class="console-highlights">${n}</span>`).join(", ")} (down to ${targetSize}).`);
+        }
+        updateGameBoard();
+        resolve();
+      }, 100);
+    };
+
+    modalOverlay.style.display = "block";
+    popup.style.display = "block";
+  });
 }
 
 // GP-3c: put a Villain from your Victory Pile into the Escape Pile (Prison of Coffins).
