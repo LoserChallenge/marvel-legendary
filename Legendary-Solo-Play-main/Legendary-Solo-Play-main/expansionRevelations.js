@@ -2761,6 +2761,157 @@ function chemistroPickHQCard(chosenPlayed) {
   });
 }
 
+// Shared Revelations single-select card picker — generalizes the .card-choice-popup scaffold used
+// by chemistroPickPlayedCard() / prodigyCopyPowers(). Presents `cards` for a single pick.
+// Mandatory by default (no opt-out); pass { allowNoThanks:true } to offer a "No Thanks!" opt-out
+// that resolves with null. Resolves with the chosen card object (or null on opt-out).
+function revelationsPickOneCard(cards, { title, instructions, allowNoThanks = false } = {}) {
+  return new Promise((resolve) => {
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const selectionRow1Container = document.querySelector(".card-choice-popup-selectionrow1-container");
+    const selectionRow1Label = document.querySelector(".card-choice-popup-selectionrow1label");
+    const selectionRow2 = document.querySelector(".card-choice-popup-selectionrow2");
+    const selectionRow2Label = document.querySelector(".card-choice-popup-selectionrow2label");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    const closeX = document.querySelector(".card-choice-popup-closebutton");
+    const popup = document.querySelector(".card-choice-popup");
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+
+    titleElement.textContent = title || "CHOOSE A CARD";
+    instructionsElement.textContent = instructions || "Choose a card:";
+
+    selectionRow1Label.style.display = "none";
+    selectionRow2Label.style.display = "none";
+    selectionRow2.style.display = "none";
+    closeX.style.display = "none";
+
+    selectionRow1Container.style.height = "50%";
+    selectionRow1Container.style.top = "50%";
+    selectionRow1Container.style.transform = "translateY(-50%)";
+
+    selectionRow1.replaceChildren();
+    previewElement.replaceChildren();
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    confirmButton.disabled = true;
+    otherChoiceButton.style.display = "none";
+
+    let selectedIndex = null;
+    let selectedCardImg = null;
+    let isDragging = false;
+
+    setupIndependentScrollGradients(selectionRow1, null);
+    setupDragScrolling(selectionRow1);
+
+    cards.forEach((card, idx) => {
+      const cardEl = document.createElement("div");
+      cardEl.className = "popup-card";
+      cardEl.setAttribute("data-pick-index", String(idx));
+
+      const img = document.createElement("img");
+      img.src = card.image;
+      img.alt = card.name;
+      img.className = "popup-card-image";
+
+      const handleHover = () => {
+        if (isDragging) return;
+        previewElement.replaceChildren();
+        const pImg = document.createElement("img");
+        pImg.src = card.image;
+        pImg.alt = card.name;
+        pImg.className = "popup-card-preview-image";
+        previewElement.appendChild(pImg);
+        if (selectedIndex === null) previewElement.style.backgroundColor = "var(--accent)";
+      };
+      const handleHoverOut = () => {
+        if (isDragging) return;
+        if (selectedIndex === null) {
+          setTimeout(() => {
+            if (!selectionRow1.querySelector(":hover") && !isDragging) {
+              previewElement.replaceChildren();
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardEl.addEventListener("mouseover", handleHover);
+      cardEl.addEventListener("mouseout", handleHoverOut);
+      cardEl.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        const thisIdx = Number(cardEl.getAttribute("data-pick-index"));
+        if (selectedIndex === thisIdx) {
+          selectedIndex = null;
+          if (selectedCardImg) selectedCardImg.classList.remove("selected");
+          selectedCardImg = null;
+          previewElement.replaceChildren();
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+          confirmButton.disabled = true;
+        } else {
+          if (selectedCardImg) selectedCardImg.classList.remove("selected");
+          selectedIndex = thisIdx;
+          selectedCardImg = img;
+          img.classList.add("selected");
+          previewElement.replaceChildren();
+          const pImg = document.createElement("img");
+          pImg.src = card.image;
+          pImg.alt = card.name;
+          pImg.className = "popup-card-preview-image";
+          previewElement.appendChild(pImg);
+          previewElement.style.backgroundColor = "var(--accent)";
+          confirmButton.disabled = false;
+        }
+      });
+
+      cardEl.appendChild(img);
+      selectionRow1.appendChild(cardEl);
+    });
+
+    if (cards.length > 5) {
+      selectionRow1.classList.remove("multi-row", "three-row");
+      selectionRow1Container.style.height = "42%";
+      selectionRow1Container.style.top = "25%";
+    } else {
+      selectionRow1.classList.remove("multi-row", "three-row");
+      selectionRow1Container.style.height = "50%";
+      selectionRow1Container.style.top = "28%";
+    }
+
+    if (allowNoThanks) {
+      noThanksButton.style.display = "block";
+      noThanksButton.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeCardChoicePopup();
+        resolve(null);
+      };
+    } else {
+      noThanksButton.style.display = "none";
+    }
+
+    confirmButton.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (selectedIndex === null) return;
+      const chosen = cards[selectedIndex];
+      closeCardChoicePopup();
+      resolve(chosen);
+    };
+
+    modalOverlay.style.display = "block";
+    popup.style.display = "block";
+  });
+}
+
 // Madam Masque — Dark Memories. Ambush: guess type, if wrong play it. Fight: KO a hero.
 async function madamMasqueAmbush() {
   if (villainDeck.length === 0) {
@@ -4513,13 +4664,23 @@ function mandarinRingSpin() {
 }
 
 // Zero, The Ice Blast — Fight: Choose a cost-0 card you played. Add it to hand at end of turn.
-function mandarinRingZero() {
+async function mandarinRingZero() {
   const costZeroPlayed = cardsPlayedThisTurn.filter(c => (c.cost || 0) === 0 && !c.isCopied && !c.markedForDeletion && !c.isSimulation);
   if (costZeroPlayed.length === 0) {
     onscreenConsole.log(`Fight! <span class="console-highlights">Zero, The Ice Blast</span>: No cost-0 cards played this turn.`);
     return;
   }
-  const card = costZeroPlayed[0];
+  // "Choose" — mandatory pick. Auto-resolve only when there is exactly one eligible card.
+  let card;
+  if (costZeroPlayed.length === 1) {
+    card = costZeroPlayed[0];
+  } else {
+    card = await revelationsPickOneCard(costZeroPlayed, {
+      title: "ZERO, THE ICE BLAST",
+      instructions: "Choose a cost-0 card you played this turn to add to your hand at end of turn:",
+    });
+  }
+  if (!card) return; // safety; mandatory flow always resolves with a card
   onscreenConsole.log(`Fight! <span class="console-highlights">Zero, The Ice Blast</span>: <span class="console-highlights">${card.name}</span> will be added to your hand at end of turn as an extra card.`);
   // Mark card for end-of-turn retrieval
   card.addToHandEndOfTurn = true;
