@@ -163,8 +163,14 @@ Source of truth for effects = the finalized, Pass-2-verified inventory (`docs/ca
 
 - **Chemistro Fight effect** (Cluster-adjacent MED) → **FIX**. No reason to gate it to one mode; make it work in both Golden Solo and What If?.
 - **Auto-pick vs. present-choice** (Korvac KO-bystander, Nightbringer, Speed "Break the Sound Barrier", Zero, Korvac discard, etc.) → **FIX ALL**. Any card text saying "choose" / "may" / non-mandatory must present the choice to the player; the game must never auto-resolve it. *(Chemistro's choice conversion was folded into its own fix on 2026-06-02 — EXCLUDE it from this batch.)*
-- **"Each other player" effects** (Dark Hawkeye "then choose one", Dark Ms. Marvel) → **DEFER**. Roll into the existing standing "other player effects in solo" review (`docs/known-issues.md`). Add any other each-other-player Revelations cards to that list as found.
+- **"Each other player" effects** (Dark Hawkeye "then choose one", Dark Ms. Marvel) → **DEFER**. Roll into the existing standing "other player effects in solo" review (`docs/known-issues.md`). Add any other each-other-player Revelations cards to that list as found. **Add: Mandarin tactic "Rings Seek Their True Hand"** (`mandarinRingsSeekTheirTrueHand`, ~3623-3642) — each-other-player effect; route here, NOT the auto-pick batch (2026-06-02).
 - All other clusters (A–H) → code-wrong, fix per recommended order.
+
+### Auto-pick → present-choice batch (diagnosed 2026-06-02)
+Full per-card diagnose + build brief: **`docs/audit-results/auto-pick-batch-diagnosis.md`**. 6 cards / ~5 commits, build easiest-first with Nightbringer last (Zero → Photon Infrared+Ultraviolet → Speed → Korvac twist → Nightbringer). Chemistro excluded (done, `3e66797`); Rings-Seek excluded (each-other-player, above); Ronin/Hellcat/Dark-Dimension excluded → cleanup item below.
+
+### QUEUED — Unimplemented (log-only / no-op) ability cleanup (logged 2026-06-02)
+**Queued AFTER Cluster B remainder.** Different fix class from the auto-pick batch: implement-from-nothing, not convert-auto-pick-to-choice. Known members (outside Cluster F, which is DONE): **Ronin "Mysterious Identity"** (color/team reassign, log-only; line 126), **Hellcat "Demon Sight" superpower** ("may fight the revealed Villain this turn", log-only; line 127), **The Dark Dimension** Fight "Take another turn after this one" (no-op stub, `expansionRevelations.js` ~2828; line 70). *Members found via comment-marker scan + catalog cross-ref — NOT an exhaustive body-level audit; this item's own diagnose must sweep all expansion effect bodies for log-only/no-op patterns before building.*
 
 ## Dedup vs. existing fix plan (do before triage)
 Cross-reference `docs/superpowers/plans/2026-04-12-revelations-phase4-fixes.md`:
