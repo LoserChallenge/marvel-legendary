@@ -3266,6 +3266,29 @@ async function tsunamiCrushesTheCoastTwist() {
 
 // === House of M / "No More Mutants" ===
 
+// Special rule (both sides): "Each Scarlet Witch in the city is a Villain ... If you fight one,
+// gain it as a Hero." The 14 Scarlet Witch cards are seeded into the Villain Deck at setup
+// (generateVillainDeck, script.js) as type:"Villain" with skrulled:true (so they skip the
+// Victory-Pile push on defeat) and fightEffect:"gainScarletWitchAsHero". This runs on the fight
+// COPY (createVillainCopy preserves type/cost/originalAttack/abilities): flip back to a Hero,
+// restore the printed Hero attack, and add it to the player's discard pile. Mirrors unskrull()
+// (script.js) but with House-of-M flavor text instead of the Skrull "rescued" message.
+function gainScarletWitchAsHero(villainCopy) {
+  if (!villainCopy) return;
+  villainCopy.type = "Hero";
+  villainCopy.attack = villainCopy.originalAttack;
+  villainCopy.skrulled = false;
+  villainCopy.scarletWitch = false;
+  villainCopy.fightEffect = ""; // clear so the gained Hero carries no villain fight effect (mirrors unskrull)
+  villainCopy.attackFromScheme = 0;
+  villainCopy.overlayTextAttack = "";
+  playerDiscardPile.push(villainCopy);
+  onscreenConsole.log(
+    `You defeated <span class="console-highlights">${villainCopy.name}</span> and gained it as a Hero — added to your discard pile.`,
+  );
+  updateGameBoard();
+}
+
 // House of M (Side A) Twist: KO all non-X-Men Heroes from HQ. If 2+ Scarlet Witch in city, transform.
 // Otherwise, play another villain card.
 async function houseOfMTwist() {

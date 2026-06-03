@@ -4657,7 +4657,7 @@ if (scheme.name === "Unite the Shards") {
     selectRandomHero();
   }
 
-  // Helper function for random hero selection
+  // Helper function for random hero selection (X-Cutioner's Song)
   function selectRandomHero() {
     // Debug: Log all heroes first
     console.log(
@@ -4731,6 +4731,53 @@ if (scheme.name === "Unite the Shards") {
     }
   }
 }
+
+  if (scheme.name === "House of M") {
+    // Setup directive: "Add 14 Scarlet Witch Hero cards to the Villain Deck."
+    // Scarlet Witch's standard 14-card comp (5 Common + 5 Common 2 + 3 Uncommon + 1 Rare = 14)
+    // is seeded into the Villain Deck. Each acts as a Villain in the city with Attack = its cost
+    // +3 (Side A "House of M") / +4 (Side B "No More Mutants") — set DYNAMICALLY off the active
+    // scheme side in updateVillainAttackValues + updateHQVillainAttackValues (the duplicate twin).
+    // "If you fight one, gain it as a Hero" → on defeat the fight copy is converted back to a Hero
+    // and pushed to the discard pile (fightEffect "gainScarletWitchAsHero").
+    // REUSE: mirrors the Skrull seed (Secret Invasion of the Skrull Shapeshifters, above) —
+    //   type:"Villain", base attack 0 (the cost+N comes from attackFromScheme), skrulled:true so
+    //   all four duplicate post-defeat handlers SKIP the Victory-Pile push (the card becomes a
+    //   Hero instead of scoring VP). A dedicated fightEffect (not "unskrull") supplies the correct
+    //   House-of-M flavor text. createVillainCopy preserves type/cost/originalAttack/abilities, so
+    //   the gained Scarlet Witch keeps her printed attack and hero powers.
+    const scarletWitchHero = heroes.find((h) => h.name === "Scarlet Witch");
+    if (scarletWitchHero) {
+      scarletWitchHero.cards.forEach((card) => {
+        let count;
+        switch (card.rarity) {
+          case "Common":
+          case "Common 2":
+            count = 5;
+            break;
+          case "Uncommon":
+            count = 3;
+            break;
+          case "Rare":
+            count = 1;
+            break;
+          default:
+            count = 0;
+        }
+        for (let i = 0; i < count; i++) {
+          deck.push({
+            ...card,
+            type: "Villain",
+            attack: 0,
+            originalAttack: card.attack,
+            skrulled: true,
+            scarletWitch: true,
+            fightEffect: "gainScarletWitchAsHero",
+          });
+        }
+      });
+    }
+  }
 
   for (let i = 0; i < 5; i++) {
     deck.push({
@@ -10246,6 +10293,21 @@ function updateVillainAttackValues(villain, i) {
     villain.attackFromScheme = villain.cost + 2;
   }
 
+  // House of M / No More Mutants: each seeded Scarlet Witch is a Villain with Attack = its cost
+  // +3 (Side A "House of M") / +4 (Side B "No More Mutants"). Keyed on the side-stable endGame
+  // field (NOT scheme.name) — the Side-B DB name is the literal string '"No More Mutants"' WITH
+  // embedded double-quotes (cardDatabase.js), so a name-string match would silently fail after the
+  // Transform and drop the attack to 0. endGame is "houseOfMEvilWins" (A) / "noMoreMutantsEvilWins"
+  // (B). Keep identical in both attack-value twins (duplicate-fn hazard).
+  if (
+    villain.scarletWitch === true &&
+    (scheme.endGame === "houseOfMEvilWins" ||
+      scheme.endGame === "noMoreMutantsEvilWins")
+  ) {
+    villain.attackFromScheme =
+      villain.cost + (scheme.endGame === "noMoreMutantsEvilWins" ? 4 : 3);
+  }
+
   if (
     scheme.name === `Steal the Weaponized Plutonium` &&
     villain.plutoniumCaptured &&
@@ -10504,6 +10566,21 @@ function updateHQVillainAttackValues(villain) {
     villain.skrulled === true
   ) {
     villain.attackFromScheme = villain.cost + 2;
+  }
+
+  // House of M / No More Mutants: each seeded Scarlet Witch is a Villain with Attack = its cost
+  // +3 (Side A "House of M") / +4 (Side B "No More Mutants"). Keyed on the side-stable endGame
+  // field (NOT scheme.name) — the Side-B DB name is the literal string '"No More Mutants"' WITH
+  // embedded double-quotes (cardDatabase.js), so a name-string match would silently fail after the
+  // Transform and drop the attack to 0. endGame is "houseOfMEvilWins" (A) / "noMoreMutantsEvilWins"
+  // (B). Keep identical in both attack-value twins (duplicate-fn hazard).
+  if (
+    villain.scarletWitch === true &&
+    (scheme.endGame === "houseOfMEvilWins" ||
+      scheme.endGame === "noMoreMutantsEvilWins")
+  ) {
+    villain.attackFromScheme =
+      villain.cost + (scheme.endGame === "noMoreMutantsEvilWins" ? 4 : 3);
   }
 
   if (
@@ -12727,6 +12804,9 @@ function createVillainCopy(villainCard) {
     alwaysLeads: villainCard.alwaysLeads,
     goblinToHeroAttackValue: villainCard.goblinToHeroAttackValue,
     goblinQueen: villainCard.goblinQueen,
+    // House of M: seeded Scarlet Witch "Villain" — carried so the cost+N attack rule and the
+    // gain-as-Hero fight effect see the flag on the fight copy (avoids the Klaw-strip bug).
+    scarletWitch: villainCard.scarletWitch,
     shards: villainCard.shards,
     capturedHero: villainCard.capturedHero ? [...villainCard.capturedHero] : undefined,
     // Mister Hyde: carry the position-derived recruit-fight flag onto the fight copy so the
