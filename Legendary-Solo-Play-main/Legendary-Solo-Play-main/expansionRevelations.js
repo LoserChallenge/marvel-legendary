@@ -1279,45 +1279,34 @@ async function askToDiscardSecondChance(card, kind) {
 
 // === Photon ===
 
-// Infrared Conversation (Common) — To play this, you must discard a card. Draw two cards.
+// Infrared Conversation (Common) — "To play this, you MUST discard a card. Draw two cards."
+// Mandatory play-cost: the player chooses WHICH card to discard, then draws two.
 async function photonInfraredConversation() {
   if (playerHand.length === 0) {
     onscreenConsole.log(`<span class="console-highlights">Infrared Conversation</span>: No cards in hand to discard.`);
     return;
   }
-  return new Promise((resolve) => {
-    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-      `<span class="console-highlights">Infrared Conversation</span>: Discard a card to draw two cards?`,
-      "Discard & Draw",
-      "Skip",
-    );
-    confirmButton.onclick = async function () {
-      closeInfoChoicePopup();
-      // For simplicity, discard a random card from hand
-      // (ideally would let player choose — but matches existing patterns)
-      if (playerHand.length > 0) {
-        const idx = Math.floor(Math.random() * playerHand.length);
-        const discarded = playerHand.splice(idx, 1)[0];
-        playerDiscardPile.push(discarded);
-        onscreenConsole.log(`Discarded <span class="console-highlights">${discarded.name}</span>.`);
-      }
-      drawCard(); drawCard();
-      onscreenConsole.log(`<span class="console-highlights">Infrared Conversation</span>: Drew two cards.`);
-      resolve();
-    };
-    denyButton.onclick = function () {
-      closeInfoChoicePopup();
-      resolve();
-    };
+  await revelationsDiscardOneFromHand({
+    title: "INFRARED CONVERSATION",
+    instructions: "To play this, you must discard a card. Choose which card to discard:",
   });
+  drawCard(); drawCard();
+  onscreenConsole.log(`<span class="console-highlights">Infrared Conversation</span>: Drew two cards.`);
 }
 
-// Ultraviolet Radiation (Common B) — To play this, you must discard a card.
-// Superpower [RANGED]: Hyperspeed 3.
-function photonUltravioletRadiation() {
-  // The "must discard" cost is a play cost — handled similarly to Infrared
-  // For now, the base attack of 3 is the main effect
-  // The discard cost will be implemented as part of a broader "play cost" system
+// Ultraviolet Radiation (Common B) — "To play this, you MUST discard a card."
+// Superpower [RANGED]: Hyperspeed 3 (separate conditionalAbility, already wired).
+// Mandatory play-cost: dispatched as this card's unconditionalAbility on play (and awaited by
+// the play pipeline before the superpower), so the discard fires whenever the card is played.
+async function photonUltravioletRadiation() {
+  if (playerHand.length === 0) {
+    onscreenConsole.log(`<span class="console-highlights">Ultraviolet Radiation</span>: No cards in hand to discard.`);
+    return;
+  }
+  await revelationsDiscardOneFromHand({
+    title: "ULTRAVIOLET RADIATION",
+    instructions: "To play this, you must discard a card. Choose which card to discard:",
+  });
 }
 
 async function photonUltravioletRadiationSuper() {
@@ -2910,6 +2899,25 @@ function revelationsPickOneCard(cards, { title, instructions, allowNoThanks = fa
     modalOverlay.style.display = "block";
     popup.style.display = "block";
   });
+}
+
+// Mandatory "you must discard a card" play-cost — player chooses WHICH hand card to discard.
+// Uses revelationsPickOneCard (mandatory; auto-resolves when only one card). Returns the
+// discarded card, or null if the hand is empty (cost cannot be paid).
+async function revelationsDiscardOneFromHand({ title, instructions }) {
+  if (playerHand.length === 0) return null;
+  let card;
+  if (playerHand.length === 1) {
+    card = playerHand[0];
+  } else {
+    card = await revelationsPickOneCard(playerHand, { title, instructions });
+  }
+  if (!card) return null;
+  const idx = playerHand.indexOf(card);
+  if (idx !== -1) playerHand.splice(idx, 1);
+  playerDiscardPile.push(card);
+  onscreenConsole.log(`Discarded <span class="console-highlights">${card.name}</span>.`);
+  return card;
 }
 
 // Madam Masque — Dark Memories. Ambush: guess type, if wrong play it. Fight: KO a hero.
