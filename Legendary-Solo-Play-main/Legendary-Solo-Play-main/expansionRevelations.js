@@ -1937,10 +1937,110 @@ async function speedRaceToTheRescue() {
 // Break the Sound Barrier (Rare) — Look at top 6 cards of your deck, draw 2,
 // put the rest back on top or bottom in any order.
 // Superpower [COVERT]: Hyperspeed 6.
+// Speed multi-select picker — choose EXACTLY `needed` of the revealed cards to draw.
+// Built on the .card-choice-popup multi-select scaffold (cf. revealTopNKOAny); selection is
+// capped at `needed` and the confirm button stays disabled until exactly `needed` are chosen.
+// Resolves with a Set of selected indices into `revealed`.
+function speedPickCardsToDraw(revealed, needed) {
+  return new Promise((resolve) => {
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    const popup = document.querySelector(".card-choice-popup");
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+
+    titleElement.textContent = "BREAK THE SOUND BARRIER";
+
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+
+    selectionRow1.textContent = "";
+    previewElement.textContent = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    const selected = new Set();
+    setupIndependentScrollGradients(selectionRow1, null);
+
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    function refresh() {
+      instructionsElement.textContent =
+        `Look at the top ${revealed.length} cards — choose ${needed} to draw (${selected.size}/${needed} selected). The rest go back on top or bottom.`;
+      confirmButton.textContent = `DRAW ${needed}`;
+      confirmButton.disabled = selected.size !== needed;
+    }
+
+    revealed.forEach((card, idx) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      cardElement.addEventListener("mouseover", () => {
+        previewElement.textContent = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = card.image;
+        previewImage.alt = card.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = "var(--accent)";
+      });
+
+      cardElement.addEventListener("click", () => {
+        if (selected.has(idx)) {
+          selected.delete(idx);
+          cardImage.classList.remove("selected");
+        } else {
+          if (selected.size >= needed) return; // cap — clicks past `needed` are ignored
+          selected.add(idx);
+          cardImage.classList.add("selected");
+        }
+        refresh();
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    setupDragScrolling(selectionRow1);
+    refresh();
+
+    confirmButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selected.size !== needed) return;
+      const result = new Set(selected);
+      closeCardChoicePopup();
+      resolve(result);
+    };
+
+    modalOverlay.style.display = "block";
+    popup.style.display = "block";
+  });
+}
+
+// Speed "Break the Sound Barrier" — Look at the top six cards of your deck, draw two of them,
+// and put the rest back on the top or bottom in any order. Mandatory; player chooses which 2 to
+// draw (multi-select) and the top/bottom placement of each leftover (handleCardPlacement loop).
 async function speedBreakTheSoundBarrier() {
-  // Reshuffle if needed
-  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
-    playerDeck = shuffle(playerDiscardPile);
+  updateGameBoard();
+  // Reshuffle discard into deck if it can't cover six.
+  if (playerDeck.length < 6 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile.concat(playerDeck));
     playerDiscardPile = [];
   }
   const count = Math.min(6, playerDeck.length);
@@ -1948,22 +2048,44 @@ async function speedBreakTheSoundBarrier() {
     onscreenConsole.log(`<span class="console-highlights">Break the Sound Barrier</span>: No cards in deck.`);
     return;
   }
-  // Pull top N cards
+  // Pull top N cards (revealed[0] = top of deck).
   const revealed = [];
   for (let i = 0; i < count; i++) {
     revealed.push(playerDeck.pop());
   }
-  // For simplicity: draw the 2 best (highest cost) and put rest on bottom
-  revealed.sort((a, b) => (b.cost || 0) - (a.cost || 0));
-  const drawn = revealed.splice(0, 2);
-  for (const card of drawn) {
-    playerHand.push(card);
+  const drawCount = Math.min(2, revealed.length);
+
+  // If there aren't more cards than we must draw, draw them all — no choice, no placement.
+  if (revealed.length <= drawCount) {
+    for (const c of revealed) playerHand.push(c);
+    onscreenConsole.log(`<span class="console-highlights">Break the Sound Barrier</span>: Looked at ${revealed.length} card${revealed.length !== 1 ? "s" : ""}, drew <span class="console-highlights">${revealed.map(c => c.name).join("</span> and <span class=\"console-highlights\">")}</span>.`);
+    updateGameBoard();
+    return;
   }
-  // Put rest on bottom
-  for (const card of revealed) {
-    playerDeck.unshift(card);
+
+  // Player chooses exactly `drawCount` of the revealed cards to draw.
+  const selectedIndices = await speedPickCardsToDraw(revealed, drawCount);
+  const drawn = [];
+  for (let i = 0; i < revealed.length; i++) {
+    if (selectedIndices.has(i)) {
+      playerHand.push(revealed[i]);
+      drawn.push(revealed[i]);
+    }
   }
-  onscreenConsole.log(`<span class="console-highlights">Break the Sound Barrier</span>: Looked at ${count} cards. Drew <span class="console-highlights">${drawn.map(c => c.name).join("</span> and <span class=\"console-highlights\">")}</span>. Put ${revealed.length} on bottom.`);
+  onscreenConsole.log(`<span class="console-highlights">Break the Sound Barrier</span>: Drew <span class="console-highlights">${drawn.map(c => c.name).join("</span> and <span class=\"console-highlights\">")}</span>.`);
+  updateGameBoard();
+
+  // Put the rest back on top or bottom — player's choice per card, in reveal order (top first).
+  const rest = [];
+  for (let i = 0; i < revealed.length; i++) {
+    if (!selectedIndices.has(i)) rest.push(revealed[i]);
+  }
+  for (let k = 0; k < rest.length; k++) {
+    await handleCardPlacement(rest[k], {
+      title: "BREAK THE SOUND BARRIER",
+      instructions: `Put <span class="console-highlights">${rest[k].name}</span> back on the top or bottom of your deck (card ${k + 1} of ${rest.length}):`,
+    });
+  }
   updateGameBoard();
 }
 
