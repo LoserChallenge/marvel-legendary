@@ -1,5 +1,13 @@
 # Revelations — "Unimplemented-Ability Cleanup" Sweep (DIAGNOSE-ONLY)
 
+> **RESOLUTION (2026-06-03):** Group B tidy DONE (commit `9ee4f80`). A1 (`theDarkDimensionFight`)
+> confirmed OUT OF SCOPE — honest "extra turns not supported in this version" log added (commit
+> `58380e9`); the GotG Time Gem general-case extra turn is the same unimplemented stub (consistent gap).
+> A2 (`hellcatDemonSightSuper`) BUILT (option 1, simplified resolve-now) + fully gated (commit `58380e9`):
+> validator 7/7, cold-read merge-ready, dual-mode `/game-test` (accept golden+whatif, can't-afford,
+> decline) all pass. A2 accepted simplification (resolve-now timing + plain-pool spend) flagged for the
+> coordinator-side `open-rules-questions.md`. Deliberate deferrals below remain deferred.
+
 **Date:** 2026-06-03. **Scope:** exhaustive body-level read of all 183 function declarations in
 `expansionRevelations.js`, cross-referenced against `docs/card-inventory/final/revelations.md` and the
 audit catalog `docs/audit-results/revelations-2026-05-28.md`. **No code changed.** Independently
