@@ -12391,8 +12391,17 @@ async function defeatLocation(cityIndex, attackCost) {
     // fight effect when you fight the Location itself. No double-prompt risk — separate code paths,
     // separate effects. Called with no args (matches the Tactic precedents; a Location has no
     // Infinity-Gems team, so the no-arg path is correct).
+    // EXCEPTION: a Location carrying `cannotBeNullified` is NOT a real Location fight effect — it
+    // borrows the Location plumbing for a SCHEME on-defeat consequence (Korvac Revealed: "if you
+    // defeat Korvac, KO the Mastermind"). Per rules-oracle (docs/rules-notes/revelations.md) that is
+    // a Scheme consequence, not a card Fight effect, so the Ultimate Nullifier must NOT cancel it and
+    // the negate prompt would be nonsensical. Skip the prompt for those; GP-6b stays intact for every
+    // real Location fight effect (which never sets this flag).
     let negate = false;
-    if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+    if (
+      !locationCard.cannotBeNullified &&
+      typeof promptNegateFightEffectWithMrFantastic === "function"
+    ) {
       negate = await promptNegateFightEffectWithMrFantastic();
     }
     if (!negate) {

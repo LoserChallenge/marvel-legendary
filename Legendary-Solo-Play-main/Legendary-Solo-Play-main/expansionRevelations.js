@@ -3677,6 +3677,10 @@ async function placeKorvac() {
     // (19) over the art, mirroring the Grim Reaper "Graveyard" precedent. Replace if Korvac art ships.
     image: "Visual Assets/Schemes/Revelations_KorvacRevealed.webp",
     forceAttackOverlay: true,
+    // korvacDefeated is a SCHEME on-defeat win trigger borrowing the Location plumbing, NOT a card
+    // Fight effect — so Mr. Fantastic's Ultimate Nullifier must not be able to cancel it (rules-oracle,
+    // docs/rules-notes/revelations.md). defeatLocation skips the negate prompt when this flag is set.
+    cannotBeNullified: true,
   };
   if (typeof placeLocation === "function") {
     await placeLocation(korvac);
