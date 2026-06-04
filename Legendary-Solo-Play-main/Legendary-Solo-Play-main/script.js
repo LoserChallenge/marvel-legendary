@@ -11755,6 +11755,27 @@ if (card.temporaryTeleport === true) {
     galactusForceOfEternityDraw = false;
   }
 
+  // "Zero, The Ice Blast" (Mandarin's Ring) — its Fight effect flags a 0-cost card the player
+  // played this turn with addToHandEndOfTurn. Now that the new hand is drawn, pull each flagged
+  // card into the hand as an extra card and clear the flag so it never recurs. The card normally
+  // sits in the discard pile, but a deck reshuffle during the draw can move it into the deck (or
+  // it may already have been drawn into the hand), so check all three zones. Graceful no-op if the
+  // card can't be found anywhere (e.g. it was KO'd this turn).
+  const retrieveZeroIceBlastCards = (pile) => {
+    for (let i = pile.length - 1; i >= 0; i--) {
+      if (pile[i].addToHandEndOfTurn) {
+        const card = pile.splice(i, 1)[0];
+        card.addToHandEndOfTurn = false;
+        playerHand.push(card);
+        onscreenConsole.log(`<span class="console-highlights">Zero, The Ice Blast</span>: <span class="console-highlights">${card.name}</span> added to your hand as an extra card.`);
+      }
+    }
+  };
+  retrieveZeroIceBlastCards(playerDiscardPile);
+  retrieveZeroIceBlastCards(playerDeck);
+  // If a flagged card was already drawn into the hand by a mid-draw reshuffle, just clear the flag.
+  playerHand.forEach((c) => { if (c.addToHandEndOfTurn) c.addToHandEndOfTurn = false; });
+
   // Photon "Light the Way": snapshot the COMPLETE opening hand after all turn-start drawing (this
   // catches cards added via the cardsToBeDrawnNextTurn direct-push path in drawOne, not just
   // drawCard). The Set dedups against any already added by the drawCard hook during the loop.
