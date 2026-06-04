@@ -1,6 +1,6 @@
 # Korvac Revealed — Build Plan (Cluster B Item 2)
 
-**Status:** NOT STARTED. Approved plan + ruling captured for a fresh-context worker. No code written.
+**Status:** ✅ DONE (commits `375fca2` build + `2017920` Epic-tactics fix, 2026-06-03). Both rulings (WIN instant-win + LIFECYCLE active-side toggle) implemented and gated — validator 7/7, cold `/code-review` ship-ready, dual-mode `/game-test` all 5 cases pass. See the catalog entry in `revelations-2026-05-28.md` (Cluster B, Korvac Revealed) for the full done-note + the Mr-Fantastic-Nullifier rules flag. Below is the original approved plan, kept for reference.
 **Authored:** 2026-06-03 (Cluster B diagnose-first pass; pattern-reuse-scout survey).
 **Branch:** `revelations`. **Builds on:** Items 1 (`a543a2b`) + 3 (`cb6ec1e`) already merged on the branch.
 
