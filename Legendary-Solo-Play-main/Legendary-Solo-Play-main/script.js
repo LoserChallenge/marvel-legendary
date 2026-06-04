@@ -8608,9 +8608,19 @@ if (stackedTwistNextToMastermind > 0) {
         hydraOfficerDeckImage.style.display = "flex";
         hydraOfficerCount.textContent = `${hydraOfficersNextToScheme}`;
         if (!hydraOfficerDeckImage.dataset.clickBound) {
+          // Same badge, both HYDRA sides — dispatch by active scheme side. Side A
+          // (Secret HYDRA Corruption): pay 3 Recruit → gain a Sympathizer. Side B
+          // (Open HYDRA Revolution): the Officers are 3-Attack "Hydra Traitor" Villains →
+          // pay 3 Attack to fight one (return to stack + KO a Hero). Branch inside the
+          // single bound listener so no re-bind is needed across a Transform.
           hydraOfficerDeckImage.addEventListener("click", (e) => {
             e.stopPropagation();
-            if (typeof showHydraSympathizerPrompt === "function") showHydraSympathizerPrompt();
+            const s = typeof getActiveScheme === "function" ? getActiveScheme() : null;
+            if (s && s.name === "Open HYDRA Revolution") {
+              if (typeof showHydraTraitorFightPrompt === "function") showHydraTraitorFightPrompt();
+            } else {
+              if (typeof showHydraSympathizerPrompt === "function") showHydraSympathizerPrompt();
+            }
           });
           hydraOfficerDeckImage.dataset.clickBound = "true";
         }

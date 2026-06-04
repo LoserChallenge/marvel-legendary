@@ -3492,6 +3492,90 @@ function showHydraSympathizerPrompt() {
   };
 }
 
+// Side-B special rule (Open HYDRA Revolution): "Officers next to this Scheme are 3 Attack
+// 'Hydra Traitor' Villains. When you fight one, return it to the Officer Stack and KO one of your
+// Heroes." Fighting is optional (a choice, like any villain) — "when you fight one" describes the
+// consequence. Cost is 3 ATTACK (not Recruit — that's the Side-A Sympathizer). Spending mirrors the
+// Demon Goblin pattern (rescueDemonGoblin, cardAbilitiesDarkCity.js): pay from totalAttackPoints,
+// honoring recruitUsedToAttack via showCounterPopup. Spending attack does NOT touch
+// cumulativeAttackPoints (that tracks attack GENERATED for Final Showdown). Returning a Traitor to
+// the stack decrements hydraOfficersNextToScheme and pushes a minted Officer back to shieldDeck —
+// which pushes the Evil-Wins gate (>=15 next-to-scheme OR stack empty) away; that is the card's
+// whole point.
+async function fightHydraTraitor() {
+  const COST = 3;
+  const activeScheme = getActiveScheme();
+  if (!activeScheme || activeScheme.name !== "Open HYDRA Revolution") {
+    return false; // Side-B only
+  }
+  if (typeof hydraOfficersNextToScheme === "undefined" || hydraOfficersNextToScheme <= 0) {
+    onscreenConsole.log("No Hydra Traitors are next to the Scheme.");
+    return false;
+  }
+  const available =
+    totalAttackPoints + (recruitUsedToAttack === true ? totalRecruitPoints : 0);
+  if (available < COST) {
+    onscreenConsole.log(
+      `You need 3 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight a <span class="console-highlights">Hydra Traitor</span>.`,
+    );
+    return false;
+  }
+
+  // Spend 3 Attack (Demon Goblin pattern).
+  if (recruitUsedToAttack === true) {
+    const result = await showCounterPopup(
+      { name: "Hydra Traitor", image: makeShieldOfficer().image },
+      COST,
+    );
+    totalAttackPoints -= result.attackUsed || 0;
+    totalRecruitPoints -= result.recruitUsed || 0;
+  } else {
+    totalAttackPoints -= COST;
+  }
+
+  // Return the Traitor to the shared S.H.I.E.L.D. Officer Stack (reverse of moveOfficersNextToScheme).
+  hydraOfficersNextToScheme--;
+  shieldDeck.push(makeShieldOfficer());
+  onscreenConsole.log(
+    `You fought a <span class="console-highlights">Hydra Traitor</span> (3 Attack). It returns to the S.H.I.E.L.D. Officer Stack (${hydraOfficersNextToScheme} left next to the Scheme; ${shieldDeck.length} in the stack). KO one of your Heroes.`,
+  );
+
+  if (typeof playSFX === "function") playSFX("attack");
+  await FightKOHeroYouHave("Hydra Traitor");
+  updateGameBoard();
+  return true;
+}
+
+// Click affordance on the next-to-scheme Officer badge for Side B: confirm the optional fight
+// before resolving (fighting is a choice). Guards keep it Side-B-only, count>0, affordable (3 Attack).
+function showHydraTraitorFightPrompt() {
+  const activeScheme = getActiveScheme();
+  if (!activeScheme || activeScheme.name !== "Open HYDRA Revolution") return;
+  if (typeof hydraOfficersNextToScheme === "undefined" || hydraOfficersNextToScheme <= 0) return;
+  const available =
+    totalAttackPoints + (recruitUsedToAttack === true ? totalRecruitPoints : 0);
+  if (available < 3) {
+    onscreenConsole.log(
+      `You need 3 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight a <span class="console-highlights">Hydra Traitor</span>.`,
+    );
+    return;
+  }
+  const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+    `Pay 3 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight a <span class="console-highlights">Hydra Traitor</span>? It returns to the S.H.I.E.L.D. Officer Stack and you KO one of your Heroes.`,
+    "Fight (3 Attack)",
+    "Cancel",
+  );
+  const titleEl = document.querySelector(".info-or-choice-popup-title");
+  if (titleEl) titleEl.textContent = "HYDRA TRAITOR";
+  confirmButton.onclick = async () => {
+    closeInfoChoicePopup();
+    await fightHydraTraitor();
+  };
+  denyButton.onclick = () => {
+    closeInfoChoicePopup();
+  };
+}
+
 // === The Korvac Saga / Korvac Revealed ===
 
 // Korvac Saga (Side A) Twist: Discard down to 4 cards or KO a bystander from VP. Transform.
