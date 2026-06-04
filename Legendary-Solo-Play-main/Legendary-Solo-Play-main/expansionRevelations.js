@@ -3597,6 +3597,7 @@ async function theKorvacSagaTwist() {
       await discardDownToN(4, "KORVAC SAGA — DISCARD TO 4");
       onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
       transformScheme();
+      await placeKorvac(); // Side B active — expose the fightable 19-Attack/9VP Korvac
       updateGameBoard();
       resolve();
     };
@@ -3606,6 +3607,7 @@ async function theKorvacSagaTwist() {
       await koBystanderFromVictoryPile("KORVAC SAGA — KO A BYSTANDER");
       onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
       transformScheme();
+      await placeKorvac(); // Side B active — expose the fightable 19-Attack/9VP Korvac
       updateGameBoard();
       resolve();
     };
@@ -3642,7 +3644,85 @@ async function korvacRevealedTwist() {
     onscreenConsole.log(`Transforming back to <span class="console-highlights">The Korvac Saga</span>.`);
     transformScheme();
   }
+  // Both transform-back branches above flip to Side A — Korvac is no longer present/fightable. The
+  // Twist-8 "Evil Wins" path returns early above and never reaches here. (Toggle, not one-shot.)
+  removeKorvac();
   updateGameBoard();
+}
+
+// --- Korvac Revealed: the fightable 19-Attack / 9VP "Korvac" entity ---
+// Korvac exists ONLY while Korvac Revealed (Side B) is the active scheme side. He is built as a
+// Location-type entity (the Grim Reaper "Graveyard" pattern) so the whole fightable / affordability /
+// VP-award / defeat-animation chain is reused for free: placeLocation -> city click ->
+// showLocationAttackButton -> defeatLocation -> korvacDefeated. His presence is tied to the ACTIVE
+// SIDE (placed on transform to Side B, removed on transform back to Side A), NOT a one-shot
+// "revealed" boolean. Defeating Korvac is an INSTANT WIN in both modes (ruling 2026-06-03).
+
+// Place the fightable Korvac into the city. Idempotent — never more than one Korvac at a time.
+async function placeKorvac() {
+  if (typeof cityLocations === "undefined") return;
+  if (cityLocations.some((loc) => loc && loc.name === "Korvac")) return; // already present
+  const korvac = {
+    name: "Korvac",
+    type: "Location",
+    attack: 19,
+    originalAttack: 19,
+    victoryPoints: 9,
+    fightEffect: "korvacDefeated",
+    team: "Cosmic",
+    keywords: [],
+    classes: [],
+    // No dedicated Korvac card art is staged, so this reuses the "Korvac Revealed" scheme art (which
+    // depicts Korvac). forceAttackOverlay makes the city renderer always paint the effective attack
+    // (19) over the art, mirroring the Grim Reaper "Graveyard" precedent. Replace if Korvac art ships.
+    image: "Visual Assets/Schemes/Revelations_KorvacRevealed.webp",
+    forceAttackOverlay: true,
+  };
+  if (typeof placeLocation === "function") {
+    await placeLocation(korvac);
+  }
+}
+
+// Remove the fightable Korvac from the city when the Scheme transforms back to The Korvac Saga (Side
+// A). Any partial Attack the player accumulated against Korvac is intentionally lost — base Legendary
+// defeats an enemy in one turn, and the A<->B toggle removing Korvac simply drops the unfinished
+// fight (ruling 2026-06-03). No broken state results: defeatLocation only fires on a full payment.
+function removeKorvac() {
+  if (typeof cityLocations === "undefined") return;
+  let removed = false;
+  for (let i = 0; i < cityLocations.length; i++) {
+    if (cityLocations[i] && cityLocations[i].name === "Korvac") {
+      cityLocations[i] = null;
+      removed = true;
+    }
+  }
+  if (removed) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Korvac</span> recedes as the Scheme transforms back to The Korvac Saga.`,
+    );
+    if (typeof updateGameBoard === "function") updateGameBoard();
+  }
+}
+
+// Fight effect: defeating Korvac KOs the Mastermind and ALL its Tactics -> INSTANT WIN, both modes.
+// Dispatched by defeatLocation via window[locationCard.fightEffect](locationCard, cityIndex). The 9 VP
+// is already awarded by defeatLocation (victoryPile push) before this runs. We BYPASS the Golden Solo
+// Final-Showdown / strength+4 / Final-Blow gate (ruling: there is no Mastermind card left to fight it
+// against) by calling showWinPopup() directly — the same popup the normal Mastermind win uses.
+async function korvacDefeated(locationCard, cityIndex) {
+  const mastermind =
+    typeof getSelectedMastermind === "function" ? getSelectedMastermind() : null;
+  onscreenConsole.log(
+    `You defeated <span class="console-highlights">Korvac</span>! KO the Mastermind and all its Tactics.`,
+  );
+  if (mastermind && Array.isArray(mastermind.tactics)) {
+    mastermind.tactics = []; // KO the Mastermind + all Tactics (verbatim card outcome)
+  }
+  if (typeof updateGameBoard === "function") updateGameBoard();
+  // Instant win — do NOT route through the Final-Showdown / strength+4 gate.
+  if (typeof showWinPopup === "function") {
+    await showWinPopup();
+  }
 }
 
 // --- MASTERMIND EFFECTS ---
