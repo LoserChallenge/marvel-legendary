@@ -3283,7 +3283,9 @@ async function swordsmanAmbush(swordsman) {
   }
   if (typeof cityLocations !== "undefined") {
     for (let i = 0; i < cityLocations.length; i++) {
-      if (cityLocations[i] && bystanderDeck.length > 0) {
+      // Skip Korvac (isSchemeVillain): it counts as a Villain, not a Location (rulesheet p.2), so "each
+      // Location captures a Bystander" does NOT apply to it. Sibling: Grim Reaper Location tallies.
+      if (cityLocations[i] && !cityLocations[i].isSchemeVillain && bystanderDeck.length > 0) {
         const bystander = bystanderDeck.pop();
         onscreenConsole.log(`<span class="console-highlights">${cityLocations[i].name}</span> captured a Bystander.`);
         if (!cityLocations[i].capturedBystanders) cityLocations[i].capturedBystanders = [];
@@ -3756,6 +3758,19 @@ async function placeKorvac() {
     // Fight effect — so Mr. Fantastic's Ultimate Nullifier must not be able to cancel it (rules-oracle,
     // docs/rules-notes/revelations.md). defeatLocation skips the negate prompt when this flag is set.
     cannotBeNullified: true,
+    // Korvac Revealed "counts as a Villain", NOT a Location (Revelations rulesheet p.2: "Locations do
+    // not count as Villains" — and the converse). It only lives in cityLocations[] to reuse the
+    // fightable/render/defeat plumbing. This flag marks it so "for each Location in the city" tallies
+    // EXCLUDE it. Three sites honour it (keep in sync): Grim Reaper +1/Location attack (script.js
+    // recalculateMastermindAttack), Epic Grim Reaper "3+ Locations -> Wound" (epicGrimReaperStrike),
+    // and Swordsman's "each Location captures a Bystander" ambush (swordsmanAmbush). Name/keyword-keyed
+    // Location checks (Lethal Legion "+3 while [Maze/Cult/Prison/Carnival] Location", Sentry's
+    // Watchtower lookup) can never match "Korvac" so they need no guard. KNOWN LIMITATIONS (documented,
+    // not fixed — coordinator 2026-06-04): Korvac is NOT added to "for each Villain in the city" counts
+    // (e.g. Sandman) — player-favourable + niche; and placing Korvac into a city whose Location slots
+    // are all full would KO the weakest real Location (overflow) — needs 5 Locations + a Korvac reveal,
+    // near-unreachable. See docs/known-issues.md.
+    isSchemeVillain: true,
   };
   if (typeof placeLocation === "function") {
     await placeLocation(korvac);
@@ -3866,8 +3881,9 @@ async function epicGrimReaperStrike() {
     if (typeof placeLocation === "function") {
       await placeLocation(graveyard);
     }
-    // Check for 3+ Locations
-    const locationCount = cityLocations.filter(loc => loc !== null).length;
+    // Check for 3+ Locations. EXCLUDE Korvac (isSchemeVillain) — it counts as a Villain, not a
+    // Location (rulesheet p.2), so it must not push this threshold. Sibling: Grim Reaper +1/Location.
+    const locationCount = cityLocations.filter(loc => loc !== null && !loc.isSchemeVillain).length;
     if (locationCount >= 3) {
       onscreenConsole.log(`3+ Locations in the city. Gaining a Wound.`);
       await drawWound();

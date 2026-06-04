@@ -598,9 +598,17 @@ async function placeLocation(locationCard) {
   }
 
   cityLocations[targetIndex] = locationCard;
-  onscreenConsole.log(
-    `<span class="console-highlights">${locationCard.name}</span> enters the city above ${citySpaceLabels[targetIndex]}.`,
-  );
+  // Korvac (isSchemeVillain) borrows the Location plumbing but "counts as a Villain", not a Location
+  // (rulesheet p.2) — so announce it as a Villain reveal, not as a Location entering above a space.
+  if (locationCard.isSchemeVillain) {
+    onscreenConsole.log(
+      `<span class="console-highlights">${locationCard.name}</span> is revealed as a ${locationCard.attack} Attack Villain! Defeat him to KO the Mastermind and all its Tactics.`,
+    );
+  } else {
+    onscreenConsole.log(
+      `<span class="console-highlights">${locationCard.name}</span> enters the city above ${citySpaceLabels[targetIndex]}.`,
+    );
+  }
   updateGameBoard();
   // PT-1: announce the Location's arrival with a draw popup, parallel to villains. Normal-placement
   // path only — the overflow branch above returns early and prompts via showOperationSelectionPopup,
@@ -6818,9 +6826,28 @@ function showPopup(type, drawnCard, confirmCallback) {
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Location Arrival") {
     playSFX("villain-entry");
-    popupTitle.innerText = `Location`;
     popupImage.style.display = "block";
-    popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city as a Location.`;
+    // Korvac (isSchemeVillain) reuses this popup but "counts as a Villain", not a Location (rulesheet
+    // p.2) — present it as a Villain reveal, not a Location entering. Built from safe DOM nodes
+    // (highlighted name + trailing text) rather than innerHTML; behaviour-identical for the non-Korvac
+    // Location case.
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "console-highlights";
+    nameSpan.textContent = drawnCard.name;
+    popupContext.replaceChildren(nameSpan);
+    if (drawnCard.isSchemeVillain) {
+      popupTitle.innerText = `Villain Revealed`;
+      popupContext.appendChild(
+        document.createTextNode(
+          ` is revealed as a ${drawnCard.attack} Attack Villain! Defeat him to KO the Mastermind and all its Tactics.`,
+        ),
+      );
+    } else {
+      popupTitle.innerText = `Location`;
+      popupContext.appendChild(
+        document.createTextNode(` enters the city as a Location.`),
+      );
+    }
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "X-Cutioner Hero to Villain") {
@@ -15400,10 +15427,15 @@ if (mastermind.name === "Thanos") {
   // --- Revelations mastermind attack-scaling (Cluster D Batch 2, effects 5 & 6) ---
   // Grim Reaper: +1 (Epic +2) per Location-slot occupant in the city. cityLocations[] holds every
   // Location-slot card incl. HYDRA Base (type "Location", henchmen:true), so a non-null count captures it.
+  // EXCLUDE Korvac (isSchemeVillain): "Korvac Revealed" counts as a Villain, not a Location (rulesheet
+  // p.2), so it must not feed this Location tally even though it lives in cityLocations[]. Sibling sites
+  // honouring the same flag: epicGrimReaperStrike (3+ Locations -> Wound) + swordsmanAmbush.
   if (mastermind.name === "Grim Reaper" || mastermind.name === "Epic Grim Reaper") {
     const locationCount =
       typeof cityLocations !== "undefined" && Array.isArray(cityLocations)
-        ? cityLocations.filter((loc) => loc !== null && loc !== undefined).length
+        ? cityLocations.filter(
+            (loc) => loc !== null && loc !== undefined && !loc.isSchemeVillain,
+          ).length
         : 0;
     mastermind.attackFromOwnEffects =
       locationCount * (mastermind.name === "Epic Grim Reaper" ? 2 : 1);
