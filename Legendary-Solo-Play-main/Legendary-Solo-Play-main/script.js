@@ -656,13 +656,13 @@ async function handleLocationOverflow(newLocation) {
 
   // KO the chosen Location (goes to KO pile, not Victory Pile)
   const koLocation = cityLocations[targetIndex];
-  console.log(`Location overflow: KO'd "${koLocation.name}" to make room for "${newLocation.name}".`);
+  onscreenConsole.log(`Location overflow: KO'd <span class="console-highlights">${koLocation.name}</span> to make room for <span class="console-highlights">${newLocation.name}</span>.`);
   koPile.push(koLocation);
   cityLocations[targetIndex] = null;
 
   // Place the new Location in the freed space
   cityLocations[targetIndex] = newLocation;
-  console.log(`Location "${newLocation.name}" placed above ${citySpaceLabels[targetIndex]}.`);
+  onscreenConsole.log(`<span class="console-highlights">${newLocation.name}</span> placed above ${citySpaceLabels[targetIndex]}.`);
   updateGameBoard();
 }
 

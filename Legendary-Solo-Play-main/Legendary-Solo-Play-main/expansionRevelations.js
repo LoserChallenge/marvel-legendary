@@ -1151,6 +1151,11 @@ async function hellcatDemonSight() {
       const topCard = villainDeck[villainDeck.length - 1];
       const cardType = topCard.type || "Unknown";
       let correct = false;
+      // INTENTIONAL ASYMMETRY (do not "fix"): the base guess counts a Location as a correct
+      // "Villain" guess for the +2 Attack (Locations enter via the Villain Deck, so guessing
+      // "Villain" is fair). The superpower (hellcatDemonSightSuper, ~line 1195) deliberately
+      // EXCLUDES Locations from the fightable path (`topCard.type !== "Villain"`) because a
+      // Location isn't a Villain you fight off the deck. Same card, two correct behaviours.
       if (guess === "Villain" && (cardType === "Villain" || cardType === "Location")) correct = true;
       if (guess === "Bystander" && cardType === "Bystander") correct = true;
       if (guess === "Strike" && cardType === "Master Strike") correct = true;
