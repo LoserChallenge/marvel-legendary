@@ -1184,13 +1184,76 @@ async function hellcatDemonSight() {
 
 // Demon Sight superpower: if revealed card was a Villain, you may fight it
 async function hellcatDemonSightSuper() {
-  // The superpower enhances the base ability — the engine calls both.
-  // This additional effect: if top of villain deck is a Villain, mark it fightable.
-  // For solo, this is primarily informational since you'll draw it soon anyway.
+  // Superpower [AVENGERS]: "If it was a Villain, you may fight it this turn." The base ability PEEKS
+  // (doesn't pop) the top of the Villain Deck — that's the card "it" refers to. If it's a Villain, the
+  // player MAY fight it now. "This turn" = resolve-now: Legendary has no attack-banking window, so the
+  // fight resolves when the superpower resolves (settled resolve-now ruling, docs/rules-notes/revelations.md).
+  // Fight = pay >= its printed Attack from the spendable attack pool; on defeat: award VP, fire the
+  // "whenever you defeat a Villain" triggers, and run its Fight effect off the city pipeline. The defeat
+  // path reuses the Nightbringer (mandarinRingNightbringer) pattern verbatim.
   const topCard = villainDeck.length > 0 ? villainDeck[villainDeck.length - 1] : null;
-  if (topCard && (topCard.type === "Villain" || topCard.type === "Location")) {
-    onscreenConsole.log(`<span class="console-highlights">Demon Sight</span> superpower: The revealed Villain can be fought this turn.`);
+  if (!topCard || topCard.type !== "Villain") {
+    return; // base revealed a non-Villain (or the deck is empty) — superpower does nothing
   }
+  const cost = topCard.attack || 0;
+  // Spendable attack = the plain attack pool (totalAttackPoints). Accepted simplification: skips the
+  // Thor recruit-as-attack counter-popup split + Negative Zone swap (rare, and a deck target has no
+  // per-space reserved attack). Affordability + spend both use this pool so they stay consistent.
+  if (totalAttackPoints < cost) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Demon Sight</span> superpower: <span class="console-highlights">${topCard.name}</span> (${cost} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">) revealed — not enough Attack to fight it.`,
+    );
+    return;
+  }
+  await new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Demon Sight: you may fight the revealed Villain ${topCard.name} (${cost} Attack) this turn.`,
+      `Fight (spend ${cost} Attack)`,
+      "No Thanks",
+    );
+    confirmButton.onclick = async function () {
+      closeInfoChoicePopup();
+      // Consume the attack — genuinely spent, cannot be reused this turn. Do NOT touch
+      // cumulativeAttackPoints (that is lifetime-generated attack for Final Showdown, never spent).
+      totalAttackPoints -= cost;
+      // Remove the fought card from the top of the deck.
+      villainDeck.pop();
+      // Defeat reward: push the ORIGINAL object (preserves VP for Final Showdown + the fightEffect string).
+      victoryPile.push(topCard);
+      onscreenConsole.log(
+        `<span class="console-highlights">Demon Sight</span>: fought and defeated <span class="console-highlights">${topCard.name}</span> (${topCard.victoryPoints || 0}VP) for ${cost} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
+      );
+      // "Whenever you defeat a Villain" triggers — flag-globals only, outside any city guard.
+      await defeatBonuses();
+      // Run its Fight effect off the city pipeline (a deck-revealed villain has no city position;
+      // currentVillainLocation is neutralized so position-keyed villain effects take their
+      // "outside special location" branch, then restored — same as mandarinRingNightbringer).
+      if (
+        topCard.fightEffect &&
+        topCard.fightEffect !== "None" &&
+        typeof window[topCard.fightEffect] === "function"
+      ) {
+        const savedLocation = currentVillainLocation;
+        currentVillainLocation = null;
+        try {
+          onscreenConsole.log(`Resolving <span class="console-highlights">${topCard.name}</span>'s Fight effect.`);
+          const villainCopy = createVillainCopy(topCard);
+          await window[topCard.fightEffect](villainCopy);
+        } finally {
+          currentVillainLocation = savedLocation;
+        }
+      }
+      updateGameBoard();
+      resolve();
+    };
+    denyButton.onclick = function () {
+      closeInfoChoicePopup();
+      onscreenConsole.log(
+        `<span class="console-highlights">Demon Sight</span> superpower: declined to fight <span class="console-highlights">${topCard.name}</span>.`,
+      );
+      resolve();
+    };
+  });
 }
 
 // Second Chance at Life (Rare) — If a Master Strike or Scheme Twist would occur,
@@ -3108,8 +3171,12 @@ async function brothersGrimmFight() {
 // The Dark Dimension (Location) — Villains here get Dark Memories (in updateVillainAttackValues).
 // Fight: Take another turn after this one.
 function theDarkDimensionFight() {
-  onscreenConsole.log(`Fight! <span class="console-highlights">The Dark Dimension</span>: Take another turn after this one!`);
-  // Extra turn flag — to be fully wired when extra-turn mechanism is implemented
+  // "Take another turn after this one" needs a general extra-turn primitive the engine does not have
+  // (the GotG Time Gem's general-case extra turn is the same unimplemented stub). OUT OF SCOPE for this
+  // version — log honestly so the player isn't misled into expecting a bonus turn.
+  onscreenConsole.log(
+    `Fight! <span class="console-highlights">The Dark Dimension</span>: "Take another turn after this one" — extra turns are not supported in this version.`,
+  );
 }
 
 // === Lethal Legion ===
