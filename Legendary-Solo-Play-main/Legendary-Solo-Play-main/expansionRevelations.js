@@ -2391,10 +2391,14 @@ async function captainMarvelNohVarrEscape() {
   }
 }
 
-// Dark Hawkeye (Bullseye) — Last Stand. Fight: KO one of your Heroes.
+// Dark Hawkeye (Bullseye) — Last Stand. Fight: KO one of your Heroes. Then choose one: each other
+// player KOs a Hero / each other player gains a 0-cost Hero from the KO pile. The self-facing KO is
+// applied; the "then choose one" branch is an each-other-player effect with no target in 1-player
+// solo, so it is deferred (per the standing non-Location each-other-player ruling) — logged, not silent.
 async function darkHawkeyeFight() {
   onscreenConsole.log(`Fight! <span class="console-highlights">Dark Hawkeye (Bullseye)</span>: KO one of your Heroes.`);
   await FightKOHeroYouHave("Dark Hawkeye (Bullseye)");
+  onscreenConsole.log(`<span class="console-highlights">Dark Hawkeye (Bullseye)</span>: the "each other player" choice has no target in solo — skipped.`);
 }
 
 // Dark Ms. Marvel (Moonstone) — Last Stand. Fight: "each other player" effect — solo skip.
@@ -2466,10 +2470,9 @@ async function sentryEscape() {
 }
 
 // Sentry's Watchtower (Location) — Fight: Gain the hero in the HQ space under this.
-// TODO (Cluster D Batch 4 — NOT YET IMPLEMENTED): "Villains here get Last Stand" is unwired.
-// revelationsVillainOwnAttack only reads each villain's OWN keywords; it does NOT detect a
-// Sentry's Watchtower sharing the space, so the Last Stand grant never fires. When implemented it
-// must go through attackFromOwnEffects (the attack-modifier pipeline), not card.attack.
+// "Villains here get Last Stand" IS wired (Cluster D Batch 4): the Location-GRANT block in
+// revelationsVillainOwnAttack (~line 188) adds calculateLastStand() to a villain sharing this
+// Location's space, via the attack-modifier bonus path (not card.attack).
 function sentrysWatchtowerFight() {
   const wtIdx = typeof cityLocations !== "undefined"
     ? cityLocations.findIndex(loc => loc && loc.name === "Sentry's Watchtower")
@@ -4219,20 +4222,12 @@ async function theHoodWarehouse() {
 // The engine fires window[location.triggeredAbility](locationCard, cityIndex) from
 // defeatVillain() (script.js) after a Villain sharing this Location's city space is defeated.
 // 10 of the 11 Revelations Location triggers are "each other player ..." effects; the Revelations
-// solo rule says these apply to YOU in 1-player solo. They are being converted from the old
-// announce-and-skip to true self-apply, staged by group (GP-3a/b done; GP-3c/d pending). Triggers
-// not yet converted still use announceOtherPlayerLocationTrigger (announce + skip) as an interim.
-// The Hood's Warehouse (the 11th) is not an each-other-player effect — it plays a Villain card.
+// solo rule says these apply to YOU in 1-player solo, so all 10 have been converted from the old
+// announce-and-skip to true self-apply. The Hood's Warehouse (the 11th) is not an each-other-player
+// effect — it plays a Villain card.
 
 const RANGE_ICON = `<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons">`;
 const TECH_ICON = `<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons">`;
-
-// Shared announce-and-skip helper for the not-yet-converted "each other player" Location triggers.
-function announceOtherPlayerLocationTrigger(name, effectText) {
-  onscreenConsole.log(
-    `<span class="console-highlights">${name}</span> triggers — "${effectText}" No other players in solo — skipped.`,
-  );
-}
 
 // Settled non-grey predicate (GP-3, rule 8): a "non-grey" card is anything that is NOT a basic grey
 // S.H.I.E.L.D. card (color "Grey") and NOT a Wound (Wounds count as grey — their color is "None").
