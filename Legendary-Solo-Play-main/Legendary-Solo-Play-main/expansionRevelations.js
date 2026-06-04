@@ -3716,7 +3716,12 @@ async function korvacDefeated(locationCard, cityIndex) {
     `You defeated <span class="console-highlights">Korvac</span>! KO the Mastermind and all its Tactics.`,
   );
   if (mastermind && Array.isArray(mastermind.tactics)) {
-    mastermind.tactics = []; // KO the Mastermind + all Tactics (verbatim card outcome)
+    // Clear IN PLACE (.length = 0), not reassign. For an Epic mastermind getSelectedMastermind()
+    // returns a fresh {...base, ...base.epic} spread each call; `epic` only overrides scalars, so the
+    // spread's `tactics` is the SAME array reference as the live base mastermind. Reassigning `= []`
+    // would only swap the throwaway's property and leave the real tactics intact; mutating length
+    // clears the shared array for both Epic and non-Epic masterminds.
+    mastermind.tactics.length = 0; // KO the Mastermind + all Tactics (verbatim card outcome)
   }
   if (typeof updateGameBoard === "function") updateGameBoard();
   // Instant win — do NOT route through the Final-Showdown / strength+4 gate.
