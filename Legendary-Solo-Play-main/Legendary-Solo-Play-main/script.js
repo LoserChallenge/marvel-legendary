@@ -8634,6 +8634,15 @@ if (stackedTwistNextToMastermind > 0) {
       if (typeof hydraOfficersNextToScheme !== "undefined" && hydraOfficersNextToScheme > 0) {
         hydraOfficerDeckImage.style.display = "flex";
         hydraOfficerCount.textContent = `${hydraOfficersNextToScheme}`;
+        // Side-aware tooltip — mirrors the click dispatch below. Re-set every render so it tracks a
+        // Transform (Side A → B): updateGameBoard runs after transformScheme. Side B (Open HYDRA
+        // Revolution) = the Officers are 3-Attack "Hydra Traitor" Villains; Side A (Secret HYDRA
+        // Corruption, the default) = pay 3 Recruit to gain a Hydra Sympathizer.
+        const activeHydraScheme = typeof getActiveScheme === "function" ? getActiveScheme() : null;
+        hydraOfficerDeckImage.title =
+          activeHydraScheme && activeHydraScheme.name === "Open HYDRA Revolution"
+            ? "Hydra Traitors next to the Scheme — pay 3 Attack to fight one (returns to the Officer stack + KO one of your Heroes)"
+            : "S.H.I.E.L.D. Officers next to the Scheme — pay 3 Recruit to gain one (Hydra Sympathizer)";
         if (!hydraOfficerDeckImage.dataset.clickBound) {
           // Same badge, both HYDRA sides — dispatch by active scheme side. Side A
           // (Secret HYDRA Corruption): pay 3 Recruit → gain a Sympathizer. Side B
@@ -10266,6 +10275,20 @@ function isBankOrStreets(idx) {
   const streetsIdx = citySpaceLabels.indexOf("The Streets");
   const bankIdx = citySpaceLabels.indexOf("The Bank");
   return idx === streetsIdx || idx === bankIdx;
+}
+
+// Mister Hyde reads as "Dr. Calvin Zabo" while fought with Recruit in the Bank or Streets
+// (revelations.md:416-419). Single source of truth for that location-aware identity — shared by
+// the Fight effect (misterHydeFight), the KO-hero popup header, and the recruit-deduction log — so
+// all three always agree. Name-scoped: ONLY Hyde-while-recruit-fought is renamed; every other card
+// (including any future usesRecruitToFight Villain) keeps its own name. usesRecruitToFight is the
+// position-derived flag set in updateVillainAttackValues and copied onto the fight copy by
+// createVillainCopy, so the resolved identity matches the cost actually charged.
+function resolveVillainDisplayName(card) {
+  if (card && card.name === "Mister Hyde" && card.usesRecruitToFight) {
+    return "Dr. Calvin Zabo";
+  }
+  return card ? card.name : "";
 }
 
 function updateVillainAttackValues(villain, i) {
@@ -12527,7 +12550,7 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
           // Recruit-only fight — deduct entirely from recruit points
           totalRecruitPoints -= villainAttack;
           onscreenConsole.log(
-            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${villainCopy.name}</span>.`
+            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${resolveVillainDisplayName(villainCopy)}</span>.`
           );
         } else if (
           (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
@@ -12776,7 +12799,7 @@ async function defeatHQVillain(index) {
           // Recruit-only fight — deduct entirely from recruit points
           totalRecruitPoints -= villainAttack;
           onscreenConsole.log(
-            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${villainCopy.name}</span>.`
+            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${resolveVillainDisplayName(villainCopy)}</span>.`
           );
         } else if (
           (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||

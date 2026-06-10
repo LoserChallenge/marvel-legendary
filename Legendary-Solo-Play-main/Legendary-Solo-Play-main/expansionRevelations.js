@@ -2426,7 +2426,7 @@ function klawFight(klaw) {
 // createVillainCopy, so the displayed identity always matches the cost actually charged. Display
 // only — card.name is NOT mutated (it is the findIndex identity key). Card-face art swap deferred.
 function misterHydeFight(villainCopy) {
-  const displayName = villainCopy && villainCopy.usesRecruitToFight ? "Dr. Calvin Zabo" : "Mister Hyde";
+  const displayName = resolveVillainDisplayName(villainCopy);
   onscreenConsole.log(`Fight! <span class="console-highlights">${displayName}</span>: KO one of your Heroes.`);
   return FightKOHeroYouHave(displayName);
 }
