@@ -4824,18 +4824,27 @@ function discardDownToN(targetSize, label) {
       if (selected.length !== toDiscard) return;
       closeCardChoicePopup();
       setTimeout(async () => {
-        const names = [];
+        // Name ONLY the cards that actually reach the discard pile, and report the REAL
+        // resulting hand size. A discard-invulnerable card (e.g. Cyclops "Unending Energy")
+        // the player keeps is re-added to hand via `returned` and must NOT be logged as
+        // discarded — checkDiscardForInvulnerability tells us which cards were actually
+        // discarded via its `discarded` set. Without this, the log named kept cards as
+        // discarded and falsely claimed "(down to ${targetSize})" when the hand bottomed
+        // out above the target (partial-compliance — Korvac Saga twist + invuln hero).
+        const discardedNames = [];
         for (const card of selected) {
           const index = playerHand.indexOf(card);
           if (index !== -1) {
             playerHand.splice(index, 1);
-            names.push(card.name);
-            const { returned } = await checkDiscardForInvulnerability(card);
+            const { discarded, returned } = await checkDiscardForInvulnerability(card);
+            for (const d of discarded) discardedNames.push(d.name);
             if (returned.length) playerHand.push(...returned);
           }
         }
-        if (names.length) {
-          onscreenConsole.log(`Discarded ${names.map(n => `<span class="console-highlights">${n}</span>`).join(", ")} (down to ${targetSize}).`);
+        if (discardedNames.length) {
+          onscreenConsole.log(`Discarded ${discardedNames.map(n => `<span class="console-highlights">${n}</span>`).join(", ")} (down to ${playerHand.length}).`);
+        } else {
+          onscreenConsole.log(`No cards discarded — all selected cards were kept (hand at ${playerHand.length}).`);
         }
         updateGameBoard();
         resolve();
