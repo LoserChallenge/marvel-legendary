@@ -3129,7 +3129,13 @@ async function madamMasqueAmbush() {
     );
     const t3 = document.querySelector(".info-or-choice-popup-title");
     if (t3) t3.textContent = "MADAM MASQUE";
-    function handleGuess(guess) {
+    // handleGuess is async + the wrong-guess processVillainCard() is awaited so the outer
+    // ambush Promise does not resolve() until the guessed card is FULLY processed. Without the
+    // await, resolve() fired immediately and the engine's `await ambushEffectFunction` (script.js
+    // ~5407) returned while processVillainCard's city-overflow / twist popup was still pending —
+    // the documented fire-and-forget race. The button onclicks below call this without awaiting,
+    // which is fine: synchronisation flows through resolve(), now correctly gated on the await.
+    async function handleGuess(guess) {
       closeInfoChoicePopup();
       const topCard = villainDeck[villainDeck.length - 1];
       const cardType = topCard.type || "Unknown";
@@ -3144,7 +3150,7 @@ async function madamMasqueAmbush() {
       } else {
         onscreenConsole.log(`Wrong! Playing that card from the Villain Deck.`);
         if (typeof processVillainCard === "function") {
-          processVillainCard();
+          await processVillainCard();
         }
       }
       resolve();
