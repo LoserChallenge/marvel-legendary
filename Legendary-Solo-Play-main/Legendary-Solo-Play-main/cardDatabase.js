@@ -4238,7 +4238,7 @@ const villains = [
         ambushEffect: "None",
         fightEffect: "brothersGrimmFight",
         escapeEffect: "None",
-        fightCondition: "None",
+        fightCondition: "twoIdenticalCards",
         conditionType: "None",
         condition: "None",
         alwaysLeads: "false",

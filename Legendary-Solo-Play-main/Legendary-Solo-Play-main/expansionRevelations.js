@@ -3173,8 +3173,55 @@ async function madamMasqueFight() {
   await FightKOHeroYouHave("Madam Masque");
 }
 
+// Brothers Grimm fight cost: discard two cards sharing the SAME name from hand. The fight button
+// only appears when isVillainConditionMet("twoIdenticalCards") confirmed a same-name pair exists in
+// hand, so this is always payable; we still guard defensively. The player picks which duplicate
+// name to spend when more than one pair is available. (Obs 15, 2026-06-11.)
+async function payBrothersGrimmDiscardCost() {
+  // Cards in hand whose name appears at least twice — only these can form the required pair.
+  const nameCounts = new Map();
+  for (const card of playerHand) {
+    if (card?.name) nameCounts.set(card.name, (nameCounts.get(card.name) || 0) + 1);
+  }
+  const eligible = playerHand.filter((card) => card?.name && nameCounts.get(card.name) >= 2);
+  if (eligible.length < 2) {
+    onscreenConsole.log(
+      `<span class="console-highlights">The Brothers Grimm</span>: no two identical cards in hand to discard.`,
+    );
+    return;
+  }
+
+  // Player chooses which card to spend; its NAME fixes the pair. Auto-resolve only when exactly one
+  // name-group of exactly two copies qualifies (no real choice to make).
+  const distinctEligibleNames = new Set(eligible.map((c) => c.name));
+  let chosen;
+  if (distinctEligibleNames.size === 1 && eligible.length === 2) {
+    chosen = eligible[0];
+  } else {
+    chosen = await revelationsPickOneCard(eligible, {
+      title: "THE BROTHERS GRIMM",
+      instructions: "You must discard two identical cards to fight. Choose which card to discard.",
+    });
+  }
+  if (!chosen) return; // defensive — this popup is mandatory (no "No Thanks")
+
+  const targetName = chosen.name;
+  const pair = playerHand.filter((c) => c.name === targetName).slice(0, 2);
+  for (const card of pair) {
+    const idx = playerHand.indexOf(card);
+    if (idx !== -1) playerHand.splice(idx, 1);
+    playerDiscardPile.push(card);
+  }
+  onscreenConsole.log(
+    `<span class="console-highlights">The Brothers Grimm</span>: discarded two copies of <span class="console-highlights">${targetName}</span> to fight.`,
+  );
+  updateGameBoard();
+}
+
 // The Brothers Grimm — Must discard two identical cards to fight. Fight: KO from discard.
 async function brothersGrimmFight() {
+  // Pay the "discard two identical cards" fight cost first (gated payable by twoIdenticalCards).
+  await payBrothersGrimmDiscardCost();
   onscreenConsole.log(`Fight! <span class="console-highlights">The Brothers Grimm</span>: You may KO a card from your discard pile.`);
   await koUpToNFromDiscardPile("The Brothers Grimm", 1);
 }

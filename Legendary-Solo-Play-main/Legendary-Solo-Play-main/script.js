@@ -11924,6 +11924,21 @@ function isVillainConditionMet(villainCard) {
       return zeroCostCount >= 3;
     }
 
+    case "twoIdenticalCards": {
+      // The Brothers Grimm: "To fight, you must also discard two identical cards." The pair is
+      // discarded from HAND, so gate on the HAND specifically — NOT cardsYouHave, which also counts
+      // cards played this turn and artifacts that can't be discarded. True when any name appears at
+      // least twice in hand (so the discard cost is actually payable). Paid in brothersGrimmFight().
+      const grimmNameCounts = new Map();
+      for (const card of playerHand) {
+        if (!card?.name) continue;
+        const n = (grimmNameCounts.get(card.name) || 0) + 1;
+        grimmNameCounts.set(card.name, n);
+        if (n >= 2) return true;
+      }
+      return false;
+    }
+
     default:
       console.warn(`Unknown fight condition: ${fightCondition}`);
       return false;
@@ -11981,7 +11996,17 @@ function showAttackButton(cityIndex, location = "city") {
     }
   }
 
-  if (playerAttackPoints + reservedAttack >= villainAttack) {
+  // Recruit-only fight (e.g. Mister Hyde as "Dr. Calvin Zabo" in the Bank/Streets): the cost must
+  // be paid from RECRUIT, not Attack. The two updateHighlights() twins already gate the cosmetic
+  // highlight on this flag, but this is the REAL click gate — without it, having enough Attack
+  // shows the button and defeatVillain then drains Recruit into the negative. (Obs 17, 2026-06-11.)
+  // recalculateVillainAttack() above refreshed villainCard.usesRecruitToFight for this position.
+  const usesRecruitToFight = villainCard.usesRecruitToFight === true;
+  const canFight = usesRecruitToFight
+    ? totalRecruitPoints >= villainAttack
+    : playerAttackPoints + reservedAttack >= villainAttack;
+
+  if (canFight) {
     // Create or update the attack button
     let attackButton = cityCell.querySelector(".attack-button");
     if (!attackButton) {
