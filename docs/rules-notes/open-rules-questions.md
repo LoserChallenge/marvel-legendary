@@ -18,18 +18,3 @@ defensible reading; listed here so the reading is visible rather than buried in 
 - **Status:** Unverified against rulebook. Practical impact tiny (requires both rare cards in
   hand simultaneously). Defensible but flag for confirmation if it ever comes up in play.
 
-## Earthquake/Tsunami "3 Villains escaped" — do escaped Henchmen count? (2026-06-11 playtest)
-
-- **Card:** Earthquake Drains the Ocean / Tsunami Crushes the Coast.
-  Evil Wins: "When 3 Villains per player have escaped **or** the Villain Deck runs out." (Solo = 3.)
-- **Question:** When the Tsunami transform destroys city spaces and the occupants escape, the
-  escapees can include **Henchmen** (e.g. Mandarin's Rings, HYDRA Base) as well as Villains.
-  Does the "3 Villains escaped" loss counter count **only Villain-type** cards, or any escaped
-  card (Henchmen included)?
-- **Why it matters:** drives both the loss-tracking logic AND the on-screen counter (see the
-  display item in the hands-on playtest log — the counter should reflect whatever the correct
-  ruling is). Paul's reading from the card text: **Villains only, NOT Henchmen.**
-- **To verify:** Revelations rulesheet definition of "Villain" for escape/loss conditions, and
-  whether Legendary's general rule treats escaped Henchmen as "Villains" for scheme Evil-Wins
-  counts. Route to `rules-oracle` (rules PDFs are master-folder-side; flag if unavailable here).
-- **Status:** Unverified. Logged, not yet implemented/changed.
