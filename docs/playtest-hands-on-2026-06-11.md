@@ -184,7 +184,10 @@ city is a Villain with Attack = its **cost + 3** (Side A "House of M") / **cost 
   fight button appears, so it's always payable — but watch the ordering feels OK when you re-test.
 - Nit (no change): name-only check means two Wounds / two Officers in hand also count as "identical"
   — rules-correct (any two same-name cards), flagged for awareness.
-- Gate: expansion-validator clean; cold-read review no blockers. Pending: dual-mode /game-test.
+- Gate: expansion-validator clean; cold-read review no blockers.
+- Runtime smoke (Playwright, golden, 2026-06-14): condition false + button HIDDEN with no same-name
+  pair in hand; condition true + button SHOWN with a pair; payBrothersGrimmDiscardCost discarded
+  exactly the two same-name cards (auto-resolve path), distinct card remained. PASS.
 - Original report: Paul fought it without discarding, with an empty hand — prerequisite not blocking.
 
 ---
@@ -209,7 +212,10 @@ city is a Villain with Attack = its **cost + 3** (Side A "House of M") / **cost 
   Enough Attack → button shows → `defeatVillain` charges Recruit → negative.
 - Fix: added recruit-only affordability branch to `showAttackButton` (`totalRecruitPoints >= cost`).
 - Gate: expansion-validator clean; cold-read review confirmed it mirrors the twins (recruit-only,
-  reserve excluded) and the flag is fresh at the read site. Pending: dual-mode /game-test.
+  reserve excluded) and the flag is fresh at the read site.
+- Runtime smoke (Playwright, golden, 2026-06-14): button HIDDEN at recruit 2 (attack 20) and recruit
+  5; SHOWN at recruit 6; usesRecruitToFight=true at Bank, cost 6. Full defeat with recruit 6 → 0
+  (never negative), slot cleared. PASS.
 - Original report: Hyde in the Bank correctly required Recruit (cost 6), but Paul had only 2 Recruit
   and was let fight anyway → −4 Recruit.
 
