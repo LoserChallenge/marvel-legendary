@@ -1557,12 +1557,35 @@ function cycleHeroImages() {
   }
 }
 
+// Heroes a scheme bars from the playable Hero pool: House of M seeds the 14 Scarlet Witch cards
+// into the Villain Deck (so she can't also be a chosen Hero); Transform Citizens Into Demons uses
+// Jean Grey as the Goblin Queen. Data-driven off scheme.excludedHeroes — new schemes get the
+// exclusion for free. Greys out (disables) each barred hero's checkbox under the active scheme and
+// unchecks it if it was selected; re-enables heroes barred only by OTHER schemes. Generalizes the
+// former hardcoded Jean Grey disable (kept behaviour-identical for that scheme).
+function applySchemeHeroExclusions(selectedSchemeName) {
+  const scheme = schemes.find((s) => s.name === selectedSchemeName);
+  const excluded = scheme && Array.isArray(scheme.excludedHeroes) ? scheme.excludedHeroes : [];
+  const allExcludable = new Set();
+  schemes.forEach((s) => (s.excludedHeroes || []).forEach((h) => allExcludable.add(h)));
+  allExcludable.forEach((heroName) => {
+    const cb = document.querySelector(`input[name="hero"][value="${heroName}"]`);
+    if (!cb) return;
+    const isExcluded = excluded.includes(heroName);
+    cb.disabled = isExcluded;
+    if (isExcluded && cb.checked) cb.checked = false;
+  });
+}
+
 // Event listener for user selecting a scheme manually
 document
   .querySelectorAll("#scheme-selection input[type=radio][name='scheme']")
   .forEach((radio) => {
     radio.addEventListener("change", function () {
       updateSchemeImage(this.value);
+      // Re-apply scheme hero exclusions on manual scheme switch (the old Jean Grey hardcode only
+      // re-applied inside randomize/restore, leaving this hole open).
+      applySchemeHeroExclusions(this.value);
     });
   });
 
@@ -2630,11 +2653,9 @@ function randomizeHero() {
     (scheme) => scheme.name === selectedSchemeName,
   );
 
-  // Update Jean Grey's disabled state for UI consistency
-  const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-  if (jeanGreyCheckbox && selectedScheme) {
-    jeanGreyCheckbox.disabled = selectedSchemeName === "Transform Citizens Into Demons";
-  }
+  // Update scheme-barred heroes' disabled state for UI consistency (data-driven, see
+  // applySchemeHeroExclusions / scheme.excludedHeroes — generalizes the old Jean Grey hardcode).
+  applySchemeHeroExclusions(selectedSchemeName);
 
   // Get the selected set and team filters
   const selectedSetFilters = Array.from(
@@ -2646,10 +2667,10 @@ function randomizeHero() {
 
   // Filter the hero checkboxes by the selected filters
   const filteredCheckboxes = Array.from(heroCheckboxes).filter((checkbox) => {
-    // EXCLUDE JEAN GREY BY NAME when the specific scheme is selected
-    // This is the key fix - we don't rely on disabled state alone
-    if (selectedSchemeName === "Transform Citizens Into Demons" && 
-        checkbox.value === "Jean Grey") {
+    // EXCLUDE scheme-barred heroes by name (Scarlet Witch under House of M, Jean Grey under
+    // Transform Citizens Into Demons) — don't rely on disabled state alone.
+    if (selectedScheme && Array.isArray(selectedScheme.excludedHeroes) &&
+        selectedScheme.excludedHeroes.includes(checkbox.value)) {
       return false;
     }
 
@@ -3265,11 +3286,9 @@ function randomizeHeroWithRequirements(scheme) {
     (schemeItem) => schemeItem.name === selectedSchemeName,
   );
 
-  // Update Jean Grey's disabled state for UI consistency
-  const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-  if (jeanGreyCheckbox && selectedScheme) {
-    jeanGreyCheckbox.disabled = selectedSchemeName === "Transform Citizens Into Demons";
-  }
+  // Update scheme-barred heroes' disabled state for UI consistency (data-driven; generalizes the
+  // old Jean Grey hardcode — see applySchemeHeroExclusions / scheme.excludedHeroes).
+  applySchemeHeroExclusions(selectedSchemeName);
 
   // Get the selected set and team filters
   const selectedSetFilters = Array.from(
@@ -3281,9 +3300,10 @@ function randomizeHeroWithRequirements(scheme) {
 
   // Filter the hero checkboxes by the selected filters
   const filteredCheckboxes = Array.from(heroCheckboxes).filter((checkbox) => {
-    // EXCLUDE JEAN GREY BY NAME when the specific scheme is selected
-    if (selectedSchemeName === "Transform Citizens Into Demons" && 
-        checkbox.value === "Jean Grey") {
+    // EXCLUDE scheme-barred heroes by name (Scarlet Witch under House of M, Jean Grey under
+    // Transform Citizens Into Demons).
+    if (selectedScheme && Array.isArray(selectedScheme.excludedHeroes) &&
+        selectedScheme.excludedHeroes.includes(checkbox.value)) {
       return false;
     }
 
@@ -3543,6 +3563,18 @@ function showConfirmChoicesPopup(
     }
   }
 
+  // Scheme-barred heroes (e.g. House of M seeds Scarlet Witch into the Villain Deck, so she
+  // cannot also be a chosen Hero) — block game start if one was selected. Data-driven off
+  // scheme.excludedHeroes; independent of heroRequirements.
+  if (Array.isArray(scheme.excludedHeroes) && scheme.excludedHeroes.length > 0) {
+    for (const heroName of scheme.excludedHeroes) {
+      if (heroes.includes(heroName)) {
+        heroFeedback += `<br><span class="error-spans">${heroName} cannot be chosen as a Hero with this Scheme.</span>`;
+        heroRequirementsMet = false;
+      }
+    }
+  }
+
   // Henchmen count validation
   if (henchmen.length < scheme.requiredHenchmen) {
     if (henchmen.length === 0) {
@@ -3743,14 +3775,9 @@ function updateAllImagesAndScroll(gameSettings) {
     }
   }
 
-  // Handle Jean Grey special case (if needed)
-  const selectedScheme = schemes.find(
-    (scheme) => scheme.name === gameSettings.scheme,
-  );
-const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-if (jeanGreyCheckbox && selectedScheme) {
-  jeanGreyCheckbox.disabled = selectedScheme.name === "Transform Citizens Into Demons";
-}
+  // Re-apply scheme hero exclusions for the restored scheme (data-driven; generalizes the old
+  // Jean Grey special case — see applySchemeHeroExclusions / scheme.excludedHeroes).
+  applySchemeHeroExclusions(gameSettings.scheme);
 }
 
 // NEW FUNCTION: Scroll to radio button selection

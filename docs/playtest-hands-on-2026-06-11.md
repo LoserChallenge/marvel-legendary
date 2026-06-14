@@ -73,23 +73,30 @@ Status key: 🆕 logged · 🔬 reproducing · ✅ confirmed-fix-landed · 💭 
 - Henchmen: HYDRA Base
 - Heroes: Cyclops, Emma Frost, Rogue, Angel, Photon, War Machine (4 X-Men + 2 non-X-Men ✓)
 
-### Obs 4 — 🆕 Scarlet Witch city-card Attack value wrong/unstable (House of M)
-**Highest priority — looks like a real attack-calc bug.** Scheme rule: each Scarlet Witch in the
-city is a Villain with Attack = its **cost + 3** (Side A "House of M") / **cost + 4** (Side B
-"No More Mutants").
-- **Alter Reality** costs **3** → expected **6** (Side A).
-- Observed sequence:
-  1. First Alter Reality entered the city reading **Attack 7** (should be 6). Off by +1.
-  2. A second Alter Reality entered reading **6** (correct) — and the first one then *also*
-     re-read as **6**. So it self-corrected once a recalc was triggered.
-  3. Later state: only one Alter Reality left in city + 2 other SW cards. The two others looked
-     fine, but the Alter Reality now reads **Attack 10**.
-  4. The scheme **had transformed** (→ "No More Mutants") by then, which should make it cost+4 =
-     **7**, not 10. So it's reading **+3 too high** (10 = 3 + 4 + 3? or 3 + 3 + 4?).
-- **Pattern hypothesis (for triage):** the +3/+4 scheme bonus appears to be **stacking/re-adding**
-  on recalcs instead of being set once — initial +1 over, then +3 over after a transform. Looks
-  like the attack-modifier field is being accumulated (`+=`) rather than assigned, OR both the
-  Side-A and Side-B bonuses get applied. Needs deterministic repro via `/game-test`.
+### Obs 4 — 🔬 Scarlet Witch attack "creep" — INVESTIGATED, attack math empirically CORRECT (Batch C)
+**Triage hypothesis (`+=` stacking / both bonuses applied) DISPROVEN.** Scheme rule: each Scarlet
+Witch in the city is a Villain with Attack = **cost + 3** (Side A) / **cost + 4** (Side B).
+- Code read: the scheme bonus is a single **assignment** (`villain.attackFromScheme = villain.cost +
+  (Side B ? 4 : 3)`) keyed on the side-stable `scheme.endGame`, in BOTH attack-value twins
+  (`updateVillainAttackValues` city ~10362, `updateHQVillainAttackValues` HQ ~10638). Seeded SW base
+  `attack` is 0; `originalAttack` is never added. Every consuming path — the city overlay
+  (`script.js:8843-8863`), the fight-cost (`recalculateVillainAttack` ~12318), and the HQ helper —
+  computes `base(0) + cost+N` with no accumulation.
+- **Deterministic Playwright repro (House of M game, 2026-06-14):**
+  - Side A: two **Alter Reality** (cost 3) placed → DOM attack overlays read **6, 6** (= 3+3). ✓
+  - After `transformScheme()` → No More Mutants (Side B): same two read **7, 7** (= 3+4). ✓ Clean
+    recalc, no stacking, no +3.
+  - **Hex Bolt** (cost 2, the only SW card with `originalAttack`=1) in the sewers entry slot reads
+    **cost+N**, NOT +1 — proving `originalAttack` does not leak into the display.
+- Every term in the display formula was checked empirically and is 0 except the scheme bonus
+  (mastermind 0, own/hero/shards 0, `cityTempBuff` 0 for House of M, shattered 0). There is **no code
+  path** that adds +1 or +3 to a Scarlet Witch villain. **Fight cost is also correct** — gameplay is
+  unaffected.
+- **Conclusion / recommendation:** not a reproducible attack-calc bug — NO speculative fix applied
+  (per diagnose-before-patching). Paul's 7/10 readings most likely a transient overlay-overlap misread
+  (cf. the known Obs 3/6 token-rendering glitches) or a non-SW effect in that specific game (Grim
+  Reaper mastermind). **Re-test ask:** if it recurs, capture the exact on-screen number + full board
+  (mastermind, every city card, whether mid-animation). Otherwise → defer/close.
 
 ### Obs 5 — 💭 Dark Spider-Man Fight effect: no popup — NO CHANGE (Paul: keep console-only)
 - Fought Dark Spider-Man; initially thought the Fight effect didn't trigger. It **did** — visible
@@ -109,13 +116,30 @@ city is a Villain with Attack = its **cost + 3** (Side A "House of M") / **cost 
 - Same display gap as Obs 1, now on House of M. (House of M Evil Wins = non-grey Heroes in KO pile
   ≥ 10 + 2×players; solo threshold = 12.) Counter should show a live tally, not static text.
 
-### Obs 8 — 🆕 Scarlet Witch still selectable as a Hero when House of M is the scheme
-- House of M shuffles **14 Scarlet Witch Hero cards** into the Villain Deck — in the physical game
-  those ARE her hero deck, so she can't also be a chosen playable Hero.
-- The setup screen currently still offers **Scarlet Witch** as a selectable Hero under House of M.
-- **Fix direction:** exclude Scarlet Witch from Hero selection (grey out / hide) when House of M is
-  the selected scheme — same family as `specificVillainRequirement`-style scheme overrides but on
-  the hero side. Verify current behavior + wire the exclusion.
+### Obs 8 — ✅ Scarlet Witch selectable as a Hero under House of M — FIXED (Batch C)
+- House of M shuffles **14 Scarlet Witch Hero cards** into the Villain Deck — she can't also be a
+  chosen playable Hero.
+- Fix: generalized the existing hardcoded **Jean Grey ↔ Transform Citizens Into Demons** hero-
+  exclusion into a data-driven **`scheme.excludedHeroes`** array. Added `excludedHeroes:
+  ["Scarlet Witch"]` to House of M and `["Jean Grey"]` to Transform Citizens (cardDatabase.js). New
+  helper `applySchemeHeroExclusions(schemeName)` (script.js) greys out + unchecks each barred hero for
+  the active scheme and re-enables heroes barred only by other schemes. All 5 former hardcoded Jean
+  Grey sites replaced with the generic helper/check; **also wired into the live scheme-radio `change`
+  listener** (a hole the Jean Grey precedent left open). Validator in `showConfirmChoicesPopup` blocks
+  Begin + shows an error if a barred hero is selected.
+- **Bonus fix (found by cold-read review):** the old Jean Grey disable used an unqualified
+  `input[value="Jean Grey"]` selector that matched the **wrong element** (the x-cutioner radio,
+  earlier in document order) — so Jean Grey's checkbox was never actually greyed out. The new
+  `input[name="hero"][value=...]` selector fixes that latent bug too.
+- Gate: cold-read `/code-review` "ship it" (no Jean Grey regression; the bonus fix noted). Runtime
+  smoke (Playwright, whatif setup, 2026-06-14): House of M → SW disabled (JG enabled); pre-checked SW
+  auto-unchecks on scheme select; Transform Citizens → JG disabled + SW re-enabled (regression check
+  PASS); neutral scheme → both enabled; Randomize ×6 under House of M never picks SW; force-selecting
+  SW with an otherwise-valid 6-hero comp → exactly one error ("Scarlet Witch cannot be chosen…") +
+  Begin disabled. PASS.
+- Note: `expansion-validator` not run for this batch — no expansion-file (`expansionRevelations.js`)
+  changes; the fix is entirely in `script.js` + `cardDatabase.js` (engine files outside the
+  validator's scope).
 
 ---
 

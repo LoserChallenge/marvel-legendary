@@ -400,6 +400,7 @@ const schemes = [
     requiredVillains: 1,
     requiredHenchmen: 1,
     requiredHeroes: 3,
+    excludedHeroes: ["Jean Grey"],
     variableTwist: false,
     twistText: `Stack 5 Bystanders face down next to the Scheme. Bystanders stacked here are "Demon Goblin" Villains. They have 2<img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'>. Players can fight these Demon Goblins to rescue them as Bystanders.`,
     backingTrack: "Demonic Inferno",
@@ -688,6 +689,7 @@ const schemes = [
     heroRequirements: {
       teamComposition: [{ team: "X-Men", count: 4 }, { team: "non:X-Men", count: 2 }],
     },
+    excludedHeroes: ["Scarlet Witch"],
     variableTwist: false,
     twistText: `KO all non-X-Men Heroes from the HQ. If there are at least 2 <span class="console-highlights">Scarlet Witch</span> cards in the city, this Scheme Transforms. Otherwise play another card from the Villain Deck.`,
     transformsInto: "\"No More Mutants\"",
