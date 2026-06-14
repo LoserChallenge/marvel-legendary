@@ -1075,33 +1075,64 @@ async function hellcatCatlikeAgility() {
 // you may put it on the bottom of that deck.
 // Superpower [INSTINCT]: Choose one — Draw a card or +1 Recruit.
 async function hellcatPartTimePI() {
-  // Look at top card of villain deck (the "any deck" most useful in solo)
-  if (villainDeck.length === 0) {
-    onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: Villain Deck is empty.`);
+  // Card text: "Reveal the top card of ANY deck. If it's not a Scheme Twist, you may put it on
+  // the bottom of that deck." Solo decks: Villain Deck, Hero Deck, your own deck. Only the
+  // Villain Deck can hold a Scheme Twist (canTwist). All three arrays use end=top / front=bottom,
+  // so bottoming = deck.unshift(deck.pop()) (in-place mutation — no reassignment of the lets).
+  if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  const candidates = [];
+  if (villainDeck.length > 0) candidates.push({ name: "Villain Deck", deck: villainDeck, canTwist: true });
+  if (heroDeck.length > 0) candidates.push({ name: "Hero Deck", deck: heroDeck, canTwist: false });
+  if (playerDeck.length > 0) candidates.push({ name: "your own deck", deck: playerDeck, canTwist: false });
+
+  if (candidates.length === 0) {
+    onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: No decks have cards to reveal.`);
     return;
   }
-  const topCard = villainDeck[villainDeck.length - 1];
-  const isTwist = topCard.type === "Scheme Twist";
-  if (isTwist) {
-    onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: Revealed <span class="console-highlights">${topCard.name || "Scheme Twist"}</span>. It's a Scheme Twist — it stays on top.`);
+
+  // Choose which deck (auto-pick when only one is non-empty).
+  let chosen = candidates[0];
+  if (candidates.length > 1) {
+    chosen = await new Promise((resolve) => {
+      const useThird = candidates.length === 3;
+      const { confirmButton, denyButton, extraButton } = showHeroAbilityMayPopup(
+        `Reveal the top card of which deck?`,
+        candidates[0].name,
+        candidates[1].name,
+        useThird ? candidates[2].name : "",
+        useThird,
+      );
+      confirmButton.onclick = () => { closeInfoChoicePopup(); resolve(candidates[0]); };
+      denyButton.onclick = () => { closeInfoChoicePopup(); resolve(candidates[1]); };
+      if (useThird) extraButton.onclick = () => { closeInfoChoicePopup(); resolve(candidates[2]); };
+    });
+  }
+
+  const topCard = chosen.deck[chosen.deck.length - 1];
+  if (chosen.canTwist && topCard.type === "Scheme Twist") {
+    onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: Revealed <span class="console-highlights">${topCard.name || "Scheme Twist"}</span> from the ${chosen.name}. It's a Scheme Twist — it stays on top.`);
     return;
   }
-  return new Promise((resolve) => {
+
+  onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: Revealed <span class="console-highlights">${topCard.name}</span> from the ${chosen.name}.`);
+  await new Promise((resolve) => {
     const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-      `Revealed top of Villain Deck: <span class="bold-spans">${topCard.name}</span>. Put it on the bottom?`,
+      `Revealed top of ${chosen.name}: <span class="bold-spans">${topCard.name}</span>. Put it on the bottom?`,
       "Put on Bottom",
       "Leave on Top",
     );
     confirmButton.onclick = function () {
       closeInfoChoicePopup();
-      const card = villainDeck.pop();
-      villainDeck.unshift(card);
-      onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: Put <span class="console-highlights">${card.name}</span> on the bottom of the Villain Deck.`);
+      chosen.deck.unshift(chosen.deck.pop());
+      onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: Put <span class="console-highlights">${topCard.name}</span> on the bottom of the ${chosen.name}.`);
       resolve();
     };
     denyButton.onclick = function () {
       closeInfoChoicePopup();
-      onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: Left <span class="console-highlights">${topCard.name}</span> on top.`);
+      onscreenConsole.log(`<span class="console-highlights">Part-Time PI</span>: Left <span class="console-highlights">${topCard.name}</span> on top of the ${chosen.name}.`);
       resolve();
     };
   });
@@ -1508,7 +1539,9 @@ function quicksilverAroundTheWorldPunchSuper() {
 // Generic single-pick icon chooser built on the .card-choice-popup tile row (mirrors
 // moveOneFromVictoryPile's DOM handling). `options` = [{ value, label, image }].
 // Resolves to the chosen value, or null if the player presses the keep/skip button.
-function chooseIconOption(title, instruction, options, skipLabel) {
+// allowSkip=false hides the skip button for MANDATORY choices (the only exit is
+// select+confirm; confirm starts disabled until a tile is selected).
+function chooseIconOption(title, instruction, options, skipLabel, allowSkip = true) {
   return new Promise((resolve) => {
     const cardchoicepopup = document.querySelector(".card-choice-popup");
     const modalOverlay = document.getElementById("modal-overlay");
@@ -1547,7 +1580,7 @@ function chooseIconOption(title, instruction, options, skipLabel) {
     confirmButton.textContent = "CONFIRM";
     confirmButton.disabled = true;
     otherChoiceButton.style.display = "none";
-    noThanksButton.style.display = "inline-block";
+    noThanksButton.style.display = allowSkip ? "inline-block" : "none";
     noThanksButton.textContent = skipLabel;
 
     options.forEach((opt) => {
@@ -1942,63 +1975,54 @@ async function speedRaceToTheRescue() {
     onscreenConsole.log(`<span class="console-highlights">Race to the Rescue</span>: No cards in deck.`);
     return;
   }
-  return new Promise((resolve) => {
-    const { confirmButton, denyButton, extraButton } = showHeroAbilityMayPopup(
-      `Choose a Hero Class to name:`,
-      "Strength / Instinct",
-      "Covert / Tech",
-      "Range",
-      true,
-    );
-    function processGuess(classes) {
-      closeInfoChoicePopup();
-      // Sub-choice if needed for compound button
-      if (classes.length > 1) {
-        const { confirmButton: a, denyButton: b } = showHeroAbilityMayPopup(
-          `Which one?`,
-          classes[0],
-          classes[1],
-        );
-        a.onclick = () => revealAndCheck(classes[0]);
-        b.onclick = () => revealAndCheck(classes[1]);
-      } else {
-        revealAndCheck(classes[0]);
-      }
+  // Card text: "Choose a Hero Class. (Strength, Instinct, Covert, Tech, or Ranged.)" — five
+  // distinct classes, MANDATORY. Reuse the in-file 5-tile chooseIconOption picker (same icon
+  // paths as roninMysteriousIdentity) with allowSkip=false so the player must name one class
+  // directly, not pick from a color-paired sub-menu.
+  const CLASS_OPTIONS = [
+    { value: "Strength", label: "Strength", image: "Visual Assets/Icons/Strength.svg" },
+    { value: "Instinct", label: "Instinct", image: "Visual Assets/Icons/Instinct.svg" },
+    { value: "Covert", label: "Covert", image: "Visual Assets/Icons/Covert.svg" },
+    { value: "Tech", label: "Tech", image: "Visual Assets/Icons/Tech.svg" },
+    { value: "Range", label: "Range", image: "Visual Assets/Icons/Range.svg" },
+  ];
+  const chosenClass = await chooseIconOption(
+    "RACE TO THE RESCUE — NAME A CLASS",
+    "Name a Hero Class, then reveal the top card of your deck. If it's that class, draw it.",
+    CLASS_OPTIONS,
+    null,
+    false,
+  );
+  if (!chosenClass) return; // defensive: popup DOM unexpectedly absent
 
-      function revealAndCheck(chosenClass) {
-        closeInfoChoicePopup();
-        const topCard = playerDeck[playerDeck.length - 1];
-        const matches = topCard.classes && topCard.classes.includes(chosenClass);
-        if (matches) {
-          const card = playerDeck.pop();
-          playerHand.push(card);
-          onscreenConsole.log(`<span class="console-highlights">Race to the Rescue</span>: Named "${chosenClass}". Revealed <span class="console-highlights">${card.name}</span> — it matches! Drew it.`);
-          updateGameBoard();
-          resolve();
-        } else {
-          onscreenConsole.log(`<span class="console-highlights">Race to the Rescue</span>: Named "${chosenClass}". Revealed <span class="console-highlights">${topCard.name}</span> — no match.`);
-          const { confirmButton: topBtn, denyButton: botBtn } = showHeroAbilityMayPopup(
-            `Put <span class="bold-spans">${topCard.name}</span> on top or bottom of your deck?`,
-            "Top",
-            "Bottom",
-          );
-          topBtn.onclick = function () {
-            closeInfoChoicePopup();
-            // Already on top — do nothing
-            resolve();
-          };
-          botBtn.onclick = function () {
-            closeInfoChoicePopup();
-            const card = playerDeck.pop();
-            playerDeck.unshift(card);
-            resolve();
-          };
-        }
-      }
-    }
-    confirmButton.onclick = () => processGuess(["Strength", "Instinct"]);
-    denyButton.onclick = () => processGuess(["Covert", "Tech"]);
-    extraButton.onclick = () => processGuess(["Range"]);
+  const topCard = playerDeck[playerDeck.length - 1];
+  const matches = topCard.classes && topCard.classes.includes(chosenClass);
+  if (matches) {
+    const card = playerDeck.pop();
+    playerHand.push(card);
+    onscreenConsole.log(`<span class="console-highlights">Race to the Rescue</span>: Named "${chosenClass}". Revealed <span class="console-highlights">${card.name}</span> — it matches! Drew it.`);
+    updateGameBoard();
+    return;
+  }
+
+  onscreenConsole.log(`<span class="console-highlights">Race to the Rescue</span>: Named "${chosenClass}". Revealed <span class="console-highlights">${topCard.name}</span> — no match.`);
+  await new Promise((resolve) => {
+    const { confirmButton: topBtn, denyButton: botBtn } = showHeroAbilityMayPopup(
+      `Put <span class="bold-spans">${topCard.name}</span> on top or bottom of your deck?`,
+      "Top",
+      "Bottom",
+    );
+    topBtn.onclick = function () {
+      closeInfoChoicePopup();
+      // Already on top — leave it
+      resolve();
+    };
+    botBtn.onclick = function () {
+      closeInfoChoicePopup();
+      const card = playerDeck.pop();
+      playerDeck.unshift(card);
+      resolve();
+    };
   });
 }
 

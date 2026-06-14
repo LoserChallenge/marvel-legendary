@@ -140,15 +140,22 @@ city is a Villain with Attack = its **cost + 3** (Side A "House of M") / **cost 
 - Side-B twists differ: Twist 2/4/6 = "each player discards an Avengers Hero or gains a Wound, then
   Transform"; Twist 8 = "Evil Wins!". The wrong/stale twist text is showing post-transform.
 
-### Obs 11 — 🆕 Hellcat "Part-Time PI" only reveals from the Villain Deck, not "any deck"
+### Obs 11 — ✅ Hellcat "Part-Time PI" only reveals from the Villain Deck — FIXED (Batch B)
 - Card: "Reveal the top card of **any deck**. If it's not a Scheme Twist, you may put it on the
   bottom of that deck."
-- Observed: the game only does this with the **Villain Deck** (consistent with the "if it's not a
-  Scheme Twist" clause being Villain-deck-specific). Per card text, "any deck" should let the player
-  **choose** — Villain Deck, **Hero Deck, or their own deck**.
-- **Fix direction:** present a deck-choice (Villain / Hero / own player deck), reveal that deck's top
-  card, and only the not-a-Scheme-Twist / put-on-bottom branch applies. Confirm intended solo scope
-  of "any deck."
+- Root cause: `hellcatPartTimePI()` hardcoded `villainDeck` (the old comment even said "the 'any
+  deck' most useful in solo"), dropping the card's deck choice.
+- Fix: present a deck choice among the non-empty decks (Villain / Hero / your own player deck), reveal
+  that deck's top, log the reveal, and offer put-on-bottom. Only the Villain Deck can hold a Scheme
+  Twist (`canTwist`) → twist stays on top. Bottoming = `chosen.deck.unshift(chosen.deck.pop())`
+  (in-place mutation of the live deck — no reassignment of the `let`s). Player deck is reshuffled from
+  discard if empty so "your own deck" is offered when it has cards. Auto-picks when only one deck is
+  non-empty.
+- Gate: expansion-validator clean (0 issues); cold-read review "ship it" (one minor — add a reveal
+  log line — applied).
+- Runtime smoke (Playwright, whatif, 2026-06-14): 3-way deck choice rendered (Villain/Hero/your own);
+  picked Hero Deck → revealed its top → Put on Bottom reordered ONLY the heroDeck (Villain + Player
+  untouched); promise resolved. PASS.
 
 ### Obs 12 — 🆕 Captain Marvel "The Sword of S.H.I.E.L.D." didn't draw after playing S.H.I.E.L.D. agents
 - Card SUPERPOWER: **[S.H.I.E.L.D.]×4 → Draw a card** (needs four S.H.I.E.L.D. team icons present).
@@ -156,12 +163,20 @@ city is a Villain with Attack = its **cost + 3** (Side A "House of M") / **cost 
   the full 4 S.H.I.E.L.D. icons (threshold not met = correct), vs. the icon-count not triggering
   when it should. Reproduce with a known 4-icon board.
 
-### Obs 13 — 🆕 Speed "Race to the Rescue" class picker offers 3 combined buttons, not 5 classes
+### Obs 13 — ✅ Speed "Race to the Rescue" picker showed 3 combined buttons, not 5 classes — FIXED (Batch B)
 - Card: "Choose a Hero Class (Strength, Instinct, Covert, Tech, or Ranged)" — should be **5** options.
-- Observed: only **3** options — **Strength/Instinct**, **Ranged**, **Tech/Covert** (combined). After
-  picking a combined one, it *did* then let Paul choose between the two — so functionally reachable,
-  but the picker grouping is wrong (likely reusing a color-paired picker). Should present 5 distinct
-  classes directly.
+- Root cause: `speedRaceToTheRescue()` was built on the 3-button `showHeroAbilityMayPopup` with
+  color-paired buttons (Strength/Instinct, Covert/Tech, Range) + a sub-choice.
+- Fix: rebuilt the picker on the in-file 5-tile `chooseIconOption()` (same icon paths as
+  `roninMysteriousIdentity`), presenting all 5 classes directly. The choice is MANDATORY, so
+  `chooseIconOption` gained an optional `allowSkip` param (default `true`, preserves its 3 existing
+  callers) and Speed passes `false` → skip button hidden, the only exit is select+confirm. Reveal /
+  match / put-on-top-or-bottom logic unchanged from the prior working version.
+- Gate: expansion-validator clean (0 issues); cold-read review "ship it".
+- Runtime smoke (Playwright, whatif, 2026-06-14): picker rendered 5 distinct tiles
+  (Strength/Instinct/Covert/Tech/Range); confirm disabled until a tile is selected; skip button
+  hidden. Named matching class → card drawn to hand, deck decremented, `updateGameBoard()` ran clean,
+  promise resolved. PASS.
 
 ### Obs 14 — 💭 Laser Maze (Location) "no effect" when fought = WORKING AS DESIGNED (code-verified)
 - Paul fought Laser Maze and saw no effect mentioned. **Verified in code 2026-06-11 — intended.**
