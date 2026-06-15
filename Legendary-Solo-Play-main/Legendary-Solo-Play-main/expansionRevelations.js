@@ -3735,8 +3735,36 @@ function showHydraTraitorFightPrompt() {
 // Korvac Saga (Side A) Twist: Discard down to 4 cards or KO a bystander from VP. Transform.
 async function theKorvacSagaTwist() {
   revelationsTwistCount++;
-  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! Discard down to four cards or KO a Bystander from your Victory Pile.`);
   return new Promise((resolve) => {
+    // Shared post-choice step: transform to Side B and expose the fightable Korvac.
+    const transformToRevealed = async () => {
+      onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
+      transformScheme();
+      await placeKorvac(); // Side B active — expose the fightable 19-Attack/9VP Korvac
+      updateGameBoard();
+      resolve();
+    };
+
+    // "KO a Bystander" is only a legal choice if the player actually HAS a Bystander in
+    // their Victory Pile (rulebook: "discard down to four OR KO a Bystander"). With none,
+    // the KO option is unfulfillable, so don't offer it — force the discard-to-4 branch.
+    const hasBystander = victoryPile.some((c) => c && c.type === "Bystander");
+
+    if (!hasBystander) {
+      onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! No Bystander in your Victory Pile — you must discard down to four cards.`);
+      (async () => {
+        await discardDownToN(4, "KORVAC SAGA — DISCARD TO 4");
+        await transformToRevealed();
+      })().catch((e) => {
+        // Surface any future throw from the helpers and still settle the outer Promise,
+        // so the twist chain never hangs (transformToRevealed normally calls resolve()).
+        console.error("Korvac no-bystander branch:", e);
+        resolve();
+      });
+      return;
+    }
+
+    onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! Discard down to four cards or KO a Bystander from your Victory Pile.`);
     const handInfo = playerHand.length > 4
       ? `Discard to 4 (discard ${playerHand.length - 4} card${playerHand.length - 4 !== 1 ? "s" : ""})`
       : `Discard to 4 (hand already at ${playerHand.length})`;
@@ -3749,21 +3777,13 @@ async function theKorvacSagaTwist() {
       closeInfoChoicePopup();
       // Discard-down-to-4: player chooses WHICH cards to discard.
       await discardDownToN(4, "KORVAC SAGA — DISCARD TO 4");
-      onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
-      transformScheme();
-      await placeKorvac(); // Side B active — expose the fightable 19-Attack/9VP Korvac
-      updateGameBoard();
-      resolve();
+      await transformToRevealed();
     };
     denyButton.onclick = async function () {
       closeInfoChoicePopup();
       // KO a Bystander from the Victory Pile: player chooses WHICH (auto when only one).
       await koBystanderFromVictoryPile("KORVAC SAGA — KO A BYSTANDER");
-      onscreenConsole.log(`Transforming to <span class="console-highlights">Korvac Revealed</span>.`);
-      transformScheme();
-      await placeKorvac(); // Side B active — expose the fightable 19-Attack/9VP Korvac
-      updateGameBoard();
-      resolve();
+      await transformToRevealed();
     };
   });
 }
@@ -3773,14 +3793,14 @@ async function theKorvacSagaTwist() {
 // Twist 8: Evil Wins!
 async function korvacRevealedTwist() {
   revelationsTwistCount++;
-  onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}!`);
   if (revelationsTwistCount >= 8) {
-    onscreenConsole.log(`Twist 8: Evil Wins! <span class="console-highlights">Korvac</span> has triumphed!`);
+    onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! <span class="console-highlights">Korvac Revealed</span> — Twist 8: Evil Wins! <span class="console-highlights">Korvac</span> has triumphed!`);
     // Evil wins handled by endGame check
     return;
   }
   if (revelationsTwistCount % 2 === 0) {
-    // Even twist: discard Avengers or wound
+    // Even twist (Korvac Revealed / Side B): discard an Avengers Hero or gain a Wound, then transform back.
+    onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! <span class="console-highlights">Korvac Revealed</span> — Discard an <span class="console-highlights">Avengers</span> Hero or gain a Wound, then the Scheme Transforms.`);
     const avengersHeroes = playerHand.filter(c => c.type === "Hero" && c.team === "Avengers");
     if (avengersHeroes.length > 0) {
       const card = avengersHeroes[0];
@@ -3794,7 +3814,9 @@ async function korvacRevealedTwist() {
     onscreenConsole.log(`Transforming back to <span class="console-highlights">The Korvac Saga</span>.`);
     transformScheme();
   } else {
-    // Odd twist on Side B — transform back without penalty
+    // Odd twist while Korvac Revealed is active (only reachable if the A/B toggle desyncs):
+    // the even-twist penalty does not apply per the card; the Scheme just Transforms back.
+    onscreenConsole.log(`Scheme Twist #${revelationsTwistCount}! <span class="console-highlights">Korvac Revealed</span> — The Scheme Transforms.`);
     onscreenConsole.log(`Transforming back to <span class="console-highlights">The Korvac Saga</span>.`);
     transformScheme();
   }
