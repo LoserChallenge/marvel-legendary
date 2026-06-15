@@ -110,12 +110,14 @@ Witch in the city is a Villain with Attack = **cost + 3** (Side A) / **cost + 4*
 - Likely a missing/auto-resolved choice popup. Triage: should this effect present a popup, or is
   silent console-only acceptable? (Compare to how other reveal-and-KO effects notify.)
 
-### Obs 6 — 🆕 Rescued Bystander icon remains (and oversized) after rescue
+### Obs 6 — ⏸️ DEFERRED — Rescued Bystander icon remains (and oversized) after rescue
 - A Bystander entered captured by a Villain in the Sewers. Paul fought the Villain; log said the
   Bystander was **rescued**, but the Bystander **icon stayed** on the space and is **larger than
   usual**.
-- Same family as Obs 3 (Klaw captured-Hero not shown) and the deferred "Villain/Mastermind overlay
-  UX pass" in known-issues — captured/rescued tokens rendering wrong. Triage together.
+- **DEFERRED (Paul, 2026-06-15)** to the post-merge **overlay/layout UX pass**, bundled with Obs 3
+  (Klaw captured-Hero not shown) — same captured/rescued-token render family. Mechanics confirmed
+  working; cosmetic only. Do NOT build pre-merge. Durable record: master's
+  merge-reconciliation-checklist §7 + known-issues "Villain/Mastermind overlay UX pass".
 
 ### Obs 7 — ✅ Scheme counter shows "SEE SCHEME" again (House of M) — FIXED (Batch E, 7a2cb76)
 - Same display gap as Obs 1, now on House of M. Fix: added `"House of M"` case to
@@ -201,7 +203,7 @@ Witch in the city is a Villain with Attack = **cost + 3** (Side A) / **cost + 4*
   picked Hero Deck → revealed its top → Put on Bottom reordered ONLY the heroDeck (Villain + Player
   untouched); promise resolved. PASS.
 
-### Obs 12 — ✅/❓ Captain Marvel "The Sword of S.H.I.E.L.D." didn't draw — ROOT CAUSE FIXED (eb45acb); threshold pending rules-oracle
+### Obs 12 — ✅ Captain Marvel "The Sword of S.H.I.E.L.D." didn't draw — FIXED (eb45acb); threshold confirmed by rules-oracle
 - Card SUPERPOWER: **[S.H.I.E.L.D.]×4 → Draw a card**.
 - **Root cause (certain):** the conditionalAbility was gated on `conditionType: "None"` /
   `condition: "None"`. `isConditionMet()` has no "None" case → hits `default` → returns `false`
@@ -210,12 +212,13 @@ Witch in the city is a Villain with Attack = **cost + 3** (Side A) / **cost + 4*
   — mirrors the established multi-icon precedent (Quicksilver "Around the World Punch" = 4 Avengers
   entries; Higher Further Faster = 2 Strength entries). Live-build probe: now fires at 5 total
   S.H.I.E.L.D. cards, dead below; ability draws a card.
-- **❓ OPEN (rules-oracle requested):** `isConditionMet` excludes the bearer card
-  (`cardsPlayedThisTurn.slice(0,-1)`), so an N-entry condition fires at **N+1 total** team cards.
-  4 entries → fires at 5 total S.H.I.E.L.D. If the printed "×4" counts Captain Marvel herself
-  (4 total), entries should be **3** — and Quicksilver ×4 / Higher Further Faster ×2 would be
-  off-by-one too-strict, needing a uniform `entries = icons − 1` correction. Shipped the
-  precedent-consistent value pending the ruling.
+- **✅ RULES-ORACLE (settled, `docs/rules-notes/core.md`):** printed Superpower icons mean N
+  **OTHER** cards, NOT counting the bearer (Dark City "Critical Hit Superpowers": "you get that
+  bonus only if you already played two OTHER [icon] cards earlier in your turn"; Core p.11-12
+  Odinson single-icon example). The engine already excludes the bearer
+  (`cardsPlayedThisTurn.slice(0,-1)`), so N condition entries fire at N others = **CORRECT**.
+  The 4-entry fix stands as shipped — NO rework. No DB-wide off-by-one: Quicksilver ×4 /
+  Higher-Further-Faster ×2 are also correctly coded.
 
 ### Obs 13 — ✅ Speed "Race to the Rescue" picker showed 3 combined buttons, not 5 classes — FIXED (Batch B)
 - Card: "Choose a Hero Class (Strength, Instinct, Covert, Tech, or Ranged)" — should be **5** options.
@@ -288,8 +291,11 @@ Witch in the city is a Villain with Attack = **cost + 3** (Side A) / **cost + 4*
 - Original report: Hyde in the Bank correctly required Recruit (cost 6), but Paul had only 2 Recruit
   and was let fight anyway → −4 Recruit.
 
-### Obs 18 — 🆕 HYDRA Officer placement (Secret HYDRA Corruption) is cut off on the left, hard to see
+### Obs 18 — ⏸️ DEFERRED — HYDRA Officer placement (Secret HYDRA Corruption) is cut off on the left
 - Each Scheme Twist places an Officer next to the Scheme. It places on the **left side**, appears
   **cut off / hard to see** on screen.
 - Paul's suggestion: render the Officer(s) **smaller, between the Scheme and Mastermind**, sitting
   on top of / slightly overlapping them. Display/layout polish.
+- **DEFERRED (Paul, 2026-06-15)** to the post-merge **overlay/layout UX pass** (with Obs 3/6).
+  Officer-placement mechanics confirmed working (count tracked correctly); cosmetic/layout only.
+  Do NOT build pre-merge. Durable record: master's merge-reconciliation-checklist §7.
