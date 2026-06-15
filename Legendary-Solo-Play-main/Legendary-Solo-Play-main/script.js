@@ -9742,14 +9742,24 @@ if (selectedSchemeEndGame) {
 
         // === Revelations Scheme Evil Wins ===
 
-        case "earthquakeEvilWins":
-          if (escapedVillainsCount >= 3 || villainDeck.length === 0) {
+        case "earthquakeEvilWins": {
+          // Settled ruling (docs/rules-notes/revelations.md): a Henchman is a subtype of
+          // Villain, so escaped Henchmen DO count toward Earthquake/Tsunami's "3 Villains
+          // escaped" loss. The shared local escapedVillainsCount filters type==="Villain"
+          // only, which silently DROPS Location-typed henchmen (e.g. HYDRA Base). Count
+          // subtype "Henchman" too; real Locations (no Henchman subtype) and bystanders/
+          // heroes stay excluded. Solo threshold = 3 escapes OR the Villain Deck empties.
+          const escapedEnemiesCount = escapedVillainsDeck.filter(
+            (card) => card.type === "Villain" || card.subtype === "Henchman",
+          ).length;
+          if (escapedEnemiesCount >= 3 || villainDeck.length === 0) {
             finalTwist = true;
             document.getElementById("defeat-context").textContent =
               `3 Villains have escaped (or the Villain Deck ran out). The earthquake and tsunami have devastated the coast beyond recovery.`;
             showDefeatPopup();
           }
           break;
+        }
 
         case "houseOfMEvilWins":
           // Evil wins condition is on Side B only — checked there
@@ -11032,6 +11042,27 @@ function updateEvilWinsTracker() {
       // Evil wins at 15 Officers next to the Scheme OR the shared Officer stack (shieldDeck)
       // empty. Show both the next-to-scheme progress and the remaining stack. PT-3.
       evilWinsText.innerHTML = `${typeof hydraOfficersNextToScheme !== "undefined" ? hydraOfficersNextToScheme : 0}/15 Officers Next to Scheme · ${shieldDeck.length} in Stack`;
+      break;
+
+    case "Earthquake Drains the Ocean": {
+      // Earthquake/Tsunami loss = 3 escaped Villains (solo). Per the ruling, escaped
+      // Henchmen count too — tally villains + any Henchman-subtype card (catches
+      // Location-typed henchmen like HYDRA Base); real Locations and bystanders/heroes
+      // are excluded. Mirrors the earthquakeEvilWins loss check in checkEvilWins. The
+      // DOM scheme radio stays "Earthquake Drains the Ocean" even after the Tsunami
+      // transform, so this one case covers both sides.
+      const escapedEnemiesCount = escapedVillainsDeck.filter(
+        (card) => card.type === "Villain" || card.subtype === "Henchman",
+      ).length;
+      evilWinsText.textContent = `${escapedEnemiesCount}/3 Villains Escaped`;
+      break;
+    }
+
+    case "House of M":
+      // Side-B (No More Mutants) loss = non-grey Heroes in the KO pile >= 10 + 2*players
+      // (solo threshold 12). Mirrors the noMoreMutantsEvilWins check. The DOM scheme radio
+      // stays "House of M" after the transform, so this case covers both sides.
+      evilWinsText.textContent = `${KOdHeroes}/12 Non-Grey Heroes KO'd`;
       break;
 
     default:
