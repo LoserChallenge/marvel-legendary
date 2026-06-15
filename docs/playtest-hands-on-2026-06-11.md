@@ -35,7 +35,12 @@ Status key: 🆕 logged · 🔬 reproducing · ✅ confirmed-fix-landed · 💭 
 - Henchmen: Mandarin's Rings
 - Heroes: Hellcat, Photon, Ronin, Scarlet Witch, War Machine
 
-### Obs 1 — 🆕 Earthquake "Evil Wins" shows "SEE SCHEME" instead of a live escape counter
+### Obs 1 — ✅ Earthquake "Evil Wins" shows "SEE SCHEME" instead of a live escape counter — FIXED (Batch E, 7a2cb76)
+- Display: added `"Earthquake Drains the Ocean"` case to `updateEvilWinsTracker()` → `N/3 Villains
+  Escaped` (was falling through to the static "See Scheme" default). Counter now also drives the
+  correctness fix (see Obs 2 ruling cache `docs/rules-notes/revelations.md`): escaped Henchmen count.
+- See the Obs 1/7 commit (`7a2cb76`) for the full count-logic fix (loss check `earthquakeEvilWins`
+  in `updateGameBoard` + the display). In-game Playwright smoke PASS.
 - Under the Scheme, the Evil Wins readout says **"EVIL WINS: SEE SCHEME."**
 - Expected: like other schemes with an escape-based loss condition, it should show a live
   **counter** toward the threshold (3 escaped, solo) rather than the static "SEE SCHEME" text.
@@ -112,9 +117,12 @@ Witch in the city is a Villain with Attack = **cost + 3** (Side A) / **cost + 4*
 - Same family as Obs 3 (Klaw captured-Hero not shown) and the deferred "Villain/Mastermind overlay
   UX pass" in known-issues — captured/rescued tokens rendering wrong. Triage together.
 
-### Obs 7 — 🆕 Scheme counter shows "SEE SCHEME" again (House of M)
-- Same display gap as Obs 1, now on House of M. (House of M Evil Wins = non-grey Heroes in KO pile
-  ≥ 10 + 2×players; solo threshold = 12.) Counter should show a live tally, not static text.
+### Obs 7 — ✅ Scheme counter shows "SEE SCHEME" again (House of M) — FIXED (Batch E, 7a2cb76)
+- Same display gap as Obs 1, now on House of M. Fix: added `"House of M"` case to
+  `updateEvilWinsTracker()` → `N/12 Non-Grey Heroes KO'd` (solo threshold 12 = 10 + 2×1, mirrors
+  the `noMoreMutantsEvilWins` loss check). Keys on the Side-A radio name (unchanged by transform),
+  covering both sides. In-game Playwright smoke: "2/12 Non-Grey Heroes KO'd" with 2 non-grey +
+  1 grey + 1 bystander in koPile. PASS.
 
 ### Obs 8 — ✅ Scarlet Witch selectable as a Hero under House of M — FIXED (Batch C)
 - House of M shuffles **14 Scarlet Witch Hero cards** into the Villain Deck — she can't also be a
@@ -152,17 +160,29 @@ Witch in the city is a Villain with Attack = **cost + 3** (Side A) / **cost + 4*
 - Henchmen: Mandarin's Rings
 - Heroes: Captain Marvel (Agent of S.H.I.E.L.D.), Darkhawk, Hellcat, Quicksilver, Speed
 
-### Obs 9 — 🆕 Korvac Saga Twist offered "KO a Bystander" with no Bystanders to KO
+### Obs 9 — ✅ Korvac Saga Twist offered "KO a Bystander" with no Bystanders to KO — FIXED (Batch D, 6887cb9)
+- Fix: `theKorvacSagaTwist()` now only offers "KO a Bystander" when `victoryPile` has a
+  Bystander; otherwise forces the discard-to-4 branch with no popup. Shared
+  `transformToRevealed()` helper extracted; no-bystander IIFE hardened with `.catch`.
+- Gate: expansion-validator 0 issues; cold-read `/code-review` "ship it"; in-game Playwright
+  smoke (whatif) — no-bystander → no popup + auto-discard + transform; has-bystander → both
+  options still shown. PASS.
 - Twist text: each player discards down to four cards **or** KOs a Bystander from their Victory Pile.
 - Paul had **no Bystanders**, but the game still presented **KO a Bystander** as a selectable option.
 - Should only offer the KO option if the player actually has a Bystander; otherwise force/auto the
   discard-to-4 branch.
 
-### Obs 10 — 🆕 "Korvac Revealed" Twist shows the Side-A twist text, not the Revealed version
+### Obs 10 — ✅ "Korvac Revealed" Twist shows the Side-A twist text, not the Revealed version — FIXED (Batch D, 6887cb9)
 - After the scheme transformed to **Korvac Revealed**, the Scheme Twist message read the **same as
   the original Korvac Saga twist** instead of the Side-B "Revealed" text.
-- Side-B twists differ: Twist 2/4/6 = "each player discards an Avengers Hero or gains a Wound, then
-  Transform"; Twist 8 = "Evil Wins!". The wrong/stale twist text is showing post-transform.
+- **Diagnostic (Playwright):** the dispatcher's per-side text was already CORRECT — `getActiveScheme()`
+  returns the transformed scheme post-`transformScheme()`, so `handleSchemeTwist`'s generic
+  "Scheme Twist! Twist N: <twistText>" line shows the right side's text. The real gap was that
+  `korvacRevealedTwist()`'s OWN effect message was a bare `Scheme Twist #N!` with no descriptive
+  text (whereas the Side-A effect logs full descriptive text), so Side-B twists read as stale/wrong.
+- Fix: added side-correct descriptive text to every Side-B branch (even-twist discard/wound,
+  odd-twist toggle-back, twist-8 Evil Wins). Gate: validator 0 / cold-read "ship it" / in-game
+  smoke — Side-B even twist logs descriptive text + transforms back, no bare message. PASS.
 
 ### Obs 11 — ✅ Hellcat "Part-Time PI" only reveals from the Villain Deck — FIXED (Batch B)
 - Card: "Reveal the top card of **any deck**. If it's not a Scheme Twist, you may put it on the
@@ -181,11 +201,21 @@ Witch in the city is a Villain with Attack = **cost + 3** (Side A) / **cost + 4*
   picked Hero Deck → revealed its top → Put on Bottom reordered ONLY the heroDeck (Villain + Player
   untouched); promise resolved. PASS.
 
-### Obs 12 — 🆕 Captain Marvel "The Sword of S.H.I.E.L.D." didn't draw after playing S.H.I.E.L.D. agents
-- Card SUPERPOWER: **[S.H.I.E.L.D.]×4 → Draw a card** (needs four S.H.I.E.L.D. team icons present).
-- Paul reported no card drawn after playing S.H.I.E.L.D. agents. **Triage:** confirm whether he had
-  the full 4 S.H.I.E.L.D. icons (threshold not met = correct), vs. the icon-count not triggering
-  when it should. Reproduce with a known 4-icon board.
+### Obs 12 — ✅/❓ Captain Marvel "The Sword of S.H.I.E.L.D." didn't draw — ROOT CAUSE FIXED (eb45acb); threshold pending rules-oracle
+- Card SUPERPOWER: **[S.H.I.E.L.D.]×4 → Draw a card**.
+- **Root cause (certain):** the conditionalAbility was gated on `conditionType: "None"` /
+  `condition: "None"`. `isConditionMet()` has no "None" case → hits `default` → returns `false`
+  EVERY time → the superpower **never fired regardless of icons**. Fully explains the report.
+- Fix: `conditionType: "playedCards"`, `condition: "S.H.I.E.L.D.&S.H.I.E.L.D.&S.H.I.E.L.D.&S.H.I.E.L.D."`
+  — mirrors the established multi-icon precedent (Quicksilver "Around the World Punch" = 4 Avengers
+  entries; Higher Further Faster = 2 Strength entries). Live-build probe: now fires at 5 total
+  S.H.I.E.L.D. cards, dead below; ability draws a card.
+- **❓ OPEN (rules-oracle requested):** `isConditionMet` excludes the bearer card
+  (`cardsPlayedThisTurn.slice(0,-1)`), so an N-entry condition fires at **N+1 total** team cards.
+  4 entries → fires at 5 total S.H.I.E.L.D. If the printed "×4" counts Captain Marvel herself
+  (4 total), entries should be **3** — and Quicksilver ×4 / Higher Further Faster ×2 would be
+  off-by-one too-strict, needing a uniform `entries = icons − 1` correction. Shipped the
+  precedent-consistent value pending the ruling.
 
 ### Obs 13 — ✅ Speed "Race to the Rescue" picker showed 3 combined buttons, not 5 classes — FIXED (Batch B)
 - Card: "Choose a Hero Class (Strength, Instinct, Covert, Tech, or Ranged)" — should be **5** options.
