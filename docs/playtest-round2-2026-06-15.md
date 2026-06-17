@@ -45,9 +45,13 @@ Setups played: (1) Korvac Saga / Mandarin / Dark Avengers / Mandarin's Rings; (2
 
 ## 🔵 P3 — fidelity / scope (needs Paul's call)
 
-### R2-9. "Put cards back in any order" only offers top/bottom one-at-a-time
+### R2-9. "Put cards back in any order" only offers top/bottom one-at-a-time — RESOLVED: reuse existing picker
 - Affects BOTH Speed "Break the Sound Barrier" AND Hood's Master Strike (reveal top 6, discard non-grey Heroes, put rest back in any order). The game presents each leftover card individually asking TOP or BOTTOM, so the player can't choose a precise full ordering.
-- Likely a shared placement helper. DECISION NEEDED (gameplay feel/scope): implement true free-ordering, or accept top/bottom-per-card as the solo approximation? → Paul to decide.
+- DECISION (Paul 2026-06-15, reuse-first): implement TRUE free-ordering by REUSING the existing helper — a real free-ordering picker already exists (Spider-Man "reveal top 3 and reorder", Redwing, several Dark City effects).
+- REUSE TARGET: `chooseReturnOrderSingleRow(cards, title)` + `pickFromCardsSingleRow(...)` at `cardAbilitiesSidekicks.js:868` / `:722` (cleanest, newest; loops a single-row pick into a chosen order, batch-pushes to playerDeck). Alt: `handleCardReturnOrder`/`showSequentialCardSelectionPopup` at `cardAbilities.js:2549`/`:2598` (used by Spider-Man + 3 Dark City sites).
+  - Speed "Break the Sound Barrier": DIRECT fit — one call with the leftover array (player deck). No changes.
+  - Hood's Master Strike: filter out non-grey Heroes FIRST (bespoke, like the Spider-Man/Redwing cost-filter), then hand the survivors to the ordering helper. Confirm it targets the PLAYER deck (it's a "reveal the top of your deck" Master Strike — yes). Count-agnostic.
+  - Caveat: all existing implementations push to `playerDeck` only; neither of our two effects needs villain-deck ordering, so no new work there.
 
 ## ✅ Confirmed working (Paul verified)
 - Korvac no-bystander → discard-to-4 (R1 Obs 9); Korvac instant-win on defeat; Speed 5-class picker (Obs 13); SW greyed out under House of M (Obs 8); N/12 tracker (Obs 7).
