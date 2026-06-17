@@ -2126,8 +2126,11 @@ function speedPickCardsToDraw(revealed, needed) {
 }
 
 // Speed "Break the Sound Barrier" — Look at the top six cards of your deck, draw two of them,
-// and put the rest back on the top or bottom in any order. Mandatory; player chooses which 2 to
-// draw (multi-select) and the top/bottom placement of each leftover (handleCardPlacement loop).
+// and put the rest back in any order. Mandatory; player chooses which 2 to draw (multi-select),
+// then the precise return order via the shared free-ordering picker (chooseReturnOrderSingleRow,
+// cardAbilitiesSidekicks.js) — the same picker Spider-Man "reveal top 3 and reorder" / Redwing use.
+// (R2-9, 2026-06-15: replaced the old one-at-a-time top/bottom loop, which couldn't express a full
+// ordering.) The picker returns the leftovers to the top of the deck in the chosen order.
 async function speedBreakTheSoundBarrier() {
   updateGameBoard();
   // Reshuffle discard into deck if it can't cover six.
@@ -2167,16 +2170,13 @@ async function speedBreakTheSoundBarrier() {
   onscreenConsole.log(`<span class="console-highlights">Break the Sound Barrier</span>: Drew <span class="console-highlights">${drawn.map(c => c.name).join("</span> and <span class=\"console-highlights\">")}</span>.`);
   updateGameBoard();
 
-  // Put the rest back on top or bottom — player's choice per card, in reveal order (top first).
+  // Put the rest back in any order — reuse the shared free-ordering picker (player deck).
   const rest = [];
   for (let i = 0; i < revealed.length; i++) {
     if (!selectedIndices.has(i)) rest.push(revealed[i]);
   }
-  for (let k = 0; k < rest.length; k++) {
-    await handleCardPlacement(rest[k], {
-      title: "BREAK THE SOUND BARRIER",
-      instructions: `Put <span class="console-highlights">${rest[k].name}</span> back on the top or bottom of your deck (card ${k + 1} of ${rest.length}):`,
-    });
+  if (rest.length > 0) {
+    await chooseReturnOrderSingleRow(rest, "BREAK THE SOUND BARRIER");
   }
   updateGameBoard();
 }
@@ -4313,11 +4313,14 @@ async function theHoodStrike() {
     playerDiscardPile.push(c);
     onscreenConsole.log(`Discarded <span class="console-highlights">${c.name}</span>.`);
   }
-  // Put rest back on top in any order
-  for (const c of rest.reverse()) {
-    playerDeck.push(c);
+  onscreenConsole.log(`Discarded ${nonGrey.length} non-grey Hero(es).`);
+  // Put the rest back in any order — reuse the shared free-ordering picker (player deck), same
+  // helper Speed "Break the Sound Barrier" / Spider-Man "reveal top 3 and reorder" use. Filtering
+  // out the non-grey Heroes first mirrors Spider-Man's cost-filter. (R2-9, 2026-06-15: replaced the
+  // old reveal-order return, which gave the player no choice of ordering.)
+  if (rest.length > 0) {
+    await chooseReturnOrderSingleRow(rest, "THE HOOD — MASTER STRIKE");
   }
-  onscreenConsole.log(`Discarded ${nonGrey.length} non-grey Hero(es). Put ${rest.length} card(s) back on top.`);
   updateGameBoard();
 }
 

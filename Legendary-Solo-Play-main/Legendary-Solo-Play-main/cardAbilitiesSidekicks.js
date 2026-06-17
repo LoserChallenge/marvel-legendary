@@ -889,7 +889,8 @@ async function chooseReturnOrderSingleRow(
 
   ordered.forEach((card) => playerDeck.push(card));
 
-  // Format console message with correct order wording
+  // Format console message with correct order wording. ordered[] is bottom→top of the
+  // returned stack (last selected sits on top, since each was pushed onto playerDeck in turn).
   if (ordered.length === 1) {
     onscreenConsole.log(
       `Returned <span class="console-highlights">${ordered[0].name}</span> to deck.`,
@@ -898,6 +899,14 @@ async function chooseReturnOrderSingleRow(
     onscreenConsole.log(
       `Returned <span class="console-highlights">${ordered[0].name}</span> to deck and ` +
         `<span class="console-highlights">${ordered[1].name}</span> placed on top.`,
+    );
+  } else if (ordered.length > 2) {
+    // Count-agnostic (Speed "Break the Sound Barrier", Hood Master Strike can return 3+).
+    const topToBottom = [...ordered].reverse().map(
+      (c) => `<span class="console-highlights">${c.name}</span>`,
+    );
+    onscreenConsole.log(
+      `Returned ${ordered.length} cards to the top of the deck (top first): ${topToBottom.join(", ")}.`,
     );
   }
 
