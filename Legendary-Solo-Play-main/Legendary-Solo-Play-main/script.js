@@ -6060,7 +6060,15 @@ function handleSchemeTwist(schemeTwistCard) {
         }
       }
     } catch (error) {
+      // Do NOT silently swallow: surface to the on-screen console so a failed
+      // twist effect (e.g. a throw deep inside a re-entrant processVillainCard
+      // draw chain) is visible to the player and diagnosable, instead of looking
+      // like "the twist logged but nothing happened". The chain-depth decrement
+      // and resolve() below still run, so state stays balanced. (R2-2, 2026-06-15.)
       console.error("Error in twist effect:", error);
+      onscreenConsole.log(
+        `<span class="console-highlights">Scheme Twist</span> effect hit an error and may not have fully resolved: ${error && error.message ? error.message : error}`,
+      );
     }
 
     addHRToTopWithInnerHTML();
