@@ -25,5 +25,30 @@ Running checklist of things to eyeball during the next milestone playtest of the
 11. ✅ **FUNCTIONAL VERIFIED 2026-06-10 (both modes).** Guess+reveal correct→+2 (feeds both totals); superpower offers fight if Villain; affordability gate resolve-now (unaffordable→no offer); pay consumes totalAttack only (cumulative untouched, plain-pool); defeat→VP + Fight effect runs; disposition (defeated→VP, declined/unaffordable→stays on top of deck). Mode-independent. Evidence: `docs/playwright-runs/2026-06-10/item11-*.png`. **11-feel: Paul ACCEPTS resolve-now as-is for now (2026-06-10).** The broader "this turn" timing (shared with Chaos Magic / Hex Bolt) is under rules research (rules-oracle + web-research dispatched 2026-06-10) → `docs/rules-notes/open-rules-questions.md`; revisit only if research surfaces an official "banked" ruling. **Hellcat "Demon Sight" superpower.** After guessing + revealing the top villain-deck card, if it's a Villain you may fight it (pay its Attack now). Confirm: it only offers when you can afford it, paying actually consumes your attack, and defeating it gives VP + runs its Fight effect. Note: you must afford it at the moment the superpower fires (resolve-now) — flag if that feels too restrictive in play.
 12. ✅ **VERIFIED 2026-06-10 (Golden) — premise NOT reproduced (confirms catalog deferred verdict).** White Gorilla Cult: NO Tech-coupling bug — `defeatLocation` removes it unconditionally with zero Tech in hand; victory pile +1 (4VP); trigger fires only via `defeatVillain`, not Location self-defeat. No code needed. **GP-4** — re-verify on the next Golden playtest (carried from the deferred list).
 
+## Suggested setups (2026-06-15 — covers the playtest-batch fixes Obs 1/7/8/9/10/11/12/13/15/17)
+
+DB-verified setup data. Masterminds are free choice for all three schemes.
+
+### Setup 1 — The Korvac Saga  (Obs 9, 10 + Korvac instant-win)
+- Scheme **The Korvac Saga** (3 heroes, 1 villain group + 1 henchman). Any mastermind.
+- Slot **Speed** as one hero to also test Obs 13 (Race to the Rescue → 5-class picker).
+- Watch: (Obs 9) a Korvac twist with NO bystander in your victory pile → forces discard-to-4, NO "KO a bystander" popup; with a bystander → both choices offered. (Obs 10) Side-B ("Korvac Revealed") twists log descriptive text, not a bare "Scheme Twist #N!". (Instant-win) once the scheme transforms to Korvac Revealed, Korvac is a fightable 19-attack/9VP villain — defeating him should instantly WIN (KO mastermind + all tactics).
+
+### Setup 2 — House of M  (Obs 8, 7 + Scarlet Witch villains)
+- Scheme **House of M** (6 heroes, gated 4 X-Men + 2 non-X-Men; 1 villain group + 1 henchman). Any mastermind.
+- Slot **Hellcat** + **Captain Marvel, Agent of S.H.I.E.L.D.** in the 2 non-X-Men slots (tests Obs 11, and Obs 12 if S.H.I.E.L.D. cards stack — see note).
+- Watch: (Obs 8) at hero-select, **Scarlet Witch is greyed out / unselectable**; if pre-selected then you switch to House of M she auto-unchecks; setup banner shows the 4+2 requirement. (Obs 7) in play the evil-wins tracker reads **"N/12 Non-Grey Heroes KO'd"** (not "SEE SCHEME"). (Item 8) 14 Scarlet Witch cards seed into the villain deck as fightable villains; scheme transforms to "No More Mutants" once ≥2 are in the city.
+
+### Setup 3 — Earthquake Drains the Ocean  (Obs 1 + Obs 17 Hyde + Obs 15 Brothers Grimm)
+- Scheme **Earthquake Drains the Ocean** (3 heroes; **3 villain groups** = 2 required + 1 extra; + 1 henchman; **city size 7**). Slot **Hellcat** to also re-test Obs 11.
+- Villain groups: include **Army of Evil** (→ Mister Hyde) AND **Hood's Gang** (→ The Brothers Grimm) + one more. Henchman: pick **HYDRA Base** if offered (it's type "Location" but counts as a henchman — exercises the Obs 1 edge).
+- Watch: (Obs 17) when **Mister Hyde is in the Bank or the Streets** he reads "Dr. Calvin Zabo" and is fought by spending **Recruit** (NOT Attack) — and Recruit must not go negative; anywhere else / in the HQ he's plain Hyde fought with Attack. (Obs 15) fighting **Brothers Grimm** costs **two identical cards**, gated — not the normal attack pay. (Obs 1) evil-wins tracker reads **"N/3 Villains Escaped"** (not "SEE SCHEME"); let enemies escape (incl. an escaped henchman / HYDRA Base) — each counts toward 3; at **3 escaped you LOSE**. When the scheme transforms to Tsunami, the left city spaces destroy and their occupants escape (watch the counter jump).
+
+### Flexible / opportunistic
+- **Obs 12 (Captain Marvel "Sword of S.H.I.E.L.D.")** fires only when **4 OTHER S.H.I.E.L.D. cards are played the same turn** (bearer excluded). Only Captain Marvel AoS is a S.H.I.E.L.D. *hero*, but base S.H.I.E.L.D. Agents/Troopers/Officers carry the icon too — hard to force in casual play; already runtime-verified in the dual-mode test, so this is the lowest-priority manual check.
+
+### Known cosmetic — DEFERRED, ignore if seen (post-merge overlay/layout UX pass)
+- **Obs 3** Klaw's captured Hero not shown in the city. **Obs 6** rescued-Bystander icon lingers / oversized after a successful rescue. **Obs 18** HYDRA Officer (Secret HYDRA Corruption) placed cut-off on the left. All mechanics work; these are render/layout only.
+
 ## Both-modes reminder
-Run mode-sensitive fixes in golden AND whatif — `expansion-validator` is Golden-only, so What If? divergences only surface in play.
+Run mode-sensitive fixes in golden AND whatif — `expansion-validator` is Golden-only, so What If? divergences only surface in play. (The 2026-06-15 holistic review found NO `gameMode` branching in any batch fix, so they're coded mode-agnostic — but per process touch BOTH modes across your session, e.g. Setup 1 in one mode, Setups 2–3 in the other.)
