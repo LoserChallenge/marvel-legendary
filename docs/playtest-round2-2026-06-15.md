@@ -4,6 +4,16 @@ Second hands-on playtest after Round-1 fixes (Batches A–E). **Merge is PAUSED*
 
 Setups played: (1) Korvac Saga / Mandarin / Dark Avengers / Mandarin's Rings; (2) House of M / Grim Reaper / Army of Evil + Lethal Legion / HYDRA Base / 4 X-Men + Captain Marvel AoS + Hellcat — replayed twice; (3) Earthquake Drains the Ocean (What If?) / The Hood / Army of Evil + Hood's Gang / HYDRA Base.
 
+## Round-2 gate results + 2nd-pass fixes (coordinator independent review, 2026-06-15)
+
+Worker landed 5 commits (f45a4eb..f66ab42); independent cold-read + expansion-validator (PASS 7/7) run from master.
+
+- **ACCEPTED:** R2-1 (softlock — all 4 sub-points verified, reorder local, guard safe for ~30 callers), R2-8 (Obs 4 root cause; zeroes only the leaking own-effect, scheme attack cost+3/+4 untouched — Alter Reality 10→6 / Warp Time 10 / Hex Bolt 0), R2-2 (error-surfacing; worker correctly did NOT add speculative serialization — re-entrant symptom didn't reproduce), R2-6, R2-7. R2-9 **Hood** half (correct: Hood text = "in any order" = top free-order).
+- **CONFIRMED no-bug (close):** R2-4 (Nefaria ambush fires on entry; sets no card state → cloning gotcha N/A), R2-5 (blackoutFight draws 2).
+- **2nd-PASS FIXES NEEDED (worker, this round):**
+  - **R2-9 Speed REGRESSION:** Speed "Break the Sound Barrier" card text = "put the rest back on the **top or bottom** in any order." The reused `chooseReturnOrderSingleRow` is TOP-ONLY, so it dropped the printed BOTTOM option the old `handleCardPlacement` had. Rework Speed to support BOTH top-ordering AND per-card bottom (Hood stays as-is — its card is top-only). Inventory ref: `expansions/Revelations/revelations-reference.md:301`.
+  - **R2-3 UX targeting bug (refines the original — reroute hypothesis was REFUTED):** villain-over-Location defeat ALREADY fires War Machine +1 recruit via `defeatVillain`→`defeatBonuses` (`cardAbilities.js:39`); bare-Location correctly does not. The real bug: `styles.css:744` `.location-card-peek:hover { z-index: 10 }` lifts the Location peek ABOVE the villain (villain z-index 2, `script.js:8735`), so a hover-click in the overlap region routes to the Location fight (no recruit) instead of `defeatVillain`. Explains Paul's observation. FIX: keep the villain the click target when stacked (cap the peek hover z-index below the villain's, or otherwise prevent the peek from intercepting the villain click). Small contained CSS/targeting fix — recommend NOW (functional mis-fight), not deferred to the overlay pass.
+
 ## 🔴 P0 — game-breaking
 
 ### R2-1. HYDRA Base bare-Location fight → KO-a-hero popup softlock
