@@ -2134,11 +2134,12 @@ function speedPickCardsToDraw(revealed, needed) {
 }
 
 // Speed "Break the Sound Barrier" — Look at the top six cards of your deck, draw two of them,
-// and put the rest back in any order. Mandatory; player chooses which 2 to draw (multi-select),
-// then the precise return order via the shared free-ordering picker (chooseReturnOrderSingleRow,
-// cardAbilitiesSidekicks.js) — the same picker Spider-Man "reveal top 3 and reorder" / Redwing use.
-// (R2-9, 2026-06-15: replaced the old one-at-a-time top/bottom loop, which couldn't express a full
-// ordering.) The picker returns the leftovers to the top of the deck in the chosen order.
+// and put the rest back on the TOP or BOTTOM in any order. Mandatory; player chooses which 2 to
+// draw (multi-select), then for each leftover picks the placement order (pickFromCardsSingleRow —
+// choose which card goes next) AND top-vs-bottom (handleCardPlacement). This expresses a precise
+// full ordering AND preserves the card's printed BOTTOM option (e.g. burying a Wound).
+// (R2-9 2nd pass, 2026-06-15: the shared chooseReturnOrderSingleRow picker is TOP-ONLY — correct
+// for Hood's Master Strike, but Speed's card explicitly allows top OR bottom, so it needs both.)
 async function speedBreakTheSoundBarrier() {
   updateGameBoard();
   // Reshuffle discard into deck if it can't cover six.
@@ -2178,13 +2179,32 @@ async function speedBreakTheSoundBarrier() {
   onscreenConsole.log(`<span class="console-highlights">Break the Sound Barrier</span>: Drew <span class="console-highlights">${drawn.map(c => c.name).join("</span> and <span class=\"console-highlights\">")}</span>.`);
   updateGameBoard();
 
-  // Put the rest back in any order — reuse the shared free-ordering picker (player deck).
+  // Put the rest back on the TOP or BOTTOM in any order: for each leftover the player picks which
+  // card to place next (free ordering) and then TOP vs BOTTOM. Reuses pickFromCardsSingleRow +
+  // handleCardPlacement (both in cardAbilitiesSidekicks.js). Placement order controls the final
+  // stack: cards sent to TOP push onto the deck end (last placed = drawn first); BOTTOM unshifts.
   const rest = [];
   for (let i = 0; i < revealed.length; i++) {
     if (!selectedIndices.has(i)) rest.push(revealed[i]);
   }
-  if (rest.length > 0) {
-    await chooseReturnOrderSingleRow(rest, "BREAK THE SOUND BARRIER");
+  while (rest.length > 0) {
+    let card;
+    if (rest.length === 1) {
+      card = rest[0];
+    } else {
+      card = await pickFromCardsSingleRow(rest, {
+        title: "BREAK THE SOUND BARRIER",
+        instructions: "Select the next card to place back on your deck:",
+        confirmText: "PLACE THIS CARD",
+      });
+    }
+    const idx = rest.indexOf(card);
+    if (idx === -1) break; // unreachable (picker returns a member of rest); fail-safe vs. a hang
+    rest.splice(idx, 1);
+    await handleCardPlacement(card, {
+      title: "BREAK THE SOUND BARRIER",
+      instructions: `Put <span class="console-highlights">${card.name}</span> on the TOP or BOTTOM of your deck${rest.length > 0 ? ` (${rest.length} card${rest.length !== 1 ? "s" : ""} left after this)` : ""}:`,
+    });
   }
   updateGameBoard();
 }
