@@ -143,6 +143,14 @@ function calculateLastStand() {
  * @param {number} [i] - city index of the villain (omit for HQ; grant only applies city-side)
  */
 function revelationsVillainOwnAttack(villain, i) {
+  // Scarlet Witch cards (House of M) are Hero cards seeded into the Villain Deck. They carry
+  // HERO superpower keywords (e.g. "Dark Memories") that are NOT villain keywords — as a Villain
+  // their Attack is defined SOLELY by the scheme (cost +3 Side A / +4 Side B, set as
+  // attackFromScheme in updateVillainAttackValues). Without this guard, the hero "Dark Memories"
+  // keyword leaks in as a villain own-effect bonus that creeps up with the discard pile (R2-8:
+  // Alter Reality / Warp Time showed cost+3 PLUS unique-discard-classes). The keyword still
+  // applies to the gained Hero (via the hero ability path) after defeat. (R2-8, 2026-06-15.)
+  if (villain && villain.scarletWitch === true) return 0;
   const kw = villain.keywords || [];
   let bonus = 0;
 
