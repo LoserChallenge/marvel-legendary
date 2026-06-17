@@ -12,7 +12,7 @@ function koBonuses() {
     updateGameBoard();
   }
   const kodCard = koPile[koPile.length - 1];
-     if (kodCard.team && kodCard.team === "Infinity Gems") {
+     if (kodCard && kodCard.team === "Infinity Gems") {
           kodCard.attack = kodCard.originalAttack;
         }
 }
@@ -8920,7 +8920,6 @@ function FightKOHeroYouHave(source) {
         onscreenConsole.log(
           `<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`,
         );
-        koBonuses();
 
         // Remove the card from the correct location
         if (selectedLocation === "artifacts") {
@@ -8938,8 +8937,10 @@ function FightKOHeroYouHave(source) {
           selectedCard.markedToDestroy = true;
         }
 
-        // Add the card to the KO pile
+        // Add the card to the KO pile BEFORE koBonuses() — koBonuses reads
+        // koPile[last] for the Infinity-Gems reset and crashes on an empty pile.
         koPile.push(selectedCard);
+        koBonuses();
 
         updateGameBoard();
         closeCardChoicePopup();
