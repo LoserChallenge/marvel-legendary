@@ -6783,12 +6783,12 @@ function showPopup(type, drawnCard, confirmCallback) {
 
   const mastermind = getSelectedMastermind();
 
-  const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const selectedScheme = schemes.find(
-    (scheme) => scheme.name === selectedSchemeName,
-  );
+  // Use the ACTIVE (possibly transformed) scheme, not the setup-screen radio
+  // choice — otherwise a transforming scheme (e.g. Korvac) shows its Side-A
+  // twist text after flipping to Side B. Matches handleSchemeTwist's console
+  // log, which already reads getActiveScheme(). (R2-6, 2026-06-15.) Only the
+  // "Scheme Twist" branch below consumes selectedScheme.
+  const selectedScheme = getActiveScheme();
 
   popup.style.display = "block";
 
@@ -12106,7 +12106,14 @@ function showAttackButton(cityIndex, location = "city") {
       document.addEventListener("click", handleClickOutside);
     }, 0);
   } else {
-    if (
+    if (usesRecruitToFight) {
+      // Recruit-only fight (Mister Hyde as "Dr. Calvin Zabo" in Bank/Streets):
+      // the cost is paid from Recruit, so the fail message must say Recruit, not
+      // Attack. (R2-7, 2026-06-15.)
+      onscreenConsole.log(
+        `You need ${villainAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`,
+      );
+    } else if (
       recruitUsedToAttack === "true" ||
       (villainCard.keywords && villainCard.keywords.includes("Bribe"))
     ) {
