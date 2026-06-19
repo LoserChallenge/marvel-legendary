@@ -740,15 +740,9 @@ button:active {
   width: auto;
 }
 
-/* Hovering the peek must NOT lift it above the villain (z-index 2 below), or a
-   hover-click on the stacked space hits the Location's fight (Recruit-free) instead
-   of the villain's — so "defeat a Villain" triggers (War Machine +1 Recruit,
-   Nightbringer) silently don't fire. Cap below the villain; the peek strip above the
-   villain stays clickable for fighting the Location itself. (R2-3, 2026-06-15: was
-   z-index:10, which stole the villain's click.) The cell is its own stacking context,
-   so this never affected neighboring cells regardless. */
+/* Hovering the peek area brings the Location to front so it can zoom */
 .location-card-peek:hover {
-  z-index: 1;
+  z-index: 10;
 }
 
 /* Villain card shifts down when Location is above, sits in front */
