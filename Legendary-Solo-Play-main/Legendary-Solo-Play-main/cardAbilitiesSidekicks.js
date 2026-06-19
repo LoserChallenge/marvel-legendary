@@ -2393,6 +2393,12 @@ async function handleRustyInvestigateChoice(card) {
 }
 
 async function handleCardPlacement(card, options = {}) {
+  // Deck target is parameterized (R2-12): defaults to playerDeck (every existing caller), but a
+  // caller can pass options.targetDeck (e.g. heroDeck for Scarlet Witch "Warp Time and Space")
+  // plus options.deckLabel for the message wording. The playerDeck-only behaviours (the `revealed`
+  // top-card flag and the stingOfTheSpider follow-up) are gated to the playerDeck case below.
+  const targetDeck = options.targetDeck || playerDeck;
+  const deckLabel = options.deckLabel || "your deck";
   return new Promise((resolve) => {
     // Elements
     const popup = document.querySelector(".info-or-choice-popup");
@@ -2441,21 +2447,21 @@ async function handleCardPlacement(card, options = {}) {
 
     // Handlers
     confirmBtn.onclick = async () => {
-      playerDeck.push(card);
-      card.revealed = true;
+      targetDeck.push(card);
+      if (targetDeck === playerDeck) card.revealed = true;
       onscreenConsole.log(
-        `You returned <span class="console-highlights">${card.name}</span> to the top of your deck.`,
+        `You returned <span class="console-highlights">${card.name}</span> to the top of ${deckLabel}.`,
       );
       cleanup();
-      if (stingOfTheSpider) {
+      if (stingOfTheSpider && targetDeck === playerDeck) {
         await scarletSpiderStingOfTheSpiderDrawChoice(card);
       }
     };
 
     otherBtn.onclick = () => {
-      playerDeck.unshift(card);
+      targetDeck.unshift(card);
       onscreenConsole.log(
-        `You returned <span class="console-highlights">${card.name}</span> to the bottom of your deck.`,
+        `You returned <span class="console-highlights">${card.name}</span> to the bottom of ${deckLabel}.`,
       );
       cleanup();
     };

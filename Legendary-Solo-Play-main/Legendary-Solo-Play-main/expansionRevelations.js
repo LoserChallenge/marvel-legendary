@@ -1925,15 +1925,38 @@ async function scarletWitchWarpTimeAndSpace() {
       labels[2] || "",
       revealed.length === 3,
     );
-    function pick(index) {
+    async function pick(index) {
       closeInfoChoicePopup();
       const chosen = revealed.splice(index, 1)[0];
       playerHand.push(chosen);
-      // Put the rest on bottom of Hero Deck
-      for (const card of revealed) {
-        heroDeck.unshift(card);
+      onscreenConsole.log(`<span class="console-highlights">Warp Time and Space</span>: <span class="console-highlights">${chosen.name}</span> goes to your hand.`);
+      updateGameBoard();
+      // Put the rest back on the TOP or BOTTOM of the HERO deck in any order (R2-12, 2026-06-15:
+      // was a hard-bottom with no choice). Player picks placement order (pickFromCardsSingleRow)
+      // and top-vs-bottom per card (handleCardPlacement parameterized to targetDeck: heroDeck —
+      // its playerDeck-only revealed flag + stingOfTheSpider follow-up are gated off for heroDeck).
+      const rest = [...revealed];
+      while (rest.length > 0) {
+        let card;
+        if (rest.length === 1) {
+          card = rest[0];
+        } else {
+          card = await pickFromCardsSingleRow(rest, {
+            title: "WARP TIME AND SPACE",
+            instructions: "Select the next card to place back on the Hero Deck:",
+            confirmText: "PLACE THIS CARD",
+          });
+        }
+        const i = rest.indexOf(card);
+        if (i === -1) break; // unreachable (picker returns a member of rest); fail-safe vs. a hang
+        rest.splice(i, 1);
+        await handleCardPlacement(card, {
+          targetDeck: heroDeck,
+          deckLabel: "the Hero Deck",
+          title: "WARP TIME AND SPACE",
+          instructions: `Put <span class="console-highlights">${card.name}</span> on the TOP or BOTTOM of the Hero Deck${rest.length > 0 ? ` (${rest.length} card${rest.length !== 1 ? "s" : ""} left after this)` : ""}:`,
+        });
       }
-      onscreenConsole.log(`<span class="console-highlights">Warp Time and Space</span>: <span class="console-highlights">${chosen.name}</span> goes to your hand. Rest placed on bottom of Hero Deck.`);
       updateGameBoard();
       resolve();
     }
