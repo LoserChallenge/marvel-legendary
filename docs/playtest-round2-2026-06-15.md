@@ -40,7 +40,11 @@ Worker landed 5 commits (f45a4eb..f66ab42); independent cold-read + expansion-va
 - Symptom: ambush ("reveal all class types or gain a Wound") did NOT fire on ambush; triggered the NEXT turn after Nefaria was already defeated. On a later replay it fired correctly on ambush. INTERMITTENT.
 - HYPOTHESIS (for worker to confirm): the Villain Card Cloning gotcha (CLAUDE.md) — ambush effects that attach state to the card aren't preserved on the `city[]` clone; the ambush function must find the card in `city[]` after placement and modify the city copy. Diagnose Nefaria's ambush against that pattern.
 
-### R2-10. House of M extra-draw is a CROSS-TURN DEFERRAL bug — REOPENS R2-2/Bug-3 (was wrongly closed as "not a bug")
+### R2-10. House of M extra-draw — RESOLVED: STALE-CACHE FALSE ALARM (no fix needed)
+- **OUTCOME (Paul, 2026-06-15):** the original repro was run on STALE CACHED CODE (the Empty-Cache-Hard-Reload step was skipped). After a proper Empty Cache + Hard Reload and reloading the SAME setup, the extra-draw worked correctly: card1 Klaw, card2 Scheme Twist, card3 SW Chaos Magic (the extra). Reconciles with the worker's clean-build result (R2-2 symptom never reproduced on a cache-busted Playwright build). NOT a real bug in current code — do NOT relay/fix. Lesson: cache state was the missing variable; the watch-list "Empty Cache and Hard Reload" step exists for exactly this.
+- The investigation below is RETAINED for reference only (it diagnosed stale-cache behavior, not the current build):
+
+> (former diagnosis — cross-turn deferral hypothesis — superseded by the stale-cache finding)
 - REPRO (Paul, 2026-06-15, two-turn evidence — this is the decisive clue):
   - TURN 1 (GS, House of M): card#1 = Scheme Twist, card#2 = Master Strike, NO card#3. The twist's extra draw (`<2 SW` branch) did not appear → turn 1 short one card.
   - TURN 2: card#1 = Klaw, card#2 = SW "Alter Reality" (**no announcement popup — Klaw and Raft were announced, SW was not**), card#3 = Raft Prison (Location). GS turn 2 should draw 2 → it drew 3 (one surplus), and the surplus card came in unannounced.
