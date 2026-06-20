@@ -1,6 +1,6 @@
 # Expansion Pipeline Status
 
-Last updated: 2026-04-06 (Revelations implementation started)
+Last updated: 2026-06-20 (Revelations complete + merged to master)
 
 ## Pipeline Tracks
 
@@ -33,7 +33,7 @@ Last updated: 2026-04-06 (Revelations implementation started)
 | fantastic-four | B | n/a | ✅ 2026-04-03 | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | n/a | n/a |
 | guardians-of-the-galaxy | B | n/a | ✅ 2026-04-03 | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | n/a | n/a |
 | paint-the-town-red | B | n/a | ✅ 2026-04-03 | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | n/a | n/a |
-| revelations | A | ✅ | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | ✅ 2026-04-05 | ⏳ started 2026-04-06 |
+| revelations | A | ✅ | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | ✅ 2026-04-05 | ✅ merged to master 2026-06-20 |
 | secret-wars-vol1 | A | ✅ | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | — | — |
 | heroes-of-asgard | A | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | — | — |
 | x-men | A | ✅ | ✅ 2026-04-04 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ | — | — |

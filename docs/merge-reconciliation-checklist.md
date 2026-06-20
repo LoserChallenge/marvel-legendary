@@ -1,5 +1,7 @@
 # Revelations → master — Merge Reconciliation Checklist
 
+> **✅ COMPLETE — Revelations merged to master 2026-06-20 (merge commit `1a178c8`), deployed + verified live.** Retained as the historical record and as a reusable runbook seed: the *structure* (gate status → rules-notes content-merge → CLAUDE.md fold/reconcile → SW cache verify → merge/conflict-resolve/push → post-merge cleanup) generalizes to any future expansion merge. Generalizing it into a template is a candidate for the process-improvement pass.
+
 Run at merge time, AFTER Paul's dual-mode playtest sign-off. Coordinator-side (master). The expansion implementation + all reviews are complete; this is the finish-line housekeeping.
 
 ## 0. Gate status (all must be green before merge)

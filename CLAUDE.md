@@ -227,7 +227,7 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 ## Reference Files
 
 - `rules/` — PDF rulesheets for all expansions. Read tool PDF support works when VS Code is launched with the full user PATH (so `pdftoppm` is accessible). It's intermittent: try `Read` first; if it fails with a pdftoppm error, **stop and tell the user** to fully close and reopen VS Code (not just reload window), then retry. Do not use pdftotext or any other workaround.
-- `docs/card-inventory/final/` — finalized card inventory files; source of truth for audits. 10 finalized (Into the Cosmos 2026-04-05).
+- `docs/card-inventory/final/` — finalized card inventory files; source of truth for audits.
 - `docs/card-inventory/card-reading-rules.md` — card image reading rules, DB authority, inventory template notes, expansion-specific card types
 - `docs/expansion-asset-pipeline.md` — staging structure, naming conventions, import mapping, inventory process, visual reference setup
 - `docs/expansion-pipeline-status.md` — pipeline progress table for all expansions
@@ -308,8 +308,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - **GitHub MCP** — check deployment status, issues, Actions logs without leaving chat.
 
 **References:**
-- `docs/card-inventory/final/` — per-expansion card data and effect text, source of truth for audits. 10 finalized (Into the Cosmos 2026-04-05). X-Men in `drafts/` awaiting Pass 2.
-- `docs/card-effect-audit-results-2026-03-31.md` — first audit run (65 issues, but **not reliable** — ran against old reference files). Re-run ready.
+- `docs/card-inventory/final/` — per-expansion finalized card data and effect text; source of truth for audits.
 
 **Other:**
 - Git worktrees: `.worktrees/` is gitignored; feature branches at `.worktrees/<branch-name>`
