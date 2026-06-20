@@ -9751,14 +9751,18 @@ if (selectedSchemeEndGame) {
         // === Revelations Scheme Evil Wins ===
 
         case "earthquakeEvilWins": {
-          // Settled ruling (docs/rules-notes/revelations.md): a Henchman is a subtype of
-          // Villain, so escaped Henchmen DO count toward Earthquake/Tsunami's "3 Villains
-          // escaped" loss. The shared local escapedVillainsCount filters type==="Villain"
-          // only, which silently DROPS Location-typed henchmen (e.g. HYDRA Base). Count
-          // subtype "Henchman" too; real Locations (no Henchman subtype) and bystanders/
-          // heroes stay excluded. Solo threshold = 3 escapes OR the Villain Deck empties.
+          // Ruling (docs/rules-notes/revelations.md + core.md, REVERSED 2026-06-19): a Henchman
+          // is a Villain subtype, so escaped non-Location Henchmen DO count toward the "3 Villains
+          // escaped" loss. BUT Locations are NEVER Villains for any Villain-condition, so a
+          // Location-typed Henchman (HYDRA Base — type "Location", subtype "Henchman") does NOT
+          // count even though it carries the Henchman subtype; a Location is a place and cannot
+          // flee. Exclude type "Location"; real Villains and non-Location Henchmen still count,
+          // bystanders/heroes stay excluded. Solo threshold = 3 escapes OR the Villain Deck empties.
+          // (Keep in sync with the Earthquake case in updateEvilWinsText.)
           const escapedEnemiesCount = escapedVillainsDeck.filter(
-            (card) => card.type === "Villain" || card.subtype === "Henchman",
+            (card) =>
+              card.type !== "Location" &&
+              (card.type === "Villain" || card.subtype === "Henchman"),
           ).length;
           if (escapedEnemiesCount >= 3 || villainDeck.length === 0) {
             finalTwist = true;
@@ -11053,14 +11057,17 @@ function updateEvilWinsTracker() {
       break;
 
     case "Earthquake Drains the Ocean": {
-      // Earthquake/Tsunami loss = 3 escaped Villains (solo). Per the ruling, escaped
-      // Henchmen count too — tally villains + any Henchman-subtype card (catches
-      // Location-typed henchmen like HYDRA Base); real Locations and bystanders/heroes
-      // are excluded. Mirrors the earthquakeEvilWins loss check in checkEvilWins. The
-      // DOM scheme radio stays "Earthquake Drains the Ocean" even after the Tsunami
-      // transform, so this one case covers both sides.
+      // Earthquake/Tsunami loss = 3 escaped Villains (solo). Escaped non-Location Henchmen count
+      // (a Henchman is a Villain subtype), but Locations are NEVER Villains (ruling REVERSED
+      // 2026-06-19, docs/rules-notes/revelations.md + core.md): a Location-typed Henchman like
+      // HYDRA Base does NOT count even though it carries subtype "Henchman". Exclude type
+      // "Location"; real Locations and bystanders/heroes are also excluded. Mirrors the
+      // earthquakeEvilWins loss check in checkEvilWins (keep in sync). The DOM scheme radio stays
+      // "Earthquake Drains the Ocean" even after the Tsunami transform, so this covers both sides.
       const escapedEnemiesCount = escapedVillainsDeck.filter(
-        (card) => card.type === "Villain" || card.subtype === "Henchman",
+        (card) =>
+          card.type !== "Location" &&
+          (card.type === "Villain" || card.subtype === "Henchman"),
       ).length;
       evilWinsText.textContent = `${escapedEnemiesCount}/3 Villains Escaped`;
       break;
