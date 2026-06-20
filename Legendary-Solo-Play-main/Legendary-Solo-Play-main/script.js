@@ -12582,17 +12582,6 @@ async function defeatLocation(cityIndex, attackCost) {
     }
   }
 
-  // Henchman-Locations (e.g. HYDRA Base) are Henchmen merely DISPLAYED as Locations: fought with
-  // Attack, worth VP (pushed to victoryPile above), and — per the rules (rules-oracle, cached in
-  // docs/rules-notes/revelations.md) — Henchmen ARE Villains, so defeating one is a Villain defeat
-  // and "whenever you defeat a Villain" triggers MUST fire (War Machine "Military-Industrial Complex"
-  // +1 Recruit, Nightbringer). Generic non-Henchman stronghold Locations are NOT Villains and
-  // correctly skip this. defeatBonuses() is distinct from koBonuses() (the R2-1 path) — no softlock
-  // risk. (R2-3 CORRECTED, 2026-06-15.)
-  if (locationCard.henchmen === true && typeof defeatBonuses === "function") {
-    await defeatBonuses();
-  }
-
   // Clear from city
   cityLocations[cityIndex] = null;
 
