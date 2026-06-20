@@ -68,7 +68,16 @@ REMAINING backup actions AT MERGE:
 - `sw.js` `CACHE_NAME` bumped v3→v4 ✓; `expansionRevelations.js` added to `FILES_TO_CACHE` (line 642) ✓. Confirm at merge.
 
 ## 6. Merge + deploy
-- Merge `revelations` → master. Push. Verify GitHub Pages (hard refresh / cache-bust). Confirm the SW cache bump took.
+- Merge `revelations` → master with a REAL (non-squash) merge so all branch commits stay in master history (posterity is then covered by history + the `original-game-baseline` tag — no need to keep the branch for that). Push. **Also push the backup tag:** `git push origin original-game-baseline`. Verify GitHub Pages (hard refresh / cache-bust). Confirm the SW cache bump took.
+
+## 6b. Post-merge cleanup (after a confirmed-healthy live deploy)
+- **Remove the worktree** `.worktrees/revelations` (redundant once merged; retires the over-context worker session). `git worktree remove .worktrees/revelations` (or `--force` if it complains about the dir).
+- **Keep the `revelations` branch label ~a few days** as a live-deploy rollback safety net, THEN delete it (`git branch -d revelations`). History + tag already preserve everything — the label is only a short-term safety net, not for posterity.
+- Route harmless untracked residue (see §4) to `D:\Claude Code\_to-delete\` or leave.
+
+## 6c. Post-merge follow-ups (NOT part of the merge; tracked elsewhere — listed here so nothing's lost)
+- **Process/skill improvements + retrospective:** `/improve-skill` on the gate/build skills (bake dual-mode coverage in structurally) + `/legendary-sweep` + "what drove the bug volume" retrospective. Full note: `D:\Claude Code\cc-helper\docs\for-later.md` (2026-06-20 entry).
+- **Deferred code items:** Darwin/Boom-Boom sidekick bugs (task chip `task_01225142`) + base/core bugs found in review (Overwhelming Firepower empty-deck guard, `recruitUsedToAttack === "true"` string-vs-boolean) + the 4 sandbox hardening items in §7. All pre-existing/non-blocking; do on master post-merge.
 
 ## 7. Open items carried forward (not merge-blockers)
 - `docs/rules-notes/open-rules-questions.md` — 5 open calls (play-a-copy timing the big one; Paul wants an official-FAQ check). Stays as a live revisit doc.
