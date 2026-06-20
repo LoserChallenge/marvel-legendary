@@ -9,6 +9,28 @@ Run at merge time, AFTER Paul's dual-mode playtest sign-off. Coordinator-side (m
 - [ ] **Sandbox-review of playtest-batch code (separate session)** — OPTIONAL belt-and-suspenders; prior sandbox-review (2026-06-04) predates the batches. Lower marginal value given the per-batch + holistic independent reviews already run. Paul's call.
 - [ ] **Paul's dual-mode playtest** (golden + whatif) — Round 1 (2026-06-15) surfaced a new batch of issues incl. a game-breaking softlock → **MERGE PAUSED**. See `docs/playtest-round2-2026-06-15.md` (Round-2 triage + diagnoses). Re-gate after Round-2 fixes land, then a fresh Paul playtest.
 
+**UPDATE 2026-06-20 — near final, branch tip `5830123`:** Round-2 + Round-3 fixes ALL landed + independently gated (R2-1..R2-13; R2-3 ADDED-then-REVERTED per the Location keyword ruling — see below; escape-exclusion 361e13e; R2-13 popup-overlay fix 931670d; one dev console.log removed 5830123). Final pre-merge gate status:
+- Golden-Solo `expansion-validator` on expansionRevelations.js = CLEAN (0/7). Full-diff `/code-review` HIGH = no blocker (2 CONFIRMED items both PRE-EXISTING base/core bugs → deferred to a post-merge base-code task, NOT branch regressions). Independent cold-reads on every fix batch = PASS.
+- "Locations walled off from all Villain-conditions" audit = clean; ruling refined to KEYWORD-PRECISE (Villain-keyed skips Locations incl HYDRA Base; Henchman-keyed hits HYDRA Base — War Machine "Simulated Target Practice" correctly includes a defeated HYDRA Base, NOT a leak). Cached in `docs/rules-notes/core.md` + `revelations.md`.
+- [ ] **Sandbox-review of the Round-2/3 FIX-RANGE** (separate session) — DISPATCHED 2026-06-20; artifact `D:\Claude Code\sandbox\revelations-fixrange-packet.md` (scoped to the 4-file/156-ins fix diff, the freshest risk surface; Phase 1-3 build rides prior reviews). Review → `D:\Claude Code\sandbox\reviews\2026-06-20-revelations-fixrange-packet-review.md`. Adjudicate findings before merge.
+- [ ] **Paul opting to SKIP his manual re-playtest** (majors already verified live) — substituted by a worker Playwright re-verify of the real Break the Sound Barrier end-to-end flow (the one P0 fix not re-run in its actual scenario). Confirm that comes back clean before merge.
+- Both CONFIRMED-but-deferred base bugs + Darwin/Boom-Boom bugs → post-merge master cleanup (task chip `task_01225142` + the base-code items).
+
+## 0.5 Original-game backup (DO THIS FIRST, before the merge — captures the pre-Revelations state)
+
+Paul's request (2026-06-20): preserve one frozen copy of the original game (current master = all already-integrated expansions Core/DarkCity/FF/GotG/PtTR, but BEFORE Revelations and any future expansion) as an emergency reference baseline. Confirmed baseline = current pre-Revelations master, NOT a stripped Core-only build.
+
+Run from MASTER, with master at its pre-merge HEAD (before the merge commit):
+1. **Git tag (permanent, robust):**
+   `git tag -a original-game-pre-revelations-2026-06-20 -m "Frozen original game (all in-game expansions, pre-Revelations). Emergency reference baseline; never merge expansions into this tag."`
+   then push it for offsite durability: `git push origin original-game-pre-revelations-2026-06-20`
+2. **Isolated physical folder copy (Paul's tangible 'isolated space'):** copy the runnable game dir to a sibling folder OUTSIDE the repo. From Git Bash (cp -r avoids robocopy flag-mangling; the inner game folder has no .git/node_modules; rules PDFs live at repo-root `rules/`, OUTSIDE this folder, so they're excluded automatically):
+   `cp -r "/d/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main" "/d/Games/Digital/Marvel Legendary/_original-backup-pre-revelations"`
+3. **VERIFY the copy exists on disk** (don't trust the command's exit alone): `ls "/d/Games/Digital/Marvel Legendary/_original-backup-pre-revelations/index.html"` and spot-check script.js + Visual Assets are present.
+4. **Make the note for future sessions** (do AFTER the copy exists, so it points at a real path):
+   - Add a "Backups" entry to the project CLAUDE.md: location `D:\Games\Digital\Marvel Legendary\_original-backup-pre-revelations\` + git tag `original-game-pre-revelations-2026-06-20`; describe as the frozen pre-Revelations original — emergency reference only, NEVER merge expansions into it.
+   - Add a project memory entry (same facts) so future sessions surface it.
+
 ## 1. Rules-notes reconciliation (`docs/rules-notes/`) — CONTENT-MERGE, do NOT let the branch overwrite
 
 **UPDATED 2026-06-14 (coordinator diagnosis — supersedes the "truncated/rebuild" framing below).** master's `docs/rules-notes/` is UNTRACKED but HEALTHY and AUTHORITATIVE; the `revelations` branch TRACKS small, independently-evolved stubs the worker created without ever seeing master's untracked files (untracked files don't exist in a worktree checkout). Sizes/content as of today:
