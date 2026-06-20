@@ -16,20 +16,16 @@ Run at merge time, AFTER Paul's dual-mode playtest sign-off. Coordinator-side (m
 - [ ] **Paul opting to SKIP his manual re-playtest** (majors already verified live) — substituted by a worker Playwright re-verify of the real Break the Sound Barrier end-to-end flow (the one P0 fix not re-run in its actual scenario). Confirm that comes back clean before merge.
 - Both CONFIRMED-but-deferred base bugs + Darwin/Boom-Boom bugs → post-merge master cleanup (task chip `task_01225142` + the base-code items).
 
-## 0.5 Original-game backup (DO THIS FIRST, before the merge)
+## 0.5 Original-game backup — ✅ DONE 2026-06-20 (created early, ahead of the merge)
 
-Paul's request: preserve one frozen copy of the original game (current master = base game + all already-integrated expansions, captured before this merge) as an emergency reference baseline. **Names must be EVERGREEN — no version/date/expansion-specific strings in the tag or folder name.** Confirmed baseline = current master, NOT a stripped Core-only build.
+Frozen evergreen-named reference copy of the original game (base game + all already-integrated expansions, pre-Revelations). Created + verified on disk in the coordinator session 2026-06-20:
+- **Git tag:** `original-game-baseline` (annotated; LOCAL — not yet pushed).
+- **Folder copy:** `D:\Games\Digital\Marvel Legendary\_original-game-backup\` (~132MB, runnable: index.html + script.js + Visual Assets verified present).
+- **Memory recorded:** project memory `original-game-backup.md` (+ MEMORY.md pointer).
 
-Run from MASTER, with master at its pre-merge HEAD (before the merge commit):
-1. **Git tag (permanent, robust; evergreen name — provenance lives in the annotation, not the name):**
-   `git tag -a original-game-baseline -m "Frozen original game baseline (base game + all in-game expansions). Emergency reference copy; never modified, never receives expansion merges."`
-   then push for offsite durability: `git push origin original-game-baseline`
-2. **Isolated physical folder copy (the tangible 'isolated space'):** copy the runnable game dir to an evergreen-named sibling folder OUTSIDE the repo. From Git Bash (cp -r avoids robocopy flag-mangling; the inner game folder has no .git/node_modules; rules PDFs live at repo-root `rules/`, OUTSIDE this folder, so they're excluded automatically):
-   `cp -r "/d/Games/Digital/Marvel Legendary/Claude Code/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main" "/d/Games/Digital/Marvel Legendary/_original-game-backup"`
-3. **VERIFY the copy exists on disk** (don't trust the command's exit alone): `ls "/d/Games/Digital/Marvel Legendary/_original-game-backup/index.html"` and spot-check script.js + Visual Assets are present.
-4. **Make the note for future sessions** (do AFTER the copy exists, so it points at a real path):
-   - Add a "Backups" entry to the project CLAUDE.md: location `D:\Games\Digital\Marvel Legendary\_original-game-backup\` + git tag `original-game-baseline`; describe (evergreen) as the frozen original-game reference copy — emergency reference only, NEVER modify it or merge expansions into it.
-   - Add a project memory entry (same facts) so future sessions surface it.
+REMAINING backup actions AT MERGE:
+1. **Push the tag** when you push master: `git push origin original-game-baseline` (offsite durability).
+2. **Add a "Backups" entry to the unified CLAUDE.md** during the §3 CLAUDE.md reconciliation (so it lands once, cleanly): location `D:\Games\Digital\Marvel Legendary\_original-game-backup\` + tag `original-game-baseline`; evergreen description — frozen original-game reference, emergency only, never modify / never merge expansions into it.
 
 ## 1. Rules-notes reconciliation (`docs/rules-notes/`) — CONTENT-MERGE, do NOT let the branch overwrite
 
