@@ -860,6 +860,16 @@ function pickFromCardsSingleRow(items, { title, instructions, confirmText }) {
       resolve(selected);
     };
 
+    // R2-13: make this picker the SOLE interactive modal. The .info-or-choice-popup (used by
+    // handleCardPlacement, villain-arrival/Master-Strike showPopup, etc.) shares z-index 999 with
+    // the .card-choice-popup; if one is left visible it overlays this picker and intercepts the
+    // card clicks (document.elementFromPoint returns the later-in-DOM popup), so selection silently
+    // dies and "confirm" never enables — the reported Speed "Break the Sound Barrier" softlock on
+    // the 2nd+ leftover. Hiding it here guarantees the picker is on top regardless of how a stale
+    // popup got left open. Symmetric guard in handleCardPlacement.
+    const lingeringInfoPopup = document.querySelector(".info-or-choice-popup");
+    if (lingeringInfoPopup) lingeringInfoPopup.style.display = "none";
+
     modalOverlay.style.display = "block";
     popup.style.display = "block";
   });
@@ -2478,6 +2488,12 @@ async function handleCardPlacement(card, options = {}) {
       updateGameBoard();
       resolve();
     }
+
+    // R2-13 (symmetric): hide the .card-choice-popup picker so a lingering one can't overlay this
+    // placement popup and intercept the TOP/BOTTOM clicks. Both share z-index 999. See the matching
+    // guard in pickFromCardsSingleRow.
+    const lingeringPicker = document.querySelector(".card-choice-popup");
+    if (lingeringPicker) lingeringPicker.style.display = "none";
 
     // Show popup
     modalOverlay.style.display = "block";
