@@ -16,3 +16,6 @@ expansions/
 
 # Superpowers plugin cache
 .superpowers/
+
+# Playwright MCP scratch output (snapshots, screenshots, console logs from /game-test)
+.playwright-mcp/

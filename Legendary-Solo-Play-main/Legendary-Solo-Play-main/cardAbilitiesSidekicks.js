@@ -860,6 +860,16 @@ function pickFromCardsSingleRow(items, { title, instructions, confirmText }) {
       resolve(selected);
     };
 
+    // R2-13: make this picker the SOLE interactive modal. The .info-or-choice-popup (used by
+    // handleCardPlacement, villain-arrival/Master-Strike showPopup, etc.) shares z-index 999 with
+    // the .card-choice-popup; if one is left visible it overlays this picker and intercepts the
+    // card clicks (document.elementFromPoint returns the later-in-DOM popup), so selection silently
+    // dies and "confirm" never enables — the reported Speed "Break the Sound Barrier" softlock on
+    // the 2nd+ leftover. Hiding it here guarantees the picker is on top regardless of how a stale
+    // popup got left open. Symmetric guard in handleCardPlacement.
+    const lingeringInfoPopup = document.querySelector(".info-or-choice-popup");
+    if (lingeringInfoPopup) lingeringInfoPopup.style.display = "none";
+
     modalOverlay.style.display = "block";
     popup.style.display = "block";
   });
@@ -889,7 +899,8 @@ async function chooseReturnOrderSingleRow(
 
   ordered.forEach((card) => playerDeck.push(card));
 
-  // Format console message with correct order wording
+  // Format console message with correct order wording. ordered[] is bottom→top of the
+  // returned stack (last selected sits on top, since each was pushed onto playerDeck in turn).
   if (ordered.length === 1) {
     onscreenConsole.log(
       `Returned <span class="console-highlights">${ordered[0].name}</span> to deck.`,
@@ -898,6 +909,14 @@ async function chooseReturnOrderSingleRow(
     onscreenConsole.log(
       `Returned <span class="console-highlights">${ordered[0].name}</span> to deck and ` +
         `<span class="console-highlights">${ordered[1].name}</span> placed on top.`,
+    );
+  } else if (ordered.length > 2) {
+    // Count-agnostic (Speed "Break the Sound Barrier", Hood Master Strike can return 3+).
+    const topToBottom = [...ordered].reverse().map(
+      (c) => `<span class="console-highlights">${c.name}</span>`,
+    );
+    onscreenConsole.log(
+      `Returned ${ordered.length} cards to the top of the deck (top first): ${topToBottom.join(", ")}.`,
     );
   }
 
@@ -2384,6 +2403,12 @@ async function handleRustyInvestigateChoice(card) {
 }
 
 async function handleCardPlacement(card, options = {}) {
+  // Deck target is parameterized (R2-12): defaults to playerDeck (every existing caller), but a
+  // caller can pass options.targetDeck (e.g. heroDeck for Scarlet Witch "Warp Time and Space")
+  // plus options.deckLabel for the message wording. The playerDeck-only behaviours (the `revealed`
+  // top-card flag and the stingOfTheSpider follow-up) are gated to the playerDeck case below.
+  const targetDeck = options.targetDeck || playerDeck;
+  const deckLabel = options.deckLabel || "your deck";
   return new Promise((resolve) => {
     // Elements
     const popup = document.querySelector(".info-or-choice-popup");
@@ -2432,21 +2457,21 @@ async function handleCardPlacement(card, options = {}) {
 
     // Handlers
     confirmBtn.onclick = async () => {
-      playerDeck.push(card);
-      card.revealed = true;
+      targetDeck.push(card);
+      if (targetDeck === playerDeck) card.revealed = true;
       onscreenConsole.log(
-        `You returned <span class="console-highlights">${card.name}</span> to the top of your deck.`,
+        `You returned <span class="console-highlights">${card.name}</span> to the top of ${deckLabel}.`,
       );
       cleanup();
-      if (stingOfTheSpider) {
+      if (stingOfTheSpider && targetDeck === playerDeck) {
         await scarletSpiderStingOfTheSpiderDrawChoice(card);
       }
     };
 
     otherBtn.onclick = () => {
-      playerDeck.unshift(card);
+      targetDeck.unshift(card);
       onscreenConsole.log(
-        `You returned <span class="console-highlights">${card.name}</span> to the bottom of your deck.`,
+        `You returned <span class="console-highlights">${card.name}</span> to the bottom of ${deckLabel}.`,
       );
       cleanup();
     };
@@ -2463,6 +2488,12 @@ async function handleCardPlacement(card, options = {}) {
       updateGameBoard();
       resolve();
     }
+
+    // R2-13 (symmetric): hide the .card-choice-popup picker so a lingering one can't overlay this
+    // placement popup and intercept the TOP/BOTTOM clicks. Both share z-index 999. See the matching
+    // guard in pickFromCardsSingleRow.
+    const lingeringPicker = document.querySelector(".card-choice-popup");
+    if (lingeringPicker) lingeringPicker.style.display = "none";
 
     // Show popup
     modalOverlay.style.display = "block";

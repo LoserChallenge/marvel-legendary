@@ -23,8 +23,8 @@ This is a **solo-play app** (Golden Solo and What If? solo modes only). Always f
   - `rules/marvel-legendary-the-golden-solo-ruleset.pdf` — Golden Solo mode adaptations
   - `rules/WhatIf_Rulebook.pdf` — What If? solo mode
 - **Staging fallback:** an expansion still being built may not be promoted to `rules/` yet — if its rulebook isn't in `rules/`, check `expansions/[name]/*Rules*.pdf` (e.g. Revelations during its current build: `expansions/revelations/2019_Marvel_Legendary_Revelations_Rules_compressed.pdf`).
-- **Worktree limitation:** the `rules/` PDFs are gitignored (main-folder only) and are NOT present in a `.worktrees/` checkout. Running inside a worktree you can read the inventory + your `docs/rules-notes/` cache but NOT the rulebook PDFs — a genuine PDF lookup must run from the MAIN folder (coordinator session). If you can't reach the PDF, say so and route it to the main folder rather than guessing.
 - `docs/expansion-mechanics/` — per-expansion mechanics references from `/analyze-expansion` (secondary; the PDF is authoritative)
+- **Worktree limitation:** the `rules/` PDFs are gitignored (main-folder only) and are NOT present in a `.worktrees/` checkout. Running inside a worktree you can read the inventory + your `docs/rules-notes/` cache but NOT the rulebook PDFs — a genuine PDF lookup must run from the MAIN folder (coordinator session). If you can't reach the PDF, say so and route it to the main folder rather than guessing.
 
 **Your cache** (check FIRST, write to as you learn):
 - `docs/rules-notes/*.md` — distilled, greppable rule findings you have recorded from prior lookups. One file per expansion plus `core.md` and `solo.md`.

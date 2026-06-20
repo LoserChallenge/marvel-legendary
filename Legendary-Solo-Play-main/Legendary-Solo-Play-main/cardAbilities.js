@@ -12,18 +12,50 @@ function koBonuses() {
     updateGameBoard();
   }
   const kodCard = koPile[koPile.length - 1];
-     if (kodCard.team && kodCard.team === "Infinity Gems") {
+     if (kodCard && kodCard.team === "Infinity Gems") {
           kodCard.attack = kodCard.originalAttack;
         }
 }
 
-function defeatBonuses() {
+// ASYNC (F-G2): now awaits rescueBystander() for Overwhelming Firepower. Called at 10 sites
+// (1 mastermind: handleMastermindPostDefeat; 9 villain: handlePostDefeat/handleHQPostDefeat/
+// defeatNonPlacedVillain + 6 expansion villain-defeat completions) — ALL are async and ALL now
+// `await defeatBonuses()`. The single mastermind caller wraps the call in
+// `isMastermindDefeat = true; try { await defeatBonuses(); } finally { isMastermindDefeat = false; }`.
+async function defeatBonuses() {
   if (extraThreeRecruitAvailable > 0) {
     totalRecruitPoints += extraThreeRecruitAvailable;
     cumulativeRecruitPoints += extraThreeRecruitAvailable;
     onscreenConsole.log(
       `You defeated a Villain or Mastermind. +${extraThreeRecruitAvailable} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
     );
+  }
+
+  // War Machine "Military-Industrial Complex" (Revelations): +1 Recruit per VILLAIN defeat this
+  // turn. VILLAIN-ONLY — skipped on the mastermind defeat (gated by isMastermindDefeat). Lives
+  // here, not in handlePostDefeat, so it also catches villain defeats triggered through the 6
+  // expansion defeatBonuses() sites (which bypass handlePostDefeat). cumulativeRecruitPoints is
+  // paired with totalRecruitPoints to match the extraThreeRecruitAvailable precedent above.
+  if (militaryComplexRecruit > 0 && !isMastermindDefeat) {
+    totalRecruitPoints += militaryComplexRecruit;
+    cumulativeRecruitPoints += militaryComplexRecruit;
+    onscreenConsole.log(
+      `<span class="console-highlights">Military-Industrial Complex</span>: +${militaryComplexRecruit} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> for defeating a Villain.`,
+    );
+    updateGameBoard();
+  }
+
+  // War Machine "Overwhelming Firepower" (Revelations): draw 1 + rescue 1 Bystander per villain
+  // OR mastermind defeat this turn. Fires on every defeat (both paths) — no mastermind gate.
+  if (overwhelmingFirepowerBonus > 0) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Overwhelming Firepower</span>: drawing ${overwhelmingFirepowerBonus} card${overwhelmingFirepowerBonus > 1 ? "s" : ""} and rescuing ${overwhelmingFirepowerBonus} Bystander${overwhelmingFirepowerBonus > 1 ? "s" : ""}.`,
+    );
+    for (let n = 0; n < overwhelmingFirepowerBonus; n++) {
+      drawCard();
+      await rescueBystander();
+    }
+    updateGameBoard();
   }
 }
 
@@ -75,6 +107,7 @@ function extraDraw(hero) {
   playSFX("card-draw");
   const card = playerDeck.pop();
   playerHand.push(card);
+  cardsInHandThisTurn.add(card); // Photon "Light the Way" tracking (mid-turn extra draws)
   extraCardsDrawnThisTurn++;
   console.log(
     "Card drawn. Total cards drawn this turn: ",
@@ -6680,7 +6713,7 @@ function showEligibleVillainsOptions(eligibleVillains, shieldCount) {
             `<span class="console-highlights">${demonBystander.name}</span> has been rescued for free.`,
           );
 
-          defeatBonuses();
+          await defeatBonuses();
           bystanderBonuses();
           await rescueBystanderAbility(demonBystander);
         } else if (mastermindSelected) {
@@ -6744,7 +6777,7 @@ function showEligibleVillainsOptions(eligibleVillains, shieldCount) {
         }
       }
 
-      defeatBonuses();
+      await defeatBonuses();
 
       // Handle fight effect if the villain has one
       let fightEffectPromise = Promise.resolve();
@@ -8623,7 +8656,12 @@ function HenchmenKOHeroYouHave() {
   });
 }
 
-function FightKOHeroYouHave() {
+// `source` is the card causing the KO — a name string (passed by expansion fight-effect wrappers)
+// or the card object the engine passes directly (e.g. Super-Skrull's fightEffect is invoked with the
+// villainCopy). Used only for the picker title. Defaults to a generic label if no source is supplied.
+function FightKOHeroYouHave(source) {
+  const sourceName =
+    (typeof source === "string" ? source : source && source.name) || "KO a Hero";
   onscreenConsole.log(`Fight! KO one of your Heroes.`);
   return new Promise((resolve, reject) => {
     // Get heroes from artifacts, hand, and played cards
@@ -8664,7 +8702,7 @@ function FightKOHeroYouHave() {
     );
 
     // Set popup content
-    titleElement.textContent = "Super-Skrull";
+    titleElement.textContent = sourceName;
     instructionsElement.textContent = "Select a Hero to KO.";
 
     // Show both rows and labels
@@ -8882,7 +8920,6 @@ function FightKOHeroYouHave() {
         onscreenConsole.log(
           `<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`,
         );
-        koBonuses();
 
         // Remove the card from the correct location
         if (selectedLocation === "artifacts") {
@@ -8900,8 +8937,10 @@ function FightKOHeroYouHave() {
           selectedCard.markedToDestroy = true;
         }
 
-        // Add the card to the KO pile
+        // Add the card to the KO pile BEFORE koBonuses() — koBonuses reads
+        // koPile[last] for the Infinity-Gems reset and crashes on an empty pile.
         koPile.push(selectedCard);
+        koBonuses();
 
         updateGameBoard();
         closeCardChoicePopup();
@@ -11676,7 +11715,10 @@ function addCardOverlays(cardContainer, card, index, location = 'city') {
   // Add location attack overlays if applicable (only for city)
   if (location === 'city') {
     const locationAttackValue = cityLocationAttack[index] || 0;
-    if (locationAttackValue !== 0) {
+    // PT-5: only show the space attack modifier (e.g. Storm's −2) when a Villain occupies the space —
+    // it applies to Villains, not Locations (the Location cost never reads cityLocationAttack). Mirrors
+    // the twin gate in script.js's board render.
+    if (locationAttackValue !== 0 && city[index]) {
       const locationElement = document.querySelector(
         `#city-label-${index}`,
       );

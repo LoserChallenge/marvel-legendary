@@ -180,15 +180,23 @@ Implement henchmen fight effects, bystander rescue effects, and any expansion-sp
 
 ## Phase 4: Validation & Testing
 
-### 4a: Expansion Validator
+### 4a: Full Expansion Audit
 
-Run the expansion-validator subagent against the new expansion file:
-> Use `.claude/agents/expansion-validator.md` — it checks all 7 Golden Solo compatibility rules.
+Run the `/expansion-audit` skill for this expansion. It runs the full pipeline:
+`engine-integration-auditor` → `expansion-validator` → six card-type auditors + `keyword-consistency-auditor` (parallel) → consolidated findings catalog at `docs/audit-results/<expansion>-<date>.md`.
 
-Present results to the user in plain English:
-> "Validation results: [N] of 7 rules passed. [Details of any failures and what the fix does]."
+Present the headline to the user:
+> "Audit complete: [N] HIGH, [M] MEDIUM, [L] LOW findings across the pipeline. Catalog saved to [path]."
 
-Fix any issues found, then re-run until all 7 rules pass.
+Then TRIAGE with the user:
+- Walk each HIGH finding in plain English ("card says X, code does Y, here's how it plays").
+- User makes the gameplay call: is the CODE wrong, or is the card-text/reference what's stale?
+- Tag each finding: Fix Now / Defer / Reject.
+- MEDIUM/LOW go into a sweep pass after HIGH is resolved.
+
+Fix the Fix-Now findings, then re-run `/expansion-audit` until the merge gate is met.
+
+**Merge gate:** HIGH count = 0, OR every remaining HIGH has a documented Defer rationale in the progress file.
 
 ### 4b: JS Syntax Check
 
@@ -210,6 +218,7 @@ Walk the user through what to look for during the test game.
 
 Before merging the expansion branch:
 - [ ] All Phase 4 issues resolved and retested
+- [ ] `/expansion-audit` run clean (0 unresolved HIGH findings, or all deferrals documented)
 - [ ] `sw.js` `CACHE_NAME` bumped (e.g. `legendary-v4` → `legendary-v5`)
 - [ ] New expansion JS file added to `FILES_TO_CACHE` in `sw.js`
 - [ ] **Sync CLAUDE.md:** copy worktree's CLAUDE.md to master — `cp .worktrees/[branch]/CLAUDE.md CLAUDE.md` — so new branches cut from master inherit all gotchas added during this expansion's work

@@ -704,6 +704,68 @@ button:active {
   background-color: var(--city-background-color);
 }
 
+/* Location card layer — sits above city space */
+.location-card-container {
+  z-index: 1;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.location-card-container img {
+  height: 14.8vh;
+  width: auto;
+  border-radius: 1vh;
+  border: 2px solid #d4af37;
+  box-sizing: border-box;
+  object-fit: cover;
+  filter: drop-shadow(0px 0px 0.5vh black);
+}
+
+/* When Location is alone (no villain) — same size as normal villain cards */
+.location-card-full {
+  padding-top: 5px;
+}
+
+/* When Location + Villain share space — Location extends above cell */
+.location-card-peek {
+  position: absolute;
+  top: -4vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.location-card-peek img {
+  height: 14.8vh;
+  width: auto;
+}
+
+/* Hovering the peek area brings the Location to front so it can zoom */
+.location-card-peek:hover {
+  z-index: 10;
+}
+
+/* Villain card shifts down when Location is above, sits in front */
+.city-space-layered .villain-card-container {
+  position: relative;
+  z-index: 2;
+  margin-top: 5vh;
+}
+
+/* City space needs relative positioning for layers */
+.city-space-layered {
+  position: relative;
+}
+
+/* Location affordability glow */
+.location-card-container.attackable {
+  filter: drop-shadow(0 0 8px #d4af37);
+}
+
+.location-card-container.attackable img {
+  border-color: #ffd700;
+}
+
 .labeltext {
   color: white;
   filter: drop-shadow(0vh 0vh 0.3vh black);
@@ -4617,6 +4679,39 @@ button:disabled:hover {
 }
 
 #demon-goblin-count {
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  margin-right: auto;
+  color: #ffffff;
+  font-family: var(--heading-font);
+  font-size: var(--heading-size);
+  text-transform: var(--text-transform);
+  letter-spacing: var(--letter-spacing);
+  margin-bottom: auto;
+  filter: drop-shadow(0vh 0vh 1.1vh red);
+  cursor: pointer;
+}
+
+/* HYDRA Officer-stack badge (PT-3) — scheme-cell count badge mirroring #demon-goblin-deck,
+   using the S.H.I.E.L.D. Officer card art and offset to the LEFT edge so it does not overlap
+   the demon-goblin badge (which sits to the right). Clickable: pay 3 Recruit to gain one. */
+#hydra-officer-deck {
+  position: absolute;
+  width: 10%;
+  height: 10%;
+  display: flex;
+  background-image: url("Visual Assets/Heroes/SHIELD/shieldofficer.webp");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 1;
+  margin-left: -9.5%;
+  cursor: pointer;
+}
+
+#hydra-officer-count {
   margin-top: auto;
   position: relative;
   z-index: 1;
@@ -8784,4 +8879,31 @@ div.screws:nth-of-type(4) {
   margin: 6px 0;
   font-size: 0.85em;
   color: #e0e0e0;
+}
+
+/* Epic Mastermind Toggle */
+.epic-toggle-container {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.epic-toggle-label {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9em;
+  color: #e0e0e0;
+}
+
+.epic-toggle-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.epic-toggle-text {
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }

@@ -562,6 +562,7 @@ let cityPermBuff = [];
 let cityLocationAttack = [];
 let cityReserveAttack = [];
 let cityCosmicThreat = [];
+let cityLocations = [];
 var mastermindTempBuff = 0;
 var mastermindPermBuff = 0;
 let mastermindPermBuffDynamicPrev = 0;
@@ -576,7 +577,147 @@ function initCityArrays() {
   cityLocationAttack = new Array(citySize).fill(0);
   cityReserveAttack = new Array(citySize).fill(0);
   cityCosmicThreat = new Array(citySize).fill(0);
+  cityLocations = new Array(citySize).fill(null);
   citySpaceLabels = citySpaces.map(s => s.label);
+}
+
+async function placeLocation(locationCard) {
+  // Find rightmost empty location slot
+  let targetIndex = -1;
+  for (let i = citySize - 1; i >= 0; i--) {
+    if (cityLocations[i] === null && !destroyedSpaces[i]) {
+      targetIndex = i;
+      break;
+    }
+  }
+
+  if (targetIndex === -1) {
+    // All spaces have Locations — overflow: KO the weakest
+    await handleLocationOverflow(locationCard);
+    return;
+  }
+
+  cityLocations[targetIndex] = locationCard;
+  // Korvac (isSchemeVillain) borrows the Location plumbing but "counts as a Villain", not a Location
+  // (rulesheet p.2) — so announce it as a Villain reveal, not as a Location entering above a space.
+  if (locationCard.isSchemeVillain) {
+    onscreenConsole.log(
+      `<span class="console-highlights">${locationCard.name}</span> is revealed as a ${locationCard.attack} Attack Villain! Defeat him to KO the Mastermind and all its Tactics.`,
+    );
+  } else {
+    onscreenConsole.log(
+      `<span class="console-highlights">${locationCard.name}</span> enters the city above ${citySpaceLabels[targetIndex]}.`,
+    );
+  }
+  updateGameBoard();
+  // PT-1: announce the Location's arrival with a draw popup, parallel to villains. Normal-placement
+  // path only — the overflow branch above returns early and prompts via showOperationSelectionPopup,
+  // so it must not double-popup. All placeLocation callers are async + awaited, so this sequences.
+  await new Promise((resolve) => {
+    showPopup("Location Arrival", locationCard, resolve);
+  });
+}
+
+async function handleLocationOverflow(newLocation) {
+  // Find the lowest attack value among all active Locations
+  let lowestAttack = Infinity;
+  for (let i = 0; i < citySize; i++) {
+    if (cityLocations[i] !== null && cityLocations[i].attack < lowestAttack) {
+      lowestAttack = cityLocations[i].attack;
+    }
+  }
+
+  // Collect all Locations tied at that lowest attack value
+  const candidates = [];
+  for (let i = 0; i < citySize; i++) {
+    if (cityLocations[i] !== null && cityLocations[i].attack === lowestAttack) {
+      candidates.push({ index: i, location: cityLocations[i] });
+    }
+  }
+
+  let targetIndex;
+  if (candidates.length === 1) {
+    // Only one candidate — KO it automatically
+    targetIndex = candidates[0].index;
+  } else {
+    // Multiple candidates tied at lowest attack — player chooses which to KO
+    const items = candidates.map((c) => ({
+      name: `${c.location.name} (Attack ${c.location.attack}) — above ${citySpaceLabels[c.index]}`,
+      image: c.location.image || null,
+      cityIndex: c.index,
+    }));
+
+    const choice = await showOperationSelectionPopup({
+      title: "Location Overflow",
+      instructions: `All city spaces are occupied. Choose which Location to KO to make room for <span class="console-highlights">${newLocation.name}</span>. Select the Location with the lowest threat:`,
+      items,
+      confirmText: "KO THIS LOCATION",
+    });
+
+    if (choice) {
+      targetIndex = choice.cityIndex;
+    } else {
+      // Fallback: KO the first candidate (lowest city index among tied locations)
+      targetIndex = candidates[0].index;
+    }
+  }
+
+  // KO the chosen Location (goes to KO pile, not Victory Pile)
+  const koLocation = cityLocations[targetIndex];
+  onscreenConsole.log(`Location overflow: KO'd <span class="console-highlights">${koLocation.name}</span> to make room for <span class="console-highlights">${newLocation.name}</span>.`);
+  koPile.push(koLocation);
+  cityLocations[targetIndex] = null;
+
+  // Place the new Location in the freed space
+  cityLocations[targetIndex] = newLocation;
+  onscreenConsole.log(`<span class="console-highlights">${newLocation.name}</span> placed above ${citySpaceLabels[targetIndex]}.`);
+  updateGameBoard();
+}
+
+// Earthquake/Tsunami city resize (E-4), Model B: flag spaces destroyed/active rather
+// than reallocating the city arrays. The whole destroyed-space engine already reads
+// destroyedSpaces[] live every frame — villain movement (processMovementWithDestroyedSpaces),
+// the destroyed overlay drawn in updateGameBoard(), and the burrow/draw guards — so
+// toggling a space back and forth is safe (no monotonic assumption anywhere).
+// `activeSpaceIndices`: the indices that REMAIN active; every other index is destroyed.
+//   Tsunami (shrink to 3): [4, 5, 6]   Earthquake (restore to 7): [0,1,2,3,4,5,6]
+// Newly-destroyed spaces escape their villain/henchman occupant (left-to-right, per the
+// Tsunami card text — attached bystanders ride along via handleVillainEscape) and KO any
+// Location there. Restored spaces just clear the flag.
+async function resizeCityForScheme(activeSpaceIndices) {
+  const activeSet = new Set(activeSpaceIndices);
+  for (let i = 0; i < citySize; i++) {
+    const shouldBeActive = activeSet.has(i);
+    const isDestroyed = destroyedSpaces[i] === true;
+
+    if (!shouldBeActive && !isDestroyed) {
+      // Escape any villain/henchman occupying the space being destroyed.
+      if (city[i]) {
+        const occupant = city[i];
+        city[i] = null;
+        onscreenConsole.log(
+          `<span class="console-highlights">${occupant.name}</span> escapes as ${citySpaceLabels[i]} is destroyed!`,
+        );
+        await new Promise((resolve) => {
+          showPopup("Villain Escape", occupant, resolve);
+        });
+        await handleVillainEscape(occupant); // pushes to escapedVillainsDeck + increments count once
+        addHRToTopWithInnerHTML();
+      }
+      // KO any Location sitting in the destroyed space.
+      if (cityLocations[i]) {
+        onscreenConsole.log(
+          `<span class="console-highlights">${cityLocations[i].name}</span> is destroyed along with ${citySpaceLabels[i]}.`,
+        );
+        koPile.push(cityLocations[i]);
+        cityLocations[i] = null;
+      }
+      destroyedSpaces[i] = true;
+    } else if (shouldBeActive && isDestroyed) {
+      destroyedSpaces[i] = false; // restored (Tsunami -> Earthquake)
+    }
+  }
+  updateGameBoard();
 }
 
 function generateCityHTML() {
@@ -612,10 +753,24 @@ function generateCityHTML() {
     labelsContainer.appendChild(labelDiv);
   }
 
-  // --- Adjust grid columns for city size ---
-  const grid = document.querySelector('.grid');
-  const totalColumns = Math.max(citySize + 3, 8);
-  grid.style.gridTemplateColumns = `repeat(${totalColumns}, 1fr)`;
+  // --- Lay the city cells + labels out as their own sub-grids ---
+  // The board is ONE shared 8-column grid (.grid, repeat(8,1fr)); every row is
+  // display:contents so its cells auto-flow into that grid, and each row is tuned to
+  // contribute exactly 8 items. The city band occupies the middle 5 columns (cols 3-7 —
+  // same as hq-wrapper / player-card-zone `grid-column: span 5`). Widening the SHARED
+  // grid to fit a >5-space city re-wraps EVERY row and shoves the header off-screen
+  // (the citySize>5 path was dormant until the Earthquake scheme; that's the bug this
+  // replaces). Instead, make each container a sub-grid that holds N cells inside the
+  // same fixed 5-column span. minmax(0,1fr) lets the narrower cells shrink rather than
+  // overflow (CSS Grid Overflow Gotcha); gap: 3px matches `.grid`. Spaces and labels use
+  // the same span + cell count, so cards stay column-aligned with their labels.
+  [spacesContainer, labelsContainer].forEach((container) => {
+    const cellCount = container.children.length;
+    container.style.display = 'grid';
+    container.style.gridColumn = '3 / span 5';
+    container.style.gridTemplateColumns = `repeat(${cellCount}, minmax(0, 1fr))`;
+    container.style.gap = '3px';
+  });
 }
 var hq1ReserveRecruit = 0;
 var hq2ReserveRecruit = 0;
@@ -626,6 +781,16 @@ let playerHand = [];
 let playerDeck = [];
 let playerDiscardPile = [];
 let justAddedToDiscard = [];
+// Photon "Light the Way" (Revelations) support — the set of cards that entered your hand THIS turn:
+// the opening-hand snapshot (taken after all turn-start drawing) PLUS each mid-turn drawCard()/
+// extraDraw(). A Set so repeated adds never double-count. Light the Way = how many of these are now
+// in playerDiscardPile = "cards you discarded from your hand this turn". Reset in endTurn.
+// KNOWN GAP (accepted for an Uncommon, see catalog deferred): a card placed into hand by a DIRECT
+// playerHand.push (NOT via drawCard/extraDraw — e.g. Scarlet Witch "Warp Time and Space" retrieving
+// to hand) and then discarded the same turn is not tracked here; closing it would mean routing those
+// push sites through this Set. Also rare: a discarded card reshuffled back into the deck mid-turn
+// leaves playerDiscardPile and stops counting.
+let cardsInHandThisTurn = new Set();
 let cardsPlayedThisTurn = [];
 let koPile = [];
 let escapedVillainsDeck = [];
@@ -673,6 +838,13 @@ let nextTurnsDraw = 6;
 let cardsToBeDrawnNextTurn = [];
 let rescueExtraBystanders = 0;
 let extraThreeRecruitAvailable = 0;
+// War Machine (Revelations) arm-a-turn defeat triggers — paid out in defeatBonuses() on each
+// villain/mastermind defeat this turn, mirroring the extraThreeRecruitAvailable precedent.
+let militaryComplexRecruit = 0;       // Military-Industrial Complex: +1 Recruit per VILLAIN defeat (count = # copies armed)
+let overwhelmingFirepowerBonus = 0;   // Overwhelming Firepower: draw 1 + rescue 1 per villain OR mastermind defeat (count = # copies armed)
+// Transient: true only for the duration of the single mastermind-defeat defeatBonuses() call
+// (handleMastermindPostDefeat), so the villain-only Military-Industrial payout skips it.
+let isMastermindDefeat = false;
 let schemeTwistCount = 0;
 let turnCount = 1;
 let killbotSchemeTwistCount = 0;
@@ -777,9 +949,37 @@ function getSelectedMastermind() {
   const selectedMastermindName = document.querySelector(
     "#mastermind-section input[type=radio]:checked",
   ).value;
-  return masterminds.find(
+  const baseMastermind = masterminds.find(
     (mastermind) => mastermind.name === selectedMastermindName,
   );
+
+  const epicCheckbox = document.getElementById('epic-mastermind-toggle');
+  if (baseMastermind && baseMastermind.epic && epicCheckbox && epicCheckbox.checked) {
+    // Shallow merge — epic should only contain scalar overrides (name, attack, image, etc.)
+    return { ...baseMastermind, ...baseMastermind.epic };
+  }
+
+  return baseMastermind;
+}
+
+function updateEpicToggleVisibility() {
+  const epicToggleContainer = document.getElementById('epic-toggle-container');
+  const epicCheckbox = document.getElementById('epic-mastermind-toggle');
+  if (!epicToggleContainer) return;
+
+  const selectedRadio = document.querySelector('#mastermind-section input[type=radio]:checked');
+  if (!selectedRadio) {
+    epicToggleContainer.style.display = 'none';
+    return;
+  }
+
+  const mastermind = masterminds.find(m => m.name === selectedRadio.value);
+  if (mastermind && mastermind.epic) {
+    epicToggleContainer.style.display = '';
+  } else {
+    epicToggleContainer.style.display = 'none';
+    if (epicCheckbox) epicCheckbox.checked = false;
+  }
 }
 
 function generateMastermindDeck(mastermind) {
@@ -1357,12 +1557,35 @@ function cycleHeroImages() {
   }
 }
 
+// Heroes a scheme bars from the playable Hero pool: House of M seeds the 14 Scarlet Witch cards
+// into the Villain Deck (so she can't also be a chosen Hero); Transform Citizens Into Demons uses
+// Jean Grey as the Goblin Queen. Data-driven off scheme.excludedHeroes — new schemes get the
+// exclusion for free. Greys out (disables) each barred hero's checkbox under the active scheme and
+// unchecks it if it was selected; re-enables heroes barred only by OTHER schemes. Generalizes the
+// former hardcoded Jean Grey disable (kept behaviour-identical for that scheme).
+function applySchemeHeroExclusions(selectedSchemeName) {
+  const scheme = schemes.find((s) => s.name === selectedSchemeName);
+  const excluded = scheme && Array.isArray(scheme.excludedHeroes) ? scheme.excludedHeroes : [];
+  const allExcludable = new Set();
+  schemes.forEach((s) => (s.excludedHeroes || []).forEach((h) => allExcludable.add(h)));
+  allExcludable.forEach((heroName) => {
+    const cb = document.querySelector(`input[name="hero"][value="${heroName}"]`);
+    if (!cb) return;
+    const isExcluded = excluded.includes(heroName);
+    cb.disabled = isExcluded;
+    if (isExcluded && cb.checked) cb.checked = false;
+  });
+}
+
 // Event listener for user selecting a scheme manually
 document
   .querySelectorAll("#scheme-selection input[type=radio][name='scheme']")
   .forEach((radio) => {
     radio.addEventListener("change", function () {
       updateSchemeImage(this.value);
+      // Re-apply scheme hero exclusions on manual scheme switch (the old Jean Grey hardcode only
+      // re-applied inside randomize/restore, leaving this hole open).
+      applySchemeHeroExclusions(this.value);
     });
   });
 
@@ -1996,6 +2219,9 @@ function randomizeScheme() {
   // Filter the radio buttons by the selected filters
   const filteredRadioButtons = schemeRadioButtons.filter((button) => {
     const schemeSet = button.getAttribute("data-set");
+    const schemeName = button.value;
+    const schemeData = schemes.find(s => s.name === schemeName);
+    if (schemeData && schemeData.hiddenFromSetup) return false;
     return selectedFilters.length === 0 || selectedFilters.includes(schemeSet);
   });
 
@@ -2022,6 +2248,54 @@ function randomizeScheme() {
 
   // Return the selected scheme value
   return selectedRadioButton.value;
+}
+
+function transformScheme() {
+  // `selectedScheme` is the runtime "current scheme" global. Other code paths in
+  // script.js use a local pattern (`const selectedScheme = schemes.find(...)` from the
+  // setup-screen radio button), so the global isn't pre-populated by setup. Lazily
+  // initialize it from the DOM radio on the first call here — every subsequent call
+  // reads the global that transformScheme itself sets at the end. Caught 2026-05-28:
+  // without lazy init, the first invocation threw `ReferenceError: selectedScheme is
+  // not defined` on the line below and the whole transform chain silently failed.
+  if (typeof window.selectedScheme === 'undefined' || !window.selectedScheme) {
+    const schemeRadio = document.querySelector('#scheme-section input[type=radio]:checked');
+    if (schemeRadio) {
+      window.selectedScheme = schemes.find(s => s.name === schemeRadio.value);
+    }
+  }
+  if (!window.selectedScheme) {
+    console.error("transformScheme(): no current scheme could be determined.");
+    return;
+  }
+
+  const targetName = window.selectedScheme.transformsInto;
+  if (!targetName) {
+    console.warn("transformScheme() called but current scheme has no transformsInto field.");
+    return;
+  }
+
+  const newScheme = schemes.find(s => s.name === targetName);
+  if (!newScheme) {
+    console.error(`Transform target scheme not found: "${targetName}"`);
+    return;
+  }
+
+  window.selectedScheme = newScheme;
+
+  // Update the in-game scheme image.
+  // Note: #scheme-place contains TWO <img> elements — the always-hidden BabyHope token
+  // (added in index.html at <div id="scheme-token">) and the visible scheme card image
+  // appended by initGame() with class "card-image". querySelector('#scheme-place img')
+  // would return BabyHope first (document order) and silently mutate the wrong element,
+  // leaving the visible scheme card unchanged. Always target the .card-image class here.
+  const schemeImg = document.querySelector('#scheme-place img.card-image');
+  if (schemeImg) {
+    schemeImg.src = newScheme.image;
+    schemeImg.alt = newScheme.name;
+  }
+
+  onscreenConsole.log(`Scheme transformed to: <span class="console-highlights">${newScheme.name}</span>`);
 }
 
 function randomizeMastermind() {
@@ -2063,6 +2337,7 @@ function randomizeMastermind() {
 
   updateMastermindImage(selectedRadioButton.value);
   updateSummaryPanel();
+  updateEpicToggleVisibility();
 }
 
 // Function to randomize villain selection
@@ -2378,11 +2653,9 @@ function randomizeHero() {
     (scheme) => scheme.name === selectedSchemeName,
   );
 
-  // Update Jean Grey's disabled state for UI consistency
-  const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-  if (jeanGreyCheckbox && selectedScheme) {
-    jeanGreyCheckbox.disabled = selectedSchemeName === "Transform Citizens Into Demons";
-  }
+  // Update scheme-barred heroes' disabled state for UI consistency (data-driven, see
+  // applySchemeHeroExclusions / scheme.excludedHeroes — generalizes the old Jean Grey hardcode).
+  applySchemeHeroExclusions(selectedSchemeName);
 
   // Get the selected set and team filters
   const selectedSetFilters = Array.from(
@@ -2394,10 +2667,10 @@ function randomizeHero() {
 
   // Filter the hero checkboxes by the selected filters
   const filteredCheckboxes = Array.from(heroCheckboxes).filter((checkbox) => {
-    // EXCLUDE JEAN GREY BY NAME when the specific scheme is selected
-    // This is the key fix - we don't rely on disabled state alone
-    if (selectedSchemeName === "Transform Citizens Into Demons" && 
-        checkbox.value === "Jean Grey") {
+    // EXCLUDE scheme-barred heroes by name (Scarlet Witch under House of M, Jean Grey under
+    // Transform Citizens Into Demons) — don't rely on disabled state alone.
+    if (selectedScheme && Array.isArray(selectedScheme.excludedHeroes) &&
+        selectedScheme.excludedHeroes.includes(checkbox.value)) {
       return false;
     }
 
@@ -2700,6 +2973,7 @@ function updateHeroRequirementsBanner() {
 document.getElementById('scheme-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('scheme-selection').addEventListener('change', updateHeroRequirementsBanner);
 document.getElementById('mastermind-selection').addEventListener('change', updateSummaryPanel);
+document.getElementById('mastermind-selection').addEventListener('change', updateEpicToggleVisibility);
 document.getElementById('villain-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('henchmen-selection').addEventListener('change', updateSummaryPanel);
 document.getElementById('hero-selection').addEventListener('change', updateSummaryPanel);
@@ -3012,11 +3286,9 @@ function randomizeHeroWithRequirements(scheme) {
     (schemeItem) => schemeItem.name === selectedSchemeName,
   );
 
-  // Update Jean Grey's disabled state for UI consistency
-  const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-  if (jeanGreyCheckbox && selectedScheme) {
-    jeanGreyCheckbox.disabled = selectedSchemeName === "Transform Citizens Into Demons";
-  }
+  // Update scheme-barred heroes' disabled state for UI consistency (data-driven; generalizes the
+  // old Jean Grey hardcode — see applySchemeHeroExclusions / scheme.excludedHeroes).
+  applySchemeHeroExclusions(selectedSchemeName);
 
   // Get the selected set and team filters
   const selectedSetFilters = Array.from(
@@ -3028,9 +3300,10 @@ function randomizeHeroWithRequirements(scheme) {
 
   // Filter the hero checkboxes by the selected filters
   const filteredCheckboxes = Array.from(heroCheckboxes).filter((checkbox) => {
-    // EXCLUDE JEAN GREY BY NAME when the specific scheme is selected
-    if (selectedSchemeName === "Transform Citizens Into Demons" && 
-        checkbox.value === "Jean Grey") {
+    // EXCLUDE scheme-barred heroes by name (Scarlet Witch under House of M, Jean Grey under
+    // Transform Citizens Into Demons).
+    if (selectedScheme && Array.isArray(selectedScheme.excludedHeroes) &&
+        selectedScheme.excludedHeroes.includes(checkbox.value)) {
       return false;
     }
 
@@ -3124,7 +3397,7 @@ function getEffectiveSetupRequirements(scheme, mastermind, gameMode) {
   }
 
   // Golden Solo
-  const goldenRequiredVillains = 2;
+  const goldenRequiredVillains = 2 + (scheme.extraVillainGroups || 0);
   const lockedVillains = [...schemeLockedVillains];
 
   // Add mastermind's Always Leads if it's a villain group and there's a free slot
@@ -3286,6 +3559,18 @@ function showConfirmChoicesPopup(
           heroFeedback += `<br><span class="error-spans">This scheme requires ${heroName}.</span>`;
           heroRequirementsMet = false;
         }
+      }
+    }
+  }
+
+  // Scheme-barred heroes (e.g. House of M seeds Scarlet Witch into the Villain Deck, so she
+  // cannot also be a chosen Hero) — block game start if one was selected. Data-driven off
+  // scheme.excludedHeroes; independent of heroRequirements.
+  if (Array.isArray(scheme.excludedHeroes) && scheme.excludedHeroes.length > 0) {
+    for (const heroName of scheme.excludedHeroes) {
+      if (heroes.includes(heroName)) {
+        heroFeedback += `<br><span class="error-spans">${heroName} cannot be chosen as a Hero with this Scheme.</span>`;
+        heroRequirementsMet = false;
       }
     }
   }
@@ -3490,14 +3775,9 @@ function updateAllImagesAndScroll(gameSettings) {
     }
   }
 
-  // Handle Jean Grey special case (if needed)
-  const selectedScheme = schemes.find(
-    (scheme) => scheme.name === gameSettings.scheme,
-  );
-const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-if (jeanGreyCheckbox && selectedScheme) {
-  jeanGreyCheckbox.disabled = selectedScheme.name === "Transform Citizens Into Demons";
-}
+  // Re-apply scheme hero exclusions for the restored scheme (data-driven; generalizes the old
+  // Jean Grey special case — see applySchemeHeroExclusions / scheme.excludedHeroes).
+  applySchemeHeroExclusions(gameSettings.scheme);
 }
 
 // NEW FUNCTION: Scroll to radio button selection
@@ -4053,8 +4333,10 @@ function generateVillainDeck(
         }
 
         // Add the card to the deck the specified number of times
+        // Preserve original type for Locations; default to "Villain" for regular cards
+        const cardType = modifiedCard.type === "Location" ? "Location" : "Villain";
         for (let i = 0; i < (modifiedCard.quantity || 2); i++) {
-          deck.push({ ...modifiedCard, type: "Villain" });
+          deck.push({ ...modifiedCard, type: cardType });
         }
       });
     } else {
@@ -4072,8 +4354,14 @@ function generateVillainDeck(
     villainDeckHenchmen.forEach((henchmanName) => {
       const henchman = window.henchmen.find((h) => h.name === henchmanName);
       if (henchman) {
-        for (let i = 0; i < 10; i++) {
-          deck.push({ ...henchman, subtype: "Henchman" });
+        if (henchman.cards) {
+          for (const card of henchman.cards) {
+            deck.push({ ...henchman, ...card, subtype: "Henchman" });
+          }
+        } else {
+          for (let i = 0; i < 10; i++) {
+            deck.push({ ...henchman, subtype: "Henchman" });
+          }
         }
       } else {
         console.warn(`Henchman with name ${henchmanName} not found.`);
@@ -4106,8 +4394,25 @@ function generateVillainDeck(
                 image: "Visual Assets/Other/organizedCrimeMaggiaGoons.webp",
               });
             }
+          } else if (henchman.cards) {
+            // What If? special henchman whose group has UNIQUE per-card data (Mandarin's Rings —
+            // the only such henchman in the DB). Rulebook (What If? p.24): the special henchman
+            // uses exactly 4 of its cards — 2 into the Villain Deck + 2 set aside — and the
+            // remaining 6 are NOT used. Group selection is random (p.24) and the cards are 1-copy-
+            // each, so which 4 is rulebook-silent → take a random 4 of the unique cards, split 2/2.
+            // Reuse the canonical {...henchman, ...card} merge (same as the Golden + non-special
+            // What If? loops) so each ring keeps its own name/fightEffect/image; the bare template
+            // alone has fightEffect "None" + a placeholder name/image (that was the bug). Identical-
+            // copy groups fall through to the template path in the else below.
+            const chosenCards = fisherYatesShuffle([...henchman.cards]).slice(0, 4);
+            chosenCards.slice(0, 2).forEach((card) => {
+              deck.push({ ...henchman, ...card, subtype: "Henchman" });
+            });
+            chosenCards.slice(2, 4).forEach((card) => {
+              henchmenToPlaceOnTop.push({ ...henchman, ...card, subtype: "Henchman" });
+            });
           } else {
-            // Normal rules: add 2 normal copies to the deck
+            // Normal rules (identical-copy henchman group): add 2 normal copies to the deck
             for (let i = 0; i < 2; i++) {
               deck.push({ ...henchman, subtype: "Henchman" });
             }
@@ -4118,9 +4423,15 @@ function generateVillainDeck(
           }
         } else {
           // For the other henchmen:
-          // Add 10 copies to the deck
-          for (let i = 0; i < 10; i++) {
-            deck.push({ ...henchman, subtype: "Henchman" });
+          if (henchman.cards) {
+            for (const card of henchman.cards) {
+              deck.push({ ...henchman, ...card, subtype: "Henchman" });
+            }
+          } else {
+            // Add 10 copies to the deck
+            for (let i = 0; i < 10; i++) {
+              deck.push({ ...henchman, subtype: "Henchman" });
+            }
           }
         }
       } else {
@@ -4381,7 +4692,7 @@ if (scheme.name === "Unite the Shards") {
     selectRandomHero();
   }
 
-  // Helper function for random hero selection
+  // Helper function for random hero selection (X-Cutioner's Song)
   function selectRandomHero() {
     // Debug: Log all heroes first
     console.log(
@@ -4455,6 +4766,53 @@ if (scheme.name === "Unite the Shards") {
     }
   }
 }
+
+  if (scheme.name === "House of M") {
+    // Setup directive: "Add 14 Scarlet Witch Hero cards to the Villain Deck."
+    // Scarlet Witch's standard 14-card comp (5 Common + 5 Common 2 + 3 Uncommon + 1 Rare = 14)
+    // is seeded into the Villain Deck. Each acts as a Villain in the city with Attack = its cost
+    // +3 (Side A "House of M") / +4 (Side B "No More Mutants") — set DYNAMICALLY off the active
+    // scheme side in updateVillainAttackValues + updateHQVillainAttackValues (the duplicate twin).
+    // "If you fight one, gain it as a Hero" → on defeat the fight copy is converted back to a Hero
+    // and pushed to the discard pile (fightEffect "gainScarletWitchAsHero").
+    // REUSE: mirrors the Skrull seed (Secret Invasion of the Skrull Shapeshifters, above) —
+    //   type:"Villain", base attack 0 (the cost+N comes from attackFromScheme), skrulled:true so
+    //   all four duplicate post-defeat handlers SKIP the Victory-Pile push (the card becomes a
+    //   Hero instead of scoring VP). A dedicated fightEffect (not "unskrull") supplies the correct
+    //   House-of-M flavor text. createVillainCopy preserves type/cost/originalAttack/abilities, so
+    //   the gained Scarlet Witch keeps her printed attack and hero powers.
+    const scarletWitchHero = heroes.find((h) => h.name === "Scarlet Witch");
+    if (scarletWitchHero) {
+      scarletWitchHero.cards.forEach((card) => {
+        let count;
+        switch (card.rarity) {
+          case "Common":
+          case "Common 2":
+            count = 5;
+            break;
+          case "Uncommon":
+            count = 3;
+            break;
+          case "Rare":
+            count = 1;
+            break;
+          default:
+            count = 0;
+        }
+        for (let i = 0; i < count; i++) {
+          deck.push({
+            ...card,
+            type: "Villain",
+            attack: 0,
+            originalAttack: card.attack,
+            skrulled: true,
+            scarletWitch: true,
+            fightEffect: "gainScarletWitchAsHero",
+          });
+        }
+      });
+    }
+  }
 
   for (let i = 0; i < 5; i++) {
     deck.push({
@@ -4597,6 +4955,21 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   goldenFirstRound = true; // reset for new game
   isFirstTurn = true;
   finalBlowDelivered = false;
+
+  // City size per scheme. Schemes may declare a `citySpaces` array (e.g. Earthquake's
+  // 7-space "Low Tide" layout); otherwise use the default 5. Set this explicitly every
+  // game so a prior 7-space game resets back to 5 — citySize/citySpaces are persistent
+  // globals. (scheme is the scheme OBJECT passed from onBeginGame; tolerate a name too.)
+  const _schemeObj =
+    scheme && typeof scheme === "object" ? scheme : schemes.find((s) => s.name === scheme);
+  if (_schemeObj && Array.isArray(_schemeObj.citySpaces)) {
+    citySpaces = _schemeObj.citySpaces;
+    citySize = _schemeObj.citySpaces.length;
+  } else {
+    citySpaces = CITY_SPACE_DEFAULTS;
+    citySize = 5;
+  }
+
   initCityArrays();
   generateCityHTML();
   console.log("Initializing game with:");
@@ -4612,6 +4985,11 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   );
 
   bystanderDeck = buildBystanderDeck();
+  shieldDeck = [...shieldOfficers];
+  // Reset HYDRA Officer-stack tracking per game (these globals live in expansionRevelations.js
+  // and are NOT otherwise reset between games). hydraOfficersNextToScheme = Officers moved next
+  // to the Scheme; the shared 30-card stack is shieldDeck itself (reset above). PT-3.
+  if (typeof hydraOfficersNextToScheme !== "undefined") hydraOfficersNextToScheme = 0;
 
   let selectedExpansions = getSelectedExpansions();
 
@@ -4971,52 +5349,59 @@ async function drawVillainCard() {
 // ---------------------------------
 // Regular villain placement & movement (guarded)
 // ---------------------------------
-async function processRegularVillainCard(villainCard) {
-  console.log("processRegularVillainCard called for:", villainCard.name);
-  console.log(
-    "Current city state before placement:",
-    JSON.stringify(city.map((c) => (c ? c.name : null))),
-  );
-  const sewersIndex = city.length - 1;
 
-  // Save the previous occupant of the sewers BEFORE placing the new villain
+// Placement-only helper: places `card` in the rightmost (sewers) slot and
+// shifts existing villains one space left, escaping the leftmost if the
+// city is full. Used by processRegularVillainCard AND by effects that
+// return a villain/henchman to the city WITHOUT re-triggering ambush
+// (e.g. Mandarin Master Strike returning a Ring from Victory Pile).
+async function enterCityFromRight(card) {
+  const sewersIndex = city.length - 1;
   const previousSewersCard = city[sewersIndex] || null;
 
-  // Place new villain
-  city[sewersIndex] = villainCard;
+  city[sewersIndex] = card;
   onscreenConsole.log(
-    `<span class="console-highlights">${villainCard.name}</span> enters the city.`,
+    `<span class="console-highlights">${card.name}</span> enters the city.`,
   );
 
   const destroyedCount = destroyedSpaces.filter(Boolean).length;
 
   if (destroyedCount > 0) {
     await processMovementWithDestroyedSpaces(previousSewersCard);
-  } else {
-    // Standard movement logic
-    let previousCard = previousSewersCard;
-    for (let j = sewersIndex - 1; j >= 0; j--) {
-      if (previousCard !== null && city[j] === null) {
-        city[j] = previousCard;
-        previousCard = null;
-        break;
-      } else if (previousCard !== null) {
-        const temp = city[j];
-        city[j] = previousCard;
-        previousCard = temp;
+    return;
+  }
 
-        if (j === 0 && previousCard) {
-          await new Promise((resolve) => {
-            showPopup("Villain Escape", previousCard, resolve);
-          });
-          await handleVillainEscape(previousCard);
-          addHRToTopWithInnerHTML();
-          previousCard = null;
-        }
+  let previousCard = previousSewersCard;
+  for (let j = sewersIndex - 1; j >= 0; j--) {
+    if (previousCard !== null && city[j] === null) {
+      city[j] = previousCard;
+      previousCard = null;
+      break;
+    } else if (previousCard !== null) {
+      const temp = city[j];
+      city[j] = previousCard;
+      previousCard = temp;
+
+      if (j === 0 && previousCard) {
+        await new Promise((resolve) => {
+          showPopup("Villain Escape", previousCard, resolve);
+        });
+        await handleVillainEscape(previousCard);
+        addHRToTopWithInnerHTML();
+        previousCard = null;
       }
-      // If previousCard is null, continue to finish the loop without mutation
     }
   }
+}
+
+async function processRegularVillainCard(villainCard) {
+  console.log("processRegularVillainCard called for:", villainCard.name);
+  console.log(
+    "Current city state before placement:",
+    JSON.stringify(city.map((c) => (c ? c.name : null))),
+  );
+
+  await enterCityFromRight(villainCard);
 
   // Arrival popup if no ambush
   if (!villainCard.ambushEffect || villainCard.ambushEffect === "None") {
@@ -5512,6 +5897,13 @@ function handleMasterStrike(masterStrikeCard) {
       return; // This prevents the Master Strike effect from running
     }
 
+    // Second Chance at Life (Hellcat) — reactive from-hand cancel BEFORE the strike
+    // resolves. If accepted, the strike never KOs and never runs its effect.
+    if (await offerSecondChanceReaction(masterStrikeCard, "Master Strike")) {
+      resolve();
+      return;
+    }
+
     // Then always handle the Master Strike effect
     await handleMasterStrikeEffect(masterStrikeCard);
 
@@ -5623,7 +6015,16 @@ function handleSchemeTwist(schemeTwistCard) {
   playSFX("scheme-twist");
   updateGameBoard();
   return new Promise(async (resolve) => {
-    const selectedScheme = getSelectedScheme();
+    // Second Chance at Life (Hellcat) — reactive from-hand cancel BEFORE the twist is
+    // KO'd, tallied, or its effect runs. Intercepting here keeps the twist out of
+    // koPile (so every koPile-based tally is unaffected) and out of revelationsTwistCount
+    // (incremented inside the twist effect, which never runs).
+    if (await offerSecondChanceReaction(schemeTwistCard, "Scheme Twist")) {
+      resolve();
+      return;
+    }
+
+    const selectedScheme = getActiveScheme();
     if (selectedScheme.name !== "Replace Earth's Leaders with Killbots" && selectedScheme.name !== "The Kree-Skrull War") {
       koPile.push(schemeTwistCard);
     }
@@ -5659,7 +6060,15 @@ function handleSchemeTwist(schemeTwistCard) {
         }
       }
     } catch (error) {
+      // Do NOT silently swallow: surface to the on-screen console so a failed
+      // twist effect (e.g. a throw deep inside a re-entrant processVillainCard
+      // draw chain) is visible to the player and diagnosable, instead of looking
+      // like "the twist logged but nothing happened". The chain-depth decrement
+      // and resolve() below still run, so state stays balanced. (R2-2, 2026-06-15.)
       console.error("Error in twist effect:", error);
+      onscreenConsole.log(
+        `<span class="console-highlights">Scheme Twist</span> effect hit an error and may not have fully resolved: ${error && error.message ? error.message : error}`,
+      );
     }
 
     addHRToTopWithInnerHTML();
@@ -5675,9 +6084,14 @@ function handleSchemeTwist(schemeTwistCard) {
 }
 
 async function handlePlutoniumSchemeTwist(villainCard) {
+  // Second Chance at Life (Hellcat) — a Plutonium Scheme Twist is still a Scheme Twist;
+  // offer the reactive from-hand cancel BEFORE it resolves.
+  if (await offerSecondChanceReaction(villainCard, "Scheme Twist")) {
+    return;
+  }
   playSFX("scheme-twist");
   updateGameBoard();
-  const selectedScheme = getSelectedScheme();
+  const selectedScheme = getActiveScheme();
   schemeTwistCount += 1;
 
   // Log twist message
@@ -5889,6 +6303,8 @@ async function processVillainCard() {
         getSelectedScheme().name === `X-Cutioner's Song`
       ) {
         await handleXCutionerHero(villainCard);
+      } else if (villainCard.type === "Location") {
+        await placeLocation(villainCard);
       } else {
         // Handle regular villain card
         await processRegularVillainCard(villainCard);
@@ -6375,12 +6791,12 @@ function showPopup(type, drawnCard, confirmCallback) {
 
   const mastermind = getSelectedMastermind();
 
-  const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const selectedScheme = schemes.find(
-    (scheme) => scheme.name === selectedSchemeName,
-  );
+  // Use the ACTIVE (possibly transformed) scheme, not the setup-screen radio
+  // choice — otherwise a transforming scheme (e.g. Korvac) shows its Side-A
+  // twist text after flipping to Side B. Matches handleSchemeTwist's console
+  // log, which already reads getActiveScheme(). (R2-6, 2026-06-15.) Only the
+  // "Scheme Twist" branch below consumes selectedScheme.
+  const selectedScheme = getActiveScheme();
 
   popup.style.display = "block";
 
@@ -6441,6 +6857,32 @@ function showPopup(type, drawnCard, confirmCallback) {
     popupTitle.innerText = `Villain`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city.`;
+    popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+    confirmBtn.innerText = getRandomConfirmText();
+  } else if (type === "Location Arrival") {
+    playSFX("villain-entry");
+    popupImage.style.display = "block";
+    // Korvac (isSchemeVillain) reuses this popup but "counts as a Villain", not a Location (rulesheet
+    // p.2) — present it as a Villain reveal, not a Location entering. Built from safe DOM nodes
+    // (highlighted name + trailing text) rather than innerHTML; behaviour-identical for the non-Korvac
+    // Location case.
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "console-highlights";
+    nameSpan.textContent = drawnCard.name;
+    popupContext.replaceChildren(nameSpan);
+    if (drawnCard.isSchemeVillain) {
+      popupTitle.innerText = `Villain Revealed`;
+      popupContext.appendChild(
+        document.createTextNode(
+          ` is revealed as a ${drawnCard.attack} Attack Villain! Defeat him to KO the Mastermind and all its Tactics.`,
+        ),
+      );
+    } else {
+      popupTitle.innerText = `Location`;
+      popupContext.appendChild(
+        document.createTextNode(` enters the city as a Location.`),
+      );
+    }
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "X-Cutioner Hero to Villain") {
@@ -7072,14 +7514,24 @@ function updateHighlights() {
           recalculateVillainAttack(city[i]) + locationAttack;
         const reservedAttack = cityReserveAttack[i] || 0;
 
-        const canAttackWithAttackPoints =
-          totalAttackPoints + reservedAttack >= villainAttack;
-        const hasBribeKeyword =
-          Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
-        const canAttackWithRecruitPoints =
-          (recruitUsedToAttack || hasBribeKeyword) &&
-          totalAttackPoints + totalRecruitPoints + reservedAttack >=
-            villainAttack;
+        const usesRecruitToFight = city[i].usesRecruitToFight === true;
+        let canAttackWithAttackPoints;
+        let canAttackWithRecruitPoints;
+
+        if (usesRecruitToFight) {
+          // Recruit-only fight (e.g., Mister Hyde as Dr. Calvin Zabo)
+          canAttackWithAttackPoints = false;
+          canAttackWithRecruitPoints = totalRecruitPoints >= villainAttack;
+        } else {
+          canAttackWithAttackPoints =
+            totalAttackPoints + reservedAttack >= villainAttack;
+          const hasBribeKeyword =
+            Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
+          canAttackWithRecruitPoints =
+            (recruitUsedToAttack || hasBribeKeyword) &&
+            totalAttackPoints + totalRecruitPoints + reservedAttack >=
+              villainAttack;
+        }
 
         if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
           cityCell.classList.add("attackable");
@@ -7319,14 +7771,24 @@ function updateHighlights() {
           recalculateVillainAttack(city[i]) + locationAttack;
         const reservedAttack = cityReserveAttack[i] || 0;
 
-        const canAttackWithAttackPoints =
-          totalAttackPoints + reservedAttack >= villainAttack;
-        const hasBribeKeyword =
-          Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
-        const canAttackWithRecruitPoints =
-          (recruitUsedToAttack || hasBribeKeyword) &&
-          totalAttackPoints + totalRecruitPoints + reservedAttack >=
-            villainAttack;
+        const usesRecruitToFight = city[i].usesRecruitToFight === true;
+        let canAttackWithAttackPoints;
+        let canAttackWithRecruitPoints;
+
+        if (usesRecruitToFight) {
+          // Recruit-only fight (e.g., Mister Hyde as Dr. Calvin Zabo)
+          canAttackWithAttackPoints = false;
+          canAttackWithRecruitPoints = totalRecruitPoints >= villainAttack;
+        } else {
+          canAttackWithAttackPoints =
+            totalAttackPoints + reservedAttack >= villainAttack;
+          const hasBribeKeyword =
+            Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
+          canAttackWithRecruitPoints =
+            (recruitUsedToAttack || hasBribeKeyword) &&
+            totalAttackPoints + totalRecruitPoints + reservedAttack >=
+              villainAttack;
+        }
 
         if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
           cityCell.classList.add("attackable");
@@ -8196,6 +8658,49 @@ if (stackedTwistNextToMastermind > 0) {
       console.warn("demon-goblin-deck element not found");
     }
 
+    // HYDRA — S.H.I.E.L.D. Officers stacked next to the Scheme (PT-3). Reuses the scheme-cell
+    // count-badge pattern (cf. demon-goblin-count). Shown whenever any Officer is next to the
+    // Scheme, on either HYDRA side. The badge is the click affordance for the Side-A "pay 3
+    // Recruit → gain a Hydra Sympathizer" action (gated inside showHydraSympathizerPrompt:
+    // Side A only, count>0, affordable).
+    const hydraOfficerDeckImage = document.getElementById("hydra-officer-deck");
+    const hydraOfficerCount = document.getElementById("hydra-officer-count");
+    if (hydraOfficerDeckImage && hydraOfficerCount) {
+      if (typeof hydraOfficersNextToScheme !== "undefined" && hydraOfficersNextToScheme > 0) {
+        hydraOfficerDeckImage.style.display = "flex";
+        hydraOfficerCount.textContent = `${hydraOfficersNextToScheme}`;
+        // Side-aware tooltip — mirrors the click dispatch below. Re-set every render so it tracks a
+        // Transform (Side A → B): updateGameBoard runs after transformScheme. Side B (Open HYDRA
+        // Revolution) = the Officers are 3-Attack "Hydra Traitor" Villains; Side A (Secret HYDRA
+        // Corruption, the default) = pay 3 Recruit to gain a Hydra Sympathizer.
+        const activeHydraScheme = typeof getActiveScheme === "function" ? getActiveScheme() : null;
+        hydraOfficerDeckImage.title =
+          activeHydraScheme && activeHydraScheme.name === "Open HYDRA Revolution"
+            ? "Hydra Traitors next to the Scheme — pay 3 Attack to fight one (returns to the Officer stack + KO one of your Heroes)"
+            : "S.H.I.E.L.D. Officers next to the Scheme — pay 3 Recruit to gain one (Hydra Sympathizer)";
+        if (!hydraOfficerDeckImage.dataset.clickBound) {
+          // Same badge, both HYDRA sides — dispatch by active scheme side. Side A
+          // (Secret HYDRA Corruption): pay 3 Recruit → gain a Sympathizer. Side B
+          // (Open HYDRA Revolution): the Officers are 3-Attack "Hydra Traitor" Villains →
+          // pay 3 Attack to fight one (return to stack + KO a Hero). Branch inside the
+          // single bound listener so no re-bind is needed across a Transform.
+          hydraOfficerDeckImage.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const s = typeof getActiveScheme === "function" ? getActiveScheme() : null;
+            if (s && s.name === "Open HYDRA Revolution") {
+              if (typeof showHydraTraitorFightPrompt === "function") showHydraTraitorFightPrompt();
+            } else {
+              if (typeof showHydraSympathizerPrompt === "function") showHydraSympathizerPrompt();
+            }
+          });
+          hydraOfficerDeckImage.dataset.clickBound = "true";
+        }
+      } else {
+        hydraOfficerDeckImage.style.display = "none";
+        hydraOfficerCount.textContent = ``;
+      }
+    }
+
     const tempBuffOverlayMastermind = document.getElementById(
       "mastermind-temp-buff",
     );
@@ -8218,7 +8723,80 @@ if (stackedTwistNextToMastermind > 0) {
       permBuffOverlayMastermind.style.display = "none"; // Hide the overlay if the buff is zero
     }
 
+    // --- Location layer rendering ---
+    const hasLocation = cityLocations[i] !== null;
+    const hasVillain = city[i] !== null;
+
+    if (hasLocation && !destroyedSpaces[i]) {
+      const locationCard = cityLocations[i];
+      const locationContainer = document.createElement("div");
+
+      if (hasVillain) {
+        locationContainer.className = "location-card-container location-card-peek";
+        newCityCell.classList.add("city-space-layered");
+      } else {
+        locationContainer.className = "location-card-container location-card-full";
+      }
+
+      const locationImg = document.createElement("img");
+      locationImg.src = locationCard.image;
+      locationImg.alt = locationCard.name;
+      locationImg.classList.add("card-image");
+      locationContainer.appendChild(locationImg);
+
+      // PT-2: captured-bystander overlay — some abilities (e.g. Swordsman's ambush) attach Bystanders
+      // to a Location. Show a count + thumbnail (reusing the villain bystander-overlay styling) so the
+      // player can see them; they're rescued to the Victory Pile when this Location is defeated.
+      // Minimal functional version — the deferred Villain/Mastermind overlay UX pass will refine it.
+      if (Array.isArray(locationCard.capturedBystanders) && locationCard.capturedBystanders.length > 0) {
+        const capOverlay = document.createElement("div");
+        capOverlay.className = "bystanders-overlay";
+        capOverlay.innerHTML = `<span class="bystanderOverlayNumber">${locationCard.capturedBystanders.length}</span><img src="${locationCard.capturedBystanders[0].image}" alt="Captured Bystander" class="villain-bystander">`;
+        locationContainer.appendChild(capOverlay);
+      }
+
+      // Location affordability check — use EFFECTIVE attack (base + bonusWhileVillain when a
+      // villain shares this space) vs the recruit-as-attack-aware pool (PT-6), so the highlight
+      // matches the real fight cost AND honors Thor / Negative Zone / reserved like villains.
+      const effectiveLocationAttack = getLocationEffectiveAttack(i);
+      if (getAvailableAttackForFight(i) >= effectiveLocationAttack) {
+        locationContainer.classList.add("attackable");
+      }
+
+      // Location attack overlay — show the bonused value when a while-villain bonus is active,
+      // mirroring the villain attack-overlay pattern.
+      // GP-2: `forceAttackOverlay` makes the overlay ALWAYS render the effective attack, even when it
+      // equals the base. The Grim Reaper "Graveyard" Location reuses the mastermind card ART (no
+      // dedicated Graveyard image is staged), whose printed attack (8) would otherwise show through
+      // unopposed when effective === base (7) and no overlay is drawn. Forcing the overlay paints the
+      // correct number (7, or 7+bonus with a villain) over the wrong art. Graveyard-scoped only.
+      if (effectiveLocationAttack !== locationCard.attack || locationCard.forceAttackOverlay) {
+        const locationAttackOverlay = document.createElement("div");
+        locationAttackOverlay.className = "attack-overlay location-attack-overlay";
+        locationAttackOverlay.textContent = effectiveLocationAttack;
+        locationContainer.appendChild(locationAttackOverlay);
+      }
+
+      // Location click handler — calls showLocationAttackButton (Task 5)
+      locationContainer.addEventListener("click", (e) => {
+        if (!popupMinimized) {
+          e.stopPropagation();
+          if (typeof showLocationAttackButton === "function") {
+            showLocationAttackButton(i);
+          }
+        }
+      });
+
+      newCityCell.appendChild(locationContainer);
+    }
+
     if (destroyedSpaces[i]) {
+      // Clear any Location from a destroyed space (player-facing announcement is
+      // already emitted via onscreenConsole.log in resizeCityForScheme())
+      if (cityLocations[i] !== null) {
+        cityLocations[i] = null;
+      }
+
       // Create a container to hold the card image and overlays
       const cardContainer = document.createElement("div");
       cardContainer.classList.add("card-container"); // Add a class for styling the container
@@ -8242,7 +8820,11 @@ if (stackedTwistNextToMastermind > 0) {
         );
         if (existingOverlay) existingOverlay.remove();
 
-        if (locationAttackValue !== 0) {
+        // PT-5: the city-space attack modifier (e.g. Storm's −2) applies to VILLAINS in the space, not
+        // Locations — the Location's own cost (getLocationEffectiveAttack) never reads cityLocationAttack.
+        // Only show the label when a Villain occupies the space, so a Location alone there isn't misread
+        // as receiving the modifier.
+        if (locationAttackValue !== 0 && city[i]) {
           const attackElement = document.createElement("div");
           attackElement.className = "location-attack-changes";
           attackElement.innerHTML = `<p>${locationAttackValue} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
@@ -8255,6 +8837,9 @@ if (stackedTwistNextToMastermind > 0) {
       // Create a container to hold the card image and overlays
       const cardContainer = document.createElement("div");
       cardContainer.classList.add("card-container"); // Add a class for styling the container
+      if (hasLocation) {
+        cardContainer.classList.add("villain-card-container");
+      }
       cardContainer.setAttribute("data-city-index", i);
       newCityCell.appendChild(cardContainer);
 
@@ -8783,12 +9368,9 @@ if (stackedTwistNextToMastermind > 0) {
     lastTurnMessageShown = true; // Prevent future logs
   } else {
     // Check Scheme end game conditions
-    const selectedSchemeName = document.querySelector(
-      "#scheme-section input[type=radio]:checked",
-    ).value;
-    const selectedScheme = schemes.find(
-      (scheme) => scheme.name === selectedSchemeName,
-    );
+    // Use getActiveScheme() so the loss condition follows a Transform (E-5):
+    // House of M -> "No More Mutants" changes endGame, and the DOM radio is stale.
+    const selectedScheme = getActiveScheme();
     const selectedSchemeEndGame = selectedScheme
       ? selectedScheme.endGame
       : null;
@@ -9166,6 +9748,76 @@ if (selectedSchemeEndGame) {
           }
           break;
 
+        // === Revelations Scheme Evil Wins ===
+
+        case "earthquakeEvilWins": {
+          // Ruling (docs/rules-notes/revelations.md + core.md, REVERSED 2026-06-19): a Henchman
+          // is a Villain subtype, so escaped non-Location Henchmen DO count toward the "3 Villains
+          // escaped" loss. BUT Locations are NEVER Villains for any Villain-condition, so a
+          // Location-typed Henchman (HYDRA Base — type "Location", subtype "Henchman") does NOT
+          // count even though it carries the Henchman subtype; a Location is a place and cannot
+          // flee. Exclude type "Location"; real Villains and non-Location Henchmen still count,
+          // bystanders/heroes stay excluded. Solo threshold = 3 escapes OR the Villain Deck empties.
+          // (Keep in sync with the Earthquake case in updateEvilWinsText.)
+          const escapedEnemiesCount = escapedVillainsDeck.filter(
+            (card) =>
+              card.type !== "Location" &&
+              (card.type === "Villain" || card.subtype === "Henchman"),
+          ).length;
+          if (escapedEnemiesCount >= 3 || villainDeck.length === 0) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `3 Villains have escaped (or the Villain Deck ran out). The earthquake and tsunami have devastated the coast beyond recovery.`;
+            showDefeatPopup();
+          }
+          break;
+        }
+
+        case "houseOfMEvilWins":
+          // Evil wins condition is on Side B only — checked there
+          break;
+
+        case "noMoreMutantsEvilWins": {
+          const nonGreyKOd = koPile.filter(c => c.type === "Hero" && c.color !== "Grey").length;
+          const threshold = 10 + 2; // 10 + 2x number of players (solo = 1 player)
+          if (nonGreyKOd >= threshold) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `${nonGreyKOd} non-grey Heroes have been KO'd. "No More Mutants" has come true.`;
+            showDefeatPopup();
+          }
+          break;
+        }
+
+        case "secretHydraEvilWins":
+        case "openHydraEvilWins":
+          // Evil wins when 15 Officers are next to the Scheme OR the shared S.H.I.E.L.D.
+          // Officer stack (shieldDeck — also the normal recruit pool) runs out. Both the
+          // scheme Twists and normal recruiting deplete shieldDeck, so an empty stack is a
+          // real reachable loss (oracle 2026-05-31, PT-3). Only treat an empty stack as a
+          // loss while the HYDRA scheme is actually in play (this case guarantees that).
+          if (typeof hydraOfficersNextToScheme !== "undefined" && hydraOfficersNextToScheme >= 15) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `15 S.H.I.E.L.D. Officers are next to the Scheme. HYDRA's infiltration is complete.`;
+            showDefeatPopup();
+          } else if (shieldDeck.length === 0) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `The S.H.I.E.L.D. Officer Stack has run out. HYDRA's infiltration is complete.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "korvacEvilWins":
+          if (typeof revelationsTwistCount !== "undefined" && revelationsTwistCount >= 8) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Twist 8 has been reached. Korvac's power is absolute. Evil Wins!`;
+            showDefeatPopup();
+          }
+          break;
+
         default:
           console.log(
             `Scheme End Game "${selectedSchemeEndGame}" is not yet defined.`,
@@ -9287,9 +9939,20 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
     cardContainer.appendChild(darkPortalOverlay);
   }
 
-  // Update attack values for villains
+  // Update attack values for villains.
+  // applyCardOverlays is the HQ render path (only caller passes location "hq", script.js:8145).
+  // Use the HQ twin (updateHQVillainAttackValues) — NOT the city twin — so an HQ villain's
+  // overlay matches its fight cost (recalculateHQVillainAttack → HQ twin) and does NOT pick up
+  // city-only own-effects: the city twin reads `index` as a CITY index, which for an HQ card is
+  // the HQ slot number, wrongly indexing cityLocations[index] and leaking the Sentry's
+  // Watchtower / The Dark Dimension co-location grant (D4-c) and Sentry→Void position bonus into
+  // HQ villains. The HQ twin takes no index, so those city-only effects stay inert. (D4-c fix.)
   if (card.type === "Villain") {
-    updateVillainAttackValues(card, index);
+    if (location === "hq") {
+      updateHQVillainAttackValues(card);
+    } else {
+      updateVillainAttackValues(card, index);
+    }
 
     const attackFromMastermind = card.attackFromMastermind || 0;
     const attackFromScheme = card.attackFromScheme || 0;
@@ -9649,12 +10312,38 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
   }
 }
 
+// Resize-safe test for "is this city index The Streets or The Bank?". Uses LABEL lookup
+// against citySpaceLabels rather than the literal indices 1/3 — those are correct only in the
+// default 5-space layout and break under Earthquake/Tsunami city resize, which rebuilds
+// citySpaceLabels with Streets/Bank at different positions. Single source of truth for both
+// Sentry ("The Void" +5) and Mister Hyde ("Dr. Calvin Zabo" recruit-fight) position tests.
+// Degrades safely: if a label is absent (indexOf → -1) it can never match a real index (≥0),
+// so the result is false (→ Attack / not-Void), the correct default.
+function isBankOrStreets(idx) {
+  if (idx == null || idx < 0) return false;
+  const streetsIdx = citySpaceLabels.indexOf("The Streets");
+  const bankIdx = citySpaceLabels.indexOf("The Bank");
+  return idx === streetsIdx || idx === bankIdx;
+}
+
+// Mister Hyde reads as "Dr. Calvin Zabo" while fought with Recruit in the Bank or Streets
+// (revelations.md:416-419). Single source of truth for that location-aware identity — shared by
+// the Fight effect (misterHydeFight), the KO-hero popup header, and the recruit-deduction log — so
+// all three always agree. Name-scoped: ONLY Hyde-while-recruit-fought is renamed; every other card
+// (including any future usesRecruitToFight Villain) keeps its own name. usesRecruitToFight is the
+// position-derived flag set in updateVillainAttackValues and copied onto the fight copy by
+// createVillainCopy, so the resolved identity matches the cost actually charged.
+function resolveVillainDisplayName(card) {
+  if (card && card.name === "Mister Hyde" && card.usesRecruitToFight) {
+    return "Dr. Calvin Zabo";
+  }
+  return card ? card.name : "";
+}
+
 function updateVillainAttackValues(villain, i) {
   const mastermind = getSelectedMastermind();
-  const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
+  // getActiveScheme() so scheme-based attack bonuses follow a Transform (E-6).
+  const scheme = getActiveScheme();
   const currentPermBuff = cityPermBuff[i];
 
   villain.attackFromMastermind = 0;
@@ -9667,6 +10356,13 @@ function updateVillainAttackValues(villain, i) {
 
   if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
     villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack || 0;
+  }
+
+  if (
+    (mastermind.name === "Mandarin" || mastermind.name === "Epic Mandarin") &&
+    villain.team === "Mandarin's Rings"
+  ) {
+    villain.attackFromMastermind = mastermind.name === "Epic Mandarin" ? 2 : 1;
   }
 
   //Attack From Scheme Effects
@@ -9706,6 +10402,21 @@ function updateVillainAttackValues(villain, i) {
     villain.attackFromScheme = villain.cost + 2;
   }
 
+  // House of M / No More Mutants: each seeded Scarlet Witch is a Villain with Attack = its cost
+  // +3 (Side A "House of M") / +4 (Side B "No More Mutants"). Keyed on the side-stable endGame
+  // field (NOT scheme.name) — the Side-B DB name is the literal string '"No More Mutants"' WITH
+  // embedded double-quotes (cardDatabase.js), so a name-string match would silently fail after the
+  // Transform and drop the attack to 0. endGame is "houseOfMEvilWins" (A) / "noMoreMutantsEvilWins"
+  // (B). Keep identical in both attack-value twins (duplicate-fn hazard).
+  if (
+    villain.scarletWitch === true &&
+    (scheme.endGame === "houseOfMEvilWins" ||
+      scheme.endGame === "noMoreMutantsEvilWins")
+  ) {
+    villain.attackFromScheme =
+      villain.cost + (scheme.endGame === "noMoreMutantsEvilWins" ? 4 : 3);
+  }
+
   if (
     scheme.name === `Steal the Weaponized Plutonium` &&
     villain.plutoniumCaptured &&
@@ -9737,13 +10448,21 @@ function updateVillainAttackValues(villain, i) {
   }
 
   //Attack from Villain Effects - (Skrulls handled within function)
+  // ADDITIVE CONVENTION (D4-b): attackFromOwnEffects is reset to 0 at the top of this
+  // function, then every contribution below ACCUMULATES with += (never =). This removes
+  // order-dependence: a villain that legitimately has two own-effects (e.g. a self-keyword
+  // bonus AND a Location-granted keyword from D4-c) sums them instead of the last write
+  // clobbering the first. The name-branches below are pairwise disjoint today (proven in
+  // the D4-b diagnosis — unique villain names, none revOwn-eligible), so += is equivalent
+  // to = for every current card (0 + X = X); it is the future grant (D4-c) that needs the
+  // accumulation. Keep this convention identical in the HQ twin (updateHQVillainAttackValues).
 
   if (
     villain.name === `Blockbuster` &&
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length * 2;
+    villain.attackFromOwnEffects += villain.bystander.length * 2;
   }
 
   if (
@@ -9751,7 +10470,7 @@ function updateVillainAttackValues(villain, i) {
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length * 3;
+    villain.attackFromOwnEffects += villain.bystander.length * 3;
   }
 
   if (
@@ -9759,7 +10478,7 @@ function updateVillainAttackValues(villain, i) {
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length;
+    villain.attackFromOwnEffects += villain.bystander.length;
   }
 
   if (
@@ -9767,7 +10486,7 @@ function updateVillainAttackValues(villain, i) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (
@@ -9775,7 +10494,7 @@ function updateVillainAttackValues(villain, i) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (
@@ -9783,11 +10502,11 @@ function updateVillainAttackValues(villain, i) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (villain.name === "Doppelganger") {
-    villain.attackFromOwnEffects = hq[i]?.cost || 0;
+    villain.attackFromOwnEffects += hq[i]?.cost || 0;
   }
 
   if (villain.name === "Kraven the Hunter") {
@@ -9798,18 +10517,49 @@ function updateVillainAttackValues(villain, i) {
       .map((card) => card.cost);
 
     const highestCost = heroCosts.length ? Math.max(...heroCosts) : 0;
-    villain.attackFromOwnEffects = highestCost;
+    villain.attackFromOwnEffects += highestCost;
   }
 
   if (villain.name === "Sandman") {
     const villainCount = city.filter(
       (obj) => obj && obj.type === "Villain",
     ).length;
-    villain.attackFromOwnEffects = villainCount * 2;
+    villain.attackFromOwnEffects += villainCount * 2;
   }
 
   if (villain.name === "Captain Atlas") {
-    villain.attackFromOwnEffects = mastermind.shards || 0;
+    villain.attackFromOwnEffects += mastermind.shards || 0;
+  }
+
+  // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1 effects 1-3 + Batch 4
+  // D4-c grant). Last Stand, Dark Memories, Lethal Legion +3-while-Location, AND the
+  // Watchtower/Dark-Dimension co-location grant (city index i passed so the grant can read
+  // cityLocations[i]). Recomputes every render; additive (D4-b). ---
+  if (typeof revelationsVillainOwnAttack === "function") {
+    const revOwn = revelationsVillainOwnAttack(villain, i);
+    if (revOwn > 0) {
+      villain.attackFromOwnEffects += revOwn;
+    }
+  }
+
+  // Sentry → "The Void": +5 Attack while in The Streets or The Bank.
+  // Same position determination as sentryFight()/isVoid, now via the resize-safe helper.
+  // Name-swap display deferred.
+  if (villain.name === "Sentry" && isBankOrStreets(i)) {
+    villain.attackFromOwnEffects += 5;
+  }
+
+  // Mister Hyde → "Dr. Calvin Zabo": while in The Bank or The Streets he is fought with
+  // Recruit instead of Attack. Setting this flag here (every render, true OR false) makes the
+  // three CITY cost read-sites position-aware with zero edits to them: the two updateHighlights
+  // twins (affordability) and the city defeat-cost deduction. recalculateVillainAttack recomputes
+  // this via updateVillainAttackValues(card, cityIndex) BEFORE each read, and createVillainCopy
+  // carries it onto the fight copy for the display name. Unconditional assignment (not a +=
+  // accumulator) so the flag flips back to false when Hyde leaves Bank/Streets. The fourth read-
+  // site — the HQ defeat-cost deduction — is handled by the parallel block in the HQ twin
+  // (updateHQVillainAttackValues), which forces the flag false (HQ has no Bank/Streets position).
+  if (villain.name === "Mister Hyde") {
+    villain.usesRecruitToFight = isBankOrStreets(i);
   }
 
   //Attack from Shards
@@ -9867,10 +10617,9 @@ function recalculateHQVillainAttack(villainCard) {
 
 function updateHQVillainAttackValues(villain) {
   const mastermind = getSelectedMastermind();
-  const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
+  // getActiveScheme() so scheme-based attack bonuses follow a Transform (E-6).
+  // HQ twin of updateVillainAttackValues — keep both in sync (duplicate-fn hazard).
+  const scheme = getActiveScheme();
 
   villain.attackFromMastermind = 0;
   villain.attackFromScheme = 0;
@@ -9882,6 +10631,13 @@ function updateHQVillainAttackValues(villain) {
 
   if (mastermind.alwaysLeadsBonus && villain.alwaysLeads === true) {
     villain.attackFromMastermind = mastermind.alwaysLeadsBonus.attack || 0;
+  }
+
+  if (
+    (mastermind.name === "Mandarin" || mastermind.name === "Epic Mandarin") &&
+    villain.team === "Mandarin's Rings"
+  ) {
+    villain.attackFromMastermind = mastermind.name === "Epic Mandarin" ? 2 : 1;
   }
 
   //Attack From Scheme Effects
@@ -9900,12 +10656,12 @@ function updateHQVillainAttackValues(villain) {
     villain.attackFromScheme = villain.bystander.length;
   }
 
-  if (
-    scheme.name === "Portals to the Dark Dimension" &&
-    currentPermBuff !== 0
-  ) {
-    villain.attackFromScheme = currentPermBuff;
-  }
+  // NOTE: No "Portals to the Dark Dimension" branch here (unlike the city twin at
+  // updateVillainAttackValues). The Portals perm-buff is CITY-SPACE-scoped — it lives in
+  // cityPermBuff[i] keyed by city index and is granted only to villains in the city. A
+  // villain in HQ (possible via the PtTR mechanic) has no city index and no perm-buff, so
+  // there is nothing to add. The HQ twin also has no `i`/`currentPermBuff` in scope, so
+  // copying the city branch here would throw a ReferenceError. Do NOT "restore symmetry".
 
   if (
     scheme.name === `Replace Earth's Leaders with Killbots` &&
@@ -9919,6 +10675,21 @@ function updateHQVillainAttackValues(villain) {
     villain.skrulled === true
   ) {
     villain.attackFromScheme = villain.cost + 2;
+  }
+
+  // House of M / No More Mutants: each seeded Scarlet Witch is a Villain with Attack = its cost
+  // +3 (Side A "House of M") / +4 (Side B "No More Mutants"). Keyed on the side-stable endGame
+  // field (NOT scheme.name) — the Side-B DB name is the literal string '"No More Mutants"' WITH
+  // embedded double-quotes (cardDatabase.js), so a name-string match would silently fail after the
+  // Transform and drop the attack to 0. endGame is "houseOfMEvilWins" (A) / "noMoreMutantsEvilWins"
+  // (B). Keep identical in both attack-value twins (duplicate-fn hazard).
+  if (
+    villain.scarletWitch === true &&
+    (scheme.endGame === "houseOfMEvilWins" ||
+      scheme.endGame === "noMoreMutantsEvilWins")
+  ) {
+    villain.attackFromScheme =
+      villain.cost + (scheme.endGame === "noMoreMutantsEvilWins" ? 4 : 3);
   }
 
   if (
@@ -9952,13 +10723,18 @@ function updateHQVillainAttackValues(villain) {
   }
 
   //Attack from Villain Effects - (Skrulls handled within function)
+  // ADDITIVE CONVENTION (D4-b): mirrors the city twin (updateVillainAttackValues).
+  // attackFromOwnEffects is reset to 0 above, then every contribution ACCUMULATES with +=
+  // (never =) so multiple own-effects sum instead of clobbering. Keep identical to the
+  // city twin (duplicate-fn hazard). HQ has no Locations, so the D4-c grant + Sentry-Void
+  // (both city-only) are intentionally absent here.
 
   if (
     villain.name === `Blockbuster` &&
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length * 2;
+    villain.attackFromOwnEffects += villain.bystander.length * 2;
   }
 
   if (
@@ -9966,7 +10742,7 @@ function updateHQVillainAttackValues(villain) {
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length * 3;
+    villain.attackFromOwnEffects += villain.bystander.length * 3;
   }
 
   if (
@@ -9974,7 +10750,7 @@ function updateHQVillainAttackValues(villain) {
     villain.bystander &&
     villain.bystander.length > 0
   ) {
-    villain.attackFromOwnEffects = villain.bystander.length;
+    villain.attackFromOwnEffects += villain.bystander.length;
   }
 
   if (
@@ -9982,7 +10758,7 @@ function updateHQVillainAttackValues(villain) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (
@@ -9990,7 +10766,7 @@ function updateHQVillainAttackValues(villain) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (
@@ -9998,11 +10774,13 @@ function updateHQVillainAttackValues(villain) {
     villain.heroAttack &&
     villain.heroAttack > 0
   ) {
-    villain.attackFromOwnEffects = villain.heroAttack;
+    villain.attackFromOwnEffects += villain.heroAttack;
   }
 
   if (villain.name === "Doppelganger") {
-    villain.attackFromOwnEffects = 0;
+    // HQ Doppelganger has no own-effect bonus (city version reads hq[i].cost; HQ has no
+    // such position). Reset-to-0 above already handles it — explicit no-op for parity.
+    villain.attackFromOwnEffects += 0;
   }
 
   if (villain.name === "Kraven the Hunter") {
@@ -10013,14 +10791,35 @@ function updateHQVillainAttackValues(villain) {
       .map((card) => card.cost);
 
     const highestCost = heroCosts.length ? Math.max(...heroCosts) : 0;
-    villain.attackFromOwnEffects = highestCost;
+    villain.attackFromOwnEffects += highestCost;
   }
 
   if (villain.name === "Sandman") {
     const villainCount = city.filter(
       (obj) => obj && obj.type === "Villain",
     ).length;
-    villain.attackFromOwnEffects = villainCount * 2;
+    villain.attackFromOwnEffects += villainCount * 2;
+  }
+
+  // --- Revelations keyword / Location attack bonuses (Cluster D Batch 1 effects 1-3; HQ twin) ---
+  // Mirror of the city updateVillainAttackValues block — keep both in sync (duplicate-fn hazard).
+  // Called WITHOUT a city index: Sentry +5 (position-dependent) AND the D4-c Watchtower/
+  // Dark-Dimension co-location grant are city-only and intentionally inert here (HQ has no
+  // Locations and no city-space position). Only the own-keyword + Lethal-Legion bonuses apply.
+  if (typeof revelationsVillainOwnAttack === "function") {
+    const revOwn = revelationsVillainOwnAttack(villain);
+    if (revOwn > 0) {
+      villain.attackFromOwnEffects += revOwn;
+    }
+  }
+
+  // Mister Hyde → "Dr. Calvin Zabo" is a CITY-position effect (Bank/Streets). The HQ has no
+  // city-space position, so a Hyde that lands in the HQ (e.g. a Paint the Town Red villain-to-HQ
+  // swap) is always plain Mister Hyde, fought with Attack. Force the flag false here so the HQ
+  // defeat-cost read can't inherit a stale `true` from his last city render (parallel-twin
+  // invariant — mirror of the city block in updateVillainAttackValues, kept inert like Sentry +5).
+  if (villain.name === "Mister Hyde") {
+    villain.usesRecruitToFight = false;
   }
 
   //Attack from Shards
@@ -10251,6 +11050,36 @@ function updateEvilWinsTracker() {
       evilWinsText.innerHTML = `${shardSupply} ${shardSupply === 1 ? "Shard" : "Shards"} Left. Mastermind has ${mastermind.shards || 0}/10`;
       break;
 
+    case "Secret HYDRA Corruption":
+      // Evil wins at 15 Officers next to the Scheme OR the shared Officer stack (shieldDeck)
+      // empty. Show both the next-to-scheme progress and the remaining stack. PT-3.
+      evilWinsText.innerHTML = `${typeof hydraOfficersNextToScheme !== "undefined" ? hydraOfficersNextToScheme : 0}/15 Officers Next to Scheme · ${shieldDeck.length} in Stack`;
+      break;
+
+    case "Earthquake Drains the Ocean": {
+      // Earthquake/Tsunami loss = 3 escaped Villains (solo). Escaped non-Location Henchmen count
+      // (a Henchman is a Villain subtype), but Locations are NEVER Villains (ruling REVERSED
+      // 2026-06-19, docs/rules-notes/revelations.md + core.md): a Location-typed Henchman like
+      // HYDRA Base does NOT count even though it carries subtype "Henchman". Exclude type
+      // "Location"; real Locations and bystanders/heroes are also excluded. Mirrors the
+      // earthquakeEvilWins loss check in checkEvilWins (keep in sync). The DOM scheme radio stays
+      // "Earthquake Drains the Ocean" even after the Tsunami transform, so this covers both sides.
+      const escapedEnemiesCount = escapedVillainsDeck.filter(
+        (card) =>
+          card.type !== "Location" &&
+          (card.type === "Villain" || card.subtype === "Henchman"),
+      ).length;
+      evilWinsText.textContent = `${escapedEnemiesCount}/3 Villains Escaped`;
+      break;
+    }
+
+    case "House of M":
+      // Side-B (No More Mutants) loss = non-grey Heroes in the KO pile >= 10 + 2*players
+      // (solo threshold 12). Mirrors the noMoreMutantsEvilWins check. The DOM scheme radio
+      // stays "House of M" after the transform, so this case covers both sides.
+      evilWinsText.textContent = `${KOdHeroes}/12 Non-Grey Heroes KO'd`;
+      break;
+
     default:
       evilWinsText.innerHTML = `See Scheme`;
   }
@@ -10263,6 +11092,7 @@ function drawCard() {
   }
   const card = playerDeck.pop();
   playerHand.push(card);
+  cardsInHandThisTurn.add(card); // Photon "Light the Way" tracking (mid-turn + opening-hand draws)
   console.log("Card drawn");
   updateGameBoard();
 }
@@ -10896,6 +11726,26 @@ if (card.temporaryTeleport === true) {
 
   selectedCards = [];
   justAddedToDiscard = [];
+  cardsInHandThisTurn = new Set(); // Photon "Light the Way": clear hand-membership tracking for the new turn
+  // Revert any "this turn" identity overrides (e.g. Ronin – Mysterious Identity) so the
+  // chosen color/class/team never leak past this turn into discard/KO-pile class/team
+  // reads (e.g. Dark Memories). Sweep every pile a played card may have moved to this
+  // turn — the destroy/discard passes above can splice a card out of cardsPlayedThisTurn,
+  // so a single pass over that array alone could miss one.
+  [cardsPlayedThisTurn, playerDiscardPile, koPile].forEach((pile) => {
+    if (!Array.isArray(pile)) return;
+    pile.forEach((card) => {
+      if (card && card._origStored) {
+        card.classes = card._origClasses;
+        card.color = card._origColor;
+        card.team = card._origTeam;
+        delete card._origClasses;
+        delete card._origColor;
+        delete card._origTeam;
+        delete card._origStored;
+      }
+    });
+  });
   cardsPlayedThisTurn = [];
   totalAttackPoints = 0;
   totalRecruitPoints = 0;
@@ -10926,6 +11776,9 @@ if (card.temporaryTeleport === true) {
   sewerRooftopDefeats = 0;
   sewerRooftopBonusRecruit = 0;
   extraThreeRecruitAvailable = 0;
+  militaryComplexRecruit = 0;
+  overwhelmingFirepowerBonus = 0;
+  isMastermindDefeat = false;
   thingCrimeStopperRescue = false;
   spiderWomanArachnoRecruit = false;
   throgRecruit = false;
@@ -10959,6 +11812,7 @@ if (card.temporaryTeleport === true) {
   shardsForRecruitEnabled = false;
   gamoraGodslayerOne = false;
   gamoraGodslayerTwo = false;
+  hyperspeedCountsBoth = false;
 
   playerHand.forEach((card) => {
     if (card.temporaryTeleport === true) {
@@ -11023,6 +11877,32 @@ if (card.temporaryTeleport === true) {
 
     galactusForceOfEternityDraw = false;
   }
+
+  // "Zero, The Ice Blast" (Mandarin's Ring) — its Fight effect flags a 0-cost card the player
+  // played this turn with addToHandEndOfTurn. Now that the new hand is drawn, pull each flagged
+  // card into the hand as an extra card and clear the flag so it never recurs. The card normally
+  // sits in the discard pile, but a deck reshuffle during the draw can move it into the deck (or
+  // it may already have been drawn into the hand), so check all three zones. Graceful no-op if the
+  // card can't be found anywhere (e.g. it was KO'd this turn).
+  const retrieveZeroIceBlastCards = (pile) => {
+    for (let i = pile.length - 1; i >= 0; i--) {
+      if (pile[i].addToHandEndOfTurn) {
+        const card = pile.splice(i, 1)[0];
+        card.addToHandEndOfTurn = false;
+        playerHand.push(card);
+        onscreenConsole.log(`<span class="console-highlights">Zero, The Ice Blast</span>: <span class="console-highlights">${card.name}</span> added to your hand as an extra card.`);
+      }
+    }
+  };
+  retrieveZeroIceBlastCards(playerDiscardPile);
+  retrieveZeroIceBlastCards(playerDeck);
+  // If a flagged card was already drawn into the hand by a mid-draw reshuffle, just clear the flag.
+  playerHand.forEach((c) => { if (c.addToHandEndOfTurn) c.addToHandEndOfTurn = false; });
+
+  // Photon "Light the Way": snapshot the COMPLETE opening hand after all turn-start drawing (this
+  // catches cards added via the cardsToBeDrawnNextTurn direct-push path in drawOne, not just
+  // drawCard). The Set dedups against any already added by the drawCard hook during the loop.
+  playerHand.forEach((c) => cardsInHandThisTurn.add(c));
 
   sortPlayerCards();
 
@@ -11117,6 +11997,21 @@ function isVillainConditionMet(villainCard) {
       return zeroCostCount >= 3;
     }
 
+    case "twoIdenticalCards": {
+      // The Brothers Grimm: "To fight, you must also discard two identical cards." The pair is
+      // discarded from HAND, so gate on the HAND specifically — NOT cardsYouHave, which also counts
+      // cards played this turn and artifacts that can't be discarded. True when any name appears at
+      // least twice in hand (so the discard cost is actually payable). Paid in brothersGrimmFight().
+      const grimmNameCounts = new Map();
+      for (const card of playerHand) {
+        if (!card?.name) continue;
+        const n = (grimmNameCounts.get(card.name) || 0) + 1;
+        grimmNameCounts.set(card.name, n);
+        if (n >= 2) return true;
+      }
+      return false;
+    }
+
     default:
       console.warn(`Unknown fight condition: ${fightCondition}`);
       return false;
@@ -11174,7 +12069,17 @@ function showAttackButton(cityIndex, location = "city") {
     }
   }
 
-  if (playerAttackPoints + reservedAttack >= villainAttack) {
+  // Recruit-only fight (e.g. Mister Hyde as "Dr. Calvin Zabo" in the Bank/Streets): the cost must
+  // be paid from RECRUIT, not Attack. The two updateHighlights() twins already gate the cosmetic
+  // highlight on this flag, but this is the REAL click gate — without it, having enough Attack
+  // shows the button and defeatVillain then drains Recruit into the negative. (Obs 17, 2026-06-11.)
+  // recalculateVillainAttack() above refreshed villainCard.usesRecruitToFight for this position.
+  const usesRecruitToFight = villainCard.usesRecruitToFight === true;
+  const canFight = usesRecruitToFight
+    ? totalRecruitPoints >= villainAttack
+    : playerAttackPoints + reservedAttack >= villainAttack;
+
+  if (canFight) {
     // Create or update the attack button
     let attackButton = cityCell.querySelector(".attack-button");
     if (!attackButton) {
@@ -11184,7 +12089,7 @@ function showAttackButton(cityIndex, location = "city") {
     }
 
     // Update the button text and style
-    attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"</span>`;
+    attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"></span>`;
     attackButton.style.display = "block";
 
     // Handle button click with proper async/await and error handling
@@ -11216,7 +12121,14 @@ function showAttackButton(cityIndex, location = "city") {
       document.addEventListener("click", handleClickOutside);
     }, 0);
   } else {
-    if (
+    if (usesRecruitToFight) {
+      // Recruit-only fight (Mister Hyde as "Dr. Calvin Zabo" in Bank/Streets):
+      // the cost is paid from Recruit, so the fail message must say Recruit, not
+      // Attack. (R2-7, 2026-06-15.)
+      onscreenConsole.log(
+        `You need ${villainAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`,
+      );
+    } else if (
       recruitUsedToAttack === "true" ||
       (villainCard.keywords && villainCard.keywords.includes("Bribe"))
     ) {
@@ -11295,7 +12207,7 @@ function showHQAttackButton(index) {
     }
 
     // Update the button text and style
-    attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"</span>`;
+    attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"></span>`;
     attackButton.style.display = "block";
 
     // Handle button click with proper async/await and error handling
@@ -11347,6 +12259,140 @@ function showHQAttackButton(index) {
       }
     }
   }
+}
+
+// Effective attack cost of the Location at cityIndex: base + bonusWhileVillain while a Villain
+// shares the same city space ("while there's a Villain here"). Generalizes the former HYDRA-Base
+// subtype==="Henchman" +2 into a single engine-read field (E-3). Returns 0 if no Location there.
+function getLocationEffectiveAttack(cityIndex) {
+  const loc = cityLocations[cityIndex];
+  if (!loc) return 0;
+  const villainPresent = city[cityIndex] !== null && city[cityIndex] !== undefined;
+  const bonus = villainPresent && loc.bonusWhileVillain ? loc.bonusWhileVillain : 0;
+  return Math.max(0, (loc.attack || 0) + bonus);
+}
+
+// Points spendable as ATTACK against a fight at cityIndex, honoring the same rules the villain
+// path uses (updateHighlights / defeatVillain): recruit-as-attack (Thor "God of Thunder" →
+// recruitUsedToAttack), Negative Zone swap, and reserved attack for the space. (PT-6 fix.)
+function getAvailableAttackForFight(cityIndex) {
+  // The mastermind reserve is a separate scalar; city spaces are indices 0..citySize-1. Any index
+  // at/after citySize is the mastermind sentinel. Using citySize (not a hardcoded 5) keeps this
+  // correct in large cities (Earthquake/Tsunami, citySize 6-7) where index 5+ are real spaces. (H1)
+  const isMastermindSlot = cityIndex >= citySize;
+  const reserved =
+    (isMastermindSlot ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
+  let pool;
+  if (negativeZoneAttackAndRecruit) {
+    pool = totalRecruitPoints; // Negative Zone: recruit pays as attack
+  } else {
+    pool = totalAttackPoints + (recruitUsedToAttack ? totalRecruitPoints : 0);
+  }
+  return pool + reserved;
+}
+
+// Deduct `cost` for a Location fight at cityIndex, mirroring the defeatVillain payment path exactly:
+// when recruit-as-attack is active (Thor), the player chooses the attack/recruit split via the SAME
+// counter-popup villains use; otherwise reserved attack first, then attack (or recruit under Negative
+// Zone). Async because the popup is awaited.
+async function payLocationAttackCost(cityIndex, cost) {
+  const isMastermindSlot = cityIndex >= citySize; // mastermind sentinel = index past the city array (H1)
+  const reservedAvail = () =>
+    (isMastermindSlot ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
+  const spendReserved = (amt) => {
+    if (isMastermindSlot) mastermindReserveAttack -= amt;
+    else cityReserveAttack[cityIndex] -= amt;
+  };
+
+  if (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) {
+    // Player chooses the attack/recruit split (matches the villain counter-popup path).
+    const locationCard = cityLocations[cityIndex];
+    const result = await showCounterPopup(locationCard, cost);
+    let attackNeeded = result.attackUsed || 0;
+    const recruitNeeded = result.recruitUsed || 0;
+    const reservedUsed = Math.min(attackNeeded, reservedAvail());
+    if (reservedUsed > 0) {
+      spendReserved(reservedUsed);
+      attackNeeded -= reservedUsed;
+    }
+    totalAttackPoints -= attackNeeded;
+    totalRecruitPoints -= recruitNeeded;
+    onscreenConsole.log(
+      `You used ${result.attackUsed} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and ${result.recruitUsed} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${locationCard.name}</span>.`,
+    );
+  } else if (negativeZoneAttackAndRecruit) {
+    totalRecruitPoints -= cost;
+  } else {
+    const reservedUsed = Math.min(cost, reservedAvail());
+    if (reservedUsed > 0) spendReserved(reservedUsed);
+    totalAttackPoints -= cost - reservedUsed;
+  }
+  // NOTE: do NOT decrement cumulativeAttackPoints here. It is only ever incremented (attack generated
+  // this turn) and reset at turn start — it has no read site in the current codebase, and the
+  // villain-fight path never decrements it. Removing the subtraction is hygiene that aligns the
+  // Location path with the villain path; net-neutral to current behavior. (L2)
+}
+
+function showLocationAttackButton(cityIndex) {
+  const locationCard = cityLocations[cityIndex];
+  if (!locationCard) return;
+
+  const cityCell = document.querySelector(`#city-${cityIndex + 1}`);
+  if (!cityCell) return;
+
+  // Effective attack cost: base + bonusWhileVillain when a villain shares this space.
+  const effectiveAttack = getLocationEffectiveAttack(cityIndex);
+
+  // Check affordability — honor recruit-as-attack / Negative Zone / reserved like the villain path.
+  if (getAvailableAttackForFight(cityIndex) < effectiveAttack) {
+    onscreenConsole.log(
+      `You need ${effectiveAttack} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight <span class="console-highlights">${locationCard.name}</span>.`,
+    );
+    return;
+  }
+
+  // Find the location container within the city cell
+  const locationContainer = cityCell.querySelector(".location-card-container");
+  if (!locationContainer) return;
+
+  // Create or update the attack button inside the location container
+  let attackButton = locationContainer.querySelector(".attack-button");
+  if (!attackButton) {
+    attackButton = document.createElement("div");
+    attackButton.classList.add("attack-button");
+    locationContainer.appendChild(attackButton);
+  }
+
+  // Update the button text and style
+  attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"></span>`;
+  attackButton.style.display = "block";
+
+  // Handle button click
+  attackButton.onclick = async function () {
+    attackButton.style.display = "none";
+    healingPossible = false;
+
+    try {
+      await defeatLocation(cityIndex, effectiveAttack);
+    } catch (error) {
+      console.error("Location fight failed:", error);
+    } finally {
+      updateGameBoard();
+    }
+  };
+
+  // Handle clicks outside the button
+  const handleClickOutside = (event) => {
+    if (!attackButton.contains(event.target)) {
+      attackButton.style.display = "none";
+      document.removeEventListener("click", handleClickOutside);
+    }
+  };
+
+  // Add a slight delay to avoid immediately hiding the button
+  setTimeout(() => {
+    document.addEventListener("click", handleClickOutside);
+  }, 0);
 }
 
 function recalculateVillainAttack(villainCard) {
@@ -11462,6 +12508,97 @@ async function drawVillainCardsSequential(count) {
 }
 
 // ---------------------------------
+// Defeat a Location card
+// ---------------------------------
+async function defeatLocation(cityIndex, attackCost) {
+  const locationCard = cityLocations[cityIndex];
+  if (!locationCard) return;
+
+  playSFX("attack");
+
+  // Snapshot geometry for defeat animation
+  const cityCell = document.querySelector(`#city-${cityIndex + 1}`);
+  const locationContainer = cityCell ? cityCell.querySelector(".location-card-container") : null;
+  const locationImg = locationContainer ? locationContainer.querySelector(".card-image") : null;
+  let animationPromise = Promise.resolve();
+  if (locationContainer && locationImg) {
+    const rect = locationContainer.getBoundingClientRect();
+    animationPromise = animateDefeatFromRect(locationImg.src, rect);
+  }
+
+  // Deduct cost — counter-popup split when recruit-as-attack active, else reserved → attack /
+  // Negative-Zone recruit, like villains. Awaited (the popup is async).
+  await payLocationAttackCost(cityIndex, attackCost);
+
+  // Refresh the reserved-attack overlay — payLocationAttackCost may have spent reserved points, and
+  // the villain-fight path does this too (defeatVillain). Without it the reserve readout goes stale. (M2)
+  updateReserveAttackAndRecruit();
+
+  // Move to Victory Pile
+  victoryPile.push(locationCard);
+  onscreenConsole.log(
+    `Defeated Location <span class="console-highlights">${locationCard.name}</span> at ${citySpaceLabels[cityIndex]}. Worth ${locationCard.victoryPoints} VP.`,
+  );
+
+  // PT-2: rescue any Bystanders this Location captured (e.g. via Swordsman's ambush). Mirrors the
+  // villain rescue path (collectDefeatOperations): push to victoryPile + bystanderBonuses + rescue
+  // ability. cityLocations[] is NOT cloned, so capturedBystanders set at ambush persists on this live
+  // object — without this block they'd be silently destroyed when the Location is defeated.
+  if (Array.isArray(locationCard.capturedBystanders) && locationCard.capturedBystanders.length > 0) {
+    for (const bystander of locationCard.capturedBystanders) {
+      if (!bystander) continue;
+      onscreenConsole.log(
+        `<span class="console-highlights">${bystander.name}</span> rescued from <span class="console-highlights">${locationCard.name}</span>.`,
+      );
+      victoryPile.push(bystander);
+      bystanderBonuses();
+      await rescueBystanderAbility(bystander);
+    }
+    locationCard.capturedBystanders = [];
+  }
+
+  // Execute fight effect if present
+  if (locationCard.fightEffect && typeof window[locationCard.fightEffect] === "function") {
+    // GP-6b: a Location is an enemy you fight, so Mr. Fantastic's Ultimate Nullifier can cancel its
+    // OWN Fight effect (project decision — BROAD scope, pure Locations included; the card says
+    // "enemy", not "Villain"; see docs/rules-notes/revelations.md). This is a DIFFERENT dispatch
+    // from the GP-3e triggeredAbility negate in defeatVillain: that cancels a Location's "each other
+    // player" trigger fired when a Villain in its space is defeated; this cancels the Location's own
+    // fight effect when you fight the Location itself. No double-prompt risk — separate code paths,
+    // separate effects. Called with no args (matches the Tactic precedents; a Location has no
+    // Infinity-Gems team, so the no-arg path is correct).
+    // EXCEPTION: a Location carrying `cannotBeNullified` is NOT a real Location fight effect — it
+    // borrows the Location plumbing for a SCHEME on-defeat consequence (Korvac Revealed: "if you
+    // defeat Korvac, KO the Mastermind"). Per rules-oracle (docs/rules-notes/revelations.md) that is
+    // a Scheme consequence, not a card Fight effect, so the Ultimate Nullifier must NOT cancel it and
+    // the negate prompt would be nonsensical. Skip the prompt for those; GP-6b stays intact for every
+    // real Location fight effect (which never sets this flag).
+    let negate = false;
+    if (
+      !locationCard.cannotBeNullified &&
+      typeof promptNegateFightEffectWithMrFantastic === "function"
+    ) {
+      negate = await promptNegateFightEffectWithMrFantastic();
+    }
+    if (!negate) {
+      await window[locationCard.fightEffect](locationCard, cityIndex);
+    } else {
+      onscreenConsole.log(
+        `<span class="console-highlights">${locationCard.name}</span>'s Fight effect cancelled by Mr. Fantastic – Ultimate Nullifier.`,
+      );
+    }
+  }
+
+  // Clear from city
+  cityLocations[cityIndex] = null;
+
+  // Wait for cosmetic animation
+  await animationPromise;
+
+  updateGameBoard();
+}
+
+// ---------------------------------
 // Main: Defeat a villain (serial & deterministic)
 // ---------------------------------
 async function defeatVillain(cityIndex, isInstantDefeat = false) {
@@ -11514,7 +12651,13 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
     // Handle point deduction (skip for instant defeat)
     if (!isInstantDefeat) {
       try {
-        if (
+        if (villainCard.usesRecruitToFight) {
+          // Recruit-only fight — deduct entirely from recruit points
+          totalRecruitPoints -= villainAttack;
+          onscreenConsole.log(
+            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${resolveVillainDisplayName(villainCopy)}</span>.`
+          );
+        } else if (
           (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
           (villainCard.keywords && villainCard.keywords.includes("Bribe"))
         ) {
@@ -11523,8 +12666,10 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
           let attackNeeded = result.attackUsed || 0;
           let recruitNeeded = result.recruitUsed || 0;
 
-          // Use reserved attack points for this location first
-          const reservedAttackAvailable = (cityIndex === 5 ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
+          // Use reserved attack points for this location first.
+          // Mastermind sentinel = index past the city array (citySize), NOT a hardcoded 5 — in large
+          // cities (Earthquake/Tsunami) index 5+ are real city spaces. (H1 twin fix)
+          const reservedAttackAvailable = (cityIndex >= citySize ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
           const reservedAttackUsed = Math.min(
             attackNeeded,
             reservedAttackAvailable,
@@ -11532,7 +12677,7 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
 
           // Deduct from reserved points
           if (reservedAttackUsed > 0) {
-            if (cityIndex === 5) {
+            if (cityIndex >= citySize) {
               mastermindReserveAttack -= reservedAttackUsed;
             } else {
               cityReserveAttack[cityIndex] -= reservedAttackUsed;
@@ -11549,14 +12694,15 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
           );
         } else {
           if (!negativeZoneAttackAndRecruit) {
-            const reservedAttackAvailable = (cityIndex === 5 ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
+            // Mastermind sentinel = index past the city array (citySize), not a hardcoded 5. (H1 twin fix)
+            const reservedAttackAvailable = (cityIndex >= citySize ? mastermindReserveAttack : cityReserveAttack[cityIndex]) || 0;
             const reservedAttackUsed = Math.min(
               villainAttack,
               reservedAttackAvailable,
             );
 
             if (reservedAttackUsed > 0) {
-              if (cityIndex === 5) {
+              if (cityIndex >= citySize) {
                 mastermindReserveAttack -= reservedAttackUsed;
               } else {
                 cityReserveAttack[cityIndex] -= reservedAttackUsed;
@@ -11595,6 +12741,40 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
     cityIndex,
     isInstantDefeat,
   );
+
+  // Check for Location triggered ability in this space
+  if (cityLocations[cityIndex] && cityLocations[cityIndex].triggeredAbility) {
+    const locationCard = cityLocations[cityIndex];
+    const triggerName = locationCard.triggeredAbility;
+    const triggerFn = window[triggerName];
+    if (typeof triggerFn === "function") {
+      // GP-3e: the 10 self-applying "each other player" Location triggers are cancellable by
+      // Mr. Fantastic's Ultimate Nullifier. hoodsWarehouseTrigger (plays a Villain card — a
+      // different effect class, not an each-other-player effect) is intentionally excluded.
+      // promptNegateFightEffectWithMrFantastic() auto-resolves false (no popup) when the
+      // Nullifier isn't available, so this adds no prompt unless cancellation is actually possible.
+      const NEGATABLE_LOCATION_TRIGGERS = new Set([
+        "domeOfDarkforceTrigger", "laserMazeTrigger", "mazeOfBonesTrigger",
+        "whiteGorillaCultTrigger", "cultOfSkullsTrigger", "carnivalOfConcussionsTrigger",
+        "prisonOfCoffinsTrigger", "raftPrisonTrigger", "carnivalOfWondersTrigger",
+        "dragonOfHeavenTrigger",
+      ]);
+      let negate = false;
+      if (
+        NEGATABLE_LOCATION_TRIGGERS.has(triggerName) &&
+        typeof promptNegateFightEffectWithMrFantastic === "function"
+      ) {
+        negate = await promptNegateFightEffectWithMrFantastic();
+      }
+      if (!negate) {
+        await triggerFn(locationCard, cityIndex);
+      } else {
+        onscreenConsole.log(
+          `<span class="console-highlights">${locationCard.name}</span> trigger cancelled by Mr. Fantastic – Ultimate Nullifier.`,
+        );
+      }
+    }
+  }
 
   // Wait for the cosmetic animation to finish (keeps UI silky)
   await animationPromise;
@@ -11720,7 +12900,13 @@ async function defeatHQVillain(index) {
     // Handle point deduction (skip for instant defeat)
     if (!isInstantDefeat) {
       try {
-        if (
+        if (villainCard.usesRecruitToFight) {
+          // Recruit-only fight — deduct entirely from recruit points
+          totalRecruitPoints -= villainAttack;
+          onscreenConsole.log(
+            `You used ${villainAttack} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${resolveVillainDisplayName(villainCopy)}</span>.`
+          );
+        } else if (
           (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
           (villainCard.keywords && villainCard.keywords.includes("Bribe"))
         ) {
@@ -11813,7 +12999,16 @@ function createVillainCopy(villainCard) {
     alwaysLeads: villainCard.alwaysLeads,
     goblinToHeroAttackValue: villainCard.goblinToHeroAttackValue,
     goblinQueen: villainCard.goblinQueen,
-    shards: villainCard.shards
+    // House of M: seeded Scarlet Witch "Villain" — carried so the cost+N attack rule and the
+    // gain-as-Hero fight effect see the flag on the fight copy (avoids the Klaw-strip bug).
+    scarletWitch: villainCard.scarletWitch,
+    shards: villainCard.shards,
+    capturedHero: villainCard.capturedHero ? [...villainCard.capturedHero] : undefined,
+    // Mister Hyde: carry the position-derived recruit-fight flag onto the fight copy so the
+    // fight-effect can show "Dr. Calvin Zabo" vs "Mister Hyde". Captured from the last render
+    // (correct — position can't change between render and the defeat click). NOT mutated onto
+    // card.name (that is the findIndex identity key and would corrupt lookups).
+    usesRecruitToFight: villainCard.usesRecruitToFight
   };
 }
 
@@ -12533,7 +13728,7 @@ async function handlePostDefeat(
     console.log("20. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
-        defeatBonuses();
+        await defeatBonuses();
       }
       currentVillainLocation = null;
       removeCosmicThreatBuff(cityIndex);
@@ -12956,7 +14151,7 @@ async function handleHQPostDefeat(
     console.log("21. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
-        defeatBonuses();
+        await defeatBonuses();
       }
       if (typeof removeHQCosmicThreatBuff === 'function') {
         removeHQCosmicThreatBuff(index);
@@ -13291,7 +14486,7 @@ async function defeatNonPlacedVillain(villainCard) {
     console.log("13. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
-        defeatBonuses();
+        await defeatBonuses();
       }
     } catch (error) {
       console.error("Error in final cleanup:", error);
@@ -13592,6 +14787,20 @@ function getSelectedScheme() {
     "#scheme-section input[type=radio]:checked",
   )?.value;
   return schemes.find((s) => s.name === schemeName);
+}
+
+// Returns the CURRENTLY-ACTIVE scheme, following any in-game transform.
+// transformScheme() updates window.selectedScheme; setup-screen readers use the
+// DOM radio (which never changes), so post-transform they go stale (E-1/E-5/E-6).
+// Use this — not getSelectedScheme() / the inline DOM query — anywhere that must
+// see the current side after a scheme Transforms (twist dispatch, evil-wins check,
+// villain attack-value calcs). Lazy-inits the global from the DOM radio on first
+// use so it is correct even before any transform has happened.
+function getActiveScheme() {
+  if (typeof window.selectedScheme === "undefined" || !window.selectedScheme) {
+    window.selectedScheme = getSelectedScheme();
+  }
+  return window.selectedScheme;
 }
 
 async function showHeroKOPopup(villain) {
@@ -14308,6 +15517,8 @@ if (mastermind.shards && mastermind.shards > 0 && !mastermind.noShardBonus) {
   
   // Initialize attackFromGems to 0 for all masterminds
   mastermind.attackFromGems = 0;
+  mastermind.attackFromRings = 0;
+  mastermind.attackFromOwnEffects = 0;
 
 if (mastermind.name === "Thanos") {
 
@@ -14330,12 +15541,48 @@ if (mastermind.name === "Thanos") {
 
   mastermind.attackFromGems = villainsInVP * 2;
  }
-  
+
 }
+
+  if (mastermind.name === "Mandarin" || mastermind.name === "Epic Mandarin") {
+    const ringCount = victoryPile.filter(
+      (card) => card.team === "Mandarin's Rings",
+    ).length;
+    const isEpic = mastermind.name === "Epic Mandarin";
+    mastermind.attackFromRings = ringCount * (isEpic ? 6 : 3);
+  }
+
+  // --- Revelations mastermind attack-scaling (Cluster D Batch 2, effects 5 & 6) ---
+  // Grim Reaper: +1 (Epic +2) per Location-slot occupant in the city. cityLocations[] holds every
+  // Location-slot card incl. HYDRA Base (type "Location", henchmen:true), so a non-null count captures it.
+  // EXCLUDE Korvac (isSchemeVillain): "Korvac Revealed" counts as a Villain, not a Location (rulesheet
+  // p.2), so it must not feed this Location tally even though it lives in cityLocations[]. Sibling sites
+  // honouring the same flag: epicGrimReaperStrike (3+ Locations -> Wound) + swordsmanAmbush.
+  if (mastermind.name === "Grim Reaper" || mastermind.name === "Epic Grim Reaper") {
+    const locationCount =
+      typeof cityLocations !== "undefined" && Array.isArray(cityLocations)
+        ? cityLocations.filter(
+            (loc) => loc !== null && loc !== undefined && !loc.isSchemeVillain,
+          ).length
+        : 0;
+    mastermind.attackFromOwnEffects =
+      locationCount * (mastermind.name === "Epic Grim Reaper" ? 2 : 1);
+  }
+
+  // The Hood: Dark Memories (Epic = Double). +1 per unique discard class (cap 5), Double x2.
+  if (
+    mastermind.keywords &&
+    (mastermind.keywords.includes("Dark Memories") ||
+      mastermind.keywords.includes("Double Dark Memories")) &&
+    typeof calculateDarkMemories === "function"
+  ) {
+    const mult = mastermind.keywords.includes("Double Dark Memories") ? 2 : 1;
+    mastermind.attackFromOwnEffects = calculateDarkMemories() * mult;
+  }
 
   // Start with the mastermind's base attack value
   let mastermindAttack =
-    mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards - mastermind.attackFromGems;
+    mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards + mastermind.attackFromOwnEffects - mastermind.attackFromGems - mastermind.attackFromRings;
 
   // Ensure mastermindAttack doesn't drop below 0
   if (mastermindAttack < 0) {
@@ -14975,8 +16222,15 @@ async function handleMastermindPostDefeat(
   mastermind.bystanders = [];
   mastermind.XCutionerHeroes = [];
 
-  // Apply defeat bonuses
-  defeatBonuses();
+  // Apply defeat bonuses. This is the SOLE mastermind-defeat call site: gate the villain-only
+  // Military-Industrial Complex payout off via isMastermindDefeat (try/finally guarantees the
+  // flag resets even if the awaited rescue rejects). Overwhelming Firepower still fires (both paths).
+  isMastermindDefeat = true;
+  try {
+    await defeatBonuses();
+  } finally {
+    isMastermindDefeat = false;
+  }
   updateMastermindOverlay();
   updateGameBoard();
 
@@ -14996,8 +16250,12 @@ async function handleMastermindPostDefeat(
 function revealMastermindTactic(mastermind) {
   const tacticCard = mastermind.tactics.pop();
 
-  // Push the tactic to the victory pile
-  victoryPile.push(tacticCard);
+  // Push the tactic to the victory pile — EXCEPT transform-tactics (Revelations tactic→Location),
+  // which do NOT go to the Victory Pile when fought: their fightEffect places a Location in the city
+  // and that ONE card scores its VP once, when the Location is later defeated (PT-8 double-score fix).
+  if (!tacticCard.transformsToLocation) {
+    victoryPile.push(tacticCard);
+  }
   showTacticPopup(tacticCard);
   updateGameBoard();
 }
@@ -15064,6 +16322,15 @@ async function resolveTacticEffects(tacticCard) {
   (!tacticCard.name || tacticCard.name !== "Mysterio Mastermind Tactic")
 ) {
       negate = await promptNegateFightEffectWithMrFantastic();
+      // M1 (PT-8 negate edge): a transform-tactic's VP push was suppressed at revealMastermindTactic
+      // because its fightEffect normally places the scoring Location. If the fight effect is negated
+      // (Mr. Fantastic — Ultimate Nullifier cancels the ability, not the card's VP), no Location is
+      // placed, so the tactic must instead score its VP via the Victory Pile — exactly like a normal
+      // defeated tactic (whose push at 15676 is unconditional). The transform stays cancelled (the
+      // !negate guard below skips the fightEffect).
+      if (negate && tacticCard.transformsToLocation) {
+        victoryPile.push(tacticCard);
+      }
       checkMastermindState();
       resolve();
     }

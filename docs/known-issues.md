@@ -35,3 +35,27 @@ Accepted for now; revisit in next UI pass.
 **What's needed:** After all expansion inventories are complete, do a single pass across all expansions to catalogue every "other player" / "each other player" / "each player" card, then decide case-by-case how each should behave in Golden Solo.
 
 **Status:** Deferred — waiting until all expansion inventories are finalized so the full list is available. Will be addressed naturally by `/analyze-expansion` as each expansion is processed.
+
+---
+
+## Korvac (Revelations) — two documented modelling limitations
+
+**Context:** "Korvac Revealed" *counts as* a 19-Attack Villain but is engineered as a `type:"Location"` entry in `cityLocations[]` to reuse the fightable/render/defeat plumbing (`placeKorvac()`, `expansionRevelations.js`). It carries `isSchemeVillain:true`. The Grim Reaper "+1 per Location" attack, Epic Grim Reaper "3+ Locations → Wound", and Swordsman "each Location captures a Bystander" all exclude it (fixed 2026-06-04). Two leaks were deliberately **left as documented limitations** (coordinator decision, 2026-06-04):
+
+1. **Korvac is NOT counted by "for each Villain in the city" effects** (e.g. Sandman's +2 Attack per Villain). Because Korvac lives in `cityLocations[]`, not `city[]`, villain-count effects under-count by 1 while Korvac is revealed. **Why deferred:** player-favourable (the enemy reads *weaker*, never causes a loss), niche combo, and the fix is a cross-expansion change to villain-count code in 4 files (only Sandman can actually co-occur — GotG/PtTR villain counts are scheme-bound and can't share a game with the Korvac scheme).
+
+2. **Placing Korvac into a city whose Location slots are all full would KO the weakest real Location** (the overflow path KOs the lowest-Attack Location; Korvac at Attack 19 is always the highest, so it displaces a real one rather than being displaced). **Why deferred:** requires 5 Locations already in play at the moment Korvac reveals — near-unreachable. (The Earthquake/Tsunami "destroy a space" path that could silently KO Korvac cannot occur — those are a different scheme, and only one scheme is in play per game.)
+
+**Status:** Deferred by design — both are niche/near-unreachable and neither can cost the player a game. Revisit only if play surfaces them.
+
+---
+
+## Villain/Mastermind overlay UX pass
+
+**Problem:** Bystanders and captured heroes currently display as small thumbnails overlaid on the villain/mastermind card. This works functionally but doesn't match how physical cards look on the table.
+
+**Desired behavior:** Refactor to use the Location fan-out pattern (full-size cards shifted in position to look stacked, mimicking physical tabletop card placement). The Location system already implements this CSS pattern — extend it to bystander and captured-hero overlays.
+
+**Scope:** Cross-cutting — affects the base game bystander-on-villain display, Skrull captures, Klaw captures, and any future captured-card mechanic across all expansions.
+
+**Status:** Deferred — log as a standalone UX pass after Revelations merges. Klaw currently has no visual indicator for captured heroes (functional only via console messages).
