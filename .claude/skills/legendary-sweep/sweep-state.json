@@ -1,0 +1,8 @@
+{
+  "last_sweep": "2026-06-19",
+  "swept_sessions": [
+    "d881aa2e-f6cf-495e-b497-934f6bc309e6",
+    "9d6fa167-98b1-4464-a2a0-42ea11ad6799"
+  ],
+  "_note": "Created 2026-06-19 with the legendary-sweep skill. last_sweep = the last real Pass-A run date; swept_sessions = the authoritative 'already processed' ledger (session-ids, filename minus .jsonl). The two sessions above were processed as the build-time TRIAL (Pass A only; Pass B not yet run). NOTE: ~34 other historical transcripts exist across the main + worktree dirs and would all count as 'new' on the next unbounded run — before the first full run, decide with Paul whether to backfill all history or seed this ledger to start-from-now (see SKILL.md A1)."
+}
