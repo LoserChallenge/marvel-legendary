@@ -8791,9 +8791,9 @@ if (stackedTwistNextToMastermind > 0) {
     }
 
     if (destroyedSpaces[i]) {
-      // Clear any Location from a destroyed space
+      // Clear any Location from a destroyed space (player-facing announcement is
+      // already emitted via onscreenConsole.log in resizeCityForScheme())
       if (cityLocations[i] !== null) {
-        console.log(`Location "${cityLocations[i].name}" destroyed with city space.`);
         cityLocations[i] = null;
       }
 
