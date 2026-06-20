@@ -25,6 +25,15 @@ The condition counts cards played earlier this turn EXCLUDING the bearer card; t
 - ENGINE NOTE: the engine condition-check counts cards played this turn EXCLUDING the bearer, so an N-icon card coded with N condition entries fires at N others — which MATCHES the rulebook. Coding N entries for an N-icon card is CORRECT, not off-by-one too-strict. (Quicksilver ×4, Higher-Further-Faster ×2, Captain Marvel Sword-of-S.H.I.E.L.D. ×4 are correctly coded if each entry = one OTHER required card.)
 - Solo: identical (single player; "earlier in your turn" is the same turn-local condition). Applies to both Golden Solo and What If?.
 
+## Locations are NEVER Villains for ANY Villain-condition — game-wide (defeat-triggers, escape tallies, "for each Villain", targeting) — Paul owner ruling 2026-06-19
+
+A Location-type card never satisfies a "Villain" condition anywhere in the game, regardless of how it is fought or what group it belongs to. Rulesheet: *"Locations do not count as Villains. Special abilities that mention Villains do not work on Locations."* (this is unconditional and has NO Henchman-Location exception). Consequences, all settled:
+- "Whenever you defeat a Villain" triggers (e.g. War Machine "Military-Industrial Complex" +1 Recruit, Nightbringer) do NOT fire when you defeat a Location card itself — INCLUDING HYDRA Base (the "Henchman Location" — its Henchman label is cosmetic for this; ALL Locations are attack-fought, so attack-fought is not a distinguisher).
+- A Location does NOT count toward any Scheme's "N Villains escaped" / Villain-escape Evil-Wins tally (a Location is a PLACE; rulesheet: *"Once placed, Locations don't move"* — it cannot flee).
+- Applies to ALL schemes/cards, present and future, in BOTH solo modes.
+- EXCEPTION that is NOT a Location-condition: defeating a real Villain/Henchman that merely occupies the city space UNDER a Location IS a normal Villain defeat and DOES fire Villain triggers — the Location card is untouched by that.
+- Full reasoning + sources: `docs/rules-notes/revelations.md` (Locations-vs-Villains + HYDRA Base + Lethal Legion entries). Pre-merge: main-game code with "Villain" conditions must be walled off from Location-type cards.
+
 ## No general "bank an effect / hold a pending play for later this turn" primitive — CONFIRMED
 
 Core neither grants nor forbids banking an effect for later in the same turn; it simply has no banking concept (cards "do what they say" when played — Core p.11). Resolve-now is an INFERENCE from that absence, not a stated rule. Bears on Revelations "this turn" timing (Demon Sight / Chaos Magic / Hex Bolt). Full open-question record: `docs/rules-notes/open-rules-questions.md`.
