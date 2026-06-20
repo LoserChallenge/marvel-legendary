@@ -150,3 +150,16 @@ Ordered easiest → hardest.
 Verified against fresh on-disk source (no-store fetch + live-fn match confirmed, not stale cache). Both `gameMode` golden + whatif:
 - **Chaos Magic:** copy grants +atk/+rec on total AND cumulative; real revealed card removed from top and placed on heroDeck bottom (`heroDeck[0]`); deck length preserved; phantom in `cardsPlayedThisTurn` flagged isCopied+markedForDeletion+isSimulation; endTurn sweep removes phantom and it does NOT enter `playerDiscardPile` (golden). Decline ("No Thanks") leaves card on top, grants nothing, no phantom.
 - **Hex Bolt symbol-timing:** with a prior Range card played → copied [RANGED] superpower FIRES; with no prior Range and the copy's OWN class = Range → superpower does NOT fire (copy can't self-satisfy; `isConditionMet` slices off the last-pushed phantom). Unconditional ability always fires; real discarded card stays in discard.
+
+## R2-13 — Break the Sound Barrier picker softlock (commit 931670d) — ✅ VERIFIED 2026-06-20 (real end-to-end flow, tip 5830123)
+
+Served build confirmed branch (not stale): `pickFromCardsSingleRow` hides `.info-or-choice-popup`, `handleCardPlacement` hides `.card-choice-popup` — both R2-13 guards present in the live functions.
+
+Drove the REAL flow (not a synthetic forced-lingering-popup): injected Speed deck of 6 trackable cards, played `speedBreakTheSoundBarrier()`, multi-selected 2 to keep (BSB-1/2), then placed all 4 leftovers (BSB-3/4/5/6) one at a time through picker → TOP/BOTTOM:
+- **1st picker (4 cards):** no overlay, card topmost/clickable.
+- **2nd picker (3 cards) — the original softlock spot:** 0 overlaying info popups; all 3 cards `elementFromPoint`-topmost; a real Playwright click on a card REGISTERED and enabled "PLACE THIS CARD" (the previously-dead button). Screenshot: `docs/playwright-runs/2026-06-20/bsb-02-second-picker-3card.png`.
+- **3rd picker (2 cards):** clean, all clickable.
+- **Final card (1 left):** correctly skips picker, direct TOP/BOTTOM.
+- **Completion:** promise resolved (no hang), no exception, no lingering popup; all 6 cards accounted for (2 in hand, 4 back in deck), placement order correct (TOP=push, BOTTOM=unshift). Console clean except expected sw.js 404.
+
+PASS — no dead PLACE button, all leftovers placed, loop completes, no softlock. (Note: a first attempt that force-cleared the random start-cascade popups produced a stranded-promise stall — harness error, not a card bug; re-run with a clean start passed fully.)
