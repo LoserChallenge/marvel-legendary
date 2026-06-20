@@ -25,14 +25,16 @@ The condition counts cards played earlier this turn EXCLUDING the bearer card; t
 - ENGINE NOTE: the engine condition-check counts cards played this turn EXCLUDING the bearer, so an N-icon card coded with N condition entries fires at N others — which MATCHES the rulebook. Coding N entries for an N-icon card is CORRECT, not off-by-one too-strict. (Quicksilver ×4, Higher-Further-Faster ×2, Captain Marvel Sword-of-S.H.I.E.L.D. ×4 are correctly coded if each entry = one OTHER required card.)
 - Solo: identical (single player; "earlier in your turn" is the same turn-local condition). Applies to both Golden Solo and What If?.
 
-## Locations are NEVER Villains for ANY Villain-condition — game-wide (defeat-triggers, escape tallies, "for each Villain", targeting) — Paul owner ruling 2026-06-19
+## Locations & "Villain"/"Henchman" conditions — MATCH THE LITERAL KEYWORD. "Villain"-keyed skips Locations (incl. HYDRA Base); "Henchman"-keyed DOES hit HYDRA Base (it IS a Henchman). Game-wide. (Paul owner ruling 2026-06-19, refined.)
 
-A Location-type card never satisfies a "Villain" condition anywhere in the game, regardless of how it is fought or what group it belongs to. Rulesheet: *"Locations do not count as Villains. Special abilities that mention Villains do not work on Locations."* (this is unconditional and has NO Henchman-Location exception). Consequences, all settled:
-- "Whenever you defeat a Villain" triggers (e.g. War Machine "Military-Industrial Complex" +1 Recruit, Nightbringer) do NOT fire when you defeat a Location card itself — INCLUDING HYDRA Base (the "Henchman Location" — its Henchman label is cosmetic for this; ALL Locations are attack-fought, so attack-fought is not a distinguisher).
-- A Location does NOT count toward any Scheme's "N Villains escaped" / Villain-escape Evil-Wins tally (a Location is a PLACE; rulesheet: *"Once placed, Locations don't move"* — it cannot flee).
-- Applies to ALL schemes/cards, present and future, in BOTH solo modes.
-- EXCEPTION that is NOT a Location-condition: defeating a real Villain/Henchman that merely occupies the city space UNDER a Location IS a normal Villain defeat and DOES fire Villain triggers — the Location card is untouched by that.
-- Full reasoning + sources: `docs/rules-notes/revelations.md` (Locations-vs-Villains + HYDRA Base + Lethal Legion entries). Pre-merge: main-game code with "Villain" conditions must be walled off from Location-type cards.
+The rulebook carve-out names VILLAINS specifically: *"Locations do not count as Villains. Special abilities that mention Villains do not work on Locations."* It does NOT say "Locations aren't Henchmen." So the discriminator is the literal keyword the card/scheme uses:
+- **A "VILLAIN"-keyed condition never applies to a Location-type card** (incl. HYDRA Base, `type === "Location"`), regardless of how it's fought or what group it belongs to. All settled:
+  - "Whenever you defeat a Villain" triggers (War Machine "Military-Industrial Complex" +1 Recruit, Nightbringer) do NOT fire on defeating a Location card itself — HYDRA Base included.
+  - A Location does NOT count toward any Scheme's "N **Villains** escaped" / Villain-escape Evil-Wins tally (the scheme text says "Villains"; a Location is also a PLACE — rulesheet *"Once placed, Locations don't move"* — it cannot flee).
+  - "for each Villain", choose/KO/affect "a Villain" in the city — Locations excluded (they also live in `cityLocations[]`, not `city[]`).
+- **HYDRA Base IS a Henchman ("Henchman Location"), so a condition keyed on the word "HENCHMAN" (not "Villain") DOES apply to it.** The carve-out names Villains, not Henchmen, and HYDRA Base's printed type is Henchman. Worked example: War Machine "Simulated Target Practice" — *"fight a **Henchman** from your Victory Pile"* — a defeated HYDRA Base IS a valid target (CORRECT as-is, NOT a leak). Its Henchman identity is real, not cosmetic.
+- LEGITIMATE non-Location case: defeating a real Villain/Henchman that merely occupies the city space UNDER a Location IS a normal Villain defeat and DOES fire Villain triggers — the Location card is untouched.
+- Applies to ALL schemes/cards, present and future, BOTH solo modes. Full reasoning + sources: `docs/rules-notes/revelations.md` (Locations-vs-Villains + HYDRA Base + Lethal Legion entries).
 
 ## No general "bank an effect / hold a pending play for later this turn" primitive — CONFIRMED
 
