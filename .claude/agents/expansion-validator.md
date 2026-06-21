@@ -127,6 +127,12 @@ All `document.getElementById` and `document.querySelector` calls must have a nul
 
 ### Required fixes before merging
 [Numbered list of all issues with exact fix instructions]
+
+---
+
+⚠️ **NOT COVERED: What If? behavioral.** These 7 rules check Golden Solo structural compatibility only. What If? Solo divergences are behavioral, not structural — this validator cannot see them. Before merge, run the dual-mode gate: check the expansion's mechanics against `docs/mode-divergence-checklist.md` and run a dual-mode `/game-test` for every mechanic that touches a divergent row.
 ```
+
+This footer is **standing** — emit it on every run, pass or fail, so the What If? gap never silently goes unchecked.
 
 All 7 rules are blocking — do not merge if any fail. After reporting, ask the user if they want you to apply the fixes.

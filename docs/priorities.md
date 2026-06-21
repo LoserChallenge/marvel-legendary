@@ -6,17 +6,9 @@ Live task tracker (in-flight / deferred / ongoing / completed). **Not auto-loade
 
 ## 🔜 Next up (in-flight)
 
-### Build the expansion-pipeline process improvements (Changes 1–3)
-The main next piece of work. Reshape the pipeline *before* the next expansion build so card-text-vs-code bugs are caught at build time.
-- **Plan (reviewed + sandbox-vetted):** `docs/superpowers/plans/2026-06-20-next-expansion-process-improvements.md`
-- **Scope:** encode, via `/improve-skill` on `/analyze-expansion` + `/new-expansion`:
-  - frozen pre-build spec + **mandatory executable per-card `/game-test` assertion** (the real centerpiece — catches dead-triggers/stubs)
-  - separate spec-authoring from spec-auditing (freeze-before-code is the floor; lens separation the upgrade)
-  - per-card spec-confidence flag (ambiguous cards → mandatory dynamic test)
-  - dual-mode gate (mode-divergent-mechanic checklist + aliased `gameMode` grep as cheap first pass; `expansion-validator` "NOT COVERED: What If?" footer)
-  - wire `engine-gotchas.md`, `expansion-decisions.md`, and `docs/card-inventory/references/` into the spec step
-- **How to run it:** this is the designated **`/cc-coordinate`** job — first hands-on multi-step coding in this arc; an independent worker builds while the coordinator holds the review context.
-- **Then:** run the new pipeline on the next expansion and record the where-caught tally vs. the frozen Revelations baseline (in the plan) as a *directional* read.
+### Run the new pipeline on the next expansion (directional read)
+The Changes 1–3 tooling is built (see Recently completed). The remaining open loop is **efficacy**: pick the next expansion, run it through the reshaped pipeline, and record the where-caught tally vs. the frozen Revelations baseline (in the plan) as a *directional* read — n=1, not validation. Default-assume the new mechanism may NOT be helping until bug data across several expansions says it did; honor the kill criterion in the plan.
+- **Plan (baseline + kill criterion):** `docs/superpowers/plans/2026-06-20-next-expansion-process-improvements.md`
 
 ---
 
@@ -41,6 +33,7 @@ The main next piece of work. Reshape the pipeline *before* the next expansion bu
 
 ## ✅ Recently completed (with context worth keeping)
 
+- **2026-06-20 — Built the expansion-pipeline process improvements (Changes 1–3).** Reshaped the pipeline before the next expansion. New: `docs/expansion-specs/` (frozen per-card behavioral specs with executable `/game-test` assertions), `docs/mode-divergence-checklist.md` (dual-mode gate). `/new-expansion` gained **Phase 2.5** (author + freeze specs before code), build-to-spec + run-assertions in Phase 3, blind-compare-to-spec + dual-mode gate (Phase 4c) in Phase 4. `/analyze-expansion` now consults `expansion-decisions.md` and flags mode-divergent mechanics. `/expansion-audit` passes the frozen spec to auditors. `expansion-validator` emits a standing "NOT COVERED: What If?" footer. Reference layer (`engine-gotchas.md`, `expansion-decisions.md`, `card-inventory/references/`) wired into the spec step. Efficacy is unproven — the next expansion gives a directional read (above).
 - **2026-06-20 — Post-Revelations process-improvement road.** Bug-volume retrospective (`docs/revelations-retrospective.md`), full `/legendary-sweep` backfill (→ `docs/engine-gotchas.md` + `docs/expansion-decisions.md`), `/audit-project` + `/optimize-project`, and the reviewed improvement plan (above). Key finding: dominant Revelations bug bucket was card-text-vs-code with no build-time check; dual-mode divergence was NOT a real driver (~0 confirmed). Safe cleanup applied; deferred items listed above.
 - **2026-06-20 — Revelations merged to master.** First expansion built into the base game. Full history: `docs/expansion-progress/revelations.md`.
 - **By 2026-03-31 — Foundation:** UI revisions, Golden Solo mode, health check, scheme-hero-requirements infrastructure. (Code is the record; see `docs/golden-solo-history.md` for rationale/rules.)

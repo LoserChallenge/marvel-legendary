@@ -44,6 +44,7 @@ Pass each card-type auditor:
 - the expansion name
 - the engine-integration gap findings (the `E-N` list from Step 2) as context, so they can cite `RELATED: E-N`
 - a note that the pattern-reuse catalog (if present) is in `docs/expansion-mechanics/<expansion>.md`
+- **the frozen per-card spec at `docs/expansion-specs/<expansion>.md` (if present), with the instruction: blind-compare the code to the spec's intended-behavior + executable assertion — treat the spec as the contract, do NOT re-derive intent from the card.** Re-read the card only when the frozen spec itself looks self-inconsistent, and flag that as a finding. (This is the authoring-vs-auditing separation: the spec was frozen before the code in `/new-expansion` Phase 2.5; the audit is the independent lens checking against it.) If no spec file exists, fall back to the card text and note the spec was missing.
 
 Pass `keyword-consistency-auditor` the expansion name (it reads the mechanics doc's keyword section itself).
 

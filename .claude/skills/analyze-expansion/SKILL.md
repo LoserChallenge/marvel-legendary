@@ -38,6 +38,7 @@ Check if `docs/expansion-mechanics/[name].md` already exists.
    - New card type rules
    - Setup changes
    - Any rules that modify core gameplay (city, villain deck, HQ, win conditions)
+3. Read `docs/expansion-decisions.md` — the cross-expansion design & rules-interpretation precedents ("we chose X, here's why"). Reuse a prior decision rather than re-litigating it; if this expansion raises a genuinely new precedent, you'll add it here at the end.
 
 ---
 
@@ -68,6 +69,8 @@ Which existing systems does this touch? Does it fit cleanly into existing patter
 Address BOTH modes explicitly:
 - **Golden Solo** — HQ rotation effects, villain draw interactions, "other player" effects, Final Showdown impact
 - **What If? Solo** — single villain group restrictions, reduced hero count, any mechanics that assume multiplayer setup counts
+
+**Check the mechanic against `docs/mode-divergence-checklist.md`.** For each mechanic, record whether it touches a divergent row (villain draw count, HQ refill, bystander spend, villain group count, win condition, "each other player" wording, player-count scaling, etc.). Mechanics that touch a row are flagged **mode-divergent** in the mechanics doc — `/new-expansion`'s Phase 4c dual-mode gate uses that flag to force both-mode `/game-test`.
 
 Flag anything that needs a decision from the user.
 
@@ -118,6 +121,7 @@ Sources: [rules PDF filename], [inventory filename]
 **Rules definition:** [Verbatim from rulebook]
 **Implementation approach:** [How it maps to the engine — plain English]
 **Solo mode notes:** [Golden Solo and What If? adaptations, decisions made]
+**Mode-divergent?:** No / Yes (mode-divergence-checklist rows: [list]) — drives the Phase 4c dual-mode gate
 **Complexity:** Fits Cleanly / New Capability / Core Engine Change
 
 ---
@@ -128,6 +132,7 @@ Sources: [rules PDF filename], [inventory filename]
 **Rules definition:** [How this type works]
 **Implementation approach:** [How it maps to the engine]
 **Solo mode notes:** [Adaptations for both modes]
+**Mode-divergent?:** No / Yes (mode-divergence-checklist rows: [list]) — drives the Phase 4c dual-mode gate
 **Complexity:** [Rating]
 
 ---
@@ -138,6 +143,7 @@ Sources: [rules PDF filename], [inventory filename]
 **Rules definition:** [How this system works]
 **Implementation approach:** [How it maps to the engine]
 **Solo mode notes:** [Adaptations for both modes]
+**Mode-divergent?:** No / Yes (mode-divergence-checklist rows: [list]) — drives the Phase 4c dual-mode gate
 **Complexity:** [Rating]
 
 ---
@@ -167,6 +173,12 @@ Sources: [rules PDF filename], [inventory filename]
 
 [Anything unresolved — for user to think about or test with physical cards before implementation begins]
 ```
+
+---
+
+## Step 4.5: Record New Precedents
+
+If analyzing this expansion produced a new cross-expansion design or rules-interpretation decision (a "we chose X because Y" that future expansions will face too — e.g. how a keyword resolves in solo, how an "each other player" effect is handled), append it to `docs/expansion-decisions.md`. Skip if every decision reused an existing precedent.
 
 ---
 

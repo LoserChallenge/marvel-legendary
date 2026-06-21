@@ -233,6 +233,8 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `docs/expansion-pipeline-status.md` — pipeline progress table for all expansions
 - `docs/expansion-mechanics/` — mechanics reference docs produced by `/analyze-expansion`
 - `docs/expansion-progress/` — implementation progress files produced by `/new-expansion`
+- `docs/expansion-specs/` — frozen per-card behavioral specs (effect text + intended behavior + engine function + executable `/game-test` assertion + confidence flag), authored in `/new-expansion` Phase 2.5 BEFORE effect code; the contract the Phase 4 audit blind-compares against
+- `docs/mode-divergence-checklist.md` — authoritative gate for dual-mode testing: the mechanics that behave differently in Golden vs What If? Solo. Consulted in `/analyze-expansion` (flag mechanics) and `/new-expansion` Phase 4c (force dual-mode `/game-test`)
 - `docs/priorities.md` — live task tracker (in-flight / deferred / ongoing / completed); consult on direction
 - `docs/known-issues.md` — detailed descriptions of open/deferred issues
 - `docs/golden-solo-history.md` — Golden Solo implementation history, architectural rules, testing checklist
@@ -281,8 +283,8 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - `/stage-expansion` — organizes and renames files in a raw staging folder
 - `/inventory-creator` — builds Pass 1 card inventory file; any expansion, full or partial scope
 - `/inventory-verifier` — Pass 2 independent verification in a fresh session
-- `/analyze-expansion` — collaborative rules analysis; produces mechanics reference in `docs/expansion-mechanics/`; final step dispatches `pattern-reuse-scout`
-- `/new-expansion` — multi-phase code integration with progress tracking in `docs/expansion-progress/`; Phase 4 runs `/expansion-audit`
+- `/analyze-expansion` — collaborative rules analysis; produces mechanics reference in `docs/expansion-mechanics/`; flags each mechanic against `docs/mode-divergence-checklist.md`; consults `docs/expansion-decisions.md`; final step dispatches `pattern-reuse-scout`
+- `/new-expansion` — multi-phase code integration with progress tracking in `docs/expansion-progress/`; **Phase 2.5 authors + freezes per-card behavioral specs (with executable `/game-test` assertions) to `docs/expansion-specs/` BEFORE any effect code**; Phase 3 builds-to-spec and runs the assertions; Phase 4 runs `/expansion-audit` (blind-compare to spec) + the dual-mode gate
 - `/expansion-audit` — pre-merge audit pipeline: dispatches `engine-integration-auditor` → `expansion-validator` → 6 card-type auditors + `keyword-consistency-auditor`, consolidates findings to `docs/audit-results/`. Spec: `docs/superpowers/specs/2026-05-28-expansion-audit-pipeline-design.md`
 
 **Skills (other):**
@@ -292,7 +294,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 
 **Subagents:**
 - `codebase-navigator` — targeted code searches without flooding context
-- `expansion-validator` — validates expansion JS against 7 Golden Solo rules; run inside `/expansion-audit`
+- `expansion-validator` — validates expansion JS against 7 Golden Solo rules; run inside `/expansion-audit`; emits a standing "NOT COVERED: What If? behavioral" footer (it's Golden-only — dual-mode gate is separate)
 - **Expansion audit pipeline** (run via `/expansion-audit`, see `docs/superpowers/specs/2026-05-28-expansion-audit-pipeline-design.md`):
   - `engine-integration-auditor` — discovers engine touchpoints + finds state-propagation gaps (E-N IDs)
   - `pattern-reuse-scout` — finds prior-art implementations of new mechanics. Run in `/analyze-expansion` AND as the mandatory reuse-first survey before building any new mechanic (rule 9)

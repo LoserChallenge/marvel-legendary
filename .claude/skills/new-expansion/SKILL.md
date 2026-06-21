@@ -106,11 +106,64 @@ Show the user a summary:
 
 ---
 
+## Phase 2.5: Author & Freeze Per-Card Behavioral Specs (the build-time check)
+
+This is the layer that was missing in Revelations: a per-card **behavioral check authored BEFORE any effect code exists**, whose centerpiece is an **executable `/game-test` assertion**. A static document alone is not verification — it is the scaffolding that produces the assertion. The assertion is what catches the bug classes that actually hurt (dead triggers that never fire, stub functions that only log, auto-pick shortcuts) — static review reads those as plausible and misses them.
+
+**Save to** `docs/expansion-specs/[name].md`. **Freeze it (commit) before writing a single line of Phase 3 effect code.** Freezing intent before the code exists is the non-negotiable floor: it stops the later audit from rationalizing whatever the code does back into "I guess that's what the card meant." Temporal ordering secures that benefit on its own.
+
+### What gets a spec, and how deep
+
+Scope spec depth to card complexity:
+- **Trivial / vanilla** (e.g. plain "+2 Attack", "+1 Recruit", a Wound with no rider) — one-line spec, assertion optional.
+- **Non-trivial** (any trigger, choice, draw, KO, villain/HQ interaction, keyword, transform, setup change) — full spec with a concrete executable assertion.
+
+If a card *looks* vanilla but its intent is genuinely uncertain, **promote it to non-trivial** so it gets a full spec block and can carry a `confidence: LOW` flag — never let ambiguity hide behind "it's just +2 Attack." Confidence overrides complexity.
+
+### Per-card spec format
+
+For each non-trivial card:
+
+```markdown
+### [Card Name]  (confidence: HIGH | LOW)
+- **Effect text:** [verbatim from inventory] — *(inventory stamp: docs/card-inventory/final/[name].md, YYYY-MM-DD)*
+- **Intended behavior:** [plain English — what should observably happen]
+- **Engine function / pattern:** [from engine-gotchas.md + the Prior Art & Reuse Candidates section of the mechanics doc — reuse before building]
+- **Interaction risks:** [cross-reference docs/card-inventory/references/ for how this interacts with existing cards/keywords]
+- **Executable assertion:** Set up state S → play/trigger the card → assert observable result R. (This becomes the `/game-test` run in Phase 3.)
+```
+
+**Inputs to consult while authoring (Change 3 reference wiring):**
+- `docs/engine-gotchas.md` — which engine function/field the effect must touch (e.g. `attackFromOwnEffects` not `card.attack`), known traps.
+- `docs/expansion-mechanics/[name].md` → **Prior Art & Reuse Candidates** — reuse an existing implementation before writing a new one.
+- `docs/card-inventory/references/` — original-game card text, for the interaction-risk cross-reference.
+
+### The two flags that protect the check
+
+- **Confidence flag (per card).** If the card's intent is unclear (ambiguous text, novel interaction) — mark `confidence: LOW`. **A LOW card gets a mandatory dynamic `/game-test` in Phase 3 regardless of complexity scoping.** This is the guard against a misread card silently becoming a wrong spec, and it overrides the complexity carve-out — a genuinely ambiguous card is never waved through on "it's just +2 Attack" grounds.
+- **Inventory stamp (staleness guard).** Stamp each card's spec with the inventory file + date it was derived from. If that card's inventory text changes after the spec is frozen, **regenerate the spec** — otherwise a late inventory edit silently turns the frozen spec into a wrong contract.
+
+### Authoring vs auditing separation
+
+The spec authored here is the **contract**. In Phase 4, `/expansion-audit`'s card-type auditors **blind-compare the code to this frozen spec — they do NOT re-derive intent from the card.** Same-lens-end-to-end (one pass reads the card, writes the spec, AND audits the code against it) shares a single blind spot: a misread card → wrong spec → clean audit against the wrong spec. Freezing the spec here, and having a separate Phase-4 lens compare code to it, breaks that chain.
+
+### Checkpoint
+
+> "Before I write any effect code, here are the behavioral specs for [N] non-trivial cards — what each should do and how I'll test it. [X] are flagged LOW-confidence and will get a forced in-game test. Anything here that doesn't match how the cards actually play?"
+
+Get the user's read on the LOW-confidence cards especially — that's where their gameplay knowledge resolves ambiguity the spec can't.
+
+### Freeze and update progress file: Phase 2.5 ✅ (spec committed before Phase 3)
+
+---
+
 ## Phase 3: Effect Implementation
 
 Broken into sub-phases by card type. **Each sub-phase can be its own session** — check the progress file to know where to resume.
 
 Read the mechanics reference document at the start of this phase (or at resume) to refresh context on all keyword implementations and solo mode decisions.
+
+**Build against the frozen Phase 2.5 spec, not from the card cold.** For each non-trivial card, implement to the spec's intended-behavior + engine-function line, then **run its executable assertion via `/game-test`** before calling that card done — execution is the only thing that catches dead triggers (wired but never fires) and stub functions (body is log-only) that read as plausible on a glance. **Any card flagged `confidence: LOW` in the spec gets a mandatory dynamic `/game-test` regardless of how simple it looks.** Do not advance a sub-phase until its non-trivial cards' assertions pass. **Every per-sub-phase checkpoint (3b–3f) must lead with its assertion PASS/FAIL line; a checkpoint presented without one is incomplete — go run the assertions before showing it.** If reality contradicts the frozen spec, surface it to the user — don't silently rewrite the spec to match the code.
 
 ### 3a: Keywords & Helpers
 
@@ -127,26 +180,29 @@ For each keyword:
 ### 3b: Hero Abilities
 
 One hero at a time, all 4 cards per hero. For each card:
-- Read the effect text from the inventory file
+- **Build against the card's frozen Phase 2.5 spec** (intended-behavior + engine-function line) — not from the inventory cold
 - Implement the function referenced in the `cardDatabase.js` entry
 - Use `async` for any function that may trigger popups, draws, or player choices — and grep all call sites to ensure `await` is present
 - Follow Golden Solo rules: `processVillainCard()` not `drawVillainCard()`, conditional `goldenRefillHQ()` for HQ manipulation, silent skip for "other player" effects
 - Follow the attack-granting pattern: update both `totalAttackPoints` and `cumulativeAttackPoints`, call `updateGameBoard()`
+- **Run the card's executable assertion via `/game-test`** — required for every non-trivial card, mandatory for any `confidence: LOW` card no matter how simple it looks
 
-**Checkpoint per hero:**
-> "[Hero Name] — 4 cards implemented. Here's what each does:
+**Checkpoint per hero — report the assertion results FIRST, then the gameplay summary:**
+> "[Hero Name] — 4 cards implemented. **Assertions (from frozen spec): [Card → PASS/FAIL via /game-test; 'trivial, no assertion' where applicable].** Here's what each does:
 > - [Card 1]: [gameplay description]
 > - [Card 2]: [gameplay description]
 > - [Card 3]: [gameplay description]
 > - [Card 4]: [gameplay description]
 > Does this match the cards?"
 
+Do not present this checkpoint until every non-trivial card's assertion has actually been run. A checkpoint with no assertion line is incomplete.
+
 ### 3c: Villain Effects
 
 For each villain group, implement ambush, fight, and escape effects. Reference the inventory for exact effect text and the mechanics reference for any keywords or special mechanics.
 
 **Checkpoint per villain group:**
-> "[Group Name] — [N] cards implemented. Key effects: [summary of notable ambush/fight/escape behaviors]. Does this match?"
+> "[Group Name] — [N] cards implemented. **Assertions (from frozen spec): [card → PASS/FAIL via /game-test].** Key effects: [summary of notable ambush/fight/escape behaviors]. Does this match?"
 
 ### 3d: Mastermind Effects
 
@@ -156,7 +212,7 @@ Implement master strike, lead card ability, and all tactic effects. Pay special 
 - Epic variants if present
 
 **Checkpoint:**
-> "[Mastermind Name] implemented. Master Strike does [X]. Tactics: [summary of each]. Does this match?"
+> "[Mastermind Name] implemented. **Assertions (from frozen spec): [Master Strike / each tactic → PASS/FAIL via /game-test].** Master Strike does [X]. Tactics: [summary of each]. Does this match?"
 
 ### 3e: Scheme Effects
 
@@ -165,14 +221,14 @@ Implement scheme twist effects, any setup modifications, and evil wins condition
 Refer to the mechanics reference for any schemes flagged as "Core engine change."
 
 **Checkpoint per scheme:**
-> "[Scheme Name] — Setup: [description]. Twist: [what happens]. Evil Wins: [condition]. Does this match?"
+> "[Scheme Name] — **Assertions (from frozen spec): [setup / twist / evil-wins → PASS/FAIL via /game-test; dual-mode where the mechanic checklist flags it].** Setup: [description]. Twist: [what happens]. Evil Wins: [condition]. Does this match?"
 
 ### 3f: Henchmen / Other
 
 Implement henchmen fight effects, bystander rescue effects, and any expansion-specific card type effects (Locations, Traps, Horrors, etc.).
 
 **Checkpoint:**
-> "[Type] effects implemented: [summary]. Does this match?"
+> "[Type] effects implemented. **Assertions (from frozen spec): [item → PASS/FAIL via /game-test].** [summary]. Does this match?"
 
 ### Update progress file after each sub-phase completes
 
@@ -184,6 +240,8 @@ Implement henchmen fight effects, bystander rescue effects, and any expansion-sp
 
 Run the `/expansion-audit` skill for this expansion. It runs the full pipeline:
 `engine-integration-auditor` → `expansion-validator` → six card-type auditors + `keyword-consistency-auditor` (parallel) → consolidated findings catalog at `docs/audit-results/<expansion>-<date>.md`.
+
+The card-type auditors **blind-compare the code to the frozen Phase 2.5 spec** (`docs/expansion-specs/[name].md`) — they treat the spec as the contract and do NOT re-derive intent from the card. This is the authoring-vs-auditing separation: the spec was authored before the code, a different lens audits against it now. An auditor re-reads the card only when the frozen spec looks self-inconsistent.
 
 Present the headline to the user:
 > "Audit complete: [N] HIGH, [M] MEDIUM, [L] LOW findings across the pipeline. Catalog saved to [path]."
@@ -205,12 +263,19 @@ Run an explicit syntax check on the new expansion file (beyond the automatic hoo
 node --check expansion[Name].js
 ```
 
-### 4c: Guided Test Game
+### 4c: Dual-Mode Gate (What If? + Golden)
+
+`expansion-validator` is Golden-Solo-only, so What If? divergences are behavioral, not structural, and the validator cannot see them. Gate dual-mode testing deliberately:
+
+1. **Run the mechanic checklist (authoritative gate).** Walk this expansion's new/modified mechanics against `docs/mode-divergence-checklist.md`. **Every mechanic that touches a row → a dual-mode `/game-test`** (run its Phase 2.5 assertion in both `gameMode === 'golden'` and `gameMode === 'whatif'`).
+2. **Grep the expansion file (cheap first-pass signal, NOT proof):** `gameMode|isGolden|\bmode\b|'golden'|'whatif'`. Hits → exercise both modes for those branches. Zero hits → no *direct* branching in this file, low risk — but NOT a guarantee (divergence can live in a shared `script.js` helper the file calls). The checklist is the real gate; the grep is just a signal.
+
+### 4d: Guided Test Game
 
 Suggest a test setup that exercises the expansion's key mechanics:
 > "For testing, I'd suggest: [Mastermind] with [Scheme], heroes: [list that includes new + existing heroes]. This setup will exercise [keyword], [mechanic], and [interaction]. Ready to try it?"
 
-Walk the user through what to look for during the test game.
+Walk the user through what to look for during the test game. For any mechanic the checklist flagged as mode-divergent, the test must cover **both** modes.
 
 ### Update progress file: Phase 4 ✅, Status → Complete
 
@@ -241,6 +306,9 @@ Status: In Progress
 <!-- After completion: ✅ Complete — [N] heroes, [N] villain groups, [N] masterminds, [N] schemes added -->
 
 ## Phase 2: Setup Screen — ⬜ Not started
+
+## Phase 2.5: Behavioral Specs frozen — ⬜ Not started
+<!-- After completion: ✅ Complete — [N] specs in docs/expansion-specs/[name].md, committed before Phase 3, [X] LOW-confidence flagged -->
 
 ## Phase 3: Effects — ⬜ Not started
 - 3a Keywords: ⬜
