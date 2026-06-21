@@ -122,6 +122,7 @@ Sources: [rules PDF filename], [inventory filename]
 **Implementation approach:** [How it maps to the engine — plain English]
 **Solo mode notes:** [Golden Solo and What If? adaptations, decisions made]
 **Mode-divergent?:** No / Yes (mode-divergence-checklist rows: [list]) — drives the Phase 4c dual-mode gate
+**Reuse verdict:** REUSE: <existing impl @ file:line> / ADAPT: <closest existing pattern @ file:line> / NEW: <why nothing existing fits> — filled by pattern-reuse-scout (Step 5); mandatory, never blank
 **Complexity:** Fits Cleanly / New Capability / Core Engine Change
 
 ---
@@ -133,6 +134,7 @@ Sources: [rules PDF filename], [inventory filename]
 **Implementation approach:** [How it maps to the engine]
 **Solo mode notes:** [Adaptations for both modes]
 **Mode-divergent?:** No / Yes (mode-divergence-checklist rows: [list]) — drives the Phase 4c dual-mode gate
+**Reuse verdict:** REUSE: <existing impl @ file:line> / ADAPT: <closest existing pattern @ file:line> / NEW: <why nothing existing fits> — filled by pattern-reuse-scout (Step 5); mandatory, never blank
 **Complexity:** [Rating]
 
 ---
@@ -144,6 +146,7 @@ Sources: [rules PDF filename], [inventory filename]
 **Implementation approach:** [How it maps to the engine]
 **Solo mode notes:** [Adaptations for both modes]
 **Mode-divergent?:** No / Yes (mode-divergence-checklist rows: [list]) — drives the Phase 4c dual-mode gate
+**Reuse verdict:** REUSE: <existing impl @ file:line> / ADAPT: <closest existing pattern @ file:line> / NEW: <why nothing existing fits> — filled by pattern-reuse-scout (Step 5); mandatory, never blank
 **Complexity:** [Rating]
 
 ---
@@ -184,12 +187,14 @@ If analyzing this expansion produced a new cross-expansion design or rules-inter
 
 ## Step 5: Pattern Reuse Scan
 
-After the mechanics doc is saved, dispatch the `pattern-reuse-scout` subagent for this expansion. It reads the mechanics doc, finds existing codebase implementations of each new mechanic, and appends a `## Prior Art & Reuse Candidates` section to the doc.
+After the mechanics doc is saved, dispatch the `pattern-reuse-scout` subagent for this expansion. It reads the mechanics doc, finds existing codebase implementations of each new mechanic, and (a) appends the `## Prior Art & Reuse Candidates` section AND (b) fills the **`Reuse verdict:`** line on **every** mechanic entry.
 
-Present the reuse recommendations to the user in plain English:
-> "Before we implement, here's what already exists that we can reuse: [mechanic] → [existing scheme/card] already does this. I'd recommend reusing it rather than building from scratch."
+**This is a gate, not a footnote.** Every keyword / card type / game system in the doc must carry a verdict — `REUSE`, `ADAPT`, or `NEW` with justification. A blank verdict means the cross-check didn't actually run for that mechanic — go back and run it. Search for *similar* patterns under different names, not just exact-name matches (the failure mode is a mechanic that behaves like an existing one but is called something else — e.g. a new keyword that works like Bribe or Shards).
 
-This makes reuse decisions BEFORE implementation, not after — the implementer (in `/new-expansion`) reads this section in Phase 1.
+Present the verdicts to the user in plain English, leading with what's already built:
+> "Cross-check against the existing game is done. Already built — borrow these: [mechanic] → REUSE [existing impl]. Close but not identical: [mechanic] → ADAPT [closest]. Genuinely new (nothing fits): [mechanic] — here's why. Recommendation: reuse/adapt everything in the first two buckets rather than building from scratch."
+
+This makes reuse decisions BEFORE implementation, not after — the implementer (in `/new-expansion`) reads each mechanic's verdict in Phase 1 and the Phase 2.5 spec step cites it in the "Engine function / pattern" line.
 
 ---
 
