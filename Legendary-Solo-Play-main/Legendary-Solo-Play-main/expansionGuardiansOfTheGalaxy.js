@@ -186,7 +186,6 @@ useButton.addEventListener("click", async (e) => {
       }
     } else {
       console.error(`Ability function "${abilityFunctionName}" not found for ${card.name}`);
-      console.log(`Define a function named ${abilityFunctionName} or add it to abilityFunctions lookup`);
     }
   } else {
     console.error(`Invalid ability type for ${card.name}:`, abilityFunctionName);
@@ -210,32 +209,21 @@ useButton.addEventListener("click", async (e) => {
 
 // Add this helper function at the top of your file or in a utility section
 function updateArtifactUsageState(card) {
-  console.log("=== UPDATE ARTIFACT USAGE DEBUG ===");
-  console.log("Card name:", card.name);
-  console.log("gamoraGodslayerOne:", gamoraGodslayerOne);
-  console.log("gamoraGodslayerTwo:", gamoraGodslayerTwo);
   
   if (card.name === "Gamora - Godslayer Blade") {
     // Special handling for Gamora
     const bothAbilitiesUsed = gamoraGodslayerOne && gamoraGodslayerTwo;
     const oneAbilityUsed = (gamoraGodslayerOne || gamoraGodslayerTwo) && !bothAbilitiesUsed;
     
-    console.log("bothAbilitiesUsed:", bothAbilitiesUsed);
-    console.log("oneAbilityUsed:", oneAbilityUsed);
     
     card.artifactAbilityUsed = bothAbilitiesUsed;
     card.partiallyUsed = oneAbilityUsed;
     
-    console.log("Set artifactAbilityUsed to:", card.artifactAbilityUsed);
-    console.log("Set partiallyUsed to:", card.partiallyUsed);
-    console.log("======================");
     
     return card.artifactAbilityUsed;
   } else {
     // Standard behavior for all other artifacts
     card.artifactAbilityUsed = true;
-    console.log("Non-Gamora card, set artifactAbilityUsed to true");
-    console.log("======================");
     return true;
   }
 }
@@ -1764,7 +1752,6 @@ async function thanosStrike() {
     );
 
     if (eligibleArtifactCards.length === 0 && eligibleHandCards.length === 0 && eligiblePlayedCards.length === 0) {
-      console.log("No eligible coloured cards in artifacts, hand, or played cards (Green/Yellow/Black/Blue/Red).");
       onscreenConsole.log(`No non-grey Heroes available for <span class="console-highlights">Thanos</span> to capture.`);
       resolve();
       return;
@@ -3182,7 +3169,6 @@ async function spaceGemArtifact() {
     function selectCell(cellElement) {
       // Don't allow selection of destroyed spaces (but allow Dark Portal spaces)
       if (isCellDestroyed(cellElement)) {
-        console.log("Destroyed space selected, no action.");
         return;
       }
 
@@ -3194,7 +3180,6 @@ async function spaceGemArtifact() {
 
       // 0. If the player selects an Empty cell first, nothing happens.
       if (!hasVillain && selectedCells.length === 0) {
-        console.log("Empty cell selected first, no action.");
         return; // Do nothing if the first selected cell is empty
       }
 
@@ -3207,9 +3192,6 @@ async function spaceGemArtifact() {
         if (selectedCells.length < 2) {
           selectionArrow.style.display = "none";
           confirmButton.disabled = true; // Disable the confirm button
-          console.log(
-            "Deselected cell, less than two selections, disabling confirm button.",
-          );
         }
         return; // Exit early since we're just deselecting
       }
@@ -3218,13 +3200,11 @@ async function spaceGemArtifact() {
       if (hasVillain && selectedCells.length === 0) {
         cellElement.classList.add("selected");
         selectedCells.push(cellElement);
-        console.log("First villain selected, added to selection.");
       }
       // 2a. If the player then selects a second villain, highlight it and add to selectedCells.
       else if (hasVillain && selectedCells.length === 1) {
         cellElement.classList.add("selected");
         selectedCells.push(cellElement);
-        console.log("Second villain selected, added to selection.");
       }
       // 2b. If the player selects an Empty space after selecting a villain, highlight it and add to selectedCells.
       else if (
@@ -3234,14 +3214,12 @@ async function spaceGemArtifact() {
       ) {
         cellElement.classList.add("selected");
         selectedCells.push(cellElement);
-        console.log("Empty space selected after villain, added to selection.");
       }
 
       // 3a. If the player selects another cell (villain or empty), deselect the first choice and highlight the new one.
       if (selectedCells.length > 2) {
         const firstCell = selectedCells.shift(); // Remove the first selected cell
         firstCell.classList.remove("selected"); // Remove the highlight from the first cell
-        console.log("More than two selections, deselected the first.");
       }
 
       // 3b. If the player selects another villain after an empty, deselect everything and highlight the new villain.
@@ -3252,7 +3230,6 @@ async function spaceGemArtifact() {
         selectedCells.forEach((cell) => cell.classList.remove("selected"));
         selectedCells = [cellElement];
         cellElement.classList.add("selected");
-        console.log("Selected another villain after an empty, reset selections.");
       }
 
       // Handle drawing the arrow based on the current selection
@@ -3267,15 +3244,12 @@ async function spaceGemArtifact() {
             selectedCells[1].textContent.trim() !== "Empty")
         ) {
           confirmButton.disabled = false; // Enable the confirm button
-          console.log("Valid selection made, enabling confirm button.");
         } else {
           confirmButton.disabled = true; // Disable the confirm button if not valid
-          console.log("Invalid selection, disabling confirm button.");
         }
       } else {
         selectionArrow.style.display = "none";
         confirmButton.disabled = true; // Disable the confirm button
-        console.log("Less than two selections, disabling confirm button.");
       }
     }
 
@@ -3574,8 +3548,6 @@ async function spaceGemArtifact() {
         y: rect2.bottom - popupRect.top, // Bottom of the cell
       };
 
-      console.log("Calculated Position 1:", posn1);
-      console.log("Calculated Position 2:", posn2);
 
       // Calculate control points for a curve that goes under the cells
       const controlX = (posn1.x + posn2.x) / 2;
@@ -3586,7 +3558,6 @@ async function spaceGemArtifact() {
         `M${posn1.x},${posn1.y} ` +
         `C${controlX},${controlY} ${controlX},${controlY} ${posn2.x},${posn2.y}`;
 
-      console.log("Path Data:", dStr);
 
       const selectionArrow = document.getElementById("selection-arrow");
       selectionArrow.setAttribute("d", dStr);
@@ -3620,9 +3591,6 @@ async function spaceGemArtifact() {
         }
 
         // Debugging: Log the initial state before any operation
-        console.log("Initial State:");
-        console.log("First Cell:", city[firstIndex]);
-        console.log("Second Cell:", city[secondIndex]);
 
         // Check if the second cell contains the blank card image (i.e., it's empty)
         const secondCellImage = secondCell.querySelector("img"); // Find the image element in the second cell
@@ -3631,7 +3599,6 @@ async function spaceGemArtifact() {
           secondCellImage.src.includes("BlankCardSpace.webp")
         ) {
           // Move the villain to the empty cell
-          console.log("Moving villain to empty space");
           onscreenConsole.log(
             `<span class="console-highlights">${city[firstIndex].name}</span> moved to an empty space.`,
           );
@@ -3644,8 +3611,6 @@ async function spaceGemArtifact() {
           shardSupply -= 1;
         } else if (city[secondIndex] && city[firstIndex]) {
           // Both cells have villains, perform the swap
-          console.log("Swapping villains");
-          console.log("Before Swap:", city[firstIndex], city[secondIndex]);
           onscreenConsole.log(
             `<span class="console-highlights">${city[firstIndex].name}</span> swapped places with <span class="console-highlights">${city[secondIndex].name}</span>.`,
           );
@@ -3659,7 +3624,6 @@ async function spaceGemArtifact() {
           shardsGainedThisTurn += 1;
           shardSupply -= 1;
 
-          console.log("After Swap:", city[firstIndex], city[secondIndex]);
         } else {
           console.error("Cannot swap cells: one of the cells is empty.");
           return;
@@ -3675,9 +3639,6 @@ async function spaceGemArtifact() {
         updateGameBoard(); // Update the actual game board with the new state
 
         // Debugging: Log the final state after the operation
-        console.log("Final State:");
-        console.log("First Cell:", city[firstIndex]);
-        console.log("Second Cell:", city[secondIndex]);
         
         resolve(); // Resolve the promise after everything is done
       }
@@ -4084,7 +4045,6 @@ if (playerDeck.length === 0) {
         playerDeck = shuffle(playerDiscardPile);
         playerDiscardPile = [];
       } else {
-        console.log("No cards available to be drawn.");
         onscreenConsole.log("No cards available to be drawn.");
         resolve();
         return;
@@ -4225,7 +4185,6 @@ return new Promise((resolve) => {
         playerDeck = shuffle(playerDiscardPile);
         playerDiscardPile = [];
       } else {
-        console.log("No cards available to be drawn.");
         onscreenConsole.log("No cards available to be drawn.");
         resolve();
         return;
@@ -4266,9 +4225,6 @@ return new Promise((resolve) => {
     };
 
     denyButton.onclick = function () {
-      console.log(
-        `You put ${topCardPlayerDeck.name} back on top of your deck.`,
-      );
       onscreenConsole.log(
         `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been returned to the top of your deck.`,
       );
@@ -4340,9 +4296,6 @@ denyButton.onclick = async function () {
 };
 
     extraButton.onclick = function () {
-      console.log(
-        `You put ${topCardPlayerDeck.name} back on top of your deck.`,
-      );
       onscreenConsole.log(
         `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been returned to the top of your deck.`,
       );
@@ -5785,7 +5738,6 @@ return new Promise((resolve) => {
     );
 
     if (playerHand.length === 0 && playerDiscardPile.length === 0) {
-      console.log("No cards in hand to discard.");
       onscreenConsole.log(`No cards available to be KO'd.`);
       updateGameBoard();
       resolve(false);
@@ -6039,7 +5991,6 @@ return new Promise((resolve) => {
     noThanksButton.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      console.log(`No card was KO'd.`);
         onscreenConsole.log(
           `You chose not to KO any cards to gain a Shard.`,
         );
@@ -6527,7 +6478,6 @@ function starLordLegendaryOutlaw() {
   return new Promise((resolve, reject) => {
     try {
       if (playerArtifacts.length === 0) {
-        console.log("No Artifacts available to copy.");
         onscreenConsole.log("No Artifacts available to copy.");
         resolve(false);
         return;

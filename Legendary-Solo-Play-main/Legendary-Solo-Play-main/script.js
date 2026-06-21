@@ -1,10 +1,6 @@
 // Core Mechanics
 //10.02.26 20:45
 
-console.log("Script loaded");
-console.log(window.henchmen);
-console.log(window.villains);
-console.log(window.heroes);
 
 window.addEventListener("load", async () => {
   const loader = document.querySelector(".loading-container");
@@ -2042,7 +2038,6 @@ function buildBystanderDeck() {
     }
   });
 
-  console.log("Built bystander deck with", deck.length, "cards");
   return shuffle(deck);
 }
 
@@ -3653,8 +3648,6 @@ function loadLastGameSetup() {
     const gameSettings = JSON.parse(saved);
     
     // DEBUG: Log what's in overallSet
-    console.log("Loaded overallSet values:", gameSettings.overallSet);
-    console.log("Full gameSettings:", gameSettings);
 
     // Restore radio buttons (single selection)
     restoreRadioButton("#scheme-section", gameSettings.scheme);
@@ -3682,7 +3675,6 @@ function loadLastGameSetup() {
     updateAllImagesAndScroll(gameSettings);
     updateSummaryPanel();
 
-    console.log("Last game setup loaded successfully!");
   } catch (error) {
     console.error("Error loading saved setup:", error);
     alert("Error loading saved setup. Please make new selections.");
@@ -3843,7 +3835,6 @@ function restoreRadioButton(sectionSelector, value) {
 function restoreCheckboxes(sectionSelector, values) {
   if (!values || !Array.isArray(values)) return;
 
-  console.log(`Restoring checkboxes in ${sectionSelector} with values:`, values);
 
   // Uncheck all checkboxes in this section first
   document
@@ -3867,7 +3858,6 @@ function restoreCheckboxes(sectionSelector, values) {
       );
       if (checkboxToCheck) {
         checkboxToCheck.checked = true;
-        console.log(`Checked checkbox with data-set="${value}"`);
       } else {
         console.warn(
           `Could not find checkbox with data-set: ${value} in ${sectionSelector}`,
@@ -4188,7 +4178,6 @@ if (selectedSchemeForHeroDeck.name === "Invade the Daily Bugle News HQ") {
   if (selectedHenchmanRadio && selectedHenchmanRadio.value !== "Random") {
     // User selected a specific henchman from the dropdown
     const selectedHenchmanName = selectedHenchmanRadio.value;
-    console.log("Using selected henchman:", selectedHenchmanName);
     
     const henchmenToAdd = window.henchmen.find(
       (h) => h.name === selectedHenchmanName
@@ -4202,7 +4191,6 @@ if (selectedSchemeForHeroDeck.name === "Invade the Daily Bugle News HQ") {
       for (let i = 0; i < 6; i++) {
         deck.push({ ...henchmenToAdd, subtype: "Henchman" });
       }
-      console.log(`Added 6 copies of ${selectedHenchmanName} to hero deck`);
     } else {
       console.warn("Selected henchman not found:", selectedHenchmanName);
       // Fallback to random selection from all available henchmen
@@ -4211,7 +4199,6 @@ if (selectedSchemeForHeroDeck.name === "Invade the Daily Bugle News HQ") {
     
   } else {
     // User selected "Random" or no specific henchman - pick randomly from all henchmen
-    console.log("Using random henchman selection from all henchmen");
     selectRandomHenchman();
   }
 
@@ -4229,7 +4216,6 @@ if (selectedSchemeForHeroDeck.name === "Invade the Daily Bugle News HQ") {
       for (let i = 0; i < 6; i++) {
         deck.push({ ...randomHenchman, subtype: "Henchman" });
       }
-      console.log(`Added 6 random copies of ${randomHenchman.name} to hero deck`);
     } else {
       console.warn("No henchmen available for random selection");
     }
@@ -4298,7 +4284,6 @@ function generateVillainDeck(
           const article = /^[aeiou]/i.test(text) ? "an" : "a";
           if (tactic) {
             tactic.effect = `Each other player plays ${article} <span class="bold-spans">${alwaysLeadsText}</span> Villain from their Victory Pile as if playing it from the Villain Deck.`;
-            console.log("Tactic updated:", tactic);
           }
         }
 
@@ -4314,11 +4299,9 @@ function generateVillainDeck(
           const article = /^[aeiou]/i.test(text) ? "an" : "a";
           if (tactic1) {
             tactic1.effect = `Each other player chooses ${article} ${alwaysLeadsText} Villain in their Victory Pile and puts it into the Escaped Villains pile.`;
-            console.log("Tactic updated:", tactic1);
           }
           if (tactic2) {
             tactic2.effect = `If this is not the final Tactic, reveal the top six cards of the Villain Deck. Play all the ${alwaysLeadsText} Villains you revealed. Put the rest on the bottom of the Villain Deck in random order.`;
-            console.log("Tactic updated:", tactic2);
           }
         }
 
@@ -4328,7 +4311,6 @@ function generateVillainDeck(
           );
           if (tactic) {
             tactic.effect = `Draw two cards. Then draw another card for each ${alwaysLeadsText} Villain in your Victory Pile.`;
-            console.log("Tactic updated:", tactic);
           }
         }
 
@@ -4632,7 +4614,6 @@ if (scheme.name === "Unite the Shards") {
   }
 
   if (scheme.name === "X-Cutioner's Song") {
-  console.log("Processing X-Cutioner's Song scheme");
 
   // Check if a specific hero was selected in the dropdown
   const selectedHeroRadio = document.querySelector(
@@ -4642,12 +4623,10 @@ if (scheme.name === "Unite the Shards") {
   if (selectedHeroRadio && selectedHeroRadio.value !== "Random") {
     // User selected a specific hero from the dropdown
     const selectedHeroName = selectedHeroRadio.value;
-    console.log("Using selected hero:", selectedHeroName);
     
     const selectedHero = heroes.find(hero => hero.name === selectedHeroName);
     
     if (selectedHero) {
-      console.log("Found selected hero data:", selectedHero.name);
       
       selectedHero.cards.forEach((card) => {
         let copiesToAdd;
@@ -4666,9 +4645,6 @@ if (scheme.name === "Unite the Shards") {
             copiesToAdd = 0;
         }
 
-        console.log(
-          `Adding ${copiesToAdd} copies of ${card.name} (${card.rarity})`,
-        );
 
         for (let i = 0; i < copiesToAdd; i++) {
           deck.push({
@@ -4688,45 +4664,31 @@ if (scheme.name === "Unite the Shards") {
     
   } else {
     // User selected "Random" or no specific hero - use original random logic
-    console.log("Using random hero selection");
     selectRandomHero();
   }
 
   // Helper function for random hero selection (X-Cutioner's Song)
   function selectRandomHero() {
     // Debug: Log all heroes first
-    console.log(
-      "All heroes:",
-      heroes.map((h) => h.name),
-    );
 
     // Get selected hero names - with better error handling
     const heroCheckboxes = document.querySelectorAll(
       "#hero-selection input[type=checkbox]:checked",
     );
-    console.log("Found checkboxes:", heroCheckboxes.length);
 
     const selectedHeroNames = Array.from(heroCheckboxes).map((cb) => {
-      console.log("Checkbox value:", cb.value);
       return cb.value;
     });
-    console.log("Selected heroes:", selectedHeroNames);
 
     // Filter available heroes - add strict equality check
     const availableHeroes = heroes.filter((hero) => {
       const isAvailable = !selectedHeroNames.some((name) => name === hero.name);
-      console.log(`Hero ${hero.name} available?`, isAvailable);
       return isAvailable;
     });
-    console.log(
-      "Available heroes:",
-      availableHeroes.map((h) => h.name),
-    );
 
     if (availableHeroes.length > 0) {
       const randomIndex = Math.floor(Math.random() * availableHeroes.length);
       const randomHero = availableHeroes[randomIndex];
-      console.log("Selected random hero:", randomHero.name);
 
       randomHero.cards.forEach((card) => {
         let copiesToAdd;
@@ -4745,9 +4707,6 @@ if (scheme.name === "Unite the Shards") {
             copiesToAdd = 0;
         }
 
-        console.log(
-          `Adding ${copiesToAdd} copies of ${card.name} (${card.rarity})`,
-        );
 
         for (let i = 0; i < copiesToAdd; i++) {
           deck.push({
@@ -4932,8 +4891,6 @@ for (let i = 0; i < scheme.twistCount; i++) {
   deck = [...deck, ...henchmenToPlaceOnTop];
 
   // Log the deck to debug
-  console.log("Henchmen to place on top:", henchmenToPlaceOnTop);
-  console.log("Generated Villain Deck:", deck);
 
   return deck;
 }
@@ -4972,13 +4929,6 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
 
   initCityArrays();
   generateCityHTML();
-  console.log("Initializing game with:");
-  console.log("Heroes:", heroes);
-  console.log("Villains:", villains);
-  console.log("Henchmen:", henchmen);
-  console.log("Mastermind:", mastermindName);
-  console.log("Scheme:", scheme);
-  console.log("Final Blow Enabled:", finalBlowEnabled);
 
   onscreenConsole.log(
     '<span style="font-style:italic;">Initializing game...</span>',
@@ -5021,14 +4971,9 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   // Append the image to the mastermind cell
   mastermindImagePlaceholder.appendChild(mastermindImage);
 
-  console.log("Selected Mastermind:", mastermind);
-  console.log("Mastermind Deck:", mastermindDeck);
 
   if (villains.length === 1) {
     const selectedVillainName = villains[0];
-    console.log(
-      `The Mastermind always leads ${selectedVillainName} in this game.`,
-    );
     onscreenConsole.log(
       `The Mastermind always leads ${selectedVillainName} in this game.`,
     );
@@ -5047,9 +4992,6 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
       selectedVillainName = villains[randomIndex];
     }
 
-    console.log(
-      `The Mastermind always leads ${selectedVillainName} in this game.`,
-    );
     onscreenConsole.log(
       `The Mastermind always leads ${selectedVillainName} in this game.`,
     );
@@ -5057,15 +4999,11 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
     // Store the alwaysLeads villain name for later use
     window.alwaysLeadsVillain = selectedVillainName;
   } else {
-    console.log(
-      "No villains selected. The Mastermind has no specific group to lead.",
-    );
     window.alwaysLeadsVillain = null;
   }
 
   // Generate the hero deck first
   heroDeck = generateHeroDeck(heroes, henchmen);
-  console.log("Hero Deck:", heroDeck);
 
   if (!heroDeck || heroDeck.length === 0) {
     console.error("Hero deck was not generated correctly.");
@@ -5079,7 +5017,6 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
 
   // Now generate the villain deck and pass the hero deck to it
   villainDeck = generateVillainDeck(villains, henchmen, scheme, heroDeck);
-  console.log("Villain Deck:", villainDeck);
 
   // Generate the player deck
   playerDeck = shuffle([...shieldCards]);
@@ -5395,11 +5332,6 @@ async function enterCityFromRight(card) {
 }
 
 async function processRegularVillainCard(villainCard) {
-  console.log("processRegularVillainCard called for:", villainCard.name);
-  console.log(
-    "Current city state before placement:",
-    JSON.stringify(city.map((c) => (c ? c.name : null))),
-  );
 
   await enterCityFromRight(villainCard);
 
@@ -6285,7 +6217,6 @@ async function processVillainCard() {
 
   // Create a new promise that will resolve when this card's entire processing is complete
   return new Promise(async (resolve) => {
-    console.log(`Processing villain card:`, villainCard.name);
 
     try {
       if (villainCard.name.includes("Master Strike")) {
@@ -7272,7 +7203,6 @@ function restoreEventHandlers() {
       const clickHandler = (e) => {
         e.stopPropagation();
         if (card.name === "Wound") {
-          console.log("Cannot toggle a Wound card.");
           return;
         }
         toggleCard(index);
@@ -9074,7 +9004,6 @@ if (stackedTwistNextToMastermind > 0) {
             if (!chosenClass) {
               // Cancelled: ensure the flag stays false and re-render so button returns
               mastermindCosmicThreatResolved = false;
-              console.log(`Keyword click, Mastermind Cosmic Threat check. ${mastermindCosmicThreatResolved}`);
               updateGameBoard();
               return;
             }
@@ -9091,7 +9020,6 @@ if (stackedTwistNextToMastermind > 0) {
               );
               // Only now mark it resolved
               mastermindCosmicThreatResolved = true;
-              console.log(`After Mastermind Cosmic Threat applied. ${mastermindCosmicThreatResolved}`);
             } else {
               // Cancelled: re-render button
               mastermindCosmicThreatResolved = false;
@@ -9122,7 +9050,6 @@ if (stackedTwistNextToMastermind > 0) {
                 `${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards`,
               );
               mastermindCosmicThreatResolved = true;
-              console.log(`After Mastermind Cosmic Threat applied. ${mastermindCosmicThreatResolved}`);
             } else {
               // Cancelled: re-render button
               mastermindCosmicThreatResolved = false;
@@ -9819,9 +9746,6 @@ if (selectedSchemeEndGame) {
           break;
 
         default:
-          console.log(
-            `Scheme End Game "${selectedSchemeEndGame}" is not yet defined.`,
-          );
           break;
       }
         // If condition is met, break out of loop
@@ -9835,7 +9759,6 @@ if (selectedSchemeEndGame) {
     showDefeatPopup();
   }
 } else if (!mastermindEndGame) {
-      console.log(`Neither Scheme nor Mastermind End Game is defined.`);
     }
   }
 
@@ -9879,7 +9802,6 @@ if (selectedSchemeEndGame) {
       e.stopPropagation(); // Prevent this click from reaching the document handler
       const card = playerHand[index];
       if (card.name === "Wound" && card.keyword3 !== "Teleport") {
-        console.log("Cannot toggle a Wound card.");
         return;
       }
       toggleCard(index);
@@ -11093,7 +11015,6 @@ function drawCard() {
   const card = playerDeck.pop();
   playerHand.push(card);
   cardsInHandThisTurn.add(card); // Photon "Light the Way" tracking (mid-turn + opening-hand draws)
-  console.log("Card drawn");
   updateGameBoard();
 }
 
@@ -11353,7 +11274,6 @@ async function confirmActions() {
         cumulativeAttackPoints += card.attack || 0;
         cumulativeRecruitPoints += card.recruit || 0;
 
-        console.log("Confirm Actions Called:", card);
 
         // Handle unconditional ability
         let abilityPromise = Promise.resolve();
@@ -11464,7 +11384,6 @@ async function confirmActions() {
                 });
               }
             } else {
-              console.log(`Unable to use conditional ability.`);
             }
           }
         });
@@ -11484,7 +11403,6 @@ async function confirmActions() {
 function isConditionMet(conditionType, condition) {
   // Exclude the last card in cardsPlayedThisTurn
   const previousCards = cardsPlayedThisTurn.slice(0, -1);
-  console.log("Previous cards excluding the last one:", previousCards);
 
   switch (conditionType) {
     case "playedCards":
@@ -11530,7 +11448,6 @@ function getOrdinalSuffix(number) {
 }
 
 function startTurn() {
-  console.log("Starting turn...");
   drawVillainCard();
   playHeroCards();
   resolveVillainActions();
@@ -11538,11 +11455,9 @@ function startTurn() {
 }
 
 function playHeroCards() {
-  console.log("Playing hero cards...");
 }
 
 function resolveVillainActions() {
-  console.log("Resolving villain actions...");
 }
 
 function hideRevealedCards() {
@@ -11600,7 +11515,6 @@ async function endTurn() {
   }
 
   mastermindCosmicThreatResolved = false;
-  console.log(`End of turn, Mastermind Cosmic Threat restored. ${mastermindCosmicThreatResolved}`);
   mastermindCosmicThreat = 0;
 
   onscreenConsole.log("Turn ended.");
@@ -11610,7 +11524,6 @@ async function endTurn() {
   );
   document.getElementById("turn-counter").innerHTML = `TURN ${turnCount}`;
 
-  console.log("Ending turn...");
 
   city.forEach((card) => {
     if (
@@ -11634,18 +11547,15 @@ async function endTurn() {
   const beforeCount = cardsPlayedThisTurn.length;
   cardsPlayedThisTurn = cardsPlayedThisTurn.filter(card => {
     if (card.markedForDeletion || card.isSimulation) {
-      console.log(`Removing simulated card: ${card.name}`);
       return false;
     }
     return true;
   });
   const afterCount = cardsPlayedThisTurn.length;
-  console.log(`Removed ${beforeCount - afterCount} simulated cards`);
   
   // 2. Revert any transformed cards (for Copy Powers)
   cardsPlayedThisTurn.forEach((card, index) => {
     if (card.originalAttributes) {
-      console.log(`Reverting ${card.name} back to ${card.originalAttributes.name}`);
       Object.assign(card, card.originalAttributes);
       delete card.originalAttributes;
     }
@@ -11659,7 +11569,6 @@ async function endTurn() {
     // If the card is marked to destroy, remove it
     if (card.markedToDestroy === true || card.markedToDrawNextTurn === true) {
       cardsPlayedThisTurn.splice(i, 1);
-      console.log(`${card.name} was destroyed (markedToDestroy).`);
       continue; // Skip any further logic for this card
     }
 
@@ -11675,7 +11584,6 @@ if (card.temporaryTeleport === true) {
     if (card.hasOwnProperty("sidekickToDestroy")) {
       if (card.sidekickToDestroy === true) {
         cardsPlayedThisTurn.splice(i, 1);
-        console.log(`${card.name} was destroyed (sidekickToDestroy).`);
       } else {
         playerDiscardPile.push(card);
       }
@@ -11690,7 +11598,6 @@ if (card.temporaryTeleport === true) {
     // If the card is marked to destroy, remove it
     if (card.markedToDrawNextTurn === true) {
       playerDiscardPile.splice(i, 1);
-      console.log(`${card.name} was destroyed (markedToDestroy).`);
     }
   }
 
@@ -11700,7 +11607,6 @@ if (card.temporaryTeleport === true) {
     // If the card is marked to destroy, remove it
     if (card.markedToDrawNextTurn === true) {
       koPile.splice(i, 1);
-      console.log(`${card.name} was destroyed (markedToDestroy).`);
     }
   }
 
@@ -11710,7 +11616,6 @@ if (card.temporaryTeleport === true) {
     // If the card is marked to destroy, remove it
     if (card.markedToDrawNextTurn === true) {
       victoryPile.splice(i, 1);
-      console.log(`${card.name} was destroyed (markedToDestroy).`);
     }
   }
 
@@ -11720,7 +11625,6 @@ if (card.temporaryTeleport === true) {
     // If the card is marked to destroy, remove it
     if (card.markedToDrawNextTurn === true) {
       playerArtifacts.splice(i, 1);
-      console.log(`${card.name} was destroyed (markedToDestroy).`);
     }
   } 
 
@@ -11835,16 +11739,13 @@ if (card.temporaryTeleport === true) {
     if (cardsToBeDrawnNextTurn.length > 0) {
       const card = cardsToBeDrawnNextTurn.shift();
       playerHand.push(card);
-      console.log(`Drew ${card.name} from cardsToBeDrawnNextTurn.`);
       return true;
     } else {
       if (playerDeck.length === 0) {
         if (playerDiscardPile.length > 0) {
-          console.log("Deck is empty, reshuffling discard pile into deck.");
           playerDeck = shuffle(playerDiscardPile);
           playerDiscardPile = [];
         } else {
-          console.log("No cards left to draw.");
           return false;
         }
       }
@@ -13074,7 +12975,6 @@ async function executeOperationsInPlayerOrder(operations, villainCopy) {
     // Auto-execute when only 1 operation remains
     if (remainingOperations.length === 1) {
       const finalOperation = remainingOperations[0];
-      console.log("Auto-executing final operation:", finalOperation.name);
       await finalOperation.execute();
       updateGameBoard();
       break;
@@ -13092,7 +12992,6 @@ async function executeOperationsInPlayerOrder(operations, villainCopy) {
     if (!choice) {
       // Execute all remaining in sequence
       for (const op of remainingOperations) {
-        console.log("Auto-executing:", op.name);
         await op.execute();
         updateGameBoard();
       }
@@ -13103,11 +13002,9 @@ async function executeOperationsInPlayerOrder(operations, villainCopy) {
       (op) => op.name === choice.name,
     );
     const [selectedOperation] = remainingOperations.splice(selectedIndex, 1);
-    console.log("Executing:", selectedOperation.name);
     await selectedOperation.execute();
     updateGameBoard();
   }
-  console.log("All operations completed");
 }
 
 // ---------------------------------
@@ -13292,19 +13189,12 @@ async function handlePostDefeat(
   cityIndex,
   isInstantDefeat = false,
 ) {
-  console.log("handlePostDefeat START", { 
-    villainName: villainCard?.name, 
-    cityIndex, 
-    isInstantDefeat 
-  });
 
   try {
     // 1. Scheme selection
-    console.log("1. Getting selected scheme...");
     const selectedSchemeName = document.querySelector(
       "#scheme-section input[type=radio]:checked",
     )?.value;
-    console.log("Selected scheme name:", selectedSchemeName);
     
     if (!selectedSchemeName) {
       console.error("No scheme selected!");
@@ -13318,12 +13208,9 @@ async function handlePostDefeat(
       onscreenConsole.log(`<span class='console-error'>Error: Scheme "${selectedSchemeName}" not found!</span>`);
       return;
     }
-    console.log("Scheme found:", scheme.name);
 
     // 2. Shards handling
-    console.log("2. Checking shards...");
     if (villainCard.shards && villainCard.shards > 0) {
-      console.log("Processing shards, count:", villainCard.shards);
       try {
         playSFX("shards");
         villainCard.shards -= 1;
@@ -13341,9 +13228,7 @@ async function handlePostDefeat(
     }
 
     // 3. Baby Hope handling
-    console.log("3. Checking Baby Hope...");
     if (villainCard.babyHope === true) {
-      console.log("Processing Baby Hope...");
       try {
         delete villainCard.babyHope;
         villainCard.attack = villainCard.originalAttack;
@@ -13361,12 +13246,10 @@ async function handlePostDefeat(
     }
 
     // 4. Plutonium handling
-    console.log("4. Checking plutonium...");
     if (
       Array.isArray(villainCard.plutoniumCaptured) &&
       villainCard.plutoniumCaptured.length
     ) {
-      console.log("Processing plutonium, count:", villainCard.plutoniumCaptured.length);
       try {
         onscreenConsole.log(
           `${villainCard.plutoniumCaptured.length} Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled into the Villain Deck.`,
@@ -13382,12 +13265,10 @@ async function handlePostDefeat(
     }
 
     // 5. X-Cutioner Heroes
-    console.log("5. Checking X-Cutioner Heroes...");
     if (
       Array.isArray(villainCard.XCutionerHeroes) &&
       villainCard.XCutionerHeroes.length > 0
     ) {
-      console.log("Processing X-Cutioner Heroes, count:", villainCard.XCutionerHeroes.length);
       try {
         for (const hero of villainCard.XCutionerHeroes) {
           playerDiscardPile.push(hero);
@@ -13402,9 +13283,7 @@ async function handlePostDefeat(
     }
 
     // 6. Extra bystanders
-    console.log("6. Checking extra bystanders...");
     if (rescueExtraBystanders > 0) {
-      console.log("Rescuing extra bystanders, count:", rescueExtraBystanders);
       try {
         for (let i = 0; i < rescueExtraBystanders; i++) {
           if (typeof rescueBystander === 'function') {
@@ -13420,9 +13299,7 @@ async function handlePostDefeat(
     }
 
     // 7. Dracula special case
-    console.log("7. Checking Dracula...");
     if (villainCard.name === "Dracula") {
-      console.log("Processing Dracula...");
       try {
         villainCard.attack = 3;
         villainCard.cost = 0;
@@ -13432,11 +13309,9 @@ async function handlePostDefeat(
     }
 
     // 8. Organized Crime Wave scheme
-    console.log("8. Checking Organized Crime Wave...");
     if (scheme.name === "Organized Crime Wave" && 
         villainCard.name === "Maggia Goons" && 
         (!villainCard.ambushEffect || villainCard.ambushEffect === "none")) {
-      console.log("Setting organized crime ambush...");
       try {
         villainCard.ambushEffect = "organizedCrimeAmbush";
       } catch (error) {
@@ -13445,17 +13320,14 @@ async function handlePostDefeat(
     }
 
     // 9. Burrow logic
-    console.log("9. Processing burrow logic...");
     const burrowingVillain =
       villainCard.keywords && villainCard.keywords.includes("Burrow");
     const inStreetsNow = cityIndex === 1;
     const streetsFree =
       (city[1] === "" || city[1] === null) && destroyedSpaces[1] === false;
 
-    console.log("Burrow check:", { burrowingVillain, inStreetsNow, streetsFree });
 
     if (burrowingVillain) {
-      console.log("Processing burrowing villain...");
       try {
         if (inStreetsNow) {
           victoryPile.push(villainCard);
@@ -13484,7 +13356,6 @@ async function handlePostDefeat(
         console.error("Error processing burrow logic:", error);
       }
     } else {
-      console.log("Processing non-burrowing villain...");
       try {
         if (!villainCard.skrulled && villainCard.team !== "Infinity Gems") {
           victoryPile.push(villainCard);
@@ -13498,10 +13369,8 @@ async function handlePostDefeat(
     }
 
     // 10. Soul Gem handling
-    console.log("10. Checking Soul Gem...");
     const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
     if (soulGem) {
-      console.log("Processing Soul Gem...");
       try {
         if (typeof soulGem.shards === 'undefined') {
           soulGem.shards = 0;
@@ -13516,9 +13385,7 @@ async function handlePostDefeat(
     }
 
     // 11. Killbot handling
-    console.log("11. Checking killbot...");
     if (villainCard.killbot === true) {
-      console.log("Processing killbot...");
       try {
         if (typeof bystanderBonuses === 'function') {
           bystanderBonuses();
@@ -13530,7 +13397,6 @@ async function handlePostDefeat(
       }
     }
 
-    console.log("12. Adding HR...");
     try {
       addHRToTopWithInnerHTML();
     } catch (error) {
@@ -13538,10 +13404,8 @@ async function handlePostDefeat(
     }
 
     // 13. Location bonuses
-    console.log("13. Processing location bonuses...");
     try {
       if (thingCrimeStopperRescue && cityIndex === 3) {
-        console.log("Thing Crime Stopper rescue triggered...");
         onscreenConsole.log(
           `You defeated <span class="console-highlights">${villainCard.name}</span> in the Bank. Rescuing a Bystander.`,
         );
@@ -13551,7 +13415,6 @@ async function handlePostDefeat(
       }
 
       if (sewerRooftopDefeats > 0 && (cityIndex === 2 || cityIndex === 4)) {
-        console.log("Sewer/Rooftop defeats triggered:", sewerRooftopDefeats);
         onscreenConsole.log(
           `You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? "in the Sewers" : "on the Rooftops"}. Drawing ${sewerRooftopDefeats} cards.`,
         );
@@ -13563,7 +13426,6 @@ async function handlePostDefeat(
       }
 
       if (sewerRooftopBonusRecruit > 0 && (cityIndex === 2 || cityIndex === 4)) {
-        console.log("Sewer/Rooftop bonus recruit triggered:", sewerRooftopBonusRecruit);
         onscreenConsole.log(
           `You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? "in the Sewers" : "on the Rooftops"}. +${sewerRooftopBonusRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
         );
@@ -13572,7 +13434,6 @@ async function handlePostDefeat(
       }
 
       if (moonKnightLunarCommunionKO && cityIndex === 2) {
-        console.log("Moon Knight Lunar Communion KO triggered...");
         onscreenConsole.log(
           `You defeated <span class="console-highlights">${villainCard.name}</span> on the Rooftops. <span class="console-highlights">Moon Knight - Lunar Communion</span> allows you to KO.`,
         );
@@ -13584,7 +13445,6 @@ async function handlePostDefeat(
       }
       
       if (moonKnightGoldenAnkhOfKhonshuBystanders && cityIndex === 2) {
-        console.log("Moon Knight Golden Ankh bystanders triggered...");
         onscreenConsole.log(
           `You defeated <span class="console-highlights">${villainCard.name}</span> on the Rooftops.`,
         );
@@ -13599,9 +13459,7 @@ async function handlePostDefeat(
     }
 
     // 14. Carrion handling
-    console.log("14. Checking Carrion...");
     if (villainCard.name === "Carrion" && carrionHeroFeast) {
-      console.log("Processing Carrion feast...");
       try {
         city[cityIndex] = villainCard;
         const feastedHero = koPile[koPile.length - 1];
@@ -13615,9 +13473,7 @@ async function handlePostDefeat(
     }
 
     // 15. Chameleon handling
-    console.log("15. Checking Chameleon...");
     if (villainCard.name === "Chameleon") {
-      console.log("Processing Chameleon...");
       try {
         onscreenConsole.log(
           `Fight! <span class="console-highlights">Chameleon</span> lets you copy the effects of the Hero in the HQ space underneath, including its <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
@@ -13628,9 +13484,7 @@ async function handlePostDefeat(
             `You copy the effects of <span class="console-highlights">${hqCard.name}</span>.`,
           );
           if (typeof chameleonFight === 'function') {
-            console.log("Calling chameleonFight...");
             await chameleonFight(hqCard);
-            console.log("chameleonFight completed");
           } else {
             console.error("chameleonFight function not found!");
           }
@@ -13643,9 +13497,7 @@ async function handlePostDefeat(
     }
 
     // 16. Weave a Web of Lies scheme
-    console.log("16. Checking Weave a Web of Lies...");
     if (scheme.name === "Weave a Web of Lies") {
-      console.log("Processing Weave a Web of Lies...");
       try {
         if (typeof weaveAWebOfLiesBystanderRescue === 'function') {
           await weaveAWebOfLiesBystanderRescue();
@@ -13658,14 +13510,11 @@ async function handlePostDefeat(
     }
 
     // 17. Professor X Mind Control
-    console.log("17. Checking Professor X Mind Control...");
     let professorXSuccess = false;
     if (hasProfessorXMindControl) {
-      console.log("Processing Professor X Mind Control...");
       try {
         if (typeof professorXMindControlGainVillain === 'function') {
           professorXSuccess = await professorXMindControlGainVillain(villainCard);
-          console.log("Professor X result:", professorXSuccess);
         } else {
           console.error("professorXMindControlGainVillain function not found!");
         }
@@ -13675,12 +13524,9 @@ async function handlePostDefeat(
     }
 
     // 18. Infinity Gem handling
-    console.log("18. Checking Infinity Gem...");
     const infinityGemVillain = villainCard.team === "Infinity Gems";
-    console.log("Is Infinity Gem villain:", infinityGemVillain);
 
     if (infinityGemVillain && !professorXSuccess && !villainCard.nullified) {
-      console.log("Processing Infinity Gem defeat...");
       try {
         villainCard.type = "Artifact";
         villainCard.originalAttack = villainCard.attack;
@@ -13693,7 +13539,6 @@ async function handlePostDefeat(
         console.error("Error processing Infinity Gem:", error);
       }
     } else if (infinityGemVillain && professorXSuccess) {
-      console.log("Professor X succeeded on Infinity Gem...");
       try {
         villainCard.unconditionalAbility = "None";
       } catch (error) {
@@ -13702,7 +13547,6 @@ async function handlePostDefeat(
     }
 
     if (infinityGemVillain && villainCard.nullified) {
-      console.log("Processing nullified Infinity Gem...");
       try {
         villainCard.nullified = false;
         victoryPile.push(villainCard);
@@ -13715,7 +13559,6 @@ async function handlePostDefeat(
     }
 
     // 19. Clear bystander array
-    console.log("19. Clearing bystander array...");
     if (villainCard.bystander) {
       try {
         villainCard.bystander = [];
@@ -13725,7 +13568,6 @@ async function handlePostDefeat(
     }
 
     // 20. Final cleanup
-    console.log("20. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
         await defeatBonuses();
@@ -13737,9 +13579,7 @@ async function handlePostDefeat(
     }
 
     // 21. Endless Armies of HYDRA
-    console.log("21. Checking Endless Armies of HYDRA...");
     if (villainCard.name === "Endless Armies of HYDRA") {
-      console.log("Processing Endless Armies of HYDRA...");
       try {
         onscreenConsole.log(
           `Fight! <span class="console-highlights">Endless Armies of HYDRA</span> forces you to play the top two cards of the Villain Deck.`,
@@ -13755,9 +13595,7 @@ async function handlePostDefeat(
     }
 
     // 22. Skrulled villain cleanup
-    console.log("22. Checking skrulled status...");
     if (villainCard.wasSkrulled === true) {
-      console.log("Removing skrulled villain from victory pile...");
       try {
         const index = victoryPile.indexOf(villainCard);
         if (index > -1) {
@@ -13768,18 +13606,14 @@ async function handlePostDefeat(
       }
     }
 
-    console.log(`handlePostDefeat: Villain fully processed. Now updating game board.`);
 
     // 23. Final update
-    console.log("23. Updating game board...");
     try {
       updateGameBoard();
-      console.log("Game board updated successfully");
     } catch (error) {
       console.error("Error updating game board:", error);
     }
 
-    console.log("handlePostDefeat COMPLETED SUCCESSFULLY");
     
   } catch (mainError) {
     console.error("FATAL ERROR in handlePostDefeat:", mainError);
@@ -13812,17 +13646,10 @@ async function handleHQPostDefeat(
   index,
   isInstantDefeat = false,
 ) {
-  console.log("handleHQPostDefeat START", { 
-    villainName: villainCard?.name, 
-    index, 
-    isInstantDefeat 
-  });
 
   try {
     // 1. Shards handling
-    console.log("1. Checking shards...");
     if (villainCard.shards && villainCard.shards > 0) {
-      console.log("Processing shards, count:", villainCard.shards);
       try {
         playSFX("shards");
         villainCard.shards -= 1;
@@ -13840,9 +13667,7 @@ async function handleHQPostDefeat(
     }
 
     // 2. Baby Hope handling
-    console.log("2. Checking Baby Hope...");
     if (villainCard.babyHope === true) {
-      console.log("Processing Baby Hope...");
       try {
         delete villainCard.babyHope;
         villainCard.attack = villainCard.originalAttack;
@@ -13860,12 +13685,10 @@ async function handleHQPostDefeat(
     }
 
     // 3. Plutonium handling
-    console.log("3. Checking plutonium...");
     if (
       Array.isArray(villainCard.plutoniumCaptured) &&
       villainCard.plutoniumCaptured.length
     ) {
-      console.log("Processing plutonium, count:", villainCard.plutoniumCaptured.length);
       try {
         onscreenConsole.log(
           `${villainCard.plutoniumCaptured.length} Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled into the Villain Deck.`,
@@ -13881,12 +13704,10 @@ async function handleHQPostDefeat(
     }
 
     // 4. X-Cutioner Heroes
-    console.log("4. Checking X-Cutioner Heroes...");
     if (
       Array.isArray(villainCard.XCutionerHeroes) &&
       villainCard.XCutionerHeroes.length > 0
     ) {
-      console.log("Processing X-Cutioner Heroes, count:", villainCard.XCutionerHeroes.length);
       try {
         for (const hero of villainCard.XCutionerHeroes) {
           playerDiscardPile.push(hero);
@@ -13901,9 +13722,7 @@ async function handleHQPostDefeat(
     }
 
     // 5. Extra bystanders
-    console.log("5. Checking extra bystanders...");
     if (rescueExtraBystanders > 0) {
-      console.log("Rescuing extra bystanders, count:", rescueExtraBystanders);
       try {
         for (let i = 0; i < rescueExtraBystanders; i++) {
           if (typeof rescueBystander === 'function') {
@@ -13919,9 +13738,7 @@ async function handleHQPostDefeat(
     }
 
     // 6. Dracula special case
-    console.log("6. Checking Dracula...");
     if (villainCard.name === "Dracula") {
-      console.log("Processing Dracula...");
       try {
         villainCard.attack = 3;
         villainCard.cost = 0;
@@ -13931,14 +13748,11 @@ async function handleHQPostDefeat(
     }
 
     // 7. Burrow logic
-    console.log("7. Processing burrow logic...");
     const burrowingVillain =
       villainCard.keywords && villainCard.keywords.includes("Burrow");
 
-    console.log("Is burrowing villain:", burrowingVillain);
 
     if (burrowingVillain) {
-      console.log("Processing burrowing villain in HQ...");
       try {
         victoryPile.push(villainCard);
         onscreenConsole.log(
@@ -13950,9 +13764,7 @@ async function handleHQPostDefeat(
     }
 
     // 8. Non-burrowing villain defeat
-    console.log("8. Processing non-burrowing villain defeat...");
     if (!villainCard.skrulled) {
-      console.log("Adding non-skulled villain to victory pile...");
       try {
         victoryPile.push(villainCard);
         onscreenConsole.log(
@@ -13964,10 +13776,8 @@ async function handleHQPostDefeat(
     }
 
     // 9. Soul Gem handling
-    console.log("9. Checking Soul Gem...");
     const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
     if (soulGem) {
-      console.log("Processing Soul Gem...");
       try {
         if (typeof soulGem.shards === 'undefined') {
           soulGem.shards = 0;
@@ -13982,23 +13792,19 @@ async function handleHQPostDefeat(
     }
 
     // 10. Replace HQ card
-    console.log("10. Replacing HQ card...");
     try {
       const newCard = refillHQSlot(index);
 
       if (newCard) {
-        console.log("New HQ card:", newCard.name);
         onscreenConsole.log(
           `<span class="console-highlights">${newCard.name}</span> has entered the HQ.`,
         );
       } else {
-        console.log("No cards left in hero deck");
       }
     } catch (error) {
       console.error("Error replacing HQ card:", error);
     }
 
-    console.log("11. Adding HR...");
     try {
       addHRToTopWithInnerHTML();
     } catch (error) {
@@ -14006,22 +13812,18 @@ async function handleHQPostDefeat(
     }
 
     // 12. Healing and deck status
-    console.log("12. Updating healing and deck status...");
     try {
       healingPossible = false;
 
       if (!hq[index] && heroDeck.length === 0) {
         heroDeckHasRunOut = true;
-        console.log("Hero deck has run out!");
       }
     } catch (error) {
       console.error("Error updating healing/deck status:", error);
     }
 
     // 13. Killbot handling
-    console.log("13. Checking killbot...");
     if (villainCard.killbot === true) {
-      console.log("Processing killbot...");
       try {
         if (typeof bystanderBonuses === 'function') {
           bystanderBonuses();
@@ -14033,7 +13835,6 @@ async function handleHQPostDefeat(
       }
     }
 
-    console.log("14. Adding HR again...");
     try {
       addHRToTopWithInnerHTML();
     } catch (error) {
@@ -14041,9 +13842,7 @@ async function handleHQPostDefeat(
     }
 
     // 15. Carrion handling
-    console.log("15. Checking Carrion...");
     if (villainCard.name === "Carrion" && carrionHeroFeast) {
-      console.log("Processing Carrion feast in HQ...");
       try {
         victoryPile.push(villainCard);
         const feastedHero = koPile[koPile.length - 1];
@@ -14057,9 +13856,7 @@ async function handleHQPostDefeat(
     }
 
     // 16. Chameleon handling
-    console.log("16. Checking Chameleon...");
     if (villainCard.name === "Chameleon") {
-      console.log("Processing Chameleon in HQ...");
       try {
         onscreenConsole.log(
           `<span class="console-highlights">Chameleon</span> is in the HQ and has no Heroes beneath him to copy!`,
@@ -14070,17 +13867,14 @@ async function handleHQPostDefeat(
     }
 
     // 17. Get selected scheme
-    console.log("17. Getting selected scheme...");
     let scheme = null;
     try {
       const selectedSchemeName = document.querySelector(
         "#scheme-section input[type=radio]:checked",
       )?.value;
-      console.log("Selected scheme name:", selectedSchemeName);
       
       if (selectedSchemeName) {
         scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
-        console.log("Scheme found:", scheme?.name);
       } else {
         console.error("No scheme selected!");
       }
@@ -14089,9 +13883,7 @@ async function handleHQPostDefeat(
     }
 
     // 18. Weave a Web of Lies scheme
-    console.log("18. Checking Weave a Web of Lies...");
     if (scheme && scheme.name === "Weave a Web of Lies") {
-      console.log("Processing Weave a Web of Lies...");
       try {
         if (typeof weaveAWebOfLiesBystanderRescue === 'function') {
           await weaveAWebOfLiesBystanderRescue();
@@ -14104,14 +13896,11 @@ async function handleHQPostDefeat(
     }
 
     // 19. Professor X Mind Control
-    console.log("19. Checking Professor X Mind Control...");
     let professorXSuccess = false;
     if (hasProfessorXMindControl) {
-      console.log("Processing Professor X Mind Control...");
       try {
         if (typeof professorXMindControlGainVillain === 'function') {
           professorXSuccess = await professorXMindControlGainVillain(villainCard);
-          console.log("Professor X result:", professorXSuccess);
         } else {
           console.error("professorXMindControlGainVillain function not found!");
         }
@@ -14121,12 +13910,9 @@ async function handleHQPostDefeat(
     }
 
     // 20. Infinity Gem handling
-    console.log("20. Checking Infinity Gem...");
     const infinityGemVillain = villainCard.team === "Infinity Gems";
-    console.log("Is Infinity Gem villain:", infinityGemVillain);
 
     if (infinityGemVillain && !professorXSuccess) {
-      console.log("Processing Infinity Gem defeat...");
       try {
         villainCard.type = "Artifact";
         villainCard.originalAttack = villainCard.attack;
@@ -14139,7 +13925,6 @@ async function handleHQPostDefeat(
         console.error("Error processing Infinity Gem:", error);
       }
     } else if (infinityGemVillain && professorXSuccess) {
-      console.log("Professor X succeeded on Infinity Gem...");
       try {
         villainCard.unconditionalAbility = "None";
       } catch (error) {
@@ -14148,7 +13933,6 @@ async function handleHQPostDefeat(
     }
 
     // 21. Final cleanup
-    console.log("21. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
         await defeatBonuses();
@@ -14163,9 +13947,7 @@ async function handleHQPostDefeat(
     }
 
     // 22. Endless Armies of HYDRA
-    console.log("22. Checking Endless Armies of HYDRA...");
     if (villainCard.name === "Endless Armies of HYDRA") {
-      console.log("Processing Endless Armies of HYDRA...");
       try {
         onscreenConsole.log(
           `Fight! <span class="console-highlights">Endless Armies of HYDRA</span> forces you to play the top two cards of the Villain Deck.`,
@@ -14181,9 +13963,7 @@ async function handleHQPostDefeat(
     }
 
     // 23. Skrulled villain cleanup
-    console.log("23. Checking skrulled status...");
     if (villainCard.wasSkrulled === true) {
-      console.log("Removing skrulled villain from victory pile...");
       try {
         const index = victoryPile.indexOf(villainCard);
         if (index > -1) {
@@ -14194,18 +13974,14 @@ async function handleHQPostDefeat(
       }
     }
 
-    console.log("handleHQPostDefeat: Villain fully processed. Now updating game board.");
 
     // 24. Final update
-    console.log("24. Updating game board...");
     try {
       updateGameBoard();
-      console.log("Game board updated successfully");
     } catch (error) {
       console.error("Error updating game board:", error);
     }
 
-    console.log("handleHQPostDefeat COMPLETED SUCCESSFULLY");
     
   } catch (mainError) {
     console.error("FATAL ERROR in handleHQPostDefeat:", mainError);
@@ -14232,17 +14008,12 @@ async function handleHQPostDefeat(
 }
 
 async function defeatNonPlacedVillain(villainCard) {
-  console.log("defeatNonPlacedVillain START", { 
-    villainName: villainCard?.name
-  });
 
   try {
     // 1. Scheme selection
-    console.log("1. Getting selected scheme...");
     const selectedSchemeName = document.querySelector(
       "#scheme-section input[type=radio]:checked",
     )?.value;
-    console.log("Selected scheme name:", selectedSchemeName);
     
     if (!selectedSchemeName) {
       console.error("No scheme selected!");
@@ -14256,12 +14027,9 @@ async function defeatNonPlacedVillain(villainCard) {
       onscreenConsole.log(`<span class='console-error'>Error: Scheme "${selectedSchemeName}" not found!</span>`);
       return;
     }
-    console.log("Scheme found:", scheme.name);
 
        // 2. Extra bystanders
-    console.log("2. Checking extra bystanders...");
     if (rescueExtraBystanders > 0) {
-      console.log("Rescuing extra bystanders, count:", rescueExtraBystanders);
       try {
         for (let i = 0; i < rescueExtraBystanders; i++) {
           if (typeof rescueBystander === 'function') {
@@ -14277,11 +14045,9 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 3. Organized Crime Wave scheme
-    console.log("3. Checking Organized Crime Wave...");
     if (scheme.name === "Organized Crime Wave" && 
         villainCard.name === "Maggia Goons" && 
         (!villainCard.ambushEffect || villainCard.ambushEffect === "none")) {
-      console.log("Setting organized crime ambush...");
       try {
         villainCard.ambushEffect = "organizedCrimeAmbush";
       } catch (error) {
@@ -14290,17 +14056,14 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 4. Burrow logic
-    console.log("4. Processing burrow logic...");
     const burrowingVillain =
       villainCard.keywords && villainCard.keywords.includes("Burrow");
     const inStreetsNow = false;
     const streetsFree =
       (city[1] === "" || city[1] === null) && destroyedSpaces[1] === false;
 
-    console.log("Burrow check:", { burrowingVillain, inStreetsNow, streetsFree });
 
     if (burrowingVillain) {
-      console.log("Processing burrowing villain...");
       try {
         if (inStreetsNow) {
           victoryPile.push(villainCard);
@@ -14329,7 +14092,6 @@ async function defeatNonPlacedVillain(villainCard) {
         console.error("Error processing burrow logic:", error);
       }
     } else {
-      console.log("Processing non-burrowing villain...");
       try {
         if (!villainCard.skrulled && villainCard.team !== "Infinity Gems") {
           victoryPile.push(villainCard);
@@ -14343,10 +14105,8 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 5. Soul Gem handling
-    console.log("5. Checking Soul Gem...");
     const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
     if (soulGem) {
-      console.log("Processing Soul Gem...");
       try {
         if (typeof soulGem.shards === 'undefined') {
           soulGem.shards = 0;
@@ -14361,9 +14121,7 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 6. Killbot handling
-    console.log("6. Checking killbot...");
     if (villainCard.killbot === true) {
-      console.log("Processing killbot...");
       try {
         if (typeof bystanderBonuses === 'function') {
           bystanderBonuses();
@@ -14375,7 +14133,6 @@ async function defeatNonPlacedVillain(villainCard) {
       }
     }
 
-    console.log("7. Adding HR...");
     try {
       addHRToTopWithInnerHTML();
     } catch (error) {
@@ -14383,9 +14140,7 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 8. Carrion handling
-    console.log("8. Checking Carrion...");
     if (villainCard.name === "Carrion" && carrionHeroFeast) {
-      console.log("Processing Carrion feast...");
       try {
         const feastedHero = koPile[koPile.length - 1];
         onscreenConsole.log(
@@ -14398,9 +14153,7 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 9. Chameleon handling
-    console.log("9. Checking Chameleon...");
     if (villainCard.name === "Chameleon") {
-      console.log("Processing Chameleon in HQ...");
       try {
         onscreenConsole.log(
           `<span class="console-highlights">Chameleon</span> has no Heroes beneath him to copy!`,
@@ -14411,9 +14164,7 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 10. Weave a Web of Lies scheme
-    console.log("10. Checking Weave a Web of Lies...");
     if (scheme.name === "Weave a Web of Lies") {
-      console.log("Processing Weave a Web of Lies...");
       try {
         if (typeof weaveAWebOfLiesBystanderRescue === 'function') {
           await weaveAWebOfLiesBystanderRescue();
@@ -14426,14 +14177,11 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 11. Professor X Mind Control
-    console.log("11. Checking Professor X Mind Control...");
     let professorXSuccess = false;
     if (hasProfessorXMindControl) {
-      console.log("Processing Professor X Mind Control...");
       try {
         if (typeof professorXMindControlGainVillain === 'function') {
           professorXSuccess = await professorXMindControlGainVillain(villainCard);
-          console.log("Professor X result:", professorXSuccess);
         } else {
           console.error("professorXMindControlGainVillain function not found!");
         }
@@ -14443,12 +14191,9 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 12. Infinity Gem handling
-    console.log("12. Checking Infinity Gem...");
     const infinityGemVillain = villainCard.team === "Infinity Gems";
-    console.log("Is Infinity Gem villain:", infinityGemVillain);
 
     if (infinityGemVillain && !professorXSuccess && !villainCard.nullified) {
-      console.log("Processing Infinity Gem defeat...");
       try {
         villainCard.type = "Artifact";
         villainCard.originalAttack = villainCard.attack;
@@ -14461,7 +14206,6 @@ async function defeatNonPlacedVillain(villainCard) {
         console.error("Error processing Infinity Gem:", error);
       }
     } else if (infinityGemVillain && professorXSuccess) {
-      console.log("Professor X succeeded on Infinity Gem...");
       try {
         villainCard.unconditionalAbility = "None";
       } catch (error) {
@@ -14470,7 +14214,6 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     if (infinityGemVillain && villainCard.nullified) {
-      console.log("Processing nullified Infinity Gem...");
       try {
         villainCard.nullified = false;
         victoryPile.push(villainCard);
@@ -14483,7 +14226,6 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
       // 13. Final cleanup
-    console.log("13. Final cleanup...");
     try {
       if (typeof defeatBonuses === 'function') {
         await defeatBonuses();
@@ -14493,9 +14235,7 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 14. Endless Armies of HYDRA
-    console.log("14. Checking Endless Armies of HYDRA...");
     if (villainCard.name === "Endless Armies of HYDRA") {
-      console.log("Processing Endless Armies of HYDRA...");
       try {
         onscreenConsole.log(
           `Fight! <span class="console-highlights">Endless Armies of HYDRA</span> forces you to play the top two cards of the Villain Deck.`,
@@ -14511,9 +14251,7 @@ async function defeatNonPlacedVillain(villainCard) {
     }
 
     // 15. Skrulled villain cleanup
-    console.log("15. Checking skrulled status...");
     if (villainCard.wasSkrulled === true) {
-      console.log("Removing skrulled villain from victory pile...");
       try {
         const index = victoryPile.indexOf(villainCard);
         if (index > -1) {
@@ -14524,18 +14262,14 @@ async function defeatNonPlacedVillain(villainCard) {
       }
     }
 
-    console.log(`handlePostDefeat: Villain fully processed. Now updating game board.`);
 
     // 16. Final update
-    console.log("16. Updating game board...");
     try {
       updateGameBoard();
-      console.log("Game board updated successfully");
     } catch (error) {
       console.error("Error updating game board:", error);
     }
 
-    console.log("handlePostDefeat COMPLETED SUCCESSFULLY");
     
   } catch (mainError) {
     console.error("FATAL ERROR in defeatNonPlacedVillain:", mainError);
@@ -15440,13 +15174,11 @@ function discardCard(index) {
 document
   .getElementById("healing-button")
   .addEventListener("click", async () => {
-    console.log("Healing Button Clicked");
     await showHealingPopup();
     healWounds();
   });
 
 function healWounds() {
-  console.log("Healing Wounds...");
   onscreenConsole.log(
     '<span style="font-style:italic;">Healing Wounds...</span>',
   );
@@ -15488,7 +15220,6 @@ function showHealingPopup() {
     modalOverlay.style.display = "block";
     healingPopupCard.style.opacity = "1";
 
-    console.log("Showing Healing Popup");
 
     // Start fade out after 100ms
     setTimeout(() => {
@@ -16336,7 +16067,6 @@ async function resolveTacticEffects(tacticCard) {
     }
     if (!negate) {
       if (typeof fightEffectFunction === "function") {
-        console.log("Executing tactic card effect:", tacticCard.fightEffect);
 
         // Execute the fightEffect function
         let effectResult = fightEffectFunction();
@@ -16357,10 +16087,6 @@ async function resolveTacticEffects(tacticCard) {
             resolve(); // Resolve the promise even if there's an error
           });
       } else {
-        console.log(
-          "Tactic card effect not found for:",
-          tacticCard.fightEffect,
-        );
         checkMastermindState();
         resolve();
       }
@@ -16686,9 +16412,6 @@ function checkDefeat() {
         break;
 
       default:
-        console.log(
-          `Mastermind End Game "${mastermindEndGame}" is not yet defined.`,
-        );
         break;
     }
   }
@@ -17217,16 +16940,6 @@ function showHeroAbilityMayPopup(
   );
 
   // Debugging: Ensure buttons are visible and set correctly
-  console.log(
-    "Confirm button display:",
-    window.getComputedStyle(newConfirmButton).display,
-  );
-  console.log("Confirm button text:", newConfirmButton.innerText);
-  console.log(
-    "Deny button display:",
-    window.getComputedStyle(newDenyButton).display,
-  );
-  console.log("Deny button text:", newDenyButton.innerText);
 
   return {
     confirmButton: newConfirmButton,
@@ -18994,7 +18707,6 @@ function addHRToTopWithInnerHTML() {
 }
 
 function openSettings() {
-  console.log("🎵 Opening settings popup");
   
   // Show the popup first
   document.getElementById("settings-popup").style.display = "block";
@@ -19008,29 +18720,23 @@ function openSettings() {
     const musicSelector = document.getElementById('music-selector');
     if (musicSelector) {
       musicSelector.value = window.audioEngine.currentMusicTrack;
-      console.log("🎵 Set dropdown to current track:", window.audioEngine.currentMusicTrack);
     }
   }
   
   // Now attach the music selector event listener (only if not already attached)
   setTimeout(() => {
     const musicSelector = document.getElementById('music-selector');
-    console.log("🎵 Music selector in popup:", musicSelector);
     
     if (musicSelector && !musicSelector._listenerAttached) {
       musicSelector.addEventListener('change', function(e) {
-        console.log("🎵 DROPDOWN CHANGE! Value:", this.value);
         const trackKey = this.value;
         if (window.audioEngine) {
-          console.log("Calling changeMusicTrack with:", trackKey);
           window.audioEngine.changeMusicTrack(trackKey);
         }
       });
       
       musicSelector._listenerAttached = true;
-      console.log("🎵 Music selector event listener attached");
     } else if (musicSelector) {
-      console.log("🎵 Music selector listener already attached");
     } else {
       console.error("🎵 Music selector not found in popup");
     }
@@ -19263,7 +18969,6 @@ async begin({ musicFadeSeconds = 2.0 } = {}) {
   if (!this.sfxLoaded || this.unlocked) return;
 
   // Ensure the current music track is loaded before starting
-  console.log(`Ensuring track "${this.currentMusicTrack}" is loaded before begin()`);
   await this._ensureMusicTrackLoaded(this.currentMusicTrack);
 
   if (this.backend === "webaudio") {
@@ -19321,14 +19026,8 @@ async begin({ musicFadeSeconds = 2.0 } = {}) {
 
     // NEW: Change music track with lazy loading
 async changeMusicTrack(trackKey, fadeSeconds = 1.0) {
-  console.log("=== changeMusicTrack called ===");
-  console.log(`Requested track: "${trackKey}"`);
-  console.log(`Current track: "${this.currentMusicTrack}"`);
-  console.log(`SFX loaded: ${this.sfxLoaded}, Unlocked: ${this.unlocked}`);
-  console.log(`Backend: ${this.backend}`);
   
   if (!this.sfxLoaded || !this.unlocked) {
-    console.log("Audio not ready - SFX loaded:", this.sfxLoaded, "Unlocked:", this.unlocked);
     return;
   }
   
@@ -19340,15 +19039,12 @@ async changeMusicTrack(trackKey, fadeSeconds = 1.0) {
   
   // Don't do anything if we're already playing this track
   if (trackKey === this.currentMusicTrack) {
-    console.log(`Already playing track "${trackKey}", skipping`);
     return;
   }
   
-  console.log(`Loading music track: "${trackKey}"`);
   
   // Ensure the track is loaded before switching
   const loaded = await this._ensureMusicTrackLoaded(trackKey);
-  console.log(`Track "${trackKey}" loaded: ${loaded}`);
   
   if (!loaded) {
     console.warn(`Failed to load track "${trackKey}", using default`);
@@ -19357,41 +19053,32 @@ async changeMusicTrack(trackKey, fadeSeconds = 1.0) {
     await this._ensureMusicTrackLoaded("background-music");
   }
   
-  console.log(`Fading out current music and switching to: "${trackKey}"`);
   
   // Fade out current music
   await this.fadeOutMusic(fadeSeconds / 2);
-  console.log("Fade out completed");
   
   // Update current track
   this.currentMusicTrack = trackKey;
   localStorage.setItem("game_currentMusicTrack", trackKey);
-  console.log(`Current track updated to: "${trackKey}"`);
   
   // Start new music
   if (this.backend === "webaudio") {
-    console.log("Using WebAudio backend to start music");
     await this._waStartMusic(trackKey, fadeSeconds / 2);
   } else {
-    console.log("Using HTMLAudio backend to start music");
     await this._htmlStartMusic(trackKey, fadeSeconds / 2);
   }
   
-  console.log("New music should be playing now");
   
   // Update UI
-  console.log("Music track change completed");
 }
 
     // NEW: Set music track from scheme
 
 // NEW: Set music track from scheme - with better handling for locked audio
 async setMusicFromScheme(scheme, fadeSeconds = 2.0) {
-  console.log("=== setMusicFromScheme called ===");
   
   if (scheme && scheme.backingTrack) {
     const trackKey = scheme.backingTrack;
-    console.log(`Setting music from scheme: "${trackKey}"`);
     
     if (MUSIC_TRACKS[trackKey]) {
       // Always update the current track
@@ -19400,10 +19087,8 @@ async setMusicFromScheme(scheme, fadeSeconds = 2.0) {
       
       // If audio is already unlocked, change track immediately
       if (this.unlocked) {
-        console.log("Audio is unlocked, changing track immediately");
         await this.changeMusicTrack(trackKey, fadeSeconds);
       } else {
-        console.log("Audio is locked - track will play when begin() is called");
         // Ensure the track is loaded so it's ready when begin() is called
         await this._ensureMusicTrackLoaded(trackKey);
       }
@@ -19459,11 +19144,8 @@ async setMusicFromScheme(scheme, fadeSeconds = 2.0) {
 _updateMusicSelector() {
   const selector = document.getElementById("music-selector");
   if (selector) {
-    console.log(`Updating music selector from "${selector.value}" to "${this.currentMusicTrack}"`);
     selector.value = this.currentMusicTrack;
-    console.log(`Music selector now shows: "${selector.value}"`);
   } else {
-    console.log("Music selector not found in DOM");
   }
 }
 
@@ -19540,10 +19222,8 @@ _updateMusicSelector() {
     }
 
     async _waStartMusic(trackKey, fadeSeconds) {
-  console.log(`_waStartMusic called for: "${trackKey}"`);
   
   if (this.musicSource) {
-    console.log("Stopping previous music source");
     try {
       this.musicSource.stop();
     } catch {}
@@ -19552,7 +19232,6 @@ _updateMusicSelector() {
   }
   
   const buf = this.buffers[trackKey];
-  console.log(`Buffer for "${trackKey}":`, buf);
   
   if (!buf) {
     console.warn(`Music track "${trackKey}" not loaded in buffers, using default`);
@@ -19567,14 +19246,12 @@ _updateMusicSelector() {
   src.start();
 
   const target = this._effMusic();
-  console.log(`Starting music fade to volume: ${target}`);
   
   this.musicGain.gain.cancelScheduledValues(now);
   this.musicGain.gain.setValueAtTime(0, now);
   this.musicGain.gain.linearRampToValueAtTime(target, now + fadeSeconds);
 
   this.musicSource = src;
-  console.log(`WebAudio music started for: "${trackKey}"`);
 }
 
     // ---------- WebAudio fade out ----------
@@ -19692,17 +19369,14 @@ _updateMusicSelector() {
     }
 
     async _htmlStartMusic(trackKey, fadeSeconds) {
-  console.log(`_htmlStartMusic called for: "${trackKey}"`);
   
   // Stop current music if playing
   if (this.currentMediaMusicEl) {
-    console.log("Stopping previous HTML music element");
     this.currentMediaMusicEl.pause();
     this.currentMediaMusicEl.currentTime = 0;
   }
   
   const el = this.mediaMusicEls[trackKey];
-  console.log(`HTML element for "${trackKey}":`, el);
   
   if (!el) {
     console.warn(`Music track "${trackKey}" not loaded in mediaMusicEls, using default`);
@@ -19714,16 +19388,13 @@ _updateMusicSelector() {
   el.loop = true;
   el.volume = 0;
   
-  console.log("Attempting to play HTML audio element");
   try {
     await el.play();
-    console.log("HTML audio play() successful");
   } catch (e) {
     console.error("HTML audio play() failed:", e);
   }
   
   const target = this._effMusic();
-  console.log(`Starting HTML music fade to volume: ${target}`);
   
   const steps = Math.max(1, Math.floor(fadeSeconds * 30));
   for (let i = 1; i <= steps; i++) {
@@ -19731,7 +19402,6 @@ _updateMusicSelector() {
     await wait(1000 / 30);
   }
   el.volume = target;
-  console.log(`HTML music started for: "${trackKey}"`);
 }
 
   }
@@ -19752,54 +19422,40 @@ _updateMusicSelector() {
 
 document.addEventListener('DOMContentLoaded', function() {
   localStorage.removeItem("game_currentMusicTrack");
-  console.log("Cleared persisted music track from localStorage");
 });
 
 // Debug the music selector setup
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("DOMContentLoaded fired");
   
   // Try multiple ways to find the element
   const musicSelector = document.getElementById('music-selector');
-  console.log("Found by ID:", musicSelector);
   
   const musicSelectorQuery = document.querySelector('#music-selector');
-  console.log("Found by querySelector:", musicSelectorQuery);
   
   const musicSelectors = document.querySelectorAll('#music-selector');
-  console.log("Found by querySelectorAll:", musicSelectors);
   
   const allSelects = document.querySelectorAll('select');
-  console.log("All select elements on page:", allSelects);
   
   if (musicSelector) {
-    console.log("Music selector found, adding event listener");
     
     // Add multiple event listeners to see what works
     musicSelector.addEventListener('change', function(e) {
-      console.log("🎵 CHANGE EVENT FIRED! Value:", this.value);
-      console.log("Event:", e);
       
       const trackKey = this.value;
       if (window.audioEngine) {
-        console.log("Calling changeMusicTrack from dropdown");
         window.audioEngine.changeMusicTrack(trackKey);
       }
     });
     
     musicSelector.addEventListener('click', function(e) {
-      console.log("🎵 CLICK EVENT on dropdown");
     });
     
     musicSelector.addEventListener('focus', function(e) {
-      console.log("🎵 FOCUS EVENT on dropdown");
     });
     
     musicSelector.addEventListener('input', function(e) {
-      console.log("🎵 INPUT EVENT on dropdown, value:", this.value);
     });
     
-    console.log("Event listeners added to music selector");
   } else {
     console.error("❌ Music selector NOT FOUND by ID");
     
@@ -19807,7 +19463,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const allElements = document.querySelectorAll('*');
     allElements.forEach(el => {
       if (el.tagName === 'SELECT' && el.id !== 'music-selector') {
-        console.log("Found other select element:", el.id, el.className);
       }
     });
   }
@@ -19881,7 +19536,6 @@ function initFontSelector() {
   const body = document.body;
 
   if (!fontSelector) {
-    console.log("Font selector not found");
     return;
   }
 
@@ -19920,7 +19574,6 @@ function initFontSelector() {
     const chosen = normaliseFont(this.value);
     applyFont(chosen);
     localStorage.setItem("selectedFont", chosen);
-    console.log(`Font changed to: ${chosen}`);
   });
 
   // Initial load: use saved font or fall back to Core
@@ -19928,7 +19581,6 @@ function initFontSelector() {
   const initialFont = normaliseFont(savedFontRaw);
   applyFont(initialFont);
 
-  console.log("Font selector initialized");
 }
 
 function updateFontVariables(fontName) {
@@ -19994,7 +19646,6 @@ function initThemeSwitcher() {
   const body = document.body;
 
   if (themeButtons.length === 0) {
-    console.log("No theme buttons found");
     return;
   }
 
@@ -20016,7 +19667,6 @@ function initThemeSwitcher() {
       // Save theme preference to localStorage
       localStorage.setItem("selectedTheme", theme);
 
-      console.log(`Theme changed to: ${theme}`);
     });
   });
 
@@ -20036,7 +19686,6 @@ function initThemeSwitcher() {
     updateThemeImages(savedTheme);
   }
 
-  console.log("Theme switcher initialized");
 }
 
 function updateThemeImages(themeName) {

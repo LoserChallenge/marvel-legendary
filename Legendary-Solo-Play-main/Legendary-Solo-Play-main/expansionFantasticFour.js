@@ -681,9 +681,6 @@ async function batheEarthInCosmicRaysTwist() {
 );
 
     if (eligibleHandCards.length === 0 && eligibleArtifactCards.length === 0) {
-      console.log(
-        "No eligible coloured cards in hand or artifacts (Green/Yellow/Black/Blue/Red).",
-      );
       onscreenConsole.log("No non-grey Heroes available to KO.");
       resolve();
       return;
@@ -955,7 +952,6 @@ async function batheEarthInCosmicRaysTwist() {
       if (selectedCard === null || selectedLocation === null) return;
 
       setTimeout(async () => {
-        console.log("Card KO'd:", selectedCard);
 
         // Perform the KO from the correct location using ID lookup
         if (selectedLocation === "hand") {
@@ -2199,7 +2195,6 @@ function galactusSunderTheEarth() {
 
     // If no matches found, log and exit
     if (cardsToKO.length === 0) {
-      console.log("No matching cards found between discard pile and HQ.");
       onscreenConsole.log(
         "Mastermind Tactic! No cards in your discard pile have the same name as a Hero in the HQ!",
       );
@@ -2705,7 +2700,6 @@ function moloidsFight() {
 
     // Check if there are any heroes available
     if (artifactHeroes.length === 0 && handHeroes.length === 0 && playedHeroes.length === 0) {
-      console.log("No heroes in artifacts, hand, or played to KO.");
       onscreenConsole.log(
         `<span class="console-highlights">Moloids</span> Fight effect negated. No Heroes available to KO.`,
       );
@@ -2958,7 +2952,6 @@ function moloidsFight() {
       if (selectedCard === null || selectedLocation === null) return;
 
       setTimeout(() => {
-        console.log(`${selectedCard.name} has been KO'd.`);
         onscreenConsole.log(
           `<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`,
         );
@@ -3274,7 +3267,6 @@ function stardustFight() {
     const CovertCardsYouHave = [...artifactCovertCards, ...handCovertCards, ...playedCovertCards];
 
     if (CovertCardsYouHave.length === 0) {
-      console.log("No available Covert Heroes.");
       onscreenConsole.log(
         `You do not have any <img src='Visual Assets/Icons/Covert.svg' alt='Covert Icon' class='console-card-icons'> Heroes to add to next turn's draw.`,
       );
@@ -3549,7 +3541,6 @@ function stardustFight() {
           }
         }
 
-        console.log(`${selectedCard.name} has been reserved for next turn.`);
         onscreenConsole.log(
           `You have selected <span class="console-highlights">${selectedCard.name}</span> to be added to your next draw as a seventh card.`,
         );
@@ -3914,7 +3905,6 @@ function humanTorchCallForBackup() {
     noThanksButton.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      console.log(`No wound was KO'd.`);
       onscreenConsole.log(`You chose not to KO any Wounds.`);
       closeCardChoicePopup();
       resolve(false);
@@ -4555,7 +4545,6 @@ function thingCrimeStopperFocus() {
   function selectCell(cellElement) {
     // Don't allow selection of destroyed spaces (but allow Dark Portal spaces)
     if (isCellDestroyed(cellElement)) {
-      console.log("Destroyed space selected, no action.");
       return;
     }
 
@@ -4569,7 +4558,6 @@ function thingCrimeStopperFocus() {
 
     // If the player selects an Empty cell first, nothing happens
     if (!hasVillain && selectedCells.length === 0) {
-      console.log("Empty cell selected first, no action.");
       return;
     }
 
@@ -4580,7 +4568,6 @@ function thingCrimeStopperFocus() {
       firstSelectedIndex = null;
       selectionArrow.style.display = "none";
       confirmButton.disabled = true;
-      console.log("Deselected cell, resetting selections.");
       return;
     }
 
@@ -4589,7 +4576,6 @@ function thingCrimeStopperFocus() {
       cellElement.classList.add("selected");
       selectedCells.push(cellElement);
       firstSelectedIndex = currentIndex;
-      console.log("First villain selected at index", firstSelectedIndex);
       return;
     }
 
@@ -4601,13 +4587,11 @@ function thingCrimeStopperFocus() {
       if (isAdjacent) {
         cellElement.classList.add("selected");
         selectedCells.push(cellElement);
-        console.log("Adjacent cell selected at index", currentIndex);
 
         // Enable confirm button since we have a valid adjacent selection
         confirmButton.disabled = false;
         drawArrow(selectedCells[0], selectedCells[1]);
       } else {
-        console.log("Non-adjacent cell selected, ignoring.");
         onscreenConsole.log(
           `You may only move a Villain to an adjacent city space.`,
         );
@@ -4959,7 +4943,6 @@ function thingCrimeStopperFocus() {
         secondCellImage.src.includes("BlankCardSpace.webp")
       ) {
         // Move the villain to the empty cell
-        console.log("Moving villain to empty space");
         onscreenConsole.log(
           `<span class="console-highlights">${city[firstIndex].name}</span> moved to empty space.`,
         );
@@ -4968,7 +4951,6 @@ function thingCrimeStopperFocus() {
         city[firstIndex] = null; // Clear the original space
       } else if (city[secondIndex] && city[firstIndex]) {
         // Both cells have villains, perform the swap
-        console.log("Swapping villains");
         onscreenConsole.log(
           `<span class="console-highlights">${city[firstIndex].name}</span> swapped places with <span class="console-highlights">${city[secondIndex].name}</span>.`,
         );
@@ -5752,12 +5734,10 @@ function silverSurferEpicDestiny() {
       let fightEffectPromise = Promise.resolve();
       if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
         const fightEffectFunction = window[villainCard.fightEffect];
-        console.log("Fight effect function found:", fightEffectFunction);
         if (typeof fightEffectFunction === "function") {
           fightEffectPromise = new Promise((resolve, reject) => {
             try {
               const result = fightEffectFunction(villainCard);
-              console.log("Fight effect executed:", result);
               resolve(result);
             } catch (error) {
               reject(error);
@@ -5769,7 +5749,6 @@ function silverSurferEpicDestiny() {
           );
         }
       } else {
-        console.log("No fight effect found for this villain.");
       }
 
       // Handle fight effect promise

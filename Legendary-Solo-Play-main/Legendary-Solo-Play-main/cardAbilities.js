@@ -92,7 +92,6 @@ function bystanderBonuses() {
 function extraDraw(hero) {
   // Check if both playerDeck and playerDiscardPile are empty
   if (playerDeck.length === 0 && playerDiscardPile.length === 0) {
-    console.log("No cards available to draw.");
     onscreenConsole.log("No cards available to draw.");
     return false; // Indicate failure
   }
@@ -109,10 +108,6 @@ function extraDraw(hero) {
   playerHand.push(card);
   cardsInHandThisTurn.add(card); // Photon "Light the Way" tracking (mid-turn extra draws)
   extraCardsDrawnThisTurn++;
-  console.log(
-    "Card drawn. Total cards drawn this turn: ",
-    extraCardsDrawnThisTurn,
-  );
   if (hero && hero.name === "Angel - Diving Catch") {
     onscreenConsole.log(
       `<span style='padding-left: 40px'>Extra card drawn: <span class="console-highlights">${card.name}</span>.</span>`,
@@ -245,15 +240,12 @@ async function SpiderManRevealTopCardToDrawAndBystander() {
     victoryPile.push(rescuedBystander);
     bystanderBonuses();
 
-    console.log("Bystander rescued:", rescuedBystander);
-    console.log("Current Victory Pile:", victoryPile);
     onscreenConsole.log(
       `<span class="console-highlights">${rescuedBystander.name}</span> rescued.`,
     );
     await rescueBystanderAbility(rescuedBystander);
     updateGameBoard();
   } else {
-    console.log("No bystanders left in the deck to rescue.");
     onscreenConsole.log("No Bystanders left to rescue.");
   }
 
@@ -711,7 +703,6 @@ async function BlackWidowRescueBystander() {
     await rescueBystanderAbility(rescuedBystander);
     updateGameBoard();
   } else {
-    console.log("No bystanders left in the deck to rescue.");
     onscreenConsole.log("No Bystanders left to rescue.");
   }
 }
@@ -726,12 +717,10 @@ function BlackWidowRescueBystanderByKO() {
     const hasBystanders = bystanderDeck.length > 0;
 
     if (!hasBystanders) {
-      console.log("There are no Bystanders available to be rescued.");
       onscreenConsole.log("There are no Bystanders available to be rescued.");
     }
 
     if (playerHand.length === 0 && playerDiscardPile.length === 0) {
-      console.log("No cards in hand to discard.");
       onscreenConsole.log(`No cards available to be KO'd.`);
       updateGameBoard();
       resolve(false);
@@ -1008,7 +997,6 @@ function BlackWidowRescueBystanderByKO() {
     noThanksButton.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      console.log(`No card was KO'd.`);
       if (hasBystanders) {
         onscreenConsole.log(
           `You chose not to KO any cards to rescue a Bystander.`,
@@ -1041,7 +1029,6 @@ function bonusAttack() {
     totalAttackPoints += totalBonusAttack;
     cumulativeAttackPoints += totalBonusAttack;
 
-    console.log("Multiplier is 'None', directly adding bonusAttack.");
     updateGameBoard();
     return;
   }
@@ -1274,7 +1261,6 @@ function bonusRecruit() {
     totalRecruitPoints += totalBonusRecruit;
     cumulativeRecruitPoints += totalBonusRecruit;
 
-    console.log("Multiplier is 'None', directly adding bonusRecruit.");
     updateGameBoard();
     return;
   }
@@ -1352,9 +1338,6 @@ function GambitRevealTopCardForAttack() {
   totalAttackPoints += topCardCost;
   cumulativeAttackPoints += topCardCost;
 
-  console.log(
-    `You revealed ${topCardPlayerDeck.name}. Its cost of ${topCardPlayerDeck.cost} has been added to your attack points.`,
-  );
   onscreenConsole.log(
     `You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span>. It has a <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> of ${topCardPlayerDeck.cost}. +${topCardPlayerDeck.cost}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
   );
@@ -1381,17 +1364,11 @@ function GambitRevealXTopCardToDraw() {
     playerDeck.pop();
     playerHand.push(topCardPlayerDeck);
     extraCardsDrawnThisTurn++;
-    console.log(
-      `You revealed ${topCardPlayerDeck.name}. It has been added to your hand.`,
-    );
     onscreenConsole.log(
       `You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span>. They are an <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="console-card-icons"> Hero and have been added to your hand.`,
     );
     updateGameBoard();
   } else {
-    console.log(
-      `You revealed ${topCardPlayerDeck.name}. They are not a member of the X-Men and have been returned to the top of the deck.`,
-    );
     onscreenConsole.log(
       `You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span>. They are not an <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="console-card-icons"> Hero and have been returned to the top of your deck.`,
     );
@@ -1430,8 +1407,6 @@ function DeadpoolApplyOddCostBonus() {
   totalAttackPoints += oddCostCount;
   cumulativeAttackPoints += oddCostCount;
 
-  console.log(`Number of odd cost cards: ${oddCostCount}`);
-  console.log(`${oddCostCount} added to Attack points.`);
 
   onscreenConsole.log(
     `Special Ability: You have played ${oddCostCount} ${oddCostText} with an odd-numbered <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons">. +${oddCostCount}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
@@ -1617,7 +1592,6 @@ function EmmaFrostVoluntaryVillainForAttack() {
       }
 
       confirmButton.onclick = async function () {
-        console.log("Extra villain card played. +2 attack granted.");
         onscreenConsole.log(
           `Extra Villain card played. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
         );
@@ -1630,7 +1604,6 @@ function EmmaFrostVoluntaryVillainForAttack() {
       };
 
       denyButton.onclick = function () {
-        console.log("No extra villain card played.");
         onscreenConsole.log("No extra Villain card has been played.");
         closeInfoChoicePopup();
         resolve();
@@ -1694,7 +1667,6 @@ function DeadpoolChooseToGainWound() {
 
       // Deny button handling
       denyButton.onclick = function () {
-        console.log("No Wound gained.");
         onscreenConsole.log("No Wound gained.");
         closeInfoChoicePopup();
         resolve();
@@ -1712,7 +1684,6 @@ async function GambitTopCardDiscardOrPutBack() {
           playerDeck = shuffle(playerDiscardPile);
           playerDiscardPile = [];
         } else {
-          console.log("No cards available to be drawn.");
           onscreenConsole.log("No cards available to be drawn.");
           resolve();
           return;
@@ -1759,7 +1730,6 @@ async function GambitTopCardDiscardOrPutBack() {
           playerHand.push(...returned);
         }
 
-        console.log(`You discarded ${topCardPlayerDeck.name}.`);
         onscreenConsole.log(
           `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been discarded.`,
         );
@@ -1769,9 +1739,6 @@ async function GambitTopCardDiscardOrPutBack() {
       };
 
       denyButton.onclick = async function () {
-        console.log(
-          `You put ${topCardPlayerDeck.name} back on top of your deck.`,
-        );
         onscreenConsole.log(
           `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been returned to the top of your deck.`,
         );
@@ -1872,9 +1839,6 @@ function HawkeyeDontDrawOrDiscard() {
 
 function rescueThreeBystanders() {
   rescueExtraBystanders += 3;
-  console.log(
-    "Whenever you defeat a villain or mastermind this turn, you will rescue 3 bystanders.",
-  );
   onscreenConsole.log(
     "Whenever you defeat a Villain or Mastermind this turn, you will rescue three Bystanders.",
   );
@@ -1883,9 +1847,6 @@ function rescueThreeBystanders() {
 function EmmaFrostExtraThreeRecruit() {
   extraThreeRecruitAvailable += 3;
 
-  console.log(
-    "Whenever you defeat a villain or mastermind this turn, you will gain 3 Recruit points.",
-  );
   onscreenConsole.log(
     'Whenever you defeat a Villain or Mastermind this turn, you will rescue gain +3 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.',
   );
@@ -1901,7 +1862,6 @@ function WolverineKoWoundToDraw() {
 
     // If no wounds are found, log and resolve
     if (discardPileWounds.length === 0 && handWounds.length === 0) {
-      console.log("No Wounds");
       onscreenConsole.log("No Wounds available to KO.");
       resolve(false);
       return;
@@ -2163,7 +2123,6 @@ function WolverineKoWoundToDraw() {
     noThanksButton.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      console.log(`No wound was KO'd.`);
       onscreenConsole.log(`You chose not to KO any Wounds.`);
       closeCardChoicePopup();
       resolve(false);
@@ -2470,7 +2429,6 @@ confirmButton.onclick = (e) => {
     noThanksButton.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      console.log(`No wound was KO'd.`);
       onscreenConsole.log(`You chose not to KO any Wounds.`);
       closeCardChoicePopup();
       resolve(false);
@@ -2828,7 +2786,6 @@ function RogueStealAbilities() {
         playerDiscardPile = [];
         onscreenConsole.log("Discard pile shuffled into deck.");
       } else {
-        console.log("No cards available to draw.");
         onscreenConsole.log("No cards available to be drawn.");
         resolve();
         return;
@@ -2853,7 +2810,6 @@ function RogueStealAbilities() {
     cardsPlayedThisTurn.push(simulatedCard);
     
     // 7. Log what happened
-    console.log(`Steal Abilities: Revealed and discarded ${topCard.name}`);
     onscreenConsole.log(
       `Revealed <span class="console-highlights">${topCard.name}</span> from deck and discarded it. Copying its abilities...`
     );
@@ -2940,7 +2896,6 @@ async function executeAbilityWithSpecialCases(card, context = "steal", options =
   // Handle special cases first
   switch(cardName) {
     case "Lockjaw":
-      console.log(`${context} copying Lockjaw's +2 attack`);
       if (!skipStats) {
         totalAttackPoints += 2;
         cumulativeAttackPoints += 2;
@@ -2949,7 +2904,6 @@ async function executeAbilityWithSpecialCases(card, context = "steal", options =
       return;
       
     case "Gamora - Godslayer Blade":
-      console.log(`${context} copying Gamora Godslayer Blade`);
       await gamoraGodslayerBladeCopy(card);
       return;
       
@@ -2976,7 +2930,6 @@ async function executeAbilityWithSpecialCases(card, context = "steal", options =
             console.error(`Conditional ability function ${card.conditionalAbility} not found`);
           }
         } else {
-          console.log(`Condition not met for ${card.name}'s ability`);
         }
       }
   }
@@ -3699,9 +3652,6 @@ function CyclopsOpticBlastDiscardToPlay() {
   return new Promise((resolve) => {
     // Check if there are any cards to discard
     if (playerHand.length === 0) {
-      console.log(
-        "No cards in Hand to discard. You are unable to play this card.",
-      );
       const unplayedCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
       playerHand.push(unplayedCard);
       cardsPlayedThisTurn.pop(unplayedCard);
@@ -3973,7 +3923,6 @@ function CyclopsOpticBlastDiscardToPlay() {
       e.stopPropagation();
       e.preventDefault();
 
-      console.log("Card cannot be played since no card was discarded.");
       onscreenConsole.log(
         `You have chosen not to discard, preventing you from playing <span class="console-highlights">Cyclops - Optic Blast</span>.`,
       );
@@ -4006,14 +3955,10 @@ async function checkDiscardForInvulnerability(cards) {
 
   for (const card of cardsArray) {
     try {
-      console.log(
-        `Processing card: ${card.name}, Invulnerability: ${card.invulnerability}`,
-      );
 
       if (!card.invulnerability || card.invulnerability === "None") {
         playerDiscardPile.push(card);
         actuallyDiscarded.push(card);
-        console.log(`→ ${card.name} discarded normally`);
         onscreenConsole.log(
           `<span class="console-highlights">${card.name}</span> has been discarded.`,
         );
@@ -4024,15 +3969,12 @@ async function checkDiscardForInvulnerability(cards) {
         // Only process specific cards we have cases for
         switch (card.name) {
           case "Cyclops - Unending Energy": {
-            console.log(`→ Triggering Cyclops effect`);
             const shouldReturn = await cyclopsDiscardInvulnerability(card);
             if (shouldReturn) {
               returnedCards.push(card);
-              console.log(`→ ${card.name} will be returned to hand`);
             } else {
               playerDiscardPile.push(card);
               actuallyDiscarded.push(card);
-              console.log(`→ ${card.name} discarded after effect`);
               onscreenConsole.log(
                 `<span class="console-highlights">${card.name}</span> has been discarded.`,
               );
@@ -4041,7 +3983,6 @@ async function checkDiscardForInvulnerability(cards) {
           }
 
           case "Angel - Diving Catch": {
-            console.log(`→ Triggering Angel Diving Catch`);
             playerDiscardPile.push(card);
             actuallyDiscarded.push(card);
             onscreenConsole.log(
@@ -4060,7 +4001,6 @@ async function checkDiscardForInvulnerability(cards) {
             // just discard it normally without special processing
             playerDiscardPile.push(card);
             actuallyDiscarded.push(card);
-            console.log(`→ ${card.name} discarded (no special effect defined)`);
             onscreenConsole.log(
               `<span class="console-highlights">${card.name}</span> has been discarded.`,
             );
@@ -4071,7 +4011,6 @@ async function checkDiscardForInvulnerability(cards) {
         // Handle other invulnerability types (like "discardWound") by discarding normally
         playerDiscardPile.push(card);
         actuallyDiscarded.push(card);
-        console.log(`→ ${card.name} discarded (invulnerability: ${card.invulnerability} - not "Discard")`);
         onscreenConsole.log(
           `<span class="console-highlights">${card.name}</span> has been discarded.`,
         );
@@ -4115,7 +4054,6 @@ async function cyclopsDiscardInvulnerability(card) {
       }
 
       confirmButton.onclick = () => {
-        console.log(`${card.name} will be returned to hand`);
         onscreenConsole.log(
           `<span class="console-highlights">${card.name}</span> will be returned to your hand.`,
         );
@@ -4124,7 +4062,6 @@ async function cyclopsDiscardInvulnerability(card) {
       };
 
       denyButton.onclick = () => {
-        console.log(`${card.name} will be discarded`);
         closeInfoChoicePopup();
         resolve(false);
       };
@@ -4136,9 +4073,6 @@ function CyclopsDeterminationDiscardToPlay() {
   return new Promise((resolve) => {
     // Check if there are any cards to discard
     if (playerHand.length === 0) {
-      console.log(
-        "No cards in Hand to discard. You are unable to play this card.",
-      );
       const unplayedCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
       playerHand.push(unplayedCard);
       cardsPlayedThisTurn.pop(unplayedCard);
@@ -4411,7 +4345,6 @@ function CyclopsDeterminationDiscardToPlay() {
       e.stopPropagation();
       e.preventDefault();
 
-      console.log("Card cannot be played since no card was discarded.");
       onscreenConsole.log(
         `You have chosen not to discard, preventing you from playing <span class="console-highlights">Cyclops - Determination</span>.`,
       );
@@ -5007,7 +4940,6 @@ async function GambitDrawTwoPutOneBack() {
         playerDeck = shuffle(playerDiscardPile);
         playerDiscardPile = [];
       } else {
-        console.log("No cards available to be drawn.");
         onscreenConsole.log("No cards available to be drawn.");
         resolve();
         return;
@@ -5246,7 +5178,6 @@ async function GambitDrawTwoPutOneBack() {
       e.preventDefault();
       if (!selectedCard) return;
 
-      console.log("Card returned to the top of the deck:", selectedCard);
 
       // Find the card in the original playerHand using object reference
       const index = playerHand.indexOf(selectedCard);
@@ -5583,7 +5514,6 @@ function DoomDrawOrDiscard() {
         const index = playerHand.indexOf(selectedCard);
         if (index !== -1) {
           const discardedCard = playerHand.splice(index, 1)[0];
-          console.log("Card discarded:", discardedCard);
 
           updateGameBoard();
 
@@ -5616,7 +5546,6 @@ function DoomDrawOrDiscard() {
           playerDeck = shuffle(playerDiscardPile);
           playerDiscardPile = [];
         } else {
-          console.log("No cards left in deck or discard pile.");
           onscreenConsole.log(`No cards available to be drawn.`);
           closeCardChoicePopup();
           updateGameBoard();
@@ -6783,12 +6712,10 @@ function showEligibleVillainsOptions(eligibleVillains, shieldCount) {
       let fightEffectPromise = Promise.resolve();
       if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
         const fightEffectFunction = window[villainCard.fightEffect];
-        console.log("Fight effect function found:", fightEffectFunction);
         if (typeof fightEffectFunction === "function") {
           fightEffectPromise = new Promise((resolve, reject) => {
             try {
               const result = fightEffectFunction(villainCard);
-              console.log("Fight effect executed:", result);
               resolve(result);
             } catch (error) {
               reject(error);
@@ -6800,7 +6727,6 @@ function showEligibleVillainsOptions(eligibleVillains, shieldCount) {
           );
         }
       } else {
-        console.log("No fight effect found for this villain.");
       }
 
       // Handle fight effect promise
@@ -7156,9 +7082,7 @@ function moveShieldOfficerToHand() {
     const shieldOfficer = shieldOfficers.pop();
     playerHand.push(shieldOfficer);
     extraCardsDrawnThisTurn++;
-    console.log("Shield Officer recruited and added to hand.");
   } else {
-    console.log("No Shield Officers left to recruit.");
     onscreenConsole.log(
       'There are no <span class="console-highlights">S.H.I.E.L.D. Officers</span> left to recruit.',
     );
@@ -7171,9 +7095,6 @@ function RogueKOHandOrDiscardForRecruit() {
   );
 
   if (playerHand.length === 0 && playerDiscardPile.length === 0) {
-    console.log(
-      "No cards in hand to discard. You are unable to play this card.",
-    );
     onscreenConsole.log(`No cards available to KO.`);
     return;
   }
@@ -7460,7 +7381,6 @@ function RogueCopyPowers() {
     );
     
     if (realCardsOnly.length === 0) {
-      console.log("No real heroes have been played yet to copy.");
       onscreenConsole.log("No Heroes available to copy.");
       resolve(false);
       return;
@@ -7712,7 +7632,6 @@ function RogueCopyPowers() {
         cumulativeAttackPoints += selectedHero.attack || 0;
         cumulativeRecruitPoints += selectedHero.recruit || 0;
         
-        console.log(`Copied ${selectedHero.name}: +${selectedHero.attack || 0} attack, +${selectedHero.recruit || 0} recruit`);
         onscreenConsole.log(
           `Copied <span class="console-highlights">${selectedHero.name}</span>. Gained +${selectedHero.attack || 0}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and +${selectedHero.recruit || 0}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`
         );
@@ -7753,7 +7672,6 @@ function StormMinus2ToRooftops() {
 function StormMinus2ToBridge() {
   cityLocationAttack[0]--;
   cityLocationAttack[0]--;
-  console.log("Any villain on the bridge loses 2 Attack this turn.");
   onscreenConsole.log(
     `Any Villain you fight on the Bridge this turn gets -2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
   );
@@ -7764,7 +7682,6 @@ function StormMinus2ToBridge() {
 function StormMinus2ToMastermind() {
   mastermindTempBuff--;
   mastermindTempBuff--;
-  console.log("The Mastermind loses 2 Attack this turn.");
   onscreenConsole.log(
     `<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero played. Superpower Ability activated. The Mastermind gets -2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> this turn.`,
   );
@@ -7808,7 +7725,6 @@ function StormMoveVillain() {
   function selectCell(cellElement) {
     // Don't allow selection of destroyed spaces (but allow Dark Portal spaces)
     if (isCellDestroyed(cellElement)) {
-      console.log("Destroyed space selected, no action.");
       return;
     }
 
@@ -7820,7 +7736,6 @@ function StormMoveVillain() {
 
     // 0. If the player selects an Empty cell first, nothing happens.
     if (!hasVillain && selectedCells.length === 0) {
-      console.log("Empty cell selected first, no action.");
       return; // Do nothing if the first selected cell is empty
     }
 
@@ -7833,9 +7748,6 @@ function StormMoveVillain() {
       if (selectedCells.length < 2) {
         selectionArrow.style.display = "none";
         confirmButton.disabled = true; // Disable the confirm button
-        console.log(
-          "Deselected cell, less than two selections, disabling confirm button.",
-        );
       }
       return; // Exit early since we're just deselecting
     }
@@ -7844,13 +7756,11 @@ function StormMoveVillain() {
     if (hasVillain && selectedCells.length === 0) {
       cellElement.classList.add("selected");
       selectedCells.push(cellElement);
-      console.log("First villain selected, added to selection.");
     }
     // 2a. If the player then selects a second villain, highlight it and add to selectedCells.
     else if (hasVillain && selectedCells.length === 1) {
       cellElement.classList.add("selected");
       selectedCells.push(cellElement);
-      console.log("Second villain selected, added to selection.");
     }
     // 2b. If the player selects an Empty space after selecting a villain, highlight it and add to selectedCells.
     else if (
@@ -7860,14 +7770,12 @@ function StormMoveVillain() {
     ) {
       cellElement.classList.add("selected");
       selectedCells.push(cellElement);
-      console.log("Empty space selected after villain, added to selection.");
     }
 
     // 3a. If the player selects another cell (villain or empty), deselect the first choice and highlight the new one.
     if (selectedCells.length > 2) {
       const firstCell = selectedCells.shift(); // Remove the first selected cell
       firstCell.classList.remove("selected"); // Remove the highlight from the first cell
-      console.log("More than two selections, deselected the first.");
     }
 
     // 3b. If the player selects another villain after an empty, deselect everything and highlight the new villain.
@@ -7878,7 +7786,6 @@ function StormMoveVillain() {
       selectedCells.forEach((cell) => cell.classList.remove("selected"));
       selectedCells = [cellElement];
       cellElement.classList.add("selected");
-      console.log("Selected another villain after an empty, reset selections.");
     }
 
     // Handle drawing the arrow based on the current selection
@@ -7893,15 +7800,12 @@ function StormMoveVillain() {
           selectedCells[1].textContent.trim() !== "Empty")
       ) {
         confirmButton.disabled = false; // Enable the confirm button
-        console.log("Valid selection made, enabling confirm button.");
       } else {
         confirmButton.disabled = true; // Disable the confirm button if not valid
-        console.log("Invalid selection, disabling confirm button.");
       }
     } else {
       selectionArrow.style.display = "none";
       confirmButton.disabled = true; // Disable the confirm button
-      console.log("Less than two selections, disabling confirm button.");
     }
   }
 
@@ -8207,8 +8111,6 @@ function StormMoveVillain() {
       y: rect2.bottom - popupRect.top, // Bottom of the cell
     };
 
-    console.log("Calculated Position 1:", posn1);
-    console.log("Calculated Position 2:", posn2);
 
     // Calculate control points for a curve that goes under the cells
     const controlX = (posn1.x + posn2.x) / 2;
@@ -8219,7 +8121,6 @@ function StormMoveVillain() {
       `M${posn1.x},${posn1.y} ` +
       `C${controlX},${controlY} ${controlX},${controlY} ${posn2.x},${posn2.y}`;
 
-    console.log("Path Data:", dStr);
 
     const selectionArrow = document.getElementById("selection-arrow");
     selectionArrow.setAttribute("d", dStr);
@@ -8253,9 +8154,6 @@ function StormMoveVillain() {
       }
 
       // Debugging: Log the initial state before any operation
-      console.log("Initial State:");
-      console.log("First Cell:", city[firstIndex]);
-      console.log("Second Cell:", city[secondIndex]);
 
       let bystanderText = "Bystander";
 
@@ -8298,7 +8196,6 @@ function StormMoveVillain() {
         secondCellImage.src.includes("BlankCardSpace.webp")
       ) {
         // Move the villain to the empty cell
-        console.log("Moving villain to empty space");
         onscreenConsole.log(
           `<span class="console-highlights">${city[firstIndex].name}</span> moved to an empty space.`,
         );
@@ -8307,8 +8204,6 @@ function StormMoveVillain() {
         city[firstIndex] = null; // Clear the original space
       } else if (city[secondIndex] && city[firstIndex]) {
         // Both cells have villains, perform the swap
-        console.log("Swapping villains");
-        console.log("Before Swap:", city[firstIndex], city[secondIndex]);
         onscreenConsole.log(
           `<span class="console-highlights">${city[firstIndex].name}</span> swapped places with <span class="console-highlights">${city[secondIndex].name}</span>.`,
         );
@@ -8318,7 +8213,6 @@ function StormMoveVillain() {
         city[secondIndex] = city[firstIndex];
         city[firstIndex] = temp;
 
-        console.log("After Swap:", city[firstIndex], city[secondIndex]);
       } else {
         console.error("Cannot swap cells: one of the cells is empty.");
         return;
@@ -8334,9 +8228,6 @@ function StormMoveVillain() {
       updateGameBoard(); // Update the actual game board with the new state
 
       // Debugging: Log the final state after the operation
-      console.log("Final State:");
-      console.log("First Cell:", city[firstIndex]);
-      console.log("Second Cell:", city[secondIndex]);
     }
   };
 }
@@ -8372,7 +8263,6 @@ function HenchmenKOHeroYouHave() {
 
     // Check if there are any heroes available
     if (handHeroes.length === 0 && playedHeroes.length === 0 && artifactHeroes.length === 0) {
-      console.log("No heroes in hand or played to KO.");
       onscreenConsole.log(
         `<span class="console-highlights">Sentinel's</span> Fight effect negated. No Heroes available to KO.`,
       );
@@ -8638,7 +8528,6 @@ function HenchmenKOHeroYouHave() {
         // Add the card to the KO pile
         koPile.push(selectedCard);
 
-        console.log(`${selectedCard.name} has been KO'd.`);
         onscreenConsole.log(
           `<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`,
         );
@@ -9052,7 +8941,6 @@ function topTwoCardsKOChoice() {
           playerDeck = shuffle(playerDiscardPile);
           playerDiscardPile = [];
         } else {
-          console.log("No cards left in deck or discard pile.");
           onscreenConsole.log(
             `<span class="console-highlights">Doombot Legion</span> Fight effect negated. No cards available to look at or KO.`,
           );
@@ -9293,9 +9181,6 @@ function doomStrike() {
     setTimeout(() => {
       // Check if the player has exactly 6 cards in their hand
       if (playerHand.length !== 6) {
-        console.log(
-          "Player does not have exactly 6 cards in hand. No action required.",
-        );
         onscreenConsole.log(
           "You do not have exactly 6 cards in your hand. Master Strike avoided!",
         );
@@ -9319,9 +9204,6 @@ function doomStrike() {
         );
 
       if (!hasTech) {
-        console.log(
-          "No Tech card found. Player must return 2 cards to the top of their deck.",
-        );
         onscreenConsole.log(
           `You are unable to reveal a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero.`,
         );
@@ -10375,7 +10257,6 @@ function RedSkullKOHandHero() {
       if (!selectedCard) return;
 
       setTimeout(() => {
-        console.log(`${selectedCard.name} has been KO'd.`);
         onscreenConsole.log(
           `<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`,
         );
@@ -11185,7 +11066,6 @@ function doomHeroRecruit() {
     });
 
     if (eligibleHeroesForDoomRecruit.length === 0) {
-      console.log("No available Tech or Range Heroes to recruit.");
       onscreenConsole.log(
         `No available <img src='Visual Assets/Icons/Tech.svg' alt='Tech Icon' class='console-card-icons'> or <img src='Visual Assets/Icons/Range.svg' alt='Range Icon' class='console-card-icons'> Heroes to recruit.`,
       );
@@ -11228,7 +11108,6 @@ function doomHeroRecruit() {
           totalAttackPoints += hero.cost;
         }
 
-        console.log(`${hero.name} has been recruited.`);
         onscreenConsole.log(
           `You have recruited <span class="console-highlights">${hero.name}</span> for free.`,
         );
@@ -11857,7 +11736,6 @@ function KO1To4FromDiscard() {
   updateGameBoard();
   return new Promise((resolve) => {
     if (playerDiscardPile.length === 0) {
-      console.log("No cards in the Discard Pile to KO.");
       onscreenConsole.log(
         "Your discard pile is currently empty. Unable to KO any cards.",
       );
@@ -12143,7 +12021,6 @@ function KO1To4FromDiscard() {
               1,
             )[0];
             koPile.push(removedCard);
-            console.log(`${removedCard.name} KO'd from discard pile.`);
             onscreenConsole.log(
               `<span class="console-highlights">${removedCard.name}</span> has been KO'd.`,
             );
@@ -12163,7 +12040,6 @@ function KO1To4FromDiscard() {
       e.preventDefault();
 
       setTimeout(() => {
-        console.log("No cards selected for KO.");
         onscreenConsole.log("You chose not to KO any cards.");
 
         updateGameBoard();
@@ -12431,7 +12307,6 @@ function chooseVillainKOFromVP() {
         victoryPile.splice(selectedVillain.index, 1);
         koPile.push(selectedVillain);
 
-        console.log(`${selectedVillain.name} KO'd from Victory Pile.`);
         onscreenConsole.log(
           `<span class="console-highlights">${selectedVillain.name}</span> has been KO'd from your Victory Pile.`,
         );
@@ -12985,7 +12860,6 @@ function recruitXMen() {
     });
 
     if (eligibleHeroesForXMenRecruit.length === 0) {
-      console.log("No available X-Men Heroes to recruit.");
       onscreenConsole.log(
         `No available <img src='Visual Assets/Icons/X-Men.svg' alt='X-Men Icon' class='console-card-icons'> Heroes to recruit.`,
       );
@@ -13028,7 +12902,6 @@ function recruitXMen() {
           totalAttackPoints += hero.cost;
         }
 
-        console.log(`${hero.name} has been recruited.`);
         onscreenConsole.log(
           `You have recruited <span class="console-highlights">${hero.name}</span> for free.`,
         );
@@ -13070,7 +12943,6 @@ async function MagnetoRevealXMenOrWound() {
     cardsYouHave.filter((item) => item.team === "X-Men").length > 0;
 
   if (!hasXMen) {
-    console.log("You are unable to reveal an X-Men hero.");
     onscreenConsole.log(
       `You are unable to reveal an <img src='Visual Assets/Icons/X-Men.svg' alt='X-Men Icon' class='console-card-icons'> Hero.`,
     );
@@ -13242,16 +13114,12 @@ async function XMenToBystanders() {
   const XMenCardsYouHave = cardsYouHave.filter((item) => item.team === "X-Men");
 
   if (XMenCardsYouHave.length === 0) {
-    console.log("You do not currently have any X-Men heroes.");
     onscreenConsole.log(
       `You do not currently have any <img src='Visual Assets/Icons/X-Men.svg' alt='X-Men Icon' class='console-card-icons'> Heroes and are unable to rescue any Bystanders.`,
     );
   } else {
     const bystanderText =
       XMenCardsYouHave.length === 1 ? "Bystander" : "Bystanders";
-    console.log(
-      `You have rescued ${XMenCardsYouHave.length} ${bystanderText}.`,
-    );
     onscreenConsole.log(
       `You have ${XMenCardsYouHave.length} <img src='Visual Assets/Icons/X-Men.svg' alt='X-Men Icon' class='console-card-icons'> Heroes. You are able to rescue ${XMenCardsYouHave.length} ${bystanderText}.`,
     );
@@ -13327,7 +13195,6 @@ function XMen7thDraw() {
     );
 
     if (XMenCardsYouHave.length === 0) {
-      console.log("No available X-Men Heroes.");
       onscreenConsole.log(
         `You do not have any <img src='Visual Assets/Icons/X-Men.svg' alt='X-Men Icon' class='console-card-icons'> Heroes to add to next turn's draw.`,
       );
@@ -13592,7 +13459,6 @@ function XMen7thDraw() {
           cardsPlayedThisTurn[selectedCard.originalIndex].markedToDrawNextTurn = true;
         }
 
-        console.log(`${selectedCard.name} has been reserved for next turn.`);
         onscreenConsole.log(
           `You have selected <span class="console-highlights">${selectedCard.name}</span> to be added to your next draw as a seventh card.`,
         );
@@ -13660,7 +13526,6 @@ function revealTop3AndChooseActions() {
 
     if (totalAvailableCards === 0) {
       onscreenConsole.log("No cards available to reveal and resolve.");
-      console.log("No cards available to reveal and resolve.");
       resolve(false);
       return;
     }
@@ -14773,7 +14638,6 @@ function handleMystiqueEscape() {
       );
       processVillainCard().then(() => resolve()).catch(reject);
     } else {
-      console.log("Mystique was not found in the Escape Pile.");
       resolve(); // Resolve immediately if Mystique is not found
     }
   });
@@ -14783,7 +14647,6 @@ function ambushBystander() {
   let sewersIndex = city.length - 1;
 
   if (bystanderDeck.length === 0) {
-    console.log("No bystanders left in the deck to rescue.");
     onscreenConsole.log(
       'Ambush! No Bystanders available for <span class="console-highlights">Green Goblin</span> to capture.',
     );
@@ -15241,7 +15104,6 @@ function captureHeroBySkrullQueen(hero) {
   const skrullQueen = city[cityIndex];
 
   if (!skrullQueen) {
-    console.log("No Villain in the rightmost city space.");
     return;
   }
 
@@ -15540,7 +15402,6 @@ async function showHeroSelectionPopup(heroes, onHeroSelected) {
       setTimeout(() => {
         const hero = hq[selectedHQIndex];
         if (hero) {
-          console.log("Selected Hero for capture:", hero.name);
         }
         onHeroSelected(hero);
         closeHQCityCardChoicePopup();
@@ -15563,7 +15424,6 @@ function fightSkrullQueen(villainCard) {
   );
 
   if (heroIndex === -1) {
-    console.log("Error. Unable to rescue any Heroes.");
     return;
   }
 
@@ -15596,7 +15456,6 @@ function escapeSkrullQueen(escapedVillain) {
   );
 
   if (heroIndex === -1) {
-    console.log("Error. Unable to find the captured hero during escape.");
     return;
   }
 
@@ -15930,7 +15789,6 @@ function freeHeroGain() {
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
 
-        console.log("Selected Hero for recruit:", hero.name);
 
         updateGameBoard();
 
@@ -16003,12 +15861,8 @@ function drawSHIELDOfficer() {
   if (shieldOfficers.length > 0) {
     const shieldOfficer = shieldOfficers.pop();
     playerDiscardPile.push(shieldOfficer);
-    console.log(
-      `<span class="console-highlights">S.H.I.E.L.D. Officer</span> gained.`,
-    );
     updateGameBoard();
   } else {
-    console.log("No S.H.I.E.L.D. Officers left to recruit.");
   }
 }
 
@@ -16819,17 +16673,11 @@ async function bankRobbery() {
         // Attach the first bystander if available
         const firstBystander = bystanderDeck.pop();
         attachBystanderToVillain(cityIndex, firstBystander);
-        console.log(
-          `Bystander assigned to ${city[cityIndex].name} at index ${cityIndex}.`,
-        );
 
         // Attach the second bystander if available
         if (bystanderDeck.length > 0) {
           const secondBystander = bystanderDeck.pop();
           attachBystanderToVillain(cityIndex, secondBystander);
-          console.log(
-            `Second bystander assigned to ${city[cityIndex].name} at index ${cityIndex}.`,
-          );
         } else {
           onscreenConsole.log("Only one Bystander was available to capture.");
         }
@@ -16838,9 +16686,6 @@ async function bankRobbery() {
         updateGameBoard();
         resolve(); // Resolve the promise after the board is updated
       } else {
-        console.log(
-          `No villain found at city index ${cityIndex}. Bystanders not assigned.`,
-        );
         resolve(); // Resolve even if no villain is found
       }
     } catch (error) {
@@ -16865,52 +16710,32 @@ async function darkPortal() {
 
   switch (twistCount) {
     case 1:
-      console.log(
-        "A dark portal opens beneath the Mastermind. They gain 1 Attack.",
-      );
       mastermindPermBuff++;
       darkPortalMastermind = true;
       break;
     case 2:
-      console.log(
-        "A dark portal opens beneath the Bridge. Villains on the Bridge gain 1 Attack.",
-      );
       cityPermBuff[0]++;
       darkPortalSpaces[0] = true;
       break;
     case 3:
-      console.log(
-        "A dark portal opens beneath the Streets. Villains on the Streets gain 1 Attack.",
-      );
       cityPermBuff[1]++;
       darkPortalSpaces[1] = true;
       break;
     case 4:
-      console.log(
-        "A dark portal opens above the Rooftops. Villains on the Rooftops gain 1 Attack.",
-      );
       cityPermBuff[2]++;
       darkPortalSpaces[2] = true;
       break;
     case 5:
-      console.log(
-        "A dark portal opens within the Bank. Villains in the Bank gain 1 Attack.",
-      );
       cityPermBuff[3]++;
       darkPortalSpaces[3] = true;
       break;
     case 6:
-      console.log(
-        "A dark portal opens within the Sewers. Villains within the Sewers gain 1 Attack.",
-      );
       cityPermBuff[4]++;
       darkPortalSpaces[4] = true;
       break;
     case 7:
-      console.log("Dark portals have opened across the entire city!");
       break;
     default:
-      console.log("No Scheme Twist effect at this time.");
       break;
   }
 
@@ -16923,17 +16748,13 @@ async function cosmicCube() {
   ).length;
 
   if (twistCount < 5) {
-    console.log("Nothing happens at this time.");
   } else if (twistCount <= 6) {
-    console.log("Scheme Twist!");
     drawWound();
   } else if (twistCount === 7) {
-    console.log("Scheme Twist!");
     drawWound();
     drawWound();
     drawWound();
   } else {
-    console.log("No other Scheme Twist effects.");
   }
 
   updateGameBoard(); // Update game board after changes
@@ -16958,9 +16779,7 @@ async function KOAllHeroesInHQ() {
 
   if (heroesKOCounter > 0) {
     const cardText = heroesKOCounter === 1 ? "Hero" : "Heroes";
-    console.log(`KO'd ${heroesKOCounter} ${cardText} from the HQ.`);
   } else {
-    console.log("No Heroes found in the HQ to KO.");
   }
 
   updateGameBoard(); // Update game board after changes
@@ -16970,7 +16789,6 @@ async function killbotAttackIncrease() {
   stackedTwistNextToMastermind++;
   killbotSchemeTwistCount++;
   killbotAttack++;
-  console.log(`Killbot attack increased to ${killbotAttack}`);
   updateGameBoard(); // Optional, if this should update the UI
 }
 
@@ -16992,7 +16810,6 @@ async function highestCostHeroSkrulled() {
     const selectedHero = await showHeroSelectionSkrullPopup(highestCostHeroes);
     await heroSkrulled(selectedHero);
   } else {
-    console.log("No heroes available in HQ.");
   }
 }
 
@@ -17277,7 +17094,6 @@ function showHeroSelectionSkrullPopup(heroes) {
       setTimeout(() => {
         const hero = hq[selectedHQIndex];
         if (hero) {
-          console.log("Selected Hero for Skrull:", hero.name);
         }
         closeHQCityCardChoicePopup();
         resolve(hero);
@@ -17429,7 +17245,6 @@ async function genericDiscardChoice() {
   }
 
   if (playerHand.length === 0) {
-    console.log("No cards in hand to discard.");
     onscreenConsole.log(`No cards available to be discarded.`);
     updateGameBoard();
     return false;
@@ -17675,7 +17490,6 @@ async function genericDiscardChoice() {
         const actualIndex = playerHand.indexOf(selectedCard);
         if (actualIndex !== -1) {
           const discardedCard = playerHand.splice(actualIndex, 1)[0];
-          console.log("Card discarded:", discardedCard);
 
           const { returned } =
             await checkDiscardForInvulnerability(discardedCard);

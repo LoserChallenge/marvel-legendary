@@ -1598,7 +1598,6 @@ async function chameleonFight(card) {
     cumulativeAttackPoints += cardCopy.attack || 0;
     cumulativeRecruitPoints += cardCopy.recruit || 0;
 
-    console.log("Chameleon Copy Called:", cardCopy.name);
 
     // Execute abilities using the helper - NO POPUP, auto-execute
     executeAbilityWithSpecialCases(cardCopy, "chameleon", {
@@ -1698,7 +1697,6 @@ function koHeroKraven(hero) {
   const heroIndex = hq.indexOf(hero);
 
   if (heroIndex === -1) {
-    console.log("Hero not found in HQ.");
     return;
   }
 
@@ -1722,7 +1720,6 @@ function koHero(hero) {
   const heroIndex = hq.indexOf(hero);
 
   if (heroIndex === -1) {
-    console.log("Hero not found in HQ.");
     return;
   }
 
@@ -2004,7 +2001,6 @@ function showHeroSelectionPopupKO(heroes, onHeroSelected) {
       setTimeout(() => {
         const hero = hq[selectedHQIndex];
         if (hero) {
-          console.log("Selected Hero to KO:", hero.name);
         }
         onHeroSelected(hero);
         closeHQCityCardChoicePopup();
@@ -2328,7 +2324,6 @@ async function vultureAmbush() {
     function selectCell(cellElement) {
       // Don't allow selection of destroyed spaces
       if (isCellDestroyed(cellElement)) {
-        console.log("Destroyed space selected, no action.");
         return;
       }
 
@@ -2338,7 +2333,6 @@ async function vultureAmbush() {
 
       // Only allow selection of Bridge (index 0) or Rooftops (index 2)
       if (cellKey !== "bridge" && cellKey !== "rooftops") {
-        console.log("Only Bridge or Rooftops can be selected for this swap.");
         return;
       }
 
@@ -2350,7 +2344,6 @@ async function vultureAmbush() {
         selectedCell = null;
         selectionArrow.style.display = "none";
         confirmButton.disabled = true;
-        console.log("Deselected cell");
         return;
       }
 
@@ -2365,7 +2358,6 @@ async function vultureAmbush() {
 
       // Draw arrow from selected cell to sewers (city[4])
       drawArrow(selectedCell, villainCells.sewers);
-      console.log(`Selected ${cellKey} for swap`);
     }
 
     function updateCityCellsInPopup() {
@@ -2602,7 +2594,6 @@ function blackCatJinx() {
         playerDeck = shuffle(playerDiscardPile);
         playerDiscardPile = [];
       } else {
-        console.log("No cards available to be drawn.");
         onscreenConsole.log("No cards available to be drawn.");
         resolve();
         return;
@@ -2637,7 +2628,6 @@ function blackCatJinx() {
         playerHand.push(...returned);
       }
 
-      console.log(`You discarded ${topCardPlayerDeck.name}.`);
       onscreenConsole.log(
         `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been discarded.`,
       );
@@ -2646,9 +2636,6 @@ function blackCatJinx() {
     };
 
     denyButton.onclick = function () {
-      console.log(
-        `You put ${topCardPlayerDeck.name} back on top of your deck.`,
-      );
       onscreenConsole.log(
         `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been returned to the top of your deck.`,
       );
@@ -3249,7 +3236,6 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
   function selectCell(cellElement) {
     // Don't allow selection of destroyed spaces
     if (isCellDestroyed(cellElement)) {
-      console.log("Destroyed space selected, no action.");
       return;
     }
 
@@ -3259,7 +3245,6 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
 
     // If the player selects an Empty cell first, nothing happens
     if (!hasVillain && selectedCells.length === 0) {
-      console.log("Empty cell selected first, no action.");
       return;
     }
 
@@ -3270,7 +3255,6 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
       firstSelectedIndex = null;
       selectionArrow.style.display = "none";
       confirmButton.disabled = true;
-      console.log("Deselected cell, resetting selections.");
       return;
     }
 
@@ -3279,7 +3263,6 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
       cellElement.classList.add("selected");
       selectedCells.push(cellElement);
       firstSelectedIndex = currentIndex;
-      console.log("First villain selected at index", firstSelectedIndex);
 
       // Check if Rooftops is a valid target
       const rooftopsCell = villainCells.rooftops;
@@ -3648,7 +3631,6 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
 
         if (isRooftopsEmpty) {
           // Move the villain to the empty Rooftops
-          console.log("Moving villain to empty Rooftops");
           onscreenConsole.log(
             `<span class="console-highlights">${city[firstIndex].name}</span> moved to the Rooftops.`,
           );
@@ -3657,7 +3639,6 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
           city[firstIndex] = null; // Clear the original space
         } else if (city[rooftopsIndex] && city[firstIndex]) {
           // Both cells have villains, perform the swap
-          console.log("Swapping villains with Rooftops");
           onscreenConsole.log(
             `<span class="console-highlights">${city[firstIndex].name}</span> swapped places with <span class="console-highlights">${city[rooftopsIndex].name}</span> at the Rooftops.`,
           );
@@ -3862,7 +3843,6 @@ async function spiderWomanRadioactiveSpider() {
   return new Promise((resolve) => {
     // Check if there are any cards to place on deck
     if (playerHand.length === 0) {
-      console.log("No cards in Hand. You are unable to play this card.");
       const unplayedCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
       playerHand.push(unplayedCard);
       cardsPlayedThisTurn.pop(unplayedCard);
@@ -4131,7 +4111,6 @@ async function spiderWomanRadioactiveSpider() {
       e.stopPropagation();
       e.preventDefault();
 
-      console.log("Card cannot be played since no card was selected.");
       onscreenConsole.log(
         `You have chosen not to put a card on top of your deck, preventing you from playing <span class="console-highlights">Spider-Woman - Radioactive Spider</span>.`,
       );
@@ -4444,7 +4423,6 @@ function spiderWomanArachnoPheromones() {
     });
 
     if (eligibleHeroesForRecruit.length === 0) {
-      console.log("No available Heroes to recruit.");
       onscreenConsole.log(`No available Heroes to recruit.`);
       resolve(false);
       return;
@@ -4617,9 +4595,6 @@ function symbioteSpiderManThwip() {
   return new Promise((resolve) => {
     // Check if there are at least two cards to place on deck
     if (playerHand.length < 2) {
-      console.log(
-        "Not enough cards in Hand. You need at least 2 cards to play this card.",
-      );
       const unplayedCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
       playerHand.push(unplayedCard);
       cardsPlayedThisTurn.pop(unplayedCard);
@@ -4909,7 +4884,6 @@ function symbioteSpiderManThwip() {
       e.stopPropagation();
       e.preventDefault();
 
-      console.log("Card cannot be played since 2 cards were not selected.");
       onscreenConsole.log(
         `You have chosen not to put 2 cards on top of your deck, preventing you from playing <span class="console-highlights">Symbiote Spider-Man - Thwip!</span>.`,
       );

@@ -25,7 +25,6 @@ function angelHighSpeedChase() {
           playerDeck = shuffle(playerDiscardPile);
           playerDiscardPile = [];
         } else {
-          console.log("No cards available to be drawn.");
           onscreenConsole.log("No cards available to be drawn.");
           resolve();
           return;
@@ -230,9 +229,6 @@ function angelDropOffAFriend() {
   return new Promise((resolve, reject) => {
     try {
       if (playerHand.length === 0) {
-        console.log(
-          "No cards in hand to discard. You are unable to play this card.",
-        );
         onscreenConsole.log(
           "No cards in hand to discard. You are unable to use this ability.",
         );
@@ -418,9 +414,6 @@ function angelDropOffAFriend() {
           const actuallyDiscarded =
             discarded && discarded.length ? discarded[0] : null;
           if (actuallyDiscarded) {
-            console.log(
-              `${actuallyDiscarded.name} discarded during checkDiscardForInvulnerability.`,
-            );
           } else if (returned && returned.length) {
             // Card came back to hand; no attack gain.
             playerHand.push(...returned);
@@ -794,9 +787,6 @@ function xforcewolverineAnimalInstincts() {
 function xforcewolverineNoMercy() {
   extraDraw();
   if (playerHand.length === 0 && playerDiscardPile.length === 0) {
-    console.log(
-      "No cards in hand to discard. You are unable to play this card.",
-    );
     onscreenConsole.log(`No cards available to KO.`);
     return;
   }
@@ -1256,8 +1246,6 @@ function elektraSaiBlades() {
   totalAttackPoints += minimalCostCount;
   cumulativeAttackPoints += minimalCostCount;
 
-  console.log(`Number of odd cost cards: ${minimalCostCount}`);
-  console.log(`${minimalCostCount} added to Attack points.`);
 
   onscreenConsole.log(
     `Special Ability: You have played ${minimalCostCount} ${minimalCostText} that cost <b>1</b> or <b>2</b> <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons">. +${minimalCostCount}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
@@ -1593,7 +1581,6 @@ function ghostRiderBlazingHellfire() {
       totalAttackPoints += 3;
       cumulativeAttackPoints += 3;
 
-      console.log(`${selectedVillain.name} KO'd from Victory Pile.`);
       onscreenConsole.log(
         `<span class="console-highlights">${selectedVillain.name}</span> has been KO'd from your Victory Pile. You gain +3<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
       );
@@ -2476,7 +2463,6 @@ function ghostRiderInfernalChains() {
   try {
   if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
     const fightEffectFunction = window[villainCard.fightEffect];
-    console.log("Fight effect function found:", fightEffectFunction);
     if (typeof fightEffectFunction === "function") {
       // Check if we should negate the fight effect
       let negate = false;
@@ -2487,9 +2473,7 @@ function ghostRiderInfernalChains() {
       // Only execute the fight effect if not negated
       if (!negate) {
         await fightEffectFunction(villainCard);
-        console.log("Fight effect executed successfully");
       } else {
-        console.log("Fight effect was negated by Mr. Fantastic");
       }
     } else {
       console.error(
@@ -2497,7 +2481,6 @@ function ghostRiderInfernalChains() {
       );
     }
   } else {
-    console.log("No fight effect found for this villain.");
   }
 } catch (error) {
   console.error(`Error in fight effect: ${error}`);
@@ -2784,7 +2767,6 @@ function ghostRiderPenanceStare() {
       totalAttackPoints += 1;
       cumulativeAttackPoints += 1;
 
-      console.log(`${selectedVillain.name} KO'd from Victory Pile.`);
       onscreenConsole.log(
         `<span class="console-highlights">${selectedVillain.name}</span> has been KO'd from your Victory Pile. You gain +1<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
       );
@@ -2823,7 +2805,6 @@ function ironfistFocusChi() {
     ),
   ];
 
-  console.log("Combined allCards:", allCards);
 
   const uniqueCosts = new Set();
 
@@ -2831,22 +2812,15 @@ function ironfistFocusChi() {
     // Treat undefined/null cost as 0, and include 0 costs
     const cost = card.cost !== undefined && card.cost !== null ? card.cost : 0;
     uniqueCosts.add(cost);
-    console.log(`Card cost added: ${cost}`);
   });
 
   const uniqueCostCount = uniqueCosts.size;
-  console.log("Unique costs found:", uniqueCostCount);
 
   const recruitPointsToAdd = uniqueCostCount;
   totalRecruitPoints += recruitPointsToAdd;
   cumulativeRecruitPoints += recruitPointsToAdd;
-  console.log("Updated totalRecruitPoints:", totalRecruitPoints);
-  console.log("Updated cumulativeRecruitPoints:", cumulativeRecruitPoints);
 
   updateGameBoard();
-  console.log(
-    `You have ${uniqueCostCount} cards with different costs. ${recruitPointsToAdd} Recruit points have been added.`,
-  );
   onscreenConsole.log(
     `Special Ability: You have ${uniqueCostCount} card${uniqueCostCount > 1 ? "s" : ""} with a different <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons">. +${uniqueCostCount} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
   );
@@ -2861,7 +2835,6 @@ function ironfistWieldTheIronFist() {
     ),
   ];
 
-  console.log("Combined allCards:", allCards);
 
   const uniqueCosts = new Set();
 
@@ -2869,22 +2842,15 @@ function ironfistWieldTheIronFist() {
     // Treat undefined/null cost as 0, and include 0 costs
     const cost = card.cost !== undefined && card.cost !== null ? card.cost : 0;
     uniqueCosts.add(cost);
-    console.log(`Card cost added: ${cost}`);
   });
 
   const uniqueCostCount = uniqueCosts.size;
-  console.log("Unique costs found:", uniqueCostCount);
 
   const attackPointsToAdd = uniqueCostCount;
   totalAttackPoints += attackPointsToAdd;
   cumulativeAttackPoints += attackPointsToAdd;
-  console.log("Updated totalAttackPoints:", totalAttackPoints);
-  console.log("Updated cumulativeAttackPoints:", cumulativeAttackPoints);
 
   updateGameBoard();
-  console.log(
-    `You have ${uniqueCostCount} cards with different costs. ${attackPointsToAdd} Attack points have been added.`,
-  );
   onscreenConsole.log(
     `Special Ability: You have ${uniqueCostCount} card${uniqueCostCount > 1 ? "s" : ""} with a different <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons">. +${uniqueCostCount} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
   );
@@ -3107,7 +3073,6 @@ function punisherBoomGoesTheDynamiteConditional() {
 function punisherBoomGoesTheDynamite() {
   // Check if both playerDeck and playerDiscardPile are empty
   if (playerDeck.length === 0 && playerDiscardPile.length === 0) {
-    console.log("No cards available to draw.");
     onscreenConsole.log("No cards available to reveal.");
     return;
   }
@@ -3246,9 +3211,7 @@ async function punisherHailOfBulletsDefeat() {
       // Only execute the fight effect if not negated
       if (!negate) {
         await fightEffectFunction(topCardVillainDeck);
-        console.log("Fight effect executed successfully");
       } else {
-        console.log("Fight effect was negated by Mr. Fantastic");
       }
     } else {
       console.error(
@@ -3256,7 +3219,6 @@ async function punisherHailOfBulletsDefeat() {
       );
     }
   } else {
-    console.log("No fight effect found for this villain.");
   }
 } catch (error) {
   console.error(`Error in fight effect: ${error}`);
@@ -3360,7 +3322,6 @@ function bladeStalkThePrey() {
   function selectCell(cellElement) {
     // Don't allow selection of destroyed spaces (but allow Dark Portal spaces)
     if (isCellDestroyed(cellElement)) {
-      console.log("Destroyed space selected, no action.");
       return;
     }
 
@@ -3374,7 +3335,6 @@ function bladeStalkThePrey() {
 
     // If the player selects an Empty cell first, nothing happens
     if (!hasVillain && selectedCells.length === 0) {
-      console.log("Empty cell selected first, no action.");
       return;
     }
 
@@ -3385,7 +3345,6 @@ function bladeStalkThePrey() {
       firstSelectedIndex = null;
       selectionArrow.style.display = "none";
       confirmButton.disabled = true;
-      console.log("Deselected cell, resetting selections.");
       return;
     }
 
@@ -3394,7 +3353,6 @@ function bladeStalkThePrey() {
       cellElement.classList.add("selected");
       selectedCells.push(cellElement);
       firstSelectedIndex = currentIndex;
-      console.log("First villain selected at index", firstSelectedIndex);
       return;
     }
 
@@ -3406,13 +3364,11 @@ function bladeStalkThePrey() {
       if (isAdjacent) {
         cellElement.classList.add("selected");
         selectedCells.push(cellElement);
-        console.log("Adjacent cell selected at index", currentIndex);
 
         // Enable confirm button since we have a valid adjacent selection
         confirmButton.disabled = false;
         drawArrow(selectedCells[0], selectedCells[1]);
       } else {
-        console.log("Non-adjacent cell selected, ignoring.");
         onscreenConsole.log(
           `You may only move a Villain to an adjacent city space.`,
         );
@@ -3762,7 +3718,6 @@ function bladeStalkThePrey() {
         secondCellImage.src.includes("BlankCardSpace.webp")
       ) {
         // Move the villain to the empty cell
-        console.log("Moving villain to empty space");
         onscreenConsole.log(
           `<span class="console-highlights">${city[firstIndex].name}</span> moved to empty space.`,
         );
@@ -3771,7 +3726,6 @@ function bladeStalkThePrey() {
         city[firstIndex] = null; // Clear the original space
       } else if (city[secondIndex] && city[firstIndex]) {
         // Both cells have villains, perform the swap
-        console.log("Swapping villains");
         onscreenConsole.log(
           `<span class="console-highlights">${city[firstIndex].name}</span> swapped places with <span class="console-highlights">${city[secondIndex].name}</span>.`,
         );
@@ -4006,7 +3960,6 @@ function playOrTeleport(card) {
 async function nightcrawlerAlongForTheRide() {
   return new Promise((resolve) => {
     // Debug logging
-    console.log("[Nightcrawler] Ability activated");
 
     // Validate player hand
     if (!playerHand || playerHand.length === 0) {
@@ -4650,7 +4603,6 @@ function cableRapidResponseForce() {
 function cableArmyOfOne() {
   return new Promise((resolve) => {
     if (playerHand.length === 0) {
-      console.log("No cards available to KO.");
       onscreenConsole.log(
         "Your hand is currently empty. Unable to KO any cards.",
       );
@@ -4925,7 +4877,6 @@ function cableArmyOfOne() {
             koPile.push(koCard);
             totalAttackPoints += 1;
             cumulativeAttackPoints += 1;
-            console.log(`${koCard.name} KO'd from hand.`);
             onscreenConsole.log(
               `<span class="console-highlights">${koCard.name}</span> has been KO'd. +1<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons"> gained.`,
             );
@@ -4934,7 +4885,6 @@ function cableArmyOfOne() {
           }
         });
       } else {
-        console.log("No cards selected for KO.");
         onscreenConsole.log("You chose not to KO any cards.");
       }
 
@@ -5016,12 +4966,6 @@ function daredevilRadarSense() {
     numberDropdown.onchange = () => {
       const hasSelection = numberDropdown.value !== ""; // This is the simplest check
       confirmBtn.disabled = !hasSelection;
-      console.log(
-        "Dropdown value:",
-        numberDropdown.value,
-        "Disabled:",
-        confirmBtn.disabled,
-      ); // Debug
     };
 
     // Handle confirm button click
@@ -6919,7 +6863,6 @@ async function showXMenKOPopup(availableCards) {
             const [koCard] = playerDiscardPile.splice(discardIndex, 1);
             // Add to KO pile
             koPile.push(koCard);
-            console.log(`${koCard.name} KO'd from discard.`);
             onscreenConsole.log(
               `<span class="console-highlights">${koCard.name}</span> has been KO'd.`,
             );
@@ -6927,7 +6870,6 @@ async function showXMenKOPopup(availableCards) {
           }
         });
       } else {
-        console.log("No cards selected for KO.");
         onscreenConsole.log("You chose not to KO any cards.");
       }
 
@@ -7000,7 +6942,6 @@ async function professorXTelepathicProbe() {
       };
       break;
     default:
-      console.log(`Unknown card type: ${topCard.type}`);
   }
 }
 
@@ -7135,17 +7076,14 @@ async function initiateTelepathicVillainFight(
   try {
     if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
       const fightEffectFunction = window[villainCard.fightEffect];
-      console.log("Fight effect function found:", fightEffectFunction);
       if (typeof fightEffectFunction === "function") {
         await fightEffectFunction(villainCard);
-        console.log("Fight effect executed successfully");
       } else {
         console.error(
           `Fight effect function ${villainCard.fightEffect} not found`,
         );
       }
     } else {
-      console.log("No fight effect found for this villain.");
     }
   } catch (error) {
     console.error(`Error in fight effect: ${error}`);
@@ -7214,7 +7152,6 @@ function handlePhalanxNoTechRevealed() {
 
     // Check if there are any Attack cards available
     if (artifactAttackCards.length === 0 && handAttackCards.length === 0 && playedAttackCards.length === 0) {
-      console.log("No available Heroes with Attack icons.");
       onscreenConsole.log(
         `You do not have any Heroes with a <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'> icon.`,
       );
@@ -9884,7 +9821,6 @@ function reignfireEscape() {
 
       processVillainCard().then(() => resolve()).catch(reject);
     } else {
-      console.log("Reignfire was not found in the Escape Pile.");
       resolve(); // Resolve immediately if Reignfire is not found
     }
   });
@@ -11494,7 +11430,6 @@ async function blackheartFunctions() {
   if (
     cardsYouHave.filter((item) => item.team === "Marvel Knights").length === 0
   ) {
-    console.log("You are unable to reveal a Marvel Knights hero.");
     onscreenConsole.log(
       `You are unable to reveal a <img src='Visual Assets/Icons/Marvel Knights.svg' alt='Marvel Knights Icon' class='console-card-icons'> Hero.`,
     );
@@ -11612,7 +11547,6 @@ if (lastCard.type !== "Hero") {
     window.captureRegistry[dracula.persistentId] = captureCode;
   }
 
-  console.log("CAPTURING - Dracula code:", captureCode, "Hero:", hero.name);
 
   // Track attack change (preserve original only once)
   if (typeof dracula.originalAttack !== "number") {
@@ -11637,10 +11571,6 @@ function draculaFight(villainLike) {
   // DO NOT re-find Dracula in city; city slot has already been cleared.
   const code = villainLike?.captureCode;
 
-  console.log("DEBUG - Dracula fight (by code only):", {
-    name: villainLike?.name,
-    code,
-  });
 
   if (!code) {
     onscreenConsole.log(`Error. Dracula has no captured hero.`);
@@ -12092,7 +12022,6 @@ async function kingpinStrike() {
   );
 
   if (!hasMarvelKnights) {
-    console.log("You are unable to reveal a Marvel Knights hero.");
     onscreenConsole.log(
       `You are unable to reveal a <img src='Visual Assets/Icons/Marvel Knights.svg' alt='Marvel Knights Icon' class='console-card-icons'> Hero.`,
     );
@@ -12220,7 +12149,6 @@ async function mephistoStrike() {
     cardsYouHave.filter((item) => item.team === "Marvel Knights").length > 0;
 
   if (!hasMarvelKnights) {
-    console.log("You are unable to reveal a Marvel Knights hero.");
     onscreenConsole.log(
       `You are unable to reveal a <img src='Visual Assets/Icons/Marvel Knights.svg' alt='Marvel Knights Icon' class='console-card-icons'> Hero.`,
     );
@@ -14300,7 +14228,6 @@ async function kingpinDirtyCops() {
   );
 
   if (zeroCostHeroes.length === 0) {
-    console.log("No zero-cost Hero cards in KO pile.");
     onscreenConsole.log(
       `No 0 <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> Hero cards available in the KO pile.`,
     );
@@ -16714,7 +16641,6 @@ async function instantDefeatAttack(cityIndex) {
 
   // Set the currentVillainLocation to the current location of the villain
   currentVillainLocation = cityIndex; // Store the city index (location) of the villain
-  console.log("Selected Villain's Location: ", currentVillainLocation);
 
   // Make a copy of critical data before any async operations
   const villainCopy = {

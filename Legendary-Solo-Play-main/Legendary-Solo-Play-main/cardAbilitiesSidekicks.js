@@ -392,7 +392,6 @@ function zabuKOChoice() {
   return new Promise((resolve) => {
     // Early exit if absolutely nothing to choose
     if (playerDiscardPile.length === 0 && playerHand.length === 0) {
-      console.log("There are no cards available to KO.");
       onscreenConsole.log("There are no cards available to KO.");
       resolve(null);
       return;
@@ -1327,7 +1326,6 @@ async function prodigyCopyPowers() {
 );
 
     if (heroesToCopy.length === 0) {
-      console.log("No eligible heroes have been played yet (cost 6 or less).");
       onscreenConsole.log(
         "No Heroes with a cost of 6 or less have been played this turn.",
       );
@@ -1543,7 +1541,6 @@ async function prodigyCopyPowers() {
           (c) => c && c.name === "Prodigy" && !c.isCopied,
         );
         if (prodigyIdx === -1) {
-          console.log("Prodigy has already copied a card.");
           closeCardChoicePopup();
           resolve(false);
           return;
@@ -1617,9 +1614,6 @@ async function prodigyCopyPowers() {
           image: hero.image || "None",
         });
 
-        console.log(
-          `Copying: ${hero.name}. Gained ${prodigyCard.attack} attack and ${prodigyCard.recruit} recruit.`,
-        );
         onscreenConsole.log(
           `Copied <span class="console-highlights">${hero.name}</span>. Gained +${prodigyCard.attack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and +${prodigyCard.recruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
         );
