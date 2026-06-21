@@ -33,6 +33,7 @@ Enhance the existing Legendary Solo Play web app. Golden Solo Mode is complete. 
 | `expansionFantasticFour.js` | Fantastic Four expansion |
 | `expansionGuardiansOfTheGalaxy.js` | Guardians of the Galaxy expansion |
 | `expansionPaintTheTownRed.js` | Paint the Town Red expansion |
+| `expansionRevelations.js` | Revelations expansion |
 | `updatesContent.js` | Patch notes |
 | `sw.js` | Service Worker — caches all game files for offline/PWA support |
 
@@ -74,7 +75,7 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 
 - Browsers on `https://` treat uncaught JS errors more strictly than `file://` — errors that silently fail locally can crash the loading screen on GitHub Pages
 - `initCosmicBackground()` and `initSplash()` in `expansionGuardiansOfTheGalaxy.js` assume DOM elements that don't exist — both have null guards added; any future expansion splash code must do the same
-- `drawVillainCard()` must NOT be called inside `initGame()` — it shows a popup requiring player input, causing a deadlock while the loading screen is still visible. It is called in `onBeginGame()` after the loader hides (~line 3571)
+- `drawVillainCard()` must NOT be called inside `initGame()` — it shows a popup requiring player input, causing a deadlock while the loading screen is still visible. It is called in `onBeginGame()` after the loader hides
 - **Game-test serve-path trap (worktree work):** when serving the game for `/game-test`/Playwright from a worktree, root the HTTP server at the WORKTREE's game directory using a path relative to the worktree root — NEVER an absolute path. An absolute path can resolve to the MAIN folder (`master`) and silently serve stale code without the branch's changes, so you verify against the wrong code and get false confidence. Confirm the served build has your changes before trusting any result.
 - **State-injection binding trap:** `citySize`, `cityReserveAttack`, `totalAttackPoints`, `cumulativeAttackPoints` are top-level `let` (NOT window-aliased); only `mastermindReserveAttack` is `var` on `window`. Inject test state via bare assignments (`citySize = 7`) to hit the lexical bindings — `window.citySize = 7` won't take.
 
@@ -87,18 +88,18 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 - **`onscreenConsole.log()`** is the game's **in-game message panel** that players see during play. Use it for every game event — card plays, villain moves, ability activations, Locations entering the city, anything the player needs to know about.
 - **`console.log()`** is the **browser's developer tools** console (F12). It's invisible to players and should only appear in dev-only instrumentation that gets removed before a feature ships. Treat any `console.log` in game logic as a red flag.
 - **Rule:** when writing game logic, reach for `onscreenConsole.log()` first. If you find yourself typing `console.log()` for something a player would want to see, stop — it's a bug.
-- **Highlight syntax:** wrap card/hero/villain names in `<span class="console-highlights">${name}</span>` to render them in the game's highlight colour. Canonical pattern at `script.js:5138-5140` (villain announcement).
-- **Caught by:** 2026-04-12 Revelations playtest. `placeLocation()` at `script.js:601` used `console.log`, so Locations entered the city with zero on-screen announcement. Fixed 2026-04-13 (Fix 1D).
+- **Highlight syntax:** wrap card/hero/villain names in `<span class="console-highlights">${name}</span>` to render them in the game's highlight colour. Canonical pattern: villain/Location announcements (grep `console-highlights` in `script.js`).
+- **Caught by:** 2026-04-12 Revelations playtest. `placeLocation()` used `console.log`, so Locations entered the city with zero on-screen announcement. Fixed 2026-04-13 (Fix 1D).
 
 ## Async Gotchas
 
 - When making a card ability function `async`, grep for ALL its call sites and add `await` there too — callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (this was missed for `heroSkrulled` callers in health check phase 2 and caught by code review).
-- `placeLocation()` in `script.js` is `async` (line 584) — any expansion function calling it must use `await placeLocation(...)` and be declared `async` itself; missing `await` causes a race condition when the city is full (overflow popup fires and forgets before the player chooses)
+- `placeLocation()` in `script.js` is `async` — any expansion function calling it must use `await placeLocation(...)` and be declared `async` itself; missing `await` causes a race condition when the city is full (overflow popup fires and forgets before the player chooses)
 
 ## Villain Card Cloning Gotcha
 
-- Villain cards are NOT cloned during ambush placement — `processRegularVillainCard()` at `script.js:5140` does `city[sewersIndex] = villainCard` as a direct reference, so ambush mutations like `villainCard.capturedHero = [...]` persist on the city copy automatically.
-- The real copy happens at fight time: `createVillainCopy()` at `script.js:12209` is a hand-rolled whitelist copier that defeatVillain() passes to fight-effect functions. **Any custom state added at ambush time must be added to the `createVillainCopy()` whitelist**, or the fight effect receives a stripped copy. `city[cityIndex]` is also nulled before the fight effect runs, so fight-effect functions cannot fall back to iterating `city[]` — they must read from the villainCopy parameter passed in.
+- Villain cards are NOT cloned during ambush placement — `processRegularVillainCard()` does `city[sewersIndex] = villainCard` as a direct reference, so ambush mutations like `villainCard.capturedHero = [...]` persist on the city copy automatically.
+- The real copy happens at fight time: `createVillainCopy()` is a hand-rolled whitelist copier that defeatVillain() passes to fight-effect functions. **Any custom state added at ambush time must be added to the `createVillainCopy()` whitelist**, or the fight effect receives a stripped copy. `city[cityIndex]` is also nulled before the fight effect runs, so fight-effect functions cannot fall back to iterating `city[]` — they must read from the villainCopy parameter passed in.
 - Pattern for arrays: follow the `bystander: [...(villainCard.bystander || [])]` line in `createVillainCopy()`.
 - Caught by: Klaw capture (Revelations Phase 4 playtest 2026-04-12). `capturedHero` was set correctly on the city copy during ambush, but `createVillainCopy()` dropped it before `klawFight()` ran. Fixed 2026-04-14 by adding `capturedHero` to the whitelist and rewriting `klawFight(klaw)` to use its parameter.
 
@@ -149,20 +150,20 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 ## cardDatabase.js Class/Color Reference
 
 - Hero classes in the DB use: `"Strength"`, `"Instinct"`, `"Covert"`, `"Tech"`, `"Range"` (NOT "Ranged")
-- Canonical source: `script.js` line ~13778 `const CLASSES = [...]`
+- Canonical source: the `const CLASSES = [...]` array in `script.js`
 - Color mapping: Strength=Green, Instinct=Yellow, Covert=Red, Tech=Black, Range=Blue
 - Always verify against the DB before bulk inserts — inventory files use different terminology
 
 ## Villain Mechanic Flags
 
-- **`usesRecruitToFight: true`** — add to villain DB entry for recruit-only fight cost (e.g. Mister Hyde); both `updateHighlights()` declarations gate affordability on this flag; missing it silently disables the entire mechanic with no error
+- **`usesRecruitToFight: true`** — add to villain DB entry for recruit-only fight cost (e.g. Mister Hyde); all THREE affordability gates read this flag (see Duplicate updateHighlights() Gotcha); missing it silently disables the entire mechanic with no error
 
 ## Villain Attack Modifier Pipeline
 
-- **Modified villain/henchman attack values live in `attackFromMastermind` / `attackFromScheme` / `attackFromOwnEffects` / `attackFromHeroEffects` / `attackFromShards` fields**, NOT in `card.attack`. The display overlay (`script.js:~8534`) and fight-cost calculation (`recalculateVillainAttack()` at `script.js:11706`) both read only these modifier fields — writing to `card.attack` directly is invisible because the base number comes from the printed card art.
-- **Canonical precedent:** the `mastermind.alwaysLeadsBonus` check at `script.js:9937`. Add new mastermind/scheme/own-effect villain bonuses inside `updateVillainAttackValues()` following that pattern.
-- **Duplicate function pattern (like `updateHighlights`):** `updateVillainAttackValues()` (city, line 9921) and `updateHQVillainAttackValues()` (HQ, line 10137) both need identical modifier logic — patch both in parallel.
-- **The overlay is conditional:** `if (totalAttackModifiers !== 0)` at `script.js:~8533` — if nothing sets a modifier field, no overlay is drawn and the player sees only the card art's printed number.
+- **Modified villain/henchman attack values live in `attackFromMastermind` / `attackFromScheme` / `attackFromOwnEffects` / `attackFromHeroEffects` / `attackFromShards` fields**, NOT in `card.attack`. The display overlay and fight-cost calculation (`recalculateVillainAttack()`) both read only these modifier fields — writing to `card.attack` directly is invisible because the base number comes from the printed card art.
+- **Canonical precedent:** the `mastermind.alwaysLeadsBonus` check inside `updateVillainAttackValues()`. Add new mastermind/scheme/own-effect villain bonuses there following that pattern.
+- **Duplicate function pattern (like `updateHighlights`):** `updateVillainAttackValues()` (city) and `updateHQVillainAttackValues()` (HQ) both need identical modifier logic — patch both in parallel.
+- **The overlay is conditional:** `if (totalAttackModifiers !== 0)` in the overlay-render code — if nothing sets a modifier field, no overlay is drawn and the player sees only the card art's printed number.
 - Caught by: Fix 1C Part B failed the 2026-04-13 Revelations playtest because it mutated `card.attack` at setup time instead of using this pipeline; the fight logic worked but the card displayed its base art value.
 - **Off-pipeline `fightEffect` dispatch:** any non-city-fight dispatch of a villain `fightEffect` (e.g. a deck-revealed villain fought in place) must save/null/restore the global `currentVillainLocation` — deck-revealed villains have no city position, and position-reading effects (Lizard, Whirlwind) misfire on stale state. Henchman `fightEffect`s don't read it (F-G3 confirmed clean).
 
@@ -173,9 +174,9 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 - Choice popups: `const { confirmButton, denyButton } = showHeroAbilityMayPopup(text, label1, label2)` → wire `onclick`, call `closeInfoChoicePopup()` + `resolve()`
 - Wound effects: call `drawWound()` (handles invulnerability) not `defaultWoundDraw()`
 - KO hero: reuse existing `FightKOHeroYouHave()` — presents card-choice popup
-- KO from discard/hand (player chooses): use `card-choice-popup` pattern (see `KO1To4FromDiscard()` in `cardAbilities.js:11814`). Do NOT use `showHeroAbilityMayPopup` — that's only for Yes/No on a known card, not for selecting from a pool.
+- KO from discard/hand (player chooses): use `card-choice-popup` pattern (see `KO1To4FromDiscard()` in `cardAbilities.js`). Do NOT use `showHeroAbilityMayPopup` — that's only for Yes/No on a known card, not for selecting from a pool.
 - Retrieve from discard (player chooses): same `card-choice-popup` pattern, moving to hand instead of KO pile
-- Evil wins: add `case "conditionName":` to the switch in `script.js` `checkEvilWins` (~line 9065)
+- Evil wins: add `case "conditionName":` (matches the scheme's `endGame` value) to the `switch (condition)` over `endGameConditions` in `script.js` — the scheme end-game / evil-wins switch inside `updateGameBoard()`. **Twin to keep in sync:** if the condition needs a live on-screen counter, also add a `case "Scheme Name":` (keyed on scheme `name`, NOT `endGame`) to the switch in `updateEvilWinsTracker()`. (There is no `checkEvilWins`/`updateEvilWinsText` function despite stale code comments naming them.)
 
 ## City Card Click Handler Pattern
 
@@ -215,9 +216,9 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 ## Mastermind Code Gotchas
 
 - Mastermind names in `cardDatabase.js` must be matched exactly — `"The Supreme Intelligence of the Kree"` not `"Supreme Intelligence"`. Wrong names silently return `undefined` from `masterminds.find()`.
-- `showConfirmChoicesPopup` receives a stub `{ name: selectedMastermind }` from its caller (~line 3514) — not a full mastermind object. Code inside needing `mastermind.alwaysLeads` etc. must call `masterminds.find(m => m.name === mastermind.name)` internally.
+- `showConfirmChoicesPopup` receives a stub `{ name: selectedMastermind }` from its caller — not a full mastermind object. Code inside needing `mastermind.alwaysLeads` etc. must call `masterminds.find(m => m.name === mastermind.name)` internally.
 - `getSelectedMastermind()` already exists in `script.js` — use it instead of manual DOM + `masterminds.find()` lookups in setup screen functions.
-- **Epic masterminds are a runtime object-spread overlay, not a separate DB entry.** `script.js:868` returns `{ ...baseMastermind, ...baseMastermind.epic }` when the Epic checkbox is checked — runtime `mastermind.name` becomes `"Epic Mandarin"` (etc.) and all overlaid fields (`attack`, `masterStrike`, `image`) take their epic values. Detect via `mastermind.name === "Epic X"`.
+- **Epic masterminds are a runtime object-spread overlay, not a separate DB entry.** The mastermind getter returns `{ ...baseMastermind, ...baseMastermind.epic }` when the Epic checkbox is checked — runtime `mastermind.name` becomes `"Epic Mandarin"` (etc.) and all overlaid fields (`attack`, `masterStrike`, `image`) take their epic values. Detect via `mastermind.name === "Epic X"`.
 
 ## Out of Scope
 
@@ -360,7 +361,7 @@ heroRequirements: {
 - Spec: `docs/superpowers/specs/2026-04-05-scheme-hero-requirements-design.md`
 - **Status**: Merged to master (2026-04-06). No current schemes use `heroRequirements` yet — infrastructure ready for expansion schemes
 
-**Villain-side scheme overrides:** `getEffectiveSetupRequirements()` in `script.js:3248` is the single source of truth for setup validation. It combines scheme fields (`requiredVillains`, `specificVillainRequirement`, `extraVillainGroups`) with game-mode rules (Golden Solo base = 2 villain groups) and mastermind `alwaysLeads`. Setup display, start-game validator, and checkbox auto-lock all read from it — no caller bypasses it. New scheme-specific villain overrides should extend this function, not the call sites.
+**Villain-side scheme overrides:** `getEffectiveSetupRequirements()` in `script.js` is the single source of truth for setup validation. It combines scheme fields (`requiredVillains`, `specificVillainRequirement`, `extraVillainGroups`) with game-mode rules (Golden Solo base = 2 villain groups) and mastermind `alwaysLeads`. Setup display, start-game validator, and checkbox auto-lock all read from it — no caller bypasses it. New scheme-specific villain overrides should extend this function, not the call sites.
 
 - **`extraVillainGroups: N`** (added 2026-04-15 for Revelations Earthquake/Tsunami) — Golden Solo adds N extra villain groups on top of the base 2. What If? Solo ignores this field (uses `requiredVillains` directly). Applied in `getEffectiveSetupRequirements()` Golden Solo branch only.
 
@@ -376,4 +377,4 @@ Details in `docs/known-issues.md`. Summary:
 - **Hero name truncation** on narrow screens — accepted, revisit in next UI pass
 - **Kree-Skrull War villain count** — rules decision needed (What If? Solo 1-group cap vs. scheme's 2-group requirement)
 - **"Other player" effects** — inconsistent solo handling; full review deferred until all inventories are finalized (will be addressed by `/analyze-expansion`)
-- **Villain/Mastermind overlay UX pass** — bystanders and captured heroes currently shrink to small thumbnails on the villain/mastermind card. Refactor to match the Location fan-out pattern (full-size cards shifted in position to mimic physical tabletop stacking). Cross-cutting — touches base game, every expansion. Defer until Revelations merges.
+- **Villain/Mastermind overlay UX pass** — bystanders and captured heroes currently shrink to small thumbnails on the villain/mastermind card. Refactor to match the Location fan-out pattern (full-size cards shifted in position to mimic physical tabletop stacking). Cross-cutting — touches base game, every expansion. Unblocked (Revelations merged 2026-06-20); not yet scheduled.
