@@ -186,6 +186,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 **Hooks:**
 - JS syntax check (`node --check`) — runs automatically after every `.js` file edit
 - Anti-pattern guard — blocks `drawVillainCard()` calls in `expansion*.js` and `cardAbilities*.js` (use `processVillainCard()` instead)
+- Debug-log guard — warns on `console.log(` calls in `script.js`/`cardAbilities*.js`/`expansion*.js` (player messages use `onscreenConsole.log()`; remove debug logs before shipping). Baseline is zero. `/deploy` also greps for these pre-push.
 - Asset edit blocker (`hookify.block-asset-edits.local.md`) — blocks Edit/Write on `Visual Assets/` or `Audio Assets/`; reads allowed
 - Worktree advisory — warns when editing `script.js` or `cardAbilities*.js` (large files, consider worktree; nudges `docs/engine-gotchas.md`)
 
