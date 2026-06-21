@@ -1,6 +1,6 @@
 # Expansion Pipeline Status
 
-Last updated: 2026-06-20 (Revelations complete + merged to master)
+Last updated: 2026-06-21 (Shadows of Nightmare + New Mutants + Messiah Complex Pass 1 complete)
 
 ## Pipeline Tracks
 
@@ -38,10 +38,10 @@ Last updated: 2026-06-20 (Revelations complete + merged to master)
 | heroes-of-asgard | A | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | — | — |
 | x-men | A | ✅ | ✅ 2026-04-04 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ | — | — |
 | into-the-cosmos | A | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ | — | — |
-| messiah-complex | A | ✅ 2026-04-05 | — | — | — | — | — | — |
-| shadows-of-nightmare | A | ✅ 2026-04-05 | — | — | — | — | — | — |
+| messiah-complex | A | ✅ 2026-04-05 | ✅ 2026-06-21 | — | — | — | — | — |
+| shadows-of-nightmare | A | ✅ 2026-04-05 | ✅ 2026-06-21 | — | — | — | — | — |
 | shield | A | ✅ 2026-04-04 | ✅ 2026-04-05 | — | — | — | — | — |
-| new-mutants | A | ✅ 2026-04-05 | — | — | — | — | — | — |
+| new-mutants | A | ✅ 2026-04-05 | ✅ 2026-06-21 | — | — | — | — | — |
 | weapon-x | A | ✅ 2026-04-05 | ✅ 2026-04-05 | — | — | — | — | — |
 | world-war-hulk | A | ✅ 2026-04-05 | — | — | — | — | — | — |
 
@@ -89,13 +89,13 @@ Remaining notes:
 ✅ All passes complete (2026-04-05). Finalized at `docs/card-inventory/final/into-the-cosmos.md`. 9 heroes, 4 villain groups (Black Order of Thanos, Celestials, Elders of the Universe, From Beyond), 3 masterminds (Magus, The Grandmaster, The Beyonder), 4 schemes, 2 henchmen groups, 3 special bystanders. New mechanics: Shards (unlimited supply, overrides GotG cap), Burn N Shards, Danger Sense (hero + villain variant for Black Order), Celestial Boons (permanent fight rewards), Contest of Champions, Cosmic Threat expanded (cost-based for Beyonder, dual-class for Celestials). Pass 2 found 0 corrections — all effect text verified clean. 10 hero cards confirmed to have no Attack/Recruit icon (all value from abilities). Galactic Rogue cost 5 and Martyr cost 3 confirmed correct against reference.
 
 ### Messiah Complex
-✅ Staged 2026-04-05. 90 images organized into Heroes/ (32), Masterminds/ (18), Villains/ (20), Henchmen/ (2), Schemes/ (8), Bystanders/ (3), Sidekicks/ (7). Key finding: 7 Special Sidekick cards, 8 Schemes (4 Veiled + 4 Unveiled paired mechanic). **Next:** Pass 1 inventory.
+✅ Staged 2026-04-05. 90 images organized into Heroes/ (32), Masterminds/ (18), Villains/ (20), Henchmen/ (2), Schemes/ (8), Bystanders/ (3), Sidekicks/ (7). Key finding: 7 Special Sidekick cards, 8 Schemes (4 Veiled + 4 Unveiled paired mechanic). Pass 1 complete 2026-06-21. Draft at `docs/card-inventory/drafts/messiah-complex.md`. 8 heroes (X-Men/X-Force/X-Factor), 4 villain groups (Reavers, Purifiers, Acolytes, Clan Yashida), 3 masterminds (Lady Deathstrike, Bastion Fused Sentinel, Exodus), 2 henchmen groups, 4 Veiled/Unveiled schemes, 3 special bystanders, 7 special sidekicks. New keywords: Clone (Hero/When-Recruited/Villain), Shatter, Tactical Formation, Investigate, Prey/Finish the Prey, Chivalrous Duel, Veiled/Unveiled Schemes. Open ⚠️ flags: Me-Myself-and-I clone trigger (image X-Factor vs reference Instinct); Scarlet Samurai VP (none printed); Silver Samurai Fight line (in card, missing from reference); Epic Bastion "enemies" vs "Masterminds"; Clan Yashida asterisk-Attack meaning; Reveal-Evil-Clones "HQ or Hero Deck" vs "Hero Deck"; Boom-Boom base value. Structural: 4 clone heroes use NON-STANDARD 4/4/4/2 distribution (DB rarity mapping needed); "Brotherhood" team icon (not in icon-reference). **Next:** Pass 2 inventory (`/inventory-verifier` in fresh session).
 
 ### Shadows of Nightmare
-✅ Staged 2026-04-05. 45 images organized into Heroes/ (20), Masterminds/ (12), Villains/ (9), Schemes/ (4). Note: DoctorStrange has two `_3` files (_3Common + _3Uncommon) — both correct. **Next:** Pass 1 inventory.
+✅ Staged 2026-04-05. 45 images organized into Heroes/ (20), Masterminds/ (12), Villains/ (9), Schemes/ (4). Note: DoctorStrange has two `_3` files (_3Common + _3Uncommon) — both correct. Pass 1 complete 2026-06-21. Draft at `docs/card-inventory/drafts/shadows-of-nightmare.md`. 5 heroes, 2 villain groups (Fear Lords, Lords of the Netherworld), 2 masterminds (Dormammu, Nightmare), 4 schemes. No henchmen/bystanders/sidekicks. New keywords: Demonic Bargain, Astral Plane, Ritual Artifacts. Open ⚠️ flags: Staff of Legba cost (reference 6 vs image 5 — needs physical-card check); tactic VP = 6 image-derived (reference lists no per-tactic VP). Note: image filenames `MasterOfTheSanctum`/`FleetingDarkMagic`/`MedallionOfManyCoats` are misnomers — printed titles match the reference. **Next:** Pass 2 inventory (`/inventory-verifier` in fresh session).
 
 ### New Mutants (new-mutants)
-✅ Staged 2026-04-05. 47 images organized into Heroes/ (20), Masterminds/ (12), Villains/ (11), Schemes/ (4). Flag: Warlock Rare named "XanticShapeshifter" — verify spelling with physical card at Pass 3. **Next:** Pass 1 inventory.
+✅ Staged 2026-04-05. 47 images organized into Heroes/ (20), Masterminds/ (12), Villains/ (11), Schemes/ (4). Pass 1 complete 2026-06-21. Draft at `docs/card-inventory/drafts/new-mutants.md`. 5 heroes (all X-Men), 2 villain groups (Hellions, Demons of Limbo), 2 masterminds (Belasco, Emma Frost), 4 schemes. No henchmen/bystanders/sidekicks. New keywords: Moonlight/Sunlight (HQ odd/even-cost mechanic), Waking Nightmare; plus a Conflicting-Card-Abilities rule. Resolved title flags: Warlock Rare = "Nanite Shapeshifter" (filename `XanticShapeshifter` was wrong); Emma Frost tactic = "Contempt for Weaklings" (reference's "Contempt for Weakness" was wrong). Open ⚠️ flag: Karma "Control Like a Puppet" trigger — card art shows Covert icon, reference says X-Men (recorded Covert; confirm Pass 2/3). Also: Warlock's two Tech cards carry dual 0+/0+ base values. **Next:** Pass 2 inventory (`/inventory-verifier` in fresh session).
 
 ### Weapon X
 ✅ Staged 2026-04-05. Pass 1 complete 2026-04-05. Full inventory at `docs/card-inventory/drafts/weapon-x.md`. 4 heroes, 2 villain groups (Berserkers, Weapon Plus), 3 masterminds (Omega Red, Romulus, Sabretooth), 3 schemes, 10 Enraging Wounds (unique card type). No henchmen/bystanders/sidekicks. New keywords: Berserk (hero + villain variants), Weapon X Sequence (hero + enemy variants), Fail, Enraging Wounds with Healing. Open ⚠️ flags: all villain copy counts unknown (reference lists "?"); Feral VP unclear (dual-nature card becomes Hero on defeat); Violent Conditioning cost 3 lower than both Commons; Omega Red "Always Leads: Any Villain Group" unusual. **Next:** Pass 2 inventory (`/inventory-verifier` in fresh session).
