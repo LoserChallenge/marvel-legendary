@@ -61,6 +61,15 @@
             "command": "node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const f=(JSON.parse(d).tool_input||{}).file_path||'';const b=require('path').basename(f);if(!/^(expansion|cardAbilities).*\\.js$/.test(b))return;const lines=require('fs').readFileSync(f,'utf8').split('\\n');const hits=[];lines.forEach((l,i)=>{const t=l.trim();if(t.startsWith('//')||t.startsWith('*'))return;if(l.includes('drawVillainCard()'))hits.push((i+1)+': '+t);});if(hits.length){console.error('ANTI-PATTERN: drawVillainCard() found in '+b+' - use processVillainCard() instead.');console.error(hits.join('\\n'));process.exit(1);}}catch(e){}});\""
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const f=(JSON.parse(d).tool_input||{}).file_path||'';const b=require('path').basename(f);if(!/^(script|cardAbilities|expansion).*\\.js$/.test(b))return;const lines=require('fs').readFileSync(f,'utf8').split('\\n');const hits=[];lines.forEach((l,i)=>{const t=l.trim();if(t.startsWith('//')||t.startsWith('*'))return;if(l.includes('console.log('))hits.push((i+1)+': '+t);});if(hits.length){console.error('DEBUG-LOG WARNING: console.log() in '+b+' - player messages use onscreenConsole.log(); remove debug console.log before shipping (/deploy flags these pre-push).');console.error(hits.join('\\n'));process.exit(1);}}catch(e){}});\""
+          }
+        ]
       }
     ]
   }
