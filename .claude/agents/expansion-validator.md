@@ -53,25 +53,25 @@ If a card function is declared `async`, every call site must use `await`. Missin
 
 ---
 
-### Rule 4 — Attack point pairing
-Any function that grants attack must update both:
-- `totalAttackPoints` — current turn display
-- `cumulativeAttackPoints` — Final Showdown tracking
+### Rule 4 — Attack / Recruit point pairing
+Any function that grants attack OR recruit must update both the current-turn total AND the Final Showdown cumulative — the recruit twin breaks Final Showdown the same way a missing attack cumulative does (recruit feeds the combined Final Showdown total):
+- `totalAttackPoints` ↔ `cumulativeAttackPoints`
+- `totalRecruitPoints` ↔ `cumulativeRecruitPoints`
 
-**Check:** Find every `totalAttackPoints +=` in the file. For each, confirm a matching `cumulativeAttackPoints +=` exists in the same function body.
+**Check:** Find every `totalAttackPoints +=` in the file — for each, confirm a matching `cumulativeAttackPoints +=` exists in the same function body. Then do the identical check for every `totalRecruitPoints +=` ↔ `cumulativeRecruitPoints +=`.
 
-**Pass:** Every `totalAttackPoints +=` has a paired `cumulativeAttackPoints +=`.
-**Fail:** Report the function name and line number. Fix: add the missing line immediately after.
+**Pass:** Every `totalAttackPoints +=` has a paired `cumulativeAttackPoints +=`, AND every `totalRecruitPoints +=` has a paired `cumulativeRecruitPoints +=`.
+**Fail:** Report the function name, line number, and which twin is missing. Fix: add the missing cumulative line immediately after.
 
 ---
 
-### Rule 5 — `updateGameBoard()` after attack changes
-After modifying `totalAttackPoints`, `updateGameBoard()` must be called so the on-screen total refreshes.
+### Rule 5 — `updateGameBoard()` after point changes
+After modifying `totalAttackPoints` or `totalRecruitPoints`, `updateGameBoard()` must be called so the on-screen total refreshes.
 
-**Check:** For each function containing `totalAttackPoints +=`, confirm `updateGameBoard()` is called somewhere in that function body.
+**Check:** For each function containing `totalAttackPoints +=` OR `totalRecruitPoints +=`, confirm `updateGameBoard()` is called somewhere in that function body.
 
-**Pass:** Every attack-granting function calls `updateGameBoard()`.
-**Fail:** Report the function name. Fix: add `updateGameBoard();` after the attack assignment.
+**Pass:** Every attack- or recruit-granting function calls `updateGameBoard()`.
+**Fail:** Report the function name. Fix: add `updateGameBoard();` after the point assignment.
 
 ---
 
@@ -113,10 +113,10 @@ All `document.getElementById` and `document.querySelector` calls must have a nul
 ### Rule 3 — Async chain ✅ PASS / ❌ FAIL
 [Details if fail]
 
-### Rule 4 — Attack point pairing ✅ PASS / ❌ FAIL
+### Rule 4 — Attack / Recruit point pairing ✅ PASS / ❌ FAIL
 [Details if fail]
 
-### Rule 5 — updateGameBoard() after attack ✅ PASS / ❌ FAIL
+### Rule 5 — updateGameBoard() after point changes ✅ PASS / ❌ FAIL
 [Details if fail]
 
 ### Rule 6 — DOM null guards ✅ PASS / ❌ FAIL
