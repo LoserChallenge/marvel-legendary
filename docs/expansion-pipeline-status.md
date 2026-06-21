@@ -1,6 +1,6 @@
 # Expansion Pipeline Status
 
-Last updated: 2026-06-21 (Shadows of Nightmare + New Mutants + Messiah Complex Pass 1 complete)
+Last updated: 2026-06-21 (Shadows of Nightmare + New Mutants + Messiah Complex + World War Hulk Pass 1 complete — ALL Pass-1 inventories done)
 
 ## Pipeline Tracks
 
@@ -43,7 +43,7 @@ Last updated: 2026-06-21 (Shadows of Nightmare + New Mutants + Messiah Complex P
 | shield | A | ✅ 2026-04-04 | ✅ 2026-04-05 | — | — | — | — | — |
 | new-mutants | A | ✅ 2026-04-05 | ✅ 2026-06-21 | — | — | — | — | — |
 | weapon-x | A | ✅ 2026-04-05 | ✅ 2026-04-05 | — | — | — | — | — |
-| world-war-hulk | A | ✅ 2026-04-05 | — | — | — | — | — | — |
+| world-war-hulk | A | ✅ 2026-04-05 | ✅ 2026-06-21 | — | — | — | — | — |
 
 ---
 
@@ -101,7 +101,7 @@ Remaining notes:
 ✅ Staged 2026-04-05. Pass 1 complete 2026-04-05. Full inventory at `docs/card-inventory/drafts/weapon-x.md`. 4 heroes, 2 villain groups (Berserkers, Weapon Plus), 3 masterminds (Omega Red, Romulus, Sabretooth), 3 schemes, 10 Enraging Wounds (unique card type). No henchmen/bystanders/sidekicks. New keywords: Berserk (hero + villain variants), Weapon X Sequence (hero + enemy variants), Fail, Enraging Wounds with Healing. Open ⚠️ flags: all villain copy counts unknown (reference lists "?"); Feral VP unclear (dual-nature card becomes Hero on defeat); Violent Conditioning cost 3 lower than both Commons; Omega Red "Always Leads: Any Villain Group" unusual. **Next:** Pass 2 inventory (`/inventory-verifier` in fresh session).
 
 ### World War Hulk
-✅ Staged 2026-04-05. 165 images organized into Heroes/ (78), Masterminds/ (36), Villains/ (36), Henchmen/ (3), Schemes/ (8), Bystanders/ (4). Key notes: 15 transforming heroes (each has 4 standard cards + 1–3 transform cards); 6 transforming masterminds (each has lead + transformed form + 4 tactics); Sentry exists as both hero and mastermind (different cards). `HulkbusterIronMan_4UncommonPromo` confirmed via image read as Ultra-Massive Armor (the transform card — mislabeled in source). Hero card titles deduced from reference file (cost/copy-count logic) rather than image reads — Pass 1/2 should verify against card images. **Next:** Pass 1 inventory.
+✅ Staged 2026-04-05. 165 images organized into Heroes/ (78), Masterminds/ (36), Villains/ (36), Henchmen/ (3), Schemes/ (8), Bystanders/ (4). Key notes: 15 transforming heroes (each has 4 standard cards + 1–3 transform cards); 6 transforming masterminds (each has lead + transformed form + 4 tactics); Sentry exists as both hero and mastermind (different cards). `HulkbusterIronMan_4UncommonPromo` confirmed via image read as Ultra-Massive Armor (the transform card — mislabeled in source). Hero card titles deduced from reference file (cost/copy-count logic) rather than image reads. Pass 1 complete 2026-06-21 — **all 78 hero titles verified against card art and matched their filenames** (staging deductions correct). Draft at `docs/card-inventory/drafts/world-war-hulk.md`. 400 cards: 15 transforming heroes, 6 double-sided transforming masterminds (NO Epic), 7 villain groups, 3 henchmen, 8 schemes, 4 bystanders. New keywords: Transform (hero + mastermind), Outwit, Smash N, Wounded Fury, Cross-Dimensional Rampage. ⚠️ Undefined-here keywords needing rules PDF: **Feast**, **Trap!**, and the Void/Illuminati Rampage variants. Open ⚠️ flags: Infini-Tendrils Attack (card 4+ vs ref 6+); Korg Forged-by-Fire trigger icon count + Lord-of-Granite class; Skaar Anger-Management trigger; transform-card default destination (many print none → hand); "Cytoplasm" vs "Cytoplasmic" Spikes; "Tectonic" vs "Techtonic". Notable: Sentry "Vast Unstable Power" is a hero→Mastermind transform; Rick Jones dual-team (+9 transforms). **Next:** Pass 2 inventory (`/inventory-verifier` in fresh session).
 
 ### S.H.I.E.L.D.
 ✅ Staged 2026-04-04. Pass 1 complete 2026-04-05. Full inventory at `docs/card-inventory/drafts/shield.md`. 4 heroes (all S.H.I.E.L.D. team), 2 villain groups (HYDRA Elite, A.I.M. HYDRA Offshoot), 2 Adapting Masterminds (HYDRA High Council, HYDRA Super-Adaptoid — no lead card, 4 rotating tactics each), 4 schemes, 8 named S.H.I.E.L.D. Officers (2 copies each). New keywords: Undercover, S.H.I.E.L.D. Level, Hydra Level, Adapting Masterminds. Open ⚠️ flags: Taskmaster erratum (printed 3+/4VP, errata 3/2VP); Hail Hydra twist count discrepancy (11 setup but effects only to Twist 10). Production import note: `Visual Assets/Heroes/SHIELD/` already holds grey starters — folder naming strategy deferred to import time. **Next:** Pass 2 inventory (`/inventory-verifier` in fresh session).
