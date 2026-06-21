@@ -59,3 +59,13 @@ Accepted for now; revisit in next UI pass.
 **Scope:** Cross-cutting — affects the base game bystander-on-villain display, Skrull captures, Klaw captures, and any future captured-card mechanic across all expansions.
 
 **Status:** Deferred — log as a standalone UX pass after Revelations merges. Klaw currently has no visual indicator for captured heroes (functional only via console messages).
+
+---
+
+## Always-leads mastermind ↔ expansion keyword collision
+
+**Symptom:** When an expansion villain trigger matches Location names by a quoted keyword (e.g. Lethal Legion "+3 Attack while a 'Maze' Location is in the city"), the *always-leading* mastermind's own tactic-Locations can unexpectedly satisfy that keyword too — Grim Reaper's "Maze of Bones" tactic-Location triggered Lethal Legion's bonus. It worked as designed in that pairing, but the interaction is unvetted for other mastermind/expansion combinations.
+
+**Root cause:** keyword-name matching across card types has no cross-mastermind awareness; the audit pipeline does not flag when an always-leading mastermind's tactic-Locations can satisfy another card's keyword condition.
+
+**Status:** Deferred — low-frequency cross-combination. When adding any keyword-by-Location-name trigger, check whether the always-leading masterminds' tactic-Locations also match the keyword. Surfaced by `/legendary-sweep` 2026-06-20.

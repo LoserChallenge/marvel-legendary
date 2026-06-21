@@ -233,18 +233,18 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `docs/expansion-pipeline-status.md` — pipeline progress table for all expansions
 - `docs/expansion-mechanics/` — mechanics reference docs produced by `/analyze-expansion`
 - `docs/expansion-progress/` — implementation progress files produced by `/new-expansion`
+- `docs/priorities.md` — live task tracker (in-flight / deferred / ongoing / completed); consult on direction
 - `docs/known-issues.md` — detailed descriptions of open/deferred issues
 - `docs/golden-solo-history.md` — Golden Solo implementation history, architectural rules, testing checklist
+- `docs/engine-gotchas.md` — cross-expansion code traps & reusable patterns (twin-function parity, attack/defeat pipelines, Location plumbing, scheme-transform reads, state lifecycle). **Consult before expansion code work and during `/expansion-audit`.** On-demand (not auto-loaded); CLAUDE.md keeps only the highest-frequency rules inline.
+- `docs/expansion-decisions.md` — cross-expansion design & rules-interpretation precedents (the "we chose X, here's why" layer). **Consult during `/analyze-expansion` and before building a new mechanic.**
+- `docs/revelations-retrospective.md` — what drove the Revelations bug volume + structural-prevention map; input to future build/gate workflow improvements.
 
-## Planned Work (in order)
+## Planned Work
 
-1. ✅ UI revisions, Golden Solo villain fix, health check (phases 1+2), card effect auditor — all merged to master by 2026-03-31
-2. **Expansion content** — complete inventories for all expansions (both tracks), then implement one at a time
-   - **Two inventory tracks — see `docs/expansion-pipeline-status.md` for full status and per-expansion notes.** Track A (new expansions): stage → inventory (PDF-primary) → verify → user review → move to `final/`. Track B (in-game expansions): inventory (DB-primary) → verify → user review → move to `final/`.
-   - **Current position:** See `docs/expansion-pipeline-status.md` for full pipeline status. Revelations is complete and merged to master (2026-06-20); next expansion not yet selected.
-   - `/analyze-expansion` → `/new-expansion` pipeline is ready. Run `/analyze-expansion` first (produces mechanics reference), then `/new-expansion` (multi-phase code integration with progress tracking).
-   - ✅ **Revelations** — complete; merged to master 2026-06-20. Full history + issue table: `docs/expansion-progress/revelations.md`.
-3. **Project optimization fixes** — 5 workflow fixes identified 2026-04-14, plan at `docs/superpowers/plans/2026-04-14-project-optimization-fixes.md`. P1/P3/P4 have no blockers. P2 unblocked — Revelations 1A/1B/1C all applied via the 2026-06-20 merge. **P5 open:** choose Option A (warning hook) or Option B (flip sync direction) for CLAUDE.md/worktree sync.
+**Active mission:** bring expansions into the game one at a time (inventory → `/analyze-expansion` → `/new-expansion`). Revelations complete + merged (2026-06-20); next expansion not yet selected.
+
+**Live task list — in-flight / deferred / ongoing:** `docs/priorities.md`. **Pipeline status table:** `docs/expansion-pipeline-status.md`. Consult both for what's next; this section stays durable-context only.
 
 ## Visual Reference Setup ✅ Complete
 
@@ -287,14 +287,11 @@ Staging structure, file naming conventions, staging process steps, card inventor
 
 **Skills (other):**
 - `/game-test` — Playwright orchestrator. Drives the live game in a real browser for verification (post-fix), diagnostic (pre-implementation scoping), reproduction, or regression. Handles HTTP-server setup, 1920×1080 viewport, state injection, screenshots, and results tracking. Reach for it on any bug-list work where deterministic state-injection beats manual playtest.
-- `/golden-solo-fixer` — executes remaining Golden Solo compatibility audit fixes
 - `/deploy` — pre-push checklist + push to master + GitHub Pages verification
 - **`/write-plan` default-location gotcha:** Superpowers' `writing-plans` skill drops output at `~/.claude/plans/{auto-slug}.md` by default — a **global** path with a machine-generated name (e.g. `temporal-coalescing-kettle.md`). For project work, override with an explicit in-repo path like `docs/superpowers/plans/YYYY-MM-DD-descriptive-name.md` inside the active worktree, or move+rename the file immediately after creation and update any references.
 
 **Subagents:**
 - `codebase-navigator` — targeted code searches without flooding context
-- `audit-tracker` — scans card files for remaining compatibility fixes
-- `revision-tracker` — scans HTML/JS for UI revision progress
 - `expansion-validator` — validates expansion JS against 7 Golden Solo rules; run inside `/expansion-audit`
 - **Expansion audit pipeline** (run via `/expansion-audit`, see `docs/superpowers/specs/2026-05-28-expansion-audit-pipeline-design.md`):
   - `engine-integration-auditor` — discovers engine touchpoints + finds state-propagation gaps (E-N IDs)

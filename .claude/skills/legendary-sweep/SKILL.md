@@ -98,8 +98,9 @@ Read every item in `docs/sweep-inbox.md`'s Capture log.
 
 | Kind of learning | Canonical home |
 |---|---|
-| Reusable code pattern / helper / recurring-bug rule (`#pattern`, `#gotcha`) | project `CLAUDE.md` — Code Patterns / Gotchas section |
-| Cross-expansion design/rules-decision precedent (`#decision`) | a note in `docs/expansion-mechanics/`; if precedents accumulate, flag a dedicated `docs/expansion-decisions.md` for Paul |
+| Deep engine code trap / reusable pattern (`#pattern`, `#gotcha`) | `docs/engine-gotchas.md` (on-demand reference; promote a truly every-session rule inline to `CLAUDE.md` only if it earns the auto-loaded slot, else point at engine-gotchas) |
+| Cross-expansion design/rules-decision precedent (`#decision`) | `docs/expansion-decisions.md` |
+| Card-content rules ruling | `docs/rules-notes/` (cited to source) |
 | Recurring pre-flight gap across expansions (`#gap`) | `docs/known-issues.md` (or a pre-flight checklist for `/analyze-expansion` / `/new-expansion`) |
 | Data / inventory convention | `docs/card-inventory/card-reading-rules.md` |
 

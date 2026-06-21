@@ -41,7 +41,7 @@ Last updated: 2026-06-20 (Revelations complete + merged to master)
 | messiah-complex | A | ✅ 2026-04-05 | — | — | — | — | — | — |
 | shadows-of-nightmare | A | ✅ 2026-04-05 | — | — | — | — | — | — |
 | shield | A | ✅ 2026-04-04 | ✅ 2026-04-05 | — | — | — | — | — |
-| the-new-mutants | A | ✅ 2026-04-05 | — | — | — | — | — | — |
+| new-mutants | A | ✅ 2026-04-05 | — | — | — | — | — | — |
 | weapon-x | A | ✅ 2026-04-05 | ✅ 2026-04-05 | — | — | — | — | — |
 | world-war-hulk | A | ✅ 2026-04-05 | — | — | — | — | — | — |
 
@@ -94,7 +94,7 @@ Remaining notes:
 ### Shadows of Nightmare
 ✅ Staged 2026-04-05. 45 images organized into Heroes/ (20), Masterminds/ (12), Villains/ (9), Schemes/ (4). Note: DoctorStrange has two `_3` files (_3Common + _3Uncommon) — both correct. **Next:** Pass 1 inventory.
 
-### New Mutants (the-new-mutants)
+### New Mutants (new-mutants)
 ✅ Staged 2026-04-05. 47 images organized into Heroes/ (20), Masterminds/ (12), Villains/ (11), Schemes/ (4). Flag: Warlock Rare named "XanticShapeshifter" — verify spelling with physical card at Pass 3. **Next:** Pass 1 inventory.
 
 ### Weapon X
