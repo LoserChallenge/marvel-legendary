@@ -15,6 +15,12 @@ Run `git status` and confirm:
 - No sensitive files (`.env`, credentials) are included
 - You are on the `master` branch (run `git branch --show-current` to confirm)
 
+Also check for leftover debug logs in the shipped game files (baseline is zero — player messages use `onscreenConsole.log`, not `console.log`):
+```
+grep -rnE "console\.log\(" Legendary-Solo-Play-main/Legendary-Solo-Play-main/script.js Legendary-Solo-Play-main/Legendary-Solo-Play-main/cardAbilities*.js Legendary-Solo-Play-main/Legendary-Solo-Play-main/expansion*.js | grep -vE ":[0-9]+:\s*(//|\*)"
+```
+Expected: no output. Any hits are debug `console.log(` traces that shouldn't ship — flag them to the user to remove before pushing.
+
 If anything looks unexpected, stop and flag it to the user before continuing.
 
 ## Step 2 — Show what's being pushed
