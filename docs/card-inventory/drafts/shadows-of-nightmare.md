@@ -45,7 +45,7 @@ Standard distribution per hero: 1 Rare (1 copy), 1 Uncommon (3 copies), 2 Common
 | Clea | The Purple Gem | Rare | 1 | 7 | Marvel Knights | Covert | — | — |
 | Doctor Voodoo | Commune with the Spirit World | Common A | 5 | 3 | Avengers | Covert | 0 | 2 |
 | Doctor Voodoo | Medallion of Many Loas | Common B | 5 | 4 | Avengers | Tech | — | — |
-| Doctor Voodoo | Staff of Legba | Uncommon | 3 | 6 ⚠️ | Avengers | Strength | — | — |
+| Doctor Voodoo | Staff of Legba | Uncommon | 3 | 5 | Avengers | Strength | — | — |
 | Doctor Voodoo | Possessed by Brother's Spirit | Rare | 1 | 7 | Avengers | Instinct | 4+ | 0+ |
 | The Ancient One | Astral Confrontation | Common A | 5 | 3 | — (Unaffiliated) | Covert | 0 | 2 |
 | The Ancient One | Teachings of Kamar-Taj | Common B | 5 | 5 | — (Unaffiliated) | Instinct | 0 | 0 |
@@ -58,7 +58,7 @@ Standard distribution per hero: 1 Rare (1 copy), 1 Uncommon (3 copies), 2 Common
 
 **Attack / Recruit notation:** fixed value (e.g. `3`) = printed base, always provided; `0+` = base 0, modified by ability; `[#]+` = base value plus conditional bonus; `0` = none of that stat; `—` = not applicable. The eight **Ritual Artifact** cards (Wand of Watoomb, Book of Cagliostro, The Eye of Agamotto, The Purple Gem, Medallion of Many Loas, Staff of Legba, The Orb of Agamotto, The Book of the Vishanti) print no base Attack/Recruit — all value comes from the discard/Ritual effect, so both stat columns are `—`.
 
-⚠️ **Staff of Legba cost** — reference lists **6**; the card image clearly reads **5** in the cost box. Recorded the reference value (6); flagged for physical-card spot-check (Pass 2/3) as a possible reference error.
+**Staff of Legba cost = 5** (card and reference agree; the earlier reference value of 6 was corrected to 5 by the user on 2026-06-21 to match the card).
 
 ---
 
@@ -371,7 +371,7 @@ Evil Wins: When the Mastermind has won 5 Duels.
 
 ## Pass 1 Flags Summary (for Pass 2 / Pass 3)
 
-1. **⚠️ Staff of Legba cost** — reference 6 vs card image 5. Recorded 6; resolve against physical card.
+1. **Staff of Legba cost = 5** — RESOLVED. Card reads 5; reference corrected from 6→5 (user, 2026-06-21). No longer a flag.
 2. **⚠️ Tactic VP = 6** — image-derived (reference lists no per-tactic VP). Confirm the circled "6" on each of the 8 tactic cards is VP.
 3. **Image filenames vs printed titles (RESOLVED, no action):** filenames `MasterOfTheSanctum`, `FleetingDarkMagic`, `MedallionOfManyCoats` are misnomers — the printed card titles are Keeper of the Sanctum, Prepare Dark Magic, Medallion of Many Loas (match the reference).
 4. **Scheme bystander counts** — not printed on any scheme card; left `—` (game-mode default).
