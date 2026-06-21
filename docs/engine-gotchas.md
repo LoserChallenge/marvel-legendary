@@ -13,6 +13,9 @@ Conventions: `script.js` line numbers drift — treat them as hints, grep to con
 - **Any custom attack-modifier state must be READ in both twins.** Setting a field on the card object isn't enough — `updateVillainAttackValues()` (city) AND `updateHQVillainAttackValues()` (HQ) must each read it. Audit E-3: Grim Reaper Graveyard's `graveyardBonus` was set but never read, so the bonus never applied.
 - **`calculateLastStand()` must skip destroyed spaces.** It counted any `null city[i]` as empty, including destroyed (nonexistent) spaces; guard `!city[i] && !destroyedSpaces[i]`. Used on both the villain side and the hero side (`applyLastStand`).
 - **A hero card that can also appear as a villain (Scarlet Witch) leaks hero keywords into the villain attack pipeline.** Its `keywords:["Dark Memories"]` (a hero superpower prop) flowed into `revelationsVillainOwnAttack()`. Villain-attack functions must gate on `attackFromScheme`/own-keyword villains and exclude hero-typed keywords.
+- **Modified villain/henchman attack lives in `attackFromMastermind` / `attackFromScheme` / `attackFromOwnEffects` / `attackFromHeroEffects` / `attackFromShards`, NOT `card.attack`.** The display overlay and `recalculateVillainAttack()` read only these modifier fields — writing `card.attack` is invisible (base number comes from the printed card art). Canonical precedent: the `mastermind.alwaysLeadsBonus` check inside `updateVillainAttackValues()`. The overlay is conditional: `if (totalAttackModifiers !== 0)` — no modifier field set = no overlay, player sees only the art's printed number. (Caught: Fix 1C Part B mutated `card.attack` at setup; fight logic worked but the card displayed its base art value.)
+- **Off-pipeline `fightEffect` dispatch must save/null/restore `currentVillainLocation`** — deck-revealed villains have no city position, and position-reading effects (Lizard, Whirlwind) misfire on stale state. Henchman `fightEffect`s don't read it (F-G3 confirmed clean).
+- **Attack-granting functions update BOTH `totalAttackPoints` AND `cumulativeAttackPoints`** (current-turn display + Final Showdown tracking) — missing the second silently breaks Final Showdown. Then call `updateGameBoard()` (else the on-screen total won't refresh until the next natural update). Recruit twin: every `totalRecruitPoints +=` needs a matching `cumulativeRecruitPoints +=` (recruit feeds the combined Final Showdown total); both reset in `endTurn`.
 
 ## Twin functions (city / HQ parity)
 
@@ -20,6 +23,9 @@ Conventions: `script.js` line numbers drift — treat them as hints, grep to con
 - **The HQ twin must force position-conditional flags to their HQ-appropriate value.** A villain moved to HQ inherits a stale city-render value (e.g. `usesRecruitToFight`) otherwise, so HQ defeat charges the wrong cost.
 - **`updateHQVillainAttackValues` (HQ twin) is intentionally asymmetric with the city twin.** It referenced undeclared `currentPermBuff` → ReferenceError under Portals to the Dark Dimension + a villain in HQ. `cityPermBuff` is city-space-scoped (city indices only); drop city-only branches from the HQ twin entirely rather than zeroing them.
 - **HQ overlay render must route through the HQ twin.** `applyCardOverlays` historically called the CITY twin for HQ villains with the HQ slot index; once any city-twin branch reads `cityLocations[index]`, HQ villains silently leak that effect.
+- **`script.js` has TWO `function updateHighlights()` declarations** — the second overwrites the first in JS, but keep both in sync (either may become active after refactoring). When modifying city villain affordability or fight-button logic, grep for all `updateHighlights` definitions and patch both.
+- **`updateVillainAttackValues()` (city) and `updateHQVillainAttackValues()` (HQ) need identical attack-modifier logic** — patch both in parallel for any new mastermind/scheme/own-effect villain bonus.
+- **`usesRecruitToFight` has THREE affordability gates, not two:** both `updateHighlights()` twins PLUS `showAttackButton()` (the REAL city fight gate) each need the recruit-only branch (`totalRecruitPoints >= cost`, reserve excluded, attack-only). Missing it on `showAttackButton()` let Mister Hyde show a fight button on Attack and charge Recruit into the negative. The flag itself: `usesRecruitToFight: true` on the villain DB entry; missing it silently disables the entire mechanic with no error.
 
 ## Defeat / bonus hooks
 
@@ -40,6 +46,10 @@ Conventions: `script.js` line numbers drift — treat them as hints, grep to con
 - **Transform-aware reads need a NEW `getActiveScheme()`** targeting only the ~5 transform-sensitive sites (twist dispatcher, `checkEvilWins`, both `updateVillainAttackValues` twins, `showPopup`'s twist branch). Do NOT broaden `getSelectedScheme()` (~50 setup-scoped DOM-radio callers) or setup validation breaks across all schemes. `getSelectedScheme()` reads the setup radio = pre-transform side.
 - **`updateEvilWinsTracker()` needs an explicit case per numeric-threshold scheme.** Earthquake / House of M fell through to the default "See Scheme" and never showed a live counter. Logic in `checkEvilWins` is not enough; the display switch needs its own case.
 - **Dynamic badge/title text that must track a transform** is set in the `updateGameBoard` render path from `getActiveScheme().name` — a static HTML `title` attribute goes stale on transform.
+- **`transformScheme()` swaps image/name/object only — it does NOT resize the city.** Schemes that change city size (Earthquake/Tsunami) need a separate `resizeCityForScheme(newSize)` call (see City resize section).
+- **`#scheme-place` selector trap:** it contains TWO `<img>` — the always-hidden BabyHope token (`#scheme-token`, `display:none`) AND the visible scheme card (`img.card-image`, appended by `initGame()`). Generic `#scheme-place img` matches the token FIRST (document order) and silently mutates an invisible element. Always target `#scheme-place img.card-image`. Same hidden-token pattern likely exists in other cells — verify selector specificity whenever updating an in-game card image.
+- **`selectedScheme` global is NOT pre-populated by setup:** most scheme-reading code uses a *local* `const selectedScheme = schemes.find(...)` from the setup radio. `transformScheme()` (and anything tracking "current scheme" across transforms) must lazy-init `window.selectedScheme` from the DOM radio on first use, then read/write the global. Without it, the first call throws `ReferenceError: selectedScheme is not defined` and the upstream try/catch swallows it silently — the player sees nothing happen.
+- **Identify a transforming scheme by a side-stable field (`scheme.endGame`), never `scheme.name`** — Side-B DB names can carry literal double-quotes (e.g. `"No More Mutants"`).
 
 ## City resize (transforming schemes)
 
@@ -86,10 +96,14 @@ Conventions: `script.js` line numbers drift — treat them as hints, grep to con
 - **`escapePile` is undefined** — the real global is `escapedVillainsDeck`. Reading the undeclared name throws `ReferenceError` in non-strict JS (two pre-existing sites: `powerManEscape`, `mandarinRingsSeekTheirTrueHand`).
 - **`escapedVillainsCount` is shadowed by a local `const`** inside `checkEvilWins`/`updateEvilWinsTracker` filtering `type === "Villain"` — silently drops HYDRA Base (`type:"Location"`). Use `type === "Villain" || subtype === "Henchman"`; real Locations are never in `escapedVillainsDeck`.
 - **Henchman subtype convention:** most henchmen are DB-typed `"Villain"`; HYDRA Base is the only one typed `"Location"`; all get `subtype:"Henchman"` from `generateVillainDeck`. A filter needing all henchmen uses `type === "Villain" || subtype === "Henchman"`. (For which conditions DO/DON'T hit HYDRA Base, see the rules ruling in `docs/rules-notes/`.)
+- **Villain cards are NOT cloned during ambush placement** — `processRegularVillainCard()` does `city[sewersIndex] = villainCard` as a direct reference, so ambush mutations (e.g. `villainCard.capturedHero = [...]`) persist on the city copy automatically. The real copy happens at fight time: `createVillainCopy()` is a hand-rolled whitelist copier that `defeatVillain()` passes to fight-effect functions. **Any custom state added at ambush time must be added to the `createVillainCopy()` whitelist**, or the fight effect receives a stripped copy. `city[cityIndex]` is also nulled before the fight effect runs, so fight-effect functions cannot fall back to iterating `city[]` — they must read from the `villainCopy` parameter. Array pattern: follow `bystander: [...(villainCard.bystander || [])]`. (Caught: Klaw's `capturedHero` was set on the city copy at ambush but `createVillainCopy()` dropped it before `klawFight()` ran — fixed by whitelisting `capturedHero` and rewriting `klawFight` to use its parameter.)
 
 ## Mastermind
 
 - **`getSelectedMastermind()` returns a fresh spread `{...base, ...base.epic}` for Epic masterminds** — reassigning `mastermind.tactics = []` mutates a throwaway copy. Clear the live array in-place with `mastermind.tactics.length = 0`.
+- **Mastermind names must match `cardDatabase.js` exactly** — `"The Supreme Intelligence of the Kree"`, not `"Supreme Intelligence"`. Wrong names silently return `undefined` from `masterminds.find()`.
+- **`showConfirmChoicesPopup` receives a stub `{ name: selectedMastermind }` from its caller** — not a full mastermind object. Code needing `mastermind.alwaysLeads` etc. must call `masterminds.find(m => m.name === mastermind.name)` internally. Prefer the existing `getSelectedMastermind()` over manual DOM + `masterminds.find()` lookups in setup functions.
+- **Epic masterminds are a runtime object-spread overlay, not a separate DB entry.** The mastermind getter returns `{ ...baseMastermind, ...baseMastermind.epic }` when the Epic checkbox is checked — runtime `mastermind.name` becomes `"Epic Mandarin"` (etc.) and overlaid fields (`attack`, `masterStrike`, `image`) take their epic values. Detect via `mastermind.name === "Epic X"`.
 
 ## Bank / Streets position
 
@@ -104,3 +118,26 @@ Conventions: `script.js` line numbers drift — treat them as hints, grep to con
 - **`defeatVillain()` reads the DOM city cell for its animation** — call `updateGameBoard()` first in a test harness or it throws "City cell not found".
 - **To confirm an expansion file is loaded:** expansion JS is injected via `createElement('script')` in index.html, not a static `<script src>` — `grep 'createElement.*script'`, not a static-tag scan (WebFetch/HTML-summarizers miss it).
 - **Confirm mode-independence by grep:** before claiming a function behaves identically in `golden` and `whatif`, grep it for `gameMode` refs; zero refs justifies full verification in one mode + a spot-check in the other.
+
+## DOM / setup screen / build
+
+- **JS/HTML pairing:** when removing an HTML element, grep `script.js` for matching top-level `getElementById()` calls. A null reference at the top of `script.js` crashes ALL subsequent listener registration silently — e.g. removing `#donate-call-to-action` broke the Welcome popup close button because `script.js` crashed before registering its listener.
+- **`https://` is stricter than `file://`:** browsers treat uncaught JS errors more strictly on GitHub Pages — an error that silently fails locally can crash the loading screen in production.
+- **Splash/cosmic init must null-guard:** `initCosmicBackground()` and `initSplash()` (`expansionGuardiansOfTheGalaxy.js`) assume DOM elements that don't exist — both have null guards; any future expansion splash code must do the same.
+- **`drawVillainCard()` must NOT be called inside `initGame()`** — it shows a popup requiring player input, deadlocking while the loading screen is still up. It is called in `onBeginGame()` after the loader hides.
+- **CSS grid overflow:** `1fr` columns don't shrink below content size by default — use `minmax(0, 1fr)` and `min-width: 0` on children when text must truncate rather than push other columns off-screen.
+- **Randomize buttons don't fire `change` events:** `randomizeMastermind()` / `randomizeScheme()` etc. set radio `.checked = true` programmatically, which does NOT fire DOM `change`. Any logic added via `addEventListener('change', ...)` on setup forms must ALSO be called directly inside the corresponding `randomize*()` function.
+- **City/Location click guard is `if (!popupMinimized)`:** `popupMinimized` is `false` during normal gameplay, so villain/Location click handlers must use `if (!popupMinimized) { handle click }` to allow clicks during play. Do NOT write `if (!popupMinimized) return;` — that blocks clicks during normal play.
+- **`generateVillainDeck()` overwrites every card's `type` to `"Villain"`** — new card types (e.g. Location) need a preservation check: `const cardType = modifiedCard.type === "Location" ? "Location" : "Villain";`.
+
+## Async patterns
+
+- **Making an ability `async` requires `await` at ALL its call sites.** Callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (missed for `heroSkrulled` callers in health-check phase 2, caught by code review).
+- **`placeLocation()` is `async`** — any expansion function calling it must `await placeLocation(...)` and be declared `async`; missing `await` races when the city is full (overflow popup fires and forgets before the player chooses).
+
+## cardDatabase.js scripting
+
+- **CRLF line endings:** `cardDatabase.js` uses CRLF — any Node script doing string replacement must normalize (`db.replace(/\r\n/g, '\n')`) or markers won't match; restore CRLF on write.
+- **vm `const` is block-scoped:** `const` declarations inside `vm.runInContext()` are NOT accessible on the context object (`context.heroes` is `undefined`). Before running, replace the declaration: `code = code.replace(/\bconst heroes\s*=/, 'heroes =');`. Same for any other top-level `const` array you need.
+- **Stub `window` in the vm context:** `cardDatabase.js` assigns `window.henchmen = henchmen` etc. at the end — use `const context = { window: {} };` or the script crashes with "window is not defined".
+- **Reusable extraction script:** `scripts/extract-hero-data.js <FolderName>` — pass the image folder name (e.g. `"Dark City"`, `"GotG"`, `"PtTR"`) to extract hero data for any expansion.

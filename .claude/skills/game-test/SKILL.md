@@ -75,6 +75,28 @@ Push back before launching if Paul's ask falls in any of these — Playwright is
 - **Randomness-dependent multi-turn flows** — RNG variation makes scripted runs unreliable; play the game.
 - **Pure code review** — if there's no behavior to observe, use code-review tools instead.
 
+## Harness gotchas
+
+Stale-serve / caching (the #1 false-confidence source):
+- **Chromium aggressively caches `script.js` and other static files** served by Python `http.server`. The Service Worker is not active in local-serve mode (registration 404s — path-prefix mismatch with GitHub Pages), but the HTTP cache alone serves stale code through normal `Ctrl+R`.
+- **Stale-serve persists across a fresh port/process** — even a new server port or a fresh browser process can serve STALE `script.js` / `cardAbilities.js` / `expansionRevelations.js`. Before trusting any result, confirm the served build carries your freshness markers; if a code-on-disk fix isn't reflected in `<function>.toString()`, monkey-patch the real implementation into `window.<funcName>` via `browser_evaluate` to verify the LOGIC.
+- **Most reliable cache flush** for interactive playtests: F12 → right-click the toolbar refresh button → "Empty Cache and Hard Reload" (plain `Ctrl+Shift+R` may not suffice). Recommend this to Paul whenever a fix has just been applied.
+- **Serve-path trap (worktree work):** root the HTTP server at the WORKTREE's game directory using a path relative to the worktree root — NEVER an absolute path. An absolute path can resolve to the MAIN folder (`master`) and silently serve stale code without the branch's changes, so you verify against the wrong code. Confirm the served build has your changes before trusting any result.
+
+Eval / state-injection correctness:
+- **State-injection binding trap:** `citySize`, `cityReserveAttack`, `totalAttackPoints`, `cumulativeAttackPoints` are top-level `let` (NOT window-aliased); only `mastermindReserveAttack` is `var` on `window`. Inject via bare assignments (`citySize = 7`) to hit the lexical bindings — `window.citySize = 7` won't take.
+- **Implicit-global trap:** when testing functions that read globals, **wipe `window.<globalName>` before each invocation** to force the cold-start path: `window.<name> = undefined; delete window.<name>;`. Do NOT write `globalName = value` — in non-strict scripts that creates an implicit global and masks missing-initialization bugs (a `transformScheme()` diagnostic passed this way while the real game still crashed).
+- **Always check dev-tools console after every invocation:** a function failing silently upstream (try/catch with `console.error`) produces no on-screen-console signal but leaves a clear trace in F12 → Console. When a test passes but the real game still fails, the test is wrong before the production code is.
+
+Driving the harness:
+- **Game start needs a TRUSTED `pointerdown` on `#begin-game`** — the handler listens for `pointerdown`, not `click`. Use a real Playwright click (`page.locator('#begin-game').click()`); a scripted `element.click()` fires only a click event and silently no-ops.
+- **Never batch a localhost `fetch`/curl with file ops in one tool call** — curl-to-localhost is permission-denied, and a denied call cancels its sibling calls in the same batch. Use Playwright `fetch` from the page instead.
+- **Python `http.server` is single-threaded** — bursts of webp/m4a requests throw `ERR_CONNECTION_REFUSED` and break card ART in screenshots (counts/DOM/logic unaffected). Use a threaded server for clean screenshots.
+- **Detect DOM state with STRUCTURAL selectors, not geometry** — broken images collapse layout, so bounding-box/`offsetParent` tests are unreliable. Use `#player-hand-element.children.length`, `.cell-label` text, `.card-container[data-city-index]`, `.popup-card`; for `position:fixed` popups (`#defeat-popup`) test `getComputedStyle(el).display`, not `offsetParent===null`.
+- **Drain the start popup QUEUE via real buttons before driving popup-heavy abilities** — `display:none` does NOT dequeue; later loops reusing the shared `.info-or-choice-popup` element collide with un-dequeued start popups (looks like an "orphaned Master Strike"). Close via `#intro-popup-close-button`, then `#info-or-choice-popup-confirm` until none remain.
+- **Live UI-refresh tests must go through the real play path** (`selectedCards=[idx]` → `confirmActions()`, or `endTurn()`) — abilities rely on the single trailing `updateGameBoard()`; an isolated ability call leaves the DOM stale and falsely reads as a refresh bug.
+- **The Playwright page can close mid-session with the server still up** — re-navigate + re-`resize(1920×1080)` to recover.
+
 ## Cleanup
 
 Leave the HTTP server running across multiple runs in the same session — costs nothing, saves restart time. Stop it at session end (kill the background PID) so the port frees cleanly.

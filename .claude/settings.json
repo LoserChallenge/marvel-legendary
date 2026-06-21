@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const f=(JSON.parse(d).tool_input||{}).file_path||'';const b=require('path').basename(f);if(/^(script|cardAbilities).*\\.js$/.test(b)){console.error('LARGE FILE WARNING: '+b+' has ~17-19K lines. For substantial feature changes, consider a git worktree first (/using-git-worktrees). Proceeding with edit.');}}catch(e){}});\""
+            "command": "node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const f=(JSON.parse(d).tool_input||{}).file_path||'';const b=require('path').basename(f);if(/^(script|cardAbilities).*\\.js$/.test(b)){console.error('LARGE FILE WARNING: '+b+' has ~17-19K lines. For substantial feature changes, consider a git worktree first (/using-git-worktrees), and check docs/engine-gotchas.md for known code traps before editing. Proceeding with edit.');}}catch(e){}});\""
           }
         ]
       }

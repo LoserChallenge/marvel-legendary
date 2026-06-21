@@ -67,22 +67,6 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 - PDF/image tool gotchas (poppler, pdftoppm, inventory PDFs) — see `docs/card-inventory/card-reading-rules.md`
 - **Staging `mv` gotcha:** Filenames starting with `---` (or any leading dash) are parsed as flags by bash. Use `mv -- "---filename" dest` to end option parsing.
 
-## JS/HTML Pairing Rule
-
-When removing an HTML element, always grep `script.js` for matching `getElementById()` calls at the top level. Null references at the top of `script.js` crash ALL subsequent listener registration silently (e.g., removing `#donate-call-to-action` from HTML broke the Welcome popup close button because `script.js` crashed before registering its listener).
-
-## GitHub Pages / HTTP Serving Gotchas
-
-- Browsers on `https://` treat uncaught JS errors more strictly than `file://` — errors that silently fail locally can crash the loading screen on GitHub Pages
-- `initCosmicBackground()` and `initSplash()` in `expansionGuardiansOfTheGalaxy.js` assume DOM elements that don't exist — both have null guards added; any future expansion splash code must do the same
-- `drawVillainCard()` must NOT be called inside `initGame()` — it shows a popup requiring player input, causing a deadlock while the loading screen is still visible. It is called in `onBeginGame()` after the loader hides
-- **Game-test serve-path trap (worktree work):** when serving the game for `/game-test`/Playwright from a worktree, root the HTTP server at the WORKTREE's game directory using a path relative to the worktree root — NEVER an absolute path. An absolute path can resolve to the MAIN folder (`master`) and silently serve stale code without the branch's changes, so you verify against the wrong code and get false confidence. Confirm the served build has your changes before trusting any result.
-- **State-injection binding trap:** `citySize`, `cityReserveAttack`, `totalAttackPoints`, `cumulativeAttackPoints` are top-level `let` (NOT window-aliased); only `mastermindReserveAttack` is `var` on `window`. Inject test state via bare assignments (`citySize = 7`) to hit the lexical bindings — `window.citySize = 7` won't take.
-
-## CSS Grid Overflow Gotcha
-
-- Grid columns using `1fr` do not shrink below content size by default — use `minmax(0, 1fr)` and `min-width: 0` on children when text must truncate rather than push other columns off-screen
-
 ## onscreenConsole vs console Gotcha
 
 - **`onscreenConsole.log()`** is the game's **in-game message panel** that players see during play. Use it for every game event — card plays, villain moves, ability activations, Locations entering the city, anything the player needs to know about.
@@ -93,59 +77,19 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 
 ## Async Gotchas
 
-- When making a card ability function `async`, grep for ALL its call sites and add `await` there too — callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (this was missed for `heroSkrulled` callers in health check phase 2 and caught by code review).
-- `placeLocation()` in `script.js` is `async` — any expansion function calling it must use `await placeLocation(...)` and be declared `async` itself; missing `await` causes a race condition when the city is full (overflow popup fires and forgets before the player chooses)
+- Making an ability `async` requires `await` at ALL its call sites; `placeLocation()` is `async`. Detail → `docs/engine-gotchas.md` (Async patterns).
 
 ## Villain Card Cloning Gotcha
 
-- Villain cards are NOT cloned during ambush placement — `processRegularVillainCard()` does `city[sewersIndex] = villainCard` as a direct reference, so ambush mutations like `villainCard.capturedHero = [...]` persist on the city copy automatically.
-- The real copy happens at fight time: `createVillainCopy()` is a hand-rolled whitelist copier that defeatVillain() passes to fight-effect functions. **Any custom state added at ambush time must be added to the `createVillainCopy()` whitelist**, or the fight effect receives a stripped copy. `city[cityIndex]` is also nulled before the fight effect runs, so fight-effect functions cannot fall back to iterating `city[]` — they must read from the villainCopy parameter passed in.
-- Pattern for arrays: follow the `bystander: [...(villainCard.bystander || [])]` line in `createVillainCopy()`.
-- Caught by: Klaw capture (Revelations Phase 4 playtest 2026-04-12). `capturedHero` was set correctly on the city copy during ambush, but `createVillainCopy()` dropped it before `klawFight()` ran. Fixed 2026-04-14 by adding `capturedHero` to the whitelist and rewriting `klawFight(klaw)` to use its parameter.
+- Custom state added to a villain at ambush time must be whitelisted in `createVillainCopy()` or the fight effect gets a stripped copy. Detail → `docs/engine-gotchas.md` (Villain identity & escape state).
 
 ## transformScheme() Limitation
 
-- `transformScheme()` in `script.js` only swaps the scheme image/name/object — it does NOT resize the city. Schemes that change city size (Earthquake/Tsunami) need a separate `resizeCityForScheme(newSize)` call (implemented — uses the `destroyedSpaces[]` flag-array model; deeper resize notes in `docs/engine-gotchas.md` → City resize).
-- **Selector gotcha (caught 2026-05-28):** `#scheme-place` contains TWO `<img>` elements — the always-hidden BabyHope token (`<div id="scheme-token" style="display:none;">` in `index.html`) AND the visible scheme card image appended by `initGame()` with class `card-image`. Generic selectors like `#scheme-place img` match the BabyHope token FIRST (document order) and silently mutate an invisible element, leaving the visible scheme card unchanged. Always target the visible card explicitly: `#scheme-place img.card-image`. Same pattern likely exists in other game cells with hidden token elements — verify selector specificity whenever you're updating an in-game card image.
-- **`selectedScheme` global gotcha (caught 2026-05-28):** Most scheme-reading code in `script.js` uses a *local* pattern (`const selectedScheme = schemes.find(...)` from the setup-screen radio button), so the GLOBAL `selectedScheme` is NOT pre-populated by setup. `transformScheme()` (and any other code that wants to track "current scheme" across transforms) must lazy-init `window.selectedScheme` from the DOM radio on first use, then read/write the global on subsequent calls. Without the lazy init, the first call throws `ReferenceError: selectedScheme is not defined` and the upstream try/catch swallows it silently — the player sees nothing happen.
-- **Embedded-quote scheme-name gotcha:** transforming-scheme Side-B DB names can carry literal double-quotes (e.g. `"No More Mutants"`). To identify a scheme across a transform, match on a side-stable field (`scheme.endGame`), never `scheme.name`.
-
-## Browser Cache Discipline for Local Playwright Testing
-
-- Chromium aggressively caches `script.js` (and other static files) when served by Python `http.server`. The Service Worker is not active in local-serve mode (registration 404s because of GitHub Pages path-prefix mismatch), but the browser's HTTP cache alone is enough to serve stale code through normal `Ctrl+R` page refreshes.
-- **Hard refresh isn't always enough.** `Ctrl+Shift+R` typically works, but the most reliable cache flush in Chromium is: **F12 → right-click the toolbar refresh button → "Empty Cache and Hard Reload"**. Recommend this to Paul whenever a fix has just been applied and a real-game playtest is the verification step.
-- For Playwright sessions: if a code-on-disk fix isn't reflected in `<function>.toString()`, monkey-patch the new implementation into `window.<funcName>` via `browser_evaluate` to verify the LOGIC, then ask Paul to do a full cache flush when he tests interactively.
-- **Always check dev-tools console for errors when verifying a fix.** A function that fails silently upstream (caught by try/catch with `console.error`) produces no on-screen-console signal but leaves a clear trace in F12 → Console. Caught 2026-05-28 — transformScheme threw `ReferenceError` for weeks and nobody noticed because the wrapping try/catch only printed to dev tools.
-- **Stale-serve persists across a fresh port/process (caught 2026-06):** Chromium serves STALE `cardAbilities.js` AND `expansionRevelations.js` even on a new server port or a fresh browser process. Before trusting any `/game-test` result, confirm the served build carries your freshness markers and eval-install the real functions (`window.<fn>` monkey-patch) first. For interactive playtests use F12 → Empty Cache and Hard Reload (plain `Ctrl+Shift+R` may not suffice).
-
-## Implicit-Global Trap in Eval-Based Tests
-
-- Caught 2026-05-28 during Playwright diagnostic of `transformScheme()`. The function reads a non-existent global (`selectedScheme`) and throws in production. My diagnostic test assigned `selectedScheme = schemes.find(...)` inside `browser_evaluate` — in non-strict mode this creates an implicit global, masking the missing-initialization bug. Test passed; real game still crashed.
-- Rule: when testing functions that read globals, **wipe `window.<globalName>` before each test invocation** to force the cold-start path. Use `window.<name> = undefined; delete window.<name>;` to reset cleanly. Don't write `globalName = value` — that creates implicit globals in non-strict scripts and hides initialization bugs.
-- Also: when a test passes but the real game still fails, the test is wrong before the production code is. Run cold tests (no implicit setup) and check dev-tools console for errors after every invocation.
-
-## Game-Test / Playwright Harness Gotchas
-
-- **Game start needs a TRUSTED `pointerdown` on `#begin-game`** — the handler listens for `pointerdown`, not `click`. Use a real Playwright click (`page.locator('#begin-game').click()`), which generates it; a scripted `element.click()` fires only a click event and silently no-ops.
-- **Never batch a localhost `fetch`/curl with file ops in one tool call:** curl-to-localhost is permission-denied, and a denied call cancels its sibling tool calls in the same batch. Use Playwright `fetch` from the page instead.
-- **Python `http.server` is single-threaded** — bursts of webp/m4a requests throw `ERR_CONNECTION_REFUSED` and break card ART in screenshots (counts/DOM/logic unaffected). Use a threaded server for clean screenshots.
-- **Detect DOM state with STRUCTURAL selectors, not geometry** — broken images collapse layout, so bounding-box/`offsetParent` tests are unreliable. Use `#player-hand-element.children.length`, `.cell-label` text, `.card-container[data-city-index]`, `.popup-card`; for `position:fixed` popups (`#defeat-popup`) test `getComputedStyle(el).display`, not `offsetParent===null`.
-- **Drain the start popup QUEUE via real buttons before driving popup-heavy abilities** — `display:none` does NOT dequeue; later loops reusing the shared `.info-or-choice-popup` element collide with un-dequeued start popups (looks like an "orphaned Master Strike"). Close via `#intro-popup-close-button`, then `#info-or-choice-popup-confirm` until none remain.
-- **Live UI-refresh tests must go through the real play path** (`selectedCards=[idx]` → `confirmActions()`, or `endTurn()`) — abilities rely on the single trailing `updateGameBoard()`; an isolated ability call leaves the DOM stale and falsely reads as a refresh bug.
-- **The Playwright page can close mid-session with the server still up** — re-navigate + re-`resize(1920×1080)` to recover.
-
-## generateVillainDeck Type Gotcha
-
-- `generateVillainDeck()` overwrites every card's `type` to `"Villain"` — new card types (e.g. Location) need a preservation check: `const cardType = modifiedCard.type === "Location" ? "Location" : "Villain";` (already added on location-system branch)
+- `transformScheme()` swaps scheme image/name/object only — it does NOT resize the city, the global `selectedScheme` isn't pre-populated by setup, and `#scheme-place` has a hidden-token selector trap (`img.card-image`). Detail → `docs/engine-gotchas.md` (Scheme transform; City resize).
 
 ## Duplicate updateHighlights() Gotcha
 
-- `script.js` contains TWO `function updateHighlights()` declarations — the second overwrites the first in JS, but both must be kept in sync since either may become active after refactoring. When modifying city villain affordability checks or fight button logic, grep for all `updateHighlights` definitions and patch both.
-- **`usesRecruitToFight` has THREE affordability gates, not two:** the two `updateHighlights()` twins above PLUS `showAttackButton()` — the REAL city fight gate — each need the recruit-only branch (`totalRecruitPoints >= cost`, reserve excluded, attack-only). Missing it on `showAttackButton()` let Mister Hyde show a fight button on Attack and charge Recruit into the negative (caught 2026-06-11, Obs 17). Keep all THREE in sync for any `usesRecruitToFight` villain.
-
-## cardDatabase.js CRLF Gotcha
-
-- `cardDatabase.js` uses CRLF line endings — any Node script doing string replacement must normalize (`db.replace(/\r\n/g, '\n')`) or markers won't match. Restore CRLF on write.
+- `script.js` has TWO `function updateHighlights()` declarations — keep both in sync; `usesRecruitToFight` has THREE affordability gates (both twins + `showAttackButton()`). Detail → `docs/engine-gotchas.md` (Twin functions).
 
 ## cardDatabase.js Class/Color Reference
 
@@ -154,18 +98,9 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 - Color mapping: Strength=Green, Instinct=Yellow, Covert=Red, Tech=Black, Range=Blue
 - Always verify against the DB before bulk inserts — inventory files use different terminology
 
-## Villain Mechanic Flags
+## Villain Attack / Mechanic Flags
 
-- **`usesRecruitToFight: true`** — add to villain DB entry for recruit-only fight cost (e.g. Mister Hyde); all THREE affordability gates read this flag (see Duplicate updateHighlights() Gotcha); missing it silently disables the entire mechanic with no error
-
-## Villain Attack Modifier Pipeline
-
-- **Modified villain/henchman attack values live in `attackFromMastermind` / `attackFromScheme` / `attackFromOwnEffects` / `attackFromHeroEffects` / `attackFromShards` fields**, NOT in `card.attack`. The display overlay and fight-cost calculation (`recalculateVillainAttack()`) both read only these modifier fields — writing to `card.attack` directly is invisible because the base number comes from the printed card art.
-- **Canonical precedent:** the `mastermind.alwaysLeadsBonus` check inside `updateVillainAttackValues()`. Add new mastermind/scheme/own-effect villain bonuses there following that pattern.
-- **Duplicate function pattern (like `updateHighlights`):** `updateVillainAttackValues()` (city) and `updateHQVillainAttackValues()` (HQ) both need identical modifier logic — patch both in parallel.
-- **The overlay is conditional:** `if (totalAttackModifiers !== 0)` in the overlay-render code — if nothing sets a modifier field, no overlay is drawn and the player sees only the card art's printed number.
-- Caught by: Fix 1C Part B failed the 2026-04-13 Revelations playtest because it mutated `card.attack` at setup time instead of using this pipeline; the fight logic worked but the card displayed its base art value.
-- **Off-pipeline `fightEffect` dispatch:** any non-city-fight dispatch of a villain `fightEffect` (e.g. a deck-revealed villain fought in place) must save/null/restore the global `currentVillainLocation` — deck-revealed villains have no city position, and position-reading effects (Lizard, Whirlwind) misfire on stale state. Henchman `fightEffect`s don't read it (F-G3 confirmed clean).
+- Modified villain attack lives in `attackFrom*` fields, NOT `card.attack` (writing `card.attack` is invisible — base comes from card art); `updateVillainAttackValues()` + `updateHQVillainAttackValues()` are twins. New DB flags like `usesRecruitToFight: true` enable recruit-only fight cost. Detail → `docs/engine-gotchas.md` (Attack / fight-cost pipeline; Twin functions).
 
 ## Expansion Effect Function Patterns
 
@@ -178,10 +113,6 @@ When removing an HTML element, always grep `script.js` for matching `getElementB
 - Retrieve from discard (player chooses): same `card-choice-popup` pattern, moving to hand instead of KO pile
 - Evil wins: add `case "conditionName":` (matches the scheme's `endGame` value) to the `switch (condition)` over `endGameConditions` in `script.js` — the scheme end-game / evil-wins switch inside `updateGameBoard()`. **Twin to keep in sync:** if the condition needs a live on-screen counter, also add a `case "Scheme Name":` (keyed on scheme `name`, NOT `endGame`) to the switch in `updateEvilWinsTracker()`. (There is no `checkEvilWins`/`updateEvilWinsText` function despite stale code comments naming them.)
 
-## City Card Click Handler Pattern
-
-- `popupMinimized` is `false` during normal gameplay — villain/Location click handlers must use `if (!popupMinimized) { handle click }` to allow clicks during play. The guard looks inverted but matches how the variable is named. Do NOT use `if (!popupMinimized) return;` — that blocks clicks during normal play.
-
 ## Card Reading & Inventory Rules
 
 Detailed rules for reading card data from images, DB authority hierarchy, inventory template format, quantity gotchas, and expansion-specific new card types (X-Men, S.H.I.E.L.D.) — see `docs/card-inventory/card-reading-rules.md`.
@@ -190,35 +121,13 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 
 **Coordinators:** route worker sessions and subagents to the inventory files as the authoritative source for any card-data question. Never point them at card images for card numbers or effects. *(Why: an image-read subagent misread a Mastermind Tactic's 6 VP as a recruit cost and reported VP 0 — the inventory had it right.)*
 
-## Attack-Granting Function Pattern
+## Attack / Recruit-Granting Function Pattern
 
-- Every function that grants attack must update BOTH `totalAttackPoints` (current turn display) AND `cumulativeAttackPoints` (Final Showdown tracking) — missing the second one silently breaks Final Showdown
-- Check every `totalAttackPoints +=` line has a matching `cumulativeAttackPoints +=`
-- Attack-granting functions must also call `updateGameBoard()` after modifying points — missing this means the on-screen total won't refresh until the next natural update (caught in Vengeance is Rocket 2026-03-31)
-
-## Recruit-Granting Function Pattern
-
-- The recruit twin of the Attack-Granting pattern: every function that grants recruit must update BOTH `totalRecruitPoints` (current-turn display) AND `cumulativeRecruitPoints` (Final Showdown tracking — recruit feeds the combined Final Showdown total). Both reset in `endTurn`.
-- Check every `totalRecruitPoints +=` line has a matching `cumulativeRecruitPoints +=`, and call `updateGameBoard()` after modifying points.
-
-## Node.js vm Gotcha (cardDatabase.js scripts)
-
-- `const` declarations inside `vm.runInContext()` are block-scoped to the script and NOT accessible on the context object — `context.heroes` will be `undefined`
-- Fix: before running, replace the declaration: `code = code.replace(/\bconst heroes\s*=/, 'heroes =');`
-- Apply the same pattern for any other top-level `const` arrays you need from the DB
-- `cardDatabase.js` assigns `window.henchmen = henchmen` etc. at the end — stub `window` in the vm context: `const context = { window: {} };` or the script crashes with "window is not defined"
-- Reusable extraction script: `scripts/extract-hero-data.js <FolderName>` — pass the image folder name (e.g. `"Dark City"`, `"GotG"`, `"PtTR"`) to extract hero data for any expansion
-
-## Randomize Button Event Gotcha
-
-- `randomizeMastermind()`, `randomizeScheme()`, etc. set radio `.checked = true` programmatically — this does NOT fire DOM `change` events. Any new logic added via `addEventListener('change', ...)` on setup screen forms must ALSO be called directly inside the corresponding `randomize*()` function, or it won't trigger when users click Randomize.
+- Every function granting attack/recruit updates BOTH the current-turn total (`totalAttackPoints`/`totalRecruitPoints`) AND the Final Showdown cumulative (`cumulativeAttackPoints`/`cumulativeRecruitPoints`), then calls `updateGameBoard()`. Missing the cumulative silently breaks Final Showdown. Detail → `docs/engine-gotchas.md` (Attack / fight-cost pipeline).
 
 ## Mastermind Code Gotchas
 
-- Mastermind names in `cardDatabase.js` must be matched exactly — `"The Supreme Intelligence of the Kree"` not `"Supreme Intelligence"`. Wrong names silently return `undefined` from `masterminds.find()`.
-- `showConfirmChoicesPopup` receives a stub `{ name: selectedMastermind }` from its caller — not a full mastermind object. Code inside needing `mastermind.alwaysLeads` etc. must call `masterminds.find(m => m.name === mastermind.name)` internally.
-- `getSelectedMastermind()` already exists in `script.js` — use it instead of manual DOM + `masterminds.find()` lookups in setup screen functions.
-- **Epic masterminds are a runtime object-spread overlay, not a separate DB entry.** The mastermind getter returns `{ ...baseMastermind, ...baseMastermind.epic }` when the Epic checkbox is checked — runtime `mastermind.name` becomes `"Epic Mandarin"` (etc.) and all overlaid fields (`attack`, `masterStrike`, `image`) take their epic values. Detect via `mastermind.name === "Epic X"`.
+- Match mastermind names to `cardDatabase.js` exactly (wrong name → `undefined` from `masterminds.find()`); use `getSelectedMastermind()`; Epic masterminds are a runtime `{...base, ...base.epic}` overlay. Detail → `docs/engine-gotchas.md` (Mastermind).
 
 ## Out of Scope
 
