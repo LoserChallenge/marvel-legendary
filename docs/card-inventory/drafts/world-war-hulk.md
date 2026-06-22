@@ -10,10 +10,10 @@
 
 # World War Hulk — Card Inventory
 
-**Primary source**: Card images in `expansions/world-war-hulk/` (effect text + card titles) — card art is authoritative for effect text and titles.
-**Cross-check**: `expansions/world-war-hulk/world-war-hulk-reference.md` (BGG-derived; authoritative for structured fields). Rules PDF: `expansions/world-war-hulk/Legendary_Rules-World_War_Hulk.pdf`.
+**Primary source (reference-first)**: `expansions/world-war-hulk/world-war-hulk-reference.md` (BGG-derived) — foremost authority for EVERY field (names, counts, costs, values, class, team, effect text). Card images in `expansions/world-war-hulk/` are a verification/backup source only. Rules PDF: `expansions/world-war-hulk/Legendary_Rules-World_War_Hulk.pdf`.
+*(Note: Pass 1 was built under the OLD image-primary rule; Pass 2 reconciled all card-vs-reference conflicts reference-first — see "Pass 2 Verification Results" at the bottom.)*
 **Pass 1 date**: 2026-06-21
-**Pass 2 status**: Pending — run `/inventory-verifier` in a fresh session
+**Pass 2 status**: ✅ Complete 2026-06-21 (reference-first; 0 ❌, all 4 carry-over flags resolved, 3 minor items for physical Pass 3 — see bottom)
 
 > **Set composition (per reference):** 400 cards — 15 Transforming Heroes (14 Hero cards each + transform cards), 6 Transforming Masterminds (double-sided, 5 physical cards each), 7 Villain Groups (8 cards each), 3 Henchmen Groups (10 each), 8 Schemes, 4 special Bystanders. Teams: Avengers, S.H.I.E.L.D., Warbound, Crime Syndicate, Champions (and a "Brotherhood" referenced elsewhere; the Void Unchained / A-Bomb are unaffiliated).
 > **Title verification (handoff concern):** all 78 hero image titles were confirmed to match their filenames — the staging deductions were correct. The `UltraMassiveArmor` "promo" worry is cleared (it is the genuine transform card).
@@ -1140,3 +1140,24 @@ VP: 1
 16. **M.O.D.O.K. base passive** globally changes Outwit to require 4 different costs (cross-card interaction).
 17. **"Brotherhood" team** is referenced in some prior-set contexts; not used on WWH cards read here. Class terminology "Range" not "Ranged" throughout.
 18. **City spaces** referenced: Sewers, Rooftops, Bridge, Bank, HQ — confirm engine city-space naming during analyze-expansion.
+
+---
+
+## Pass 2 Verification Results (2026-06-21, reference-first)
+
+161 card images / ~400 cards verified by 12 independent subagents (Heroes 78, Villains 36, Masterminds 36, Schemes 8, Henchmen 3, Bystanders 4). **0 ❌ errors. All copy-count totals check (each villain group = 8, each henchmen group = 10, hero rarity 5/5/3/1 + transform = source count).**
+
+**Carry-over flags — RESOLVED:**
+- **Korg "Lord of Granite" class → ✅ Covert confirmed.** Reference alt-text says Covert; card border is red (= Covert). Flag cleared — the draft value (Covert) is correct.
+- **Skaar "Anger Management" trigger → ✅ [STRENGTH] confirmed.** Card art shows an unambiguous green Strength fist (the Pass-1 "read gray/Tech" was a misread). Flag cleared — draft value [STRENGTH] is correct.
+- **Cytoplasm Spikes henchman name → ✅ confirmed** "Cytoplasm Spikes" (card art); reference Main-list "Cytoplasmic" is the typo. Flag cleared.
+- Card-wins typos confirmed (draft already correct, no change): "Tectonic" (Hulkbuster Common B), "Cross-Dimensional" (Fall of the Hulks), Primus Vand "adjacent to him", Ironclad "or KOs", Battle of Wits "your new hand".
+
+**⚠️ Items for physical Pass 3 (3 total):**
+1. **Korg "Forged by Fire" Superpower trigger icon count.** Reference shows TWO `[STRENGTH][STRENGTH]:`; Pass-1 draft (effect line) records ONE. Reference-first resolves to **two** (card art is ambiguous — a second adjacent icon can't be ruled out). *Pass 3: count the inline icons on the physical card; if two, change the draft's "Forged by Fire" Superpower from `[STRENGTH]` to `[STRENGTH][STRENGTH]`.*
+2. **Infini-Tendrils (Aspects of the Void) Fight value.** Card art unambiguously reads **4+** (clear "4"); reference says 6+ (typo). Draft's 4+ stands. *Pass 3: confirm the physical card's lower-right Fight number is 4.*
+3. **Rick Jones "The Destiny Force" base Attack notation.** Draft records `0+`, but it's an effect-only card with no printed attack value (it draws cards). Cleaner as `0` or `—`. *Pass 3: confirm no printed attack icon, then adjust notation.* (Notation only — no play impact.)
+
+**Undefined-here keywords (NOT Pass-3 inventory items — for `/analyze-expansion` + rules PDF):** Feast, Trap!, and the Void/Illuminati variants of Cross-Dimensional Rampage are not defined in this set's reference (carry from prior sets). Captured verbatim everywhere; do not flag their absence.
+
+**Structural confirmations (correct, not errors):** 6 transforming masterminds have NO Epic variants (no `_Epic` files — correct); transforming heroes keep transform cards in a separate Transformation Pile (hero image counts exceed 4); Sentry "Vast Unstable Power" is a hero→Mastermind transform; Rick Jones is dual-team (S.H.I.E.L.D. base / Avengers transforms) with A-Bomb correctly having no team; The Void Unchained correctly Unaffiliated; mastermind tactics inherit the main Mastermind's VP 6.
