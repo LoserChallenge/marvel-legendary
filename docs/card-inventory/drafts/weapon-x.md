@@ -14,7 +14,7 @@
 **Primary source**: `expansions/weapon-x/weapon-x-reference.md` (BGG community wiki) — foremost authority for all fields (reference-first protocol).
 **Cross-check**: Card images in `expansions/weapon-x/` (verification/backup).
 **Pass 1 date**: 2026-04-05
-**Pass 2 status**: ✅ Complete 2026-06-21 — verified clean against the reference. Heroes (16), Masterminds (18), Schemes (3), Enraging Wounds (10) all clean, zero corrections. Two open Pass-3 items, both villains: (1) per-card copy counts — reference says "(? copies)", so the per-card split is unconfirmed. Rulesheet checked 2026-06-21: confirms "2 Villain Groups of 8 cards each" but gives no per-card breakdown. Group totals correct (Berserkers 8, Weapon Plus 8); exact per-card split needs a physical-card count. (2) Feral has no villain-side VP — confirmed by design (dual card → becomes a Hero on defeat), not missing data. Pass-3 spot-check 2026-06-22 (8 cards across all types incl. Three Brains, Metabolic Overdrive, Violent Conditioning, Wild Child, Typhoid Mary, Epic Romulus, Wipe Heroes' Memories, Last Breath) confirmed all clean — Wild Child's "Fail:" line is correctly recorded.
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified clean against the reference. Heroes (16), Masterminds (18), Schemes (3), Enraging Wounds (10) all clean, zero corrections. Both villain open items RESOLVED by physical count 2026-06-22: (1) per-card copy counts now set from the physical cards — Berserkers: Cyber 1 / Feral 3 / Thornn 2 / Wild Child 2; Weapon Plus: Daken 1 / Huntsman 1 / Nuke 2 / Skinless Man 1 / Typhoid Mary 2 / Ultimaton 1 (each group sums to 8). Online search (web-researcher 2026-06-22) had confirmed the counts are unpublished anywhere — physical count was the only path. (2) Feral villain-side VP = none printed — confirmed (dual card → gain as a Hero on defeat); the earlier image-read guess of "3" was wrong. Pass-3 spot-check 2026-06-22 (8 cards across all types incl. Three Brains, Metabolic Overdrive, Violent Conditioning, Wild Child, Typhoid Mary, Epic Romulus, Wipe Heroes' Memories, Last Breath) confirmed all clean — Wild Child's "Fail:" line is correctly recorded.
 
 ---
 
@@ -55,7 +55,7 @@ Standard distribution per hero: 1 Rare (1 copy), 1 Uncommon (3 copies), 2 Common
 | Weapon X (Wolverine) | Violent Conditioning | Uncommon | 3 | 3 | Marvel Knights | Instinct | 2+ | 0 |
 | Weapon X (Wolverine) | Escape the Weapon X Lab | Rare | 1 | 6 | Marvel Knights | Instinct | 3+ | 0 |
 
-> ⚠️ Violent Conditioning (Weapon X Wolverine Uncommon): cost 3 is lower than both Commons (cost 4 and 5) — atypical ordering; verify against physical card.
+> ✅ Violent Conditioning (Weapon X Wolverine Uncommon): cost 3 confirmed (Pass-3 spot-check) — genuinely lower than both Commons (cost 4 and 5); atypical ordering but correct.
 
 ---
 
@@ -63,31 +63,31 @@ Standard distribution per hero: 1 Rare (1 copy), 1 Uncommon (3 copies), 2 Common
 
 Both groups are **8 cards each** (verified against reference total: 100 cards = 56 hero + 16 villain + 15 mastermind + 10 wounds + 3 schemes).
 
-> ⚠️ **Copy counts unknown**: Reference lists "?" for all villain copy counts. Estimates below are based on standard distribution patterns. All copy counts need physical card verification.
+> ✅ **Copy counts confirmed (physical count 2026-06-22):** the reference listed "?" for every villain copy count; the values above are now from a physical card count (each group sums to 8). A web search (web-researcher 2026-06-22) confirmed the per-card split is unpublished anywhere — the physical count was the only source. Berserkers: Cyber 1 / Feral 3 / Thornn 2 / Wild Child 2. Weapon Plus: Daken 1 / Huntsman 1 / Nuke 2 / Skinless Man 1 / Typhoid Mary 2 / Ultimaton 1.
 
 **Berserkers** (8 cards)
 
 | Group | Card Name | Count | Fight Value | VP |
 |---|---|---|---|---|
-| Berserkers | Cyber | 2⚠️ | 5+ | 5 |
-| Berserkers | Feral | 2⚠️ | 3+ | ⚠️ |
-| Berserkers | Thornn | 2⚠️ | 3+ | 2 |
-| Berserkers | Wild Child | 2⚠️ | 3+ | 4 |
+| Berserkers | Cyber | 1 | 5+ | 5 |
+| Berserkers | Feral | 3 | 3+ | — |
+| Berserkers | Thornn | 2 | 3+ | 2 |
+| Berserkers | Wild Child | 2 | 3+ | 4 |
 
 > All Berserkers have one or more Berserk keywords. Fight values have "+" to reflect the Berserk bonus enemies gain when you try to fight them.
-> ⚠️ Feral VP: Reference does not list a VP value. Feral is a dual-nature card (Villain → Hero when defeated). Card image agent reading suggested VP 3, but this needs physical verification.
+> ✅ Feral VP confirmed (physical Pass 3): **none printed** — Feral is a dual-nature card (Villain → gain as a Hero when defeated), so there is no villain-side VP. (The earlier image-read guess of "3" was wrong — it was a misread.)
 > Feral hero side: X-Force team, Instinct class, 2+ Attack, SUPERPOWER: [INSTINCT]: Berserk, Berserk.
 
 **Weapon Plus** (8 cards)
 
 | Group | Card Name | Count | Fight Value | VP |
 |---|---|---|---|---|
-| Weapon Plus | Daken | 1⚠️ | 3+ | 4 |
-| Weapon Plus | Huntsman (Weapon XII) | 2⚠️ | 2+ | 2 |
-| Weapon Plus | Nuke (Weapon VII) | 2⚠️ | 2+ | 2 |
-| Weapon Plus | Skinless Man (Weapon III) | 1⚠️ | 3+ | 3 |
-| Weapon Plus | Typhoid Mary (Weapon IX) | 1⚠️ | 3+ | 3 |
-| Weapon Plus | Ultimaton (Weapon XV) | 1⚠️ | 4+ | 6 |
+| Weapon Plus | Daken | 1 | 3+ | 4 |
+| Weapon Plus | Huntsman (Weapon XII) | 1 | 2+ | 2 |
+| Weapon Plus | Nuke (Weapon VII) | 2 | 2+ | 2 |
+| Weapon Plus | Skinless Man (Weapon III) | 1 | 3+ | 3 |
+| Weapon Plus | Typhoid Mary (Weapon IX) | 2 | 3+ | 3 |
+| Weapon Plus | Ultimaton (Weapon XV) | 1 | 4+ | 6 |
 
 > All Weapon Plus Villains have Weapon X Sequence (Ultimaton has Doubled Weapon X Sequence). Fight values have "+" to reflect the Weapon X Sequence bonus. Daken also has Berserk and a Fail effect.
 
@@ -129,7 +129,7 @@ Sabretooth Tactics:
 |---|---|---|
 | Condition Logan into Weapon X | 8 | — |
 | Go After Heroes' Loved Ones | 8/10/11⚠️ | — |
-| Wipe Heroes' Memories | Players + 4⚠️ | — |
+| Wipe Heroes' Memories | Players + 4 | — |
 
 > "Go After Heroes' Loved Ones": 1 player: 8 Twists, 2-4 players: 10 Twists, 5 players: 11 Twists.
 > "Wipe Heroes' Memories": Twists = number of players + 4 (1p: 5, 2p: 6, 3p: 7, 4p: 8, 5p: 9).
@@ -252,29 +252,29 @@ Sabretooth Tactics:
 
 > All Berserkers have Berserk — when you try to fight them, you discard from your deck and they gain +Attack. If the boosted Attack exceeds your total, you fail the fight, lose all Attack, and can't fight again this turn. Fail effects trigger on a failed attempt.
 
-**Cyber** (×2⚠️)
+**Cyber** (×1)
 Berserk, Berserk
 Fight: KO one of your Heroes. If any of the cards you Berserked were [INSTINCT] or [TECH], shuffle Cyber into the Villain Deck, then play another card from the Villain Deck.
 Fail: Each player discards a [INSTINCT] or [TECH] Hero or gains a Wound.
 Escape: Do the Fail effect.
 Attack: 5+ | VP: 5
 
-**Feral** (×2⚠️)
+**Feral** (×3)
 Berserk, Berserk
 Fight: Choose a player to gain this as a Hero.
 Fail: KO a non-grey Hero from your discard pile.
 Escape: Each player discards a non-grey Hero.
-Attack: 3+ | VP: ⚠️ (reference does not list; dual-nature card — becomes Hero on defeat)
+Attack: 3+ | VP: — (none printed — dual-nature card; gain as a Hero on defeat. Confirmed physical Pass 3.)
 > Feral hero side: X-Force, Instinct, 2+ Attack. SUPERPOWER: [INSTINCT]: Berserk, Berserk.
 
-**Thornn** (×2⚠️)
+**Thornn** (×2)
 Berserk
 Ambush: Choose a card named "Feral" from any player's discard pile to enter the city as a Villain.
 Fight: Draw the card you Berserked.
 Fail: When you draw a new hand at the end of this turn, discard a card.
 Attack: 3+ | VP: 2
 
-**Wild Child** (×2⚠️)
+**Wild Child** (×2)
 Berserk, Berserk, Berserk
 Fight: KO one of the cards you Berserked this way that costs 0.
 Fail: KO a card discarded by Wild Child's Berserking that costs 1 or more. (You can't KO cards you shuffled into your deck during the Berserking.)
@@ -286,20 +286,20 @@ Attack: 3+ | VP: 4
 
 > All Weapon Plus Villains have Weapon X Sequence — they gain +Attack equal to the longest consecutive cost sequence among HQ cards. Daken also has Berserk.
 
-**Daken** (×1⚠️)
+**Daken** (×1)
 Weapon X Sequence
 Berserk
 Fight: KO one of your Heroes.
 Fail: You gain a Wound.
 Attack: 3+ | VP: 4
 
-**Huntsman (Weapon XII)** (×2⚠️)
+**Huntsman (Weapon XII)** (×1)
 Weapon X Sequence
 Ambush: Reveal the top 3 cards of the Hero Deck. Huntsman captures each that costs 4 or less. Put the rest on the bottom of the Hero Deck.
 Fight: If Huntsman has any captured Heroes, choose a player to gain one of them and return Huntsman to his city space with the rest of them. (Ignore his Ambush.)
 Attack: 2+ | VP: 2
 
-**Nuke (Weapon VII)** (×2⚠️)
+**Nuke (Weapon VII)** (×2)
 Weapon X Sequence
 Fight: Reveal the top card of the Hero Deck as "Nuke's Adrenaline Pill":
   [COVERT]: "Rage" — Each other player gains a Wound.
@@ -308,12 +308,12 @@ Fight: Reveal the top card of the Hero Deck as "Nuke's Adrenaline Pill":
 Escape: Each player gains a Wound.
 Attack: 2+ | VP: 2
 
-**Skinless Man (Weapon III)** (×1⚠️)
+**Skinless Man (Weapon III)** (×1)
 Weapon X Sequence
 Ambush: Skinless Man captures a Bystander of your choice from your Victory Pile. If you don't have one, gain a Wound and he captures one from the Bystander Deck.
 Attack: 3+ | VP: 3
 
-**Typhoid Mary (Weapon IX)** (×1⚠️)
+**Typhoid Mary (Weapon IX)** (×2)
 Weapon X Sequence
 Fight: Reveal the top card of the Hero Deck as her "Personality":
   [STRENGTH]: "Typhoid" — Put a card from your discard pile on top of the deck of the player to your left.
@@ -323,7 +323,7 @@ Fight: Reveal the top card of the Hero Deck as her "Personality":
   [RANGED]: "Walker" — Put a card you played this turn on top of your deck.
 Attack: 3+ | VP: 3
 
-**Ultimaton (Weapon XV)** (×1⚠️)
+**Ultimaton (Weapon XV)** (×1)
 Doubled Weapon X Sequence
 Ambush: Each player discards a non-grey Hero.
 Fight: Each player KOs one of their grey Heroes.
