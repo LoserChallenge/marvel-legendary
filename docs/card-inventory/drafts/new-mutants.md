@@ -13,7 +13,7 @@
 **Primary source**: Card images in `expansions/new-mutants/` (effect text + card titles) — the actual card art is authoritative for effect text and titles.
 **Cross-check**: `expansions/new-mutants/new-mutants-reference.md` (BGG-derived; authoritative for structured fields — copy counts, costs, fight values, VP, class/team). Rules PDF also present: `expansions/new-mutants/2020_Marvel_Legendary_NewMutants_Rules_compressed.pdf`.
 **Pass 1 date**: 2026-06-21
-**Pass 2 status**: Pending — run `/inventory-verifier` in a fresh session
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 4 card types (Heroes 20, Villains 11, Masterminds 12, Schemes 4) clean. Both villain groups total 8 (reference specifies copy counts). One open Pass-3 item: Karma "Control Like a Puppet" trigger — card art shows Covert, reference says "X-Men" (plain text → likely a reference typo); draft keeps [COVERT] (image wins), confirm against physical card. Draft already fixed several reference text typos (Contempt for Weaklings, "that group", "player", "and the Streets").
 
 > **Set composition (per reference):** 100 cards — 5 Heroes (14 cards each, all X-Men team), 2 Masterminds (5 cards each), 2 Villain Groups (8 cards each), 4 Schemes. No henchmen, bystanders, or sidekicks.
 
@@ -221,7 +221,7 @@ Emma Frost, The White Queen Tactics:
 
 **Control Like a Puppet** (Rare)
 - SPECIAL ABILITY: 5+ Attack.
-- SUPERPOWER: [COVERT] ⚠️: Choose a Villain in the city. You get **+**Attack equal to its VP, usable only against other Villains or the Mastermind. *(⚠️ card art shows the Covert rotation icon; the BGG reference lists this trigger as "X-Men". Image-primary → recorded [COVERT]; confirm in Pass 2.)*
+- SUPERPOWER: [COVERT] ⚠️: Choose a Villain in the city. You get **+**Attack equal to its VP, usable only against other Villains or the Mastermind. *(⚠️ Pass 2: card art shows the Covert rotation icon — pixel-identical to Sow Rivalry's confirmed-Covert trigger — while the reference says "X-Men" in PLAIN TEXT, not its usual alt-text image, suggesting a reference transcription slip. Image wins here; keep [COVERT]. Confirm against physical card in Pass 3.)*
 
 ---
 
@@ -392,7 +392,7 @@ Evil Wins: When Evil has 4 "runs" *(Villains in the Escape Pile)* per player.
 
 ## Pass 1 Flags Summary (for Pass 2 / Pass 3)
 
-1. **⚠️ Karma — Control Like a Puppet superpower trigger:** card art shows the **Covert** rotation icon; BGG reference text says "X-Men". Recorded [COVERT] (image-primary). Confirm against physical card in Pass 2/3 — this changes which class enables the bonus.
+1. **⚠️ Karma — Control Like a Puppet superpower trigger:** card art shows the **Covert** rotation icon (pixel-identical to Sow Rivalry's confirmed-Covert trigger); BGG reference says "X-Men" but in plain text rather than its usual alt-text image — a likely transcription slip. **Pass 2 conclusion: image wins, keep [COVERT].** Still confirm against the physical card in Pass 3 — this changes which class enables the bonus.
 2. **Warlock Rare title (RESOLVED, no action):** filename `XanticShapeshifter` is wrong — printed title is **Nanite Shapeshifter** (matches reference).
 3. **Emma Frost tactic title (RESOLVED, no action):** printed title is **Contempt for Weaklings** (filename agrees; reference's "Contempt for Weakness" was wrong).
 4. **Warlock dual base values:** "Analyze Planetary Rotation" and "Nanite Shapeshifter" print BOTH a `0+` Recruit and `0+` Attack base — confirm the DB models a dual-resource base.
