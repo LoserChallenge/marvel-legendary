@@ -14,7 +14,7 @@
 **Primary source**: `expansions/weapon-x/weapon-x-reference.md` (BGG community wiki) — foremost authority for all fields (reference-first protocol).
 **Cross-check**: Card images in `expansions/weapon-x/` (verification/backup).
 **Pass 1 date**: 2026-04-05
-**Pass 2 status**: ✅ Complete 2026-06-21 — verified clean against the reference. Heroes (16), Masterminds (18), Schemes (3), Enraging Wounds (10) all clean, zero corrections. Two open Pass-3 items, both villains: (1) per-card copy counts — reference says "(? copies)", so the per-card split is unconfirmed (totals are correct: Berserkers 8, Weapon Plus 8); needs physical-card/rulesheet count. (2) Feral has no villain-side VP — confirmed by design (dual card → becomes a Hero on defeat), not missing data.
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified clean against the reference. Heroes (16), Masterminds (18), Schemes (3), Enraging Wounds (10) all clean, zero corrections. Two open Pass-3 items, both villains: (1) per-card copy counts — reference says "(? copies)", so the per-card split is unconfirmed. Rulesheet checked 2026-06-21: confirms "2 Villain Groups of 8 cards each" but gives no per-card breakdown. Group totals correct (Berserkers 8, Weapon Plus 8); exact per-card split needs a physical-card count. (2) Feral has no villain-side VP — confirmed by design (dual card → becomes a Hero on defeat), not missing data.
 
 ---
 

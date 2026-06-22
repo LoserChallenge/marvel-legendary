@@ -13,7 +13,7 @@
 **Primary source**: Card images in `expansions/messiah-complex/` (effect text + card titles) — card art is authoritative for effect text and titles.
 **Cross-check**: `expansions/messiah-complex/messiah-complex-reference.md` (BGG-derived; authoritative for structured fields). Rules PDF: `expansions/messiah-complex/Lgd_MessiahComplex_Rulesheet_Compressed.pdf`.
 **Pass 1 date**: 2026-06-21
-**Pass 2 status**: Pending — run `/inventory-verifier` in a fresh session
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 7 card types (Heroes 32, Villains 20, Masterminds 18, Schemes 8 sides, Henchmen 2, Bystanders 3, Sidekicks 7) clean. One correction: "Me, Myself, and I" trigger X-Factor → Instinct (see effects). 4/4/4/2 clone-hero distribution confirmed correct (Multiple Man, Shatterstar, Stepford Cuckoos, M). Open Pass-3 items (all pre-flagged, mostly reference typos the draft already corrected via card art): Silver Samurai Fight line absent from reference (card wins); "Reveal Evil Clones" Twist clone-source "HQ or Hero Deck" (card) vs "Hero Deck" (reference) — card wins; Epic Bastion passive "Sentinel enemies" (card) vs "Masterminds" (reference) — card wins, real gameplay diff, confirm in Pass 3; Clan Yashida asterisk-Attack meaning (rules-PDF question); Boom-Boom 0+ / Rockslide+Prodigy 0-vs-— base-value DB convention.
 
 > **Set composition (per reference):** 200 cards — 8 Heroes (14 cards each), 3 Masterminds (5 cards each), 4 Villain Groups (8 cards each), 2 Henchmen Groups (10 cards each), 4 double-sided Veiled/Unveiled Schemes (8 sides), 7 special Sidekicks (2 each), 3 special Bystanders (1 each). Teams used: X-Men, X-Force, X-Factor (and villains reference "Brotherhood").
 
@@ -215,7 +215,7 @@ Exodus Tactics:
 
 **Me, Myself, and I** (×4)
 - SPECIAL ABILITY: 2 Recruit. Tactical Formation 444: Draw a card.
-- SUPERPOWER: [X-FACTOR] ⚠️: Clone *(⚠️ image read = X-Factor team icon; BGG reference says Instinct — inline-icon conflict, verify Pass 2)*
+- SUPERPOWER: [INSTINCT]: Clone *(✅ Pass 2 resolved: trigger is Instinct per the reference; the prior "X-Factor" read was the corner team icon, not the inline trigger. Inline-icon — worth a physical glance in Pass 3.)*
 
 **Finding Myself** (×4)
 - SPECIAL ABILITY: 1 Attack. Investigate for a card that has the same card name as any of your cards. (You don't need to choose a specific card name before you Investigate.)
@@ -729,7 +729,7 @@ Cost: 2
 2. Reference typos corrected from card art throughout (Pretty Boy "get", Stryker "one Sidekick", Epic LDS "their deck", Epic Exodus "plus"/"Immortality", Stretching Claws "your Heroes").
 
 **Open ⚠️ — need spot-check:**
-3. **Multiple Man "Me, Myself, and I" clone trigger:** image read = **X-Factor** team icon; BGG reference says **Instinct**. Recorded X-Factor (image-primary) but this is an inline-icon conflict — Pass 2 must confirm (the other clone-heroes' triggers matched reference; this is the lone conflict). Also re-check Gene-Spliced Creation's two-icon trigger [RANGE],[INSTINCT].
+3. **Multiple Man "Me, Myself, and I" clone trigger:** ✅ RESOLVED (Pass 2). Trigger is **Instinct** per the reference; the earlier "X-Factor" was the corner team icon misread, not the inline trigger. Draft corrected to [INSTINCT]: Clone. (Gene-Spliced Creation's two-icon trigger [RANGE],[INSTINCT] also confirmed.) Worth a physical glance in Pass 3 as an inline-icon.
 4. **Scarlet Samurai VP** — NO VP printed on the villain side of the card OR in the reference. Likely a no-VP dual Villain/Hero card, but confirm against physical card / rules.
 5. **Silver Samurai Fight line** — card prints "Fight: KO a card from your discard pile"; reference OMITS it. Image wins; confirm.
 6. **Epic Bastion passive** — card prints "All Sentinel **enemies**"; Normal Bastion + reference say "**Masterminds**." Meaningful gameplay difference (enemies = all Sentinel villains/henchmen/masterminds). Resolve against rules PDF.
