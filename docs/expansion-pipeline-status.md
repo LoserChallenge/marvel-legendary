@@ -42,7 +42,7 @@ Last updated: 2026-06-21 (Shadows of Nightmare FINALIZED through Pass 3. Weapon 
 | shadows-of-nightmare | A | ✅ 2026-04-05 | ✅ 2026-06-21 | ✅ 2026-06-21 (clean) | ✅ 2026-06-21 | ✅ 2026-06-21 | — | — |
 | shield | A | ✅ 2026-04-04 | ✅ 2026-04-05 | — | — | — | — | — |
 | new-mutants | A | ✅ 2026-04-05 | ✅ 2026-06-21 | — | — | — | — | — |
-| weapon-x | A | ✅ 2026-04-05 | ✅ 2026-04-05 | — | — | — | — | — |
+| weapon-x | A | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ 2026-06-21 (clean; 2 villain Pass-3 items) | — | — | — | — |
 | world-war-hulk | A | ✅ 2026-04-05 | ✅ 2026-06-21 | — | — | — | — | — |
 
 ---
