@@ -13,7 +13,7 @@
 **Primary source**: Card images in `expansions/shadows-of-nightmare/` (effect text + card titles) — the actual card art is authoritative for effect text and titles.
 **Cross-check**: `expansions/shadows-of-nightmare/shadows-of-nightmare-reference.md` (BGG-derived; authoritative for structured fields — copy counts, costs, fight values, VP, class/team).
 **Pass 1 date**: 2026-06-21
-**Pass 2 status**: Pending — run `/inventory-verifier` in a fresh session
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified clean against the reference, zero corrections. Awaiting user Pass 3 physical-card spot-check.
 
 > **Set composition (per reference):** 100 cards — 5 Heroes (14 cards each), 2 Masterminds (5 cards each), 2 Villain Groups (8 cards each), 4 Schemes. No henchmen, bystanders, or sidekicks.
 
@@ -108,7 +108,7 @@ Nightmare Tactics:
   Deadly Waking Nightmares, Don't Fall Asleep, Dream Weaver, Night Terrors
 ```
 
-⚠️ Each tactic card shows a VP value of **6** (image-derived — the reference does not list per-tactic VP). Tactics carry no recruit/attack cost. Confirm in Pass 2.
+✅ Each tactic is worth **6 VP** — the main Mastermind's VP (Dormammu and Nightmare both = VP 6), which tactics inherit unless stated otherwise. Tactics carry no recruit/attack cost. (Pass 2 confirmed.)
 
 ---
 
@@ -372,7 +372,7 @@ Evil Wins: When the Mastermind has won 5 Duels.
 ## Pass 1 Flags Summary (for Pass 2 / Pass 3)
 
 1. **Staff of Legba cost = 5** — RESOLVED. Card reads 5; reference corrected from 6→5 (user, 2026-06-21). No longer a flag.
-2. **⚠️ Tactic VP = 6** — image-derived (reference lists no per-tactic VP). Confirm the circled "6" on each of the 8 tactic cards is VP.
+2. **Tactic VP = 6** — ✅ RESOLVED (Pass 2). This is the main Mastermind's VP, which tactics inherit (Dormammu/Nightmare both print VP: 6 in the reference). Correct as recorded; no longer a flag.
 3. **Image filenames vs printed titles (RESOLVED, no action):** filenames `MasterOfTheSanctum`, `FleetingDarkMagic`, `MedallionOfManyCoats` are misnomers — the printed card titles are Keeper of the Sanctum, Prepare Dark Magic, Medallion of Many Loas (match the reference).
 4. **Scheme bystander counts** — not printed on any scheme card; left `—` (game-mode default).
 5. **Class/team** — confirmed from card images: Doctor Strange & Doctor Voodoo = Avengers; Clea = Marvel Knights; The Ancient One & The Vishanti = unaffiliated (no team icon). Note: this set has **no** Tech/Range terminology conflict — DB convention uses `"Range"` (not "Ranged"); recorded as Range.

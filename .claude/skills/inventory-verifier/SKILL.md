@@ -37,17 +37,19 @@ Same as Pass 1. If any description proves insufficient for a specific icon, the 
 
 Use the same source question as Pass 1: **Is this expansion already coded in the game?**
 
+**Source authority is reference-first** — the reference doc is the foremost authority for every field (names, counts, costs, values, class, team, AND effect text); card images are a verification/backup source. Full detail: `docs/card-inventory/card-reading-rules.md` (Source Authority).
+
 **YES — in the game:**
-1. `cardDatabase.js` — primary source for **structured fields only** (names, costs, teams, classes, values)
-2. Card images in `Visual Assets/Heroes/[Expansion Display Name]/` — primary source for **all effect text**. Card images are the single source of truth for how the game works. Do not categorize or reinterpret effects based on how the code implements them.
+1. `cardDatabase.js` — authoritative for **structured fields** (names, costs, teams, classes, values).
+2. Card images in `Visual Assets/Heroes/[Expansion Display Name]/` — primary source for **effect text** (not stored in the DB).
 3. `cardAbilities.js` / `cardAbilitiesDarkCity.js` / `script.js` / expansion files — **cross-reference only** for effect text. If card text and code appear to disagree, trust the card text and flag ⚠️ for the user.
 
 **NO — not yet in the game:**
-1. Card images in `expansions/[expansion-name]/` subfolders — primary source for **all effect text**. Card images are the single source of truth for how the game works.
-2. PDF inventory in `expansions/[expansion-name]/` — primary source for **structured fields** (names, counts, costs, values). Cross-check for effect text, but defer to card images when phrasing differs.
+1. **Reference doc — `expansions/[expansion-name]/[expansion-name]-reference.md`** (BGG-derived) — **PRIMARY authority for ALL fields**, including effect text. Re-derive each field from here. It encodes hero class/team in its image alt-text (e.g. `Ranged Hero` → Range) — read class/team from that alt-text, NOT by eyeballing the card icon.
+2. Card images in `expansions/[expansion-name]/` subfolders — **verification/backup source.** Confirm reference values against the art and catch the rare reference typo. On conflict, **the reference wins** unless the image clearly and unambiguously shows the reference is wrong — then flag ⚠️ for the user's Pass 3. Never override the reference on an ambiguous icon read.
 3. `docs/card-inventory/final/[expansion].md` if it exists — additional cross-check only
 
-**Do not refer to the Pass 1 log while consulting these sources.** Build your own independent understanding from the source materials first, then compare against the log.
+**Do not refer to the Pass 1 log while consulting these sources.** Independently re-derive each field from the reference first, verify against the images, then compare against the log.
 
 ---
 
@@ -58,19 +60,19 @@ Use parallel subagents — one per card type in scope. Do not verify card types 
 **Orchestrator steps:**
 1. Read the card-data.md log to identify which sections are in scope
 2. Dispatch one subagent per in-scope card type simultaneously
-3. Each subagent receives: its section of the card-data.md log, the relevant source materials, and the flagging rules from this skill
-4. Each subagent consults sources independently first, then compares against the Pass 1 log entries
+3. Each subagent receives: its section of the card-data.md log, the relevant source materials (lead with the reference doc), and the flagging rules from this skill
+4. Each subagent re-derives each field from the **reference doc first**, verifies against the card images, then compares against the Pass 1 log entries
 5. Collect all results and assemble the final verification summary and annotated log
 
 ---
 
 ## Verification Process (per subagent)
 
-For each entry, check in this order:
+Reference-first. For each entry, check in this order:
 
-1. **Against primary source** (DB or PDF): card name, copy count, cost/fight value, VP, team/class (if determinable from source)
-2. **Against code or images**: effect text accuracy; trigger icons in Superpowers — use `icon-reference.md` for identification
-3. **Internal consistency**: hero distribution (expected 1R/1U/2C per hero), villain group totals, value plausibility for cost tier
+1. **Re-derive from the reference doc (or DB):** card name, copy count, cost/fight value, VP, team/class. For not-in-game expansions, read class/team from the reference's image alt-text (`Ranged Hero` → Range, etc.) — never eyeball the card icon. Tactics inherit the main Mastermind's Attack/VP unless stated otherwise (most are VP 6).
+2. **Verify against the card images:** confirm the reference values and read effect text + Superpower trigger icons (use `icon-reference.md`). The image is a check, not an override — on conflict, the reference wins unless the image unambiguously shows a reference error, which you flag ⚠️ for Pass 3. Do not contradict the reference on an ambiguous icon read.
+3. **Internal consistency:** hero distribution (expected 1R/1U/2C per hero), villain group totals, value plausibility for cost tier.
 
 ---
 
@@ -88,7 +90,7 @@ For each entry, check in this order:
 
 **Effect text:** Minor wording differences are acceptable if the mechanical meaning is identical. Flag `❌` only if the effect would function differently in play. **Exception:** Optionality language is never a "minor" difference. "You may X" vs "X" (optional vs mandatory) and "If you do, Y" vs "to gain Y" (conditional vs automatic) change how the card plays — flag `❌` if optionality is missing or added.
 
-**Team/Class from images only:** Do not attempt to verify team or class values from card images alone — use the PDF or DB. If the source doesn't list them, leave the existing `___` in place and note `⚠️` for the user.
+**Team/Class:** verify against the reference, not the card icon. For not-in-game expansions the reference encodes class/team in its image alt-text (`Covert Hero` → Covert, etc.) — that is authoritative. Never flag a class/team `❌` based on an icon read of the art; if the reference and a clear image read genuinely conflict, flag `⚠️` for Pass 3. If no source lists it, leave the existing `___` and note `⚠️`.
 
 ---
 

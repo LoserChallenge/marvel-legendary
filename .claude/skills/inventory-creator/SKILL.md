@@ -57,7 +57,7 @@ Answer one question: **Is this expansion already coded in the game?**
    - Hero copy counts: NOT stored directly — derive from the `rarity` field using the rule in `generateHeroDeck()` (`script.js:3649`): `"Common"` → 5, `"Common 2"` → 5, `"Uncommon"` → 3, `"Rare"` → 1. Flag ⚠️ if any hero deviates from the 1R/1U/2C pattern
    - Villain group totals, scheme names, mastermind names and `alwaysLeads` field
 
-2. **Card images in `Visual Assets/Heroes/[Expansion Display Name]/`** — primary source for **all effect text**. The card images are the single source of truth for how the game works. Capture text as close to verbatim as possible, especially optionality language ("You may", "If you do") which is mechanically significant. Do not categorize or reinterpret effects based on how the code implements them.
+2. **Card images in `Visual Assets/Heroes/[Expansion Display Name]/`** — primary source for **effect text** (not stored in the DB). Capture text as close to verbatim as possible, especially optionality language ("You may", "If you do") which is mechanically significant. Do not categorize or reinterpret effects based on how the code implements them.
 
 3. **`cardAbilities.js` / `cardAbilitiesDarkCity.js` / `script.js` / relevant expansion files** — **cross-reference only** for effect text. Use to resolve ambiguity when a card image is unclear (e.g., a trigger icon is too small to read). Never let code override or reword what the card says. If the card text and the code appear to disagree, record the card text and flag ⚠️ for the user to investigate.
 
@@ -67,18 +67,19 @@ Answer one question: **Is this expansion already coded in the game?**
 
 *(Revelations, Secret Wars Vol. 1, Heroes of Asgard, X-Men, and all other new/unbuilt expansions)*
 
-**Source priority:**
+**Source priority (reference-first):**
 
-1. **Card images in `expansions/[expansion-name]/` subfolders** — primary source for **all effect text**. Card images are the single source of truth for how the game works. Capture text as close to verbatim as possible, especially optionality language ("You may", "If you do") which is mechanically significant.
+1. **Reference doc — `expansions/[expansion-name]/[expansion-name]-reference.md`** (BGG-derived) — **PRIMARY authority for ALL fields**: names, copy counts, costs, fight values, VP, class, team, **and effect text**. Fill every field from here first. Capture effect text close to verbatim, especially optionality language ("You may", "If you do") which is mechanically significant.
 
-2. **PDF inventory in `expansions/[expansion-name]/`** — primary source for **structured fields**: card names, copy counts, costs, fight values, VP, team/class if listed. Also useful as a cross-check for effect text, but defer to card images when phrasing differs.
+2. **Card images in `expansions/[expansion-name]/` subfolders** — **verification/backup source.** After filling fields from the reference, read the images to confirm them and to catch the rare reference typo or fill a genuine reference gap. Reconcile field-by-field, don't spot-check. When an image read conflicts with the reference, **the reference wins** unless the image clearly and unambiguously shows the reference is wrong — then flag `⚠️` for the user's Pass 3. Never silently swap in an image-derived value.
 
 3. **`docs/card-inventory/final/[expansion].md`** if it exists — additional cross-check only
 
 **Team and Class values (not-in-game expansions):**
-- Fill from PDF if listed
-- If PDF does not list them, leave `___` — user fills these from physical cards
-- Never read team or class solely from card images
+- The reference encodes hero class/team in its **image alt-text** (e.g. `![Microbadge: Legendary fan - Ranged Hero]` → Range; `Covert Hero` → Covert). Read class/team from that alt-text — it is the authoritative source.
+- Verify against the card image, but the reference's alt-text wins on conflict (icon reads are the most error-prone). Leave `___` only if the reference genuinely lacks it.
+
+**Mastermind tactics:** a tactic inherits the main Mastermind's Attack and VP unless it states otherwise — record each tactic with the Mastermind's stats (most are VP 6), then verify against the card image. See `docs/card-inventory/card-reading-rules.md` (Mastermind Tactics).
 
 ---
 

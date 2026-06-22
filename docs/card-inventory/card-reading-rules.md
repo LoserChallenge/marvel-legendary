@@ -4,13 +4,20 @@ Detailed rules for reading card data from images and databases. Referenced from 
 
 ---
 
-## DB vs. Image Authority
+## Source Authority — reference-first
 
-- `cardDatabase.js` is the authoritative source for class, team, cost, condition, and base attack/recruit values — NEVER override these from card images
-- Card images should ONLY be used to extract the **effect text** (the written description of what the card does) which is not stored in the database for hero cards
-- Class icons (Tech gear, Covert eye, Strength fist, Instinct bolt, Ranged crosshair) and team icons (X-Men X, Avengers A, S.H.I.E.L.D. eagle) are easily confused by image readers — always trust the DB fields
-- The small `[ClassName]:` or `[TeamName]:` trigger icons embedded in effect text (e.g. the icon before "Gain another Shard") are equally prone to misreading — after recording an effect, cross-check the trigger icon against (a) the card's own class/team in the DB and (b) what the code actually checks; a mismatch means the image was likely misread, not that the code is wrong
-- When building card reference data: pull all structured fields from DB first, then read images only to fill in the effect text column
+The reference document is the foremost authority for **every** field — names, copy counts, costs, fight values, VP, class, team, **and effect text**. Card images are a **verification/backup source**, not a primary one.
+
+- **Not-in-game expansions:** `expansions/[name]/[name]-reference.md` (BGG-derived) is authoritative for ALL fields, including effect text. **The reference encodes hero class/team in its image alt-text** (e.g. `![Microbadge: Legendary fan - Ranged Hero]` → class Range; `Covert Hero` → Covert). Read class/team from that alt-text — do NOT eyeball the card's class icon.
+- **In-game expansions:** `cardDatabase.js` is authoritative for structured fields (class, team, cost, condition, base attack/recruit, VP, fight values). For effect text not stored in the DB, use the finalized inventory if present, otherwise the card image.
+- **Card images verify the reference; they never override it.** Read images to confirm reference values and to catch the rare reference typo or fill a genuine reference gap. When an image read conflicts with the reference, **the reference wins** UNLESS the image clearly and unambiguously shows the reference is wrong — then flag `⚠️` for the user's Pass 3. Never silently swap in an image-derived value.
+- Class icons, team icons, and inline `[ClassName]:` / `[TeamName]:` trigger icons are the **most error-prone image reads** — repeated false positives have come from reading these off the art when the answer was already in the reference. Never let an icon read override the reference's class/team/trigger.
+- **Build order:** fill every field from the reference (or DB) first; then use images to verify and to flag suspected reference errors. Reconcile field-by-field — do not spot-check.
+
+## Mastermind Tactics — stat inheritance
+
+- A Mastermind's Tactic cards **inherit the main Mastermind card's Attack and VP unless the tactic states otherwise.** References (and the cards) typically print Attack/VP only on the main Mastermind, not on each tactic — so record each tactic with the Mastermind's Attack and VP.
+- Most tactics are **VP 6** (the common Mastermind VP), but exceptions exist — verify each tactic against its card image and flag any that genuinely differ. A tactic's lower-right number is its Fight value, not VP; do not record it as VP.
 
 ## Card Layout Anatomy
 
