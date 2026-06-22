@@ -13,7 +13,7 @@
 **Primary source**: Card images in `expansions/messiah-complex/` (effect text + card titles) — card art is authoritative for effect text and titles.
 **Cross-check**: `expansions/messiah-complex/messiah-complex-reference.md` (BGG-derived; authoritative for structured fields). Rules PDF: `expansions/messiah-complex/Lgd_MessiahComplex_Rulesheet_Compressed.pdf`.
 **Pass 1 date**: 2026-06-21
-**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 7 card types (Heroes 32, Villains 20, Masterminds 18, Schemes 8 sides, Henchmen 2, Bystanders 3, Sidekicks 7) clean. One correction: "Me, Myself, and I" trigger X-Factor → Instinct (see effects). 4/4/4/2 clone-hero distribution confirmed correct (Multiple Man, Shatterstar, Stepford Cuckoos, M). Open Pass-3 items (all pre-flagged, mostly reference typos the draft already corrected via card art): Silver Samurai Fight line absent from reference (card wins); "Reveal Evil Clones" Twist clone-source "HQ or Hero Deck" (card) vs "Hero Deck" (reference) — card wins; Epic Bastion passive "Sentinel enemies" (card) vs "Masterminds" (reference) — card wins, real gameplay diff, confirm in Pass 3; Clan Yashida asterisk-Attack meaning (rules-PDF question); Boom-Boom 0+ / Rockslide+Prodigy 0-vs-— base-value DB convention.
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 7 card types (Heroes 32, Villains 20, Masterminds 18, Schemes 8 sides, Henchmen 2, Bystanders 3, Sidekicks 7) clean. One correction: "Me, Myself, and I" trigger X-Factor → Instinct (see effects). 4/4/4/2 clone-hero distribution confirmed correct (Multiple Man, Shatterstar, Stepford Cuckoos, M). Pass-3 spot-check 2026-06-22 resolved several: Silver Samurai Fight line IS printed (draft correct); "Reveal Evil Clones" Twist clones from **Hero Deck** only (reference right; "HQ or" image read corrected); Boom-Boom 0+ base confirmed printed. **Still open:** Epic Bastion passive "Sentinel enemies" (card) vs "Masterminds" (Normal/reference) — confirm Epic card prints "enemies" (real gameplay diff, not typo); Clan Yashida asterisk-Attack meaning (rules-PDF question); Rockslide+Prodigy 0-vs-— base-value DB convention.
 
 > **Set composition (per reference):** 200 cards — 8 Heroes (14 cards each), 3 Masterminds (5 cards each), 4 Villain Groups (8 cards each), 2 Henchmen Groups (10 cards each), 4 double-sided Veiled/Unveiled Schemes (8 sides), 7 special Sidekicks (2 each), 3 special Bystanders (1 each). Teams used: X-Men, X-Force, X-Factor (and villains reference "Brotherhood").
 
@@ -613,7 +613,7 @@ Twist 5: This Scheme Transforms into a random Unveiled Scheme. Do its Twist effe
 
 **…Reveal the Heroes' Evil Clones** (Unveiled)
 When revealed: Twists stacked next to the Mastermind are "Cloning Breakthroughs."
-Twist: Add this Twist to the Cloning Breakthroughs. The top card of the Hero Deck enters the city as an "Evil Clone" Villain. Clone a copy of it from the HQ or Hero Deck as another Evil Clone. *(⚠️ image: "from the HQ or Hero Deck"; reference: "from the Hero Deck" — verify Pass 2)*
+Twist: Add this Twist to the Cloning Breakthroughs. The top card of the Hero Deck enters the city as an "Evil Clone" Villain. Clone a copy of it from the Hero Deck as another Evil Clone. *(Pass 3 confirmed: "from the Hero Deck" — the reference was right; the Pass-1 image read of "HQ or" was wrong.)*
 Special Rules: Each Evil Clone has Attack equal to its cost plus the number of Cloning Breakthroughs. It has "Fight: A player gains this as a Hero. KO one of your Heroes."
 Evil Wins: When there are 7 Evil Clones in the city and/or Escape Pile, or the Villain Deck or Hero Deck runs out.
 
@@ -731,11 +731,11 @@ Cost: 2
 **Open ⚠️ — need spot-check:**
 3. **Multiple Man "Me, Myself, and I" clone trigger:** ✅ RESOLVED (Pass 2). Trigger is **Instinct** per the reference; the earlier "X-Factor" was the corner team icon misread, not the inline trigger. Draft corrected to [INSTINCT]: Clone. (Gene-Spliced Creation's two-icon trigger [RANGE],[INSTINCT] also confirmed.) Worth a physical glance in Pass 3 as an inline-icon.
 4. **Scarlet Samurai VP** — NO VP printed on the villain side of the card OR in the reference. Likely a no-VP dual Villain/Hero card, but confirm against physical card / rules.
-5. **Silver Samurai Fight line** — card prints "Fight: KO a card from your discard pile"; reference OMITS it. Image wins; confirm.
-6. **Epic Bastion passive** — card prints "All Sentinel **enemies**"; Normal Bastion + reference say "**Masterminds**." Meaningful gameplay difference (enemies = all Sentinel villains/henchmen/masterminds). Resolve against rules PDF.
+5. **✅ RESOLVED (Pass 3) — Silver Samurai Fight line** "Fight: KO a card from your discard pile" IS printed on the physical card (reference omitted it). Draft is correct as recorded.
+6. **⚠️ STILL OPEN (Pass 3) — Epic Bastion passive wording.** Draft records Normal Bastion = "All Sentinel **Masterminds**" and Epic Bastion = "All Sentinel **enemies**" (the broader wording captured from the Epic card art). *Check: pull the **Epic Bastion** physical card and confirm its passive prints "enemies" (not "Masterminds"). If so, it's a real Epic-vs-Normal gameplay difference to implement, not a typo.*
 7. **Clan Yashida asterisk-Attacks (3*/3*/4*/5*)** — no controlling text on the cards (unlike Acolyte self-Shatter lines). Determine what `*` means for Yashida (likely Shatter-able / Chivalrous-Duel-related) via rules PDF.
-8. **"…Reveal the Heroes' Evil Clones" Twist** — image "Clone a copy of it from the HQ or Hero Deck"; reference "from the Hero Deck." Image wins; confirm.
-9. **Boom-Boom base value** — 0+ Attack on card art; reference omits it. Confirm.
+8. **✅ RESOLVED (Pass 3) — "…Reveal the Heroes' Evil Clones" Twist** clones "from the **Hero Deck**" only (the reference was right; the Pass-1 image read of "HQ or Hero Deck" was wrong). Effect line corrected.
+9. **✅ RESOLVED (Pass 3) — Boom-Boom base value** = **0+ Attack** is printed on the physical card (reference omitted it). Draft is correct as recorded.
 10. **Sidekick base-value convention** — Rockslide and Prodigy have no printed lower-left value (recorded 0). Confirm `0` vs `—` for the DB.
 
 **Structural notes for implementation (not errors):**

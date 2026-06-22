@@ -14,7 +14,7 @@
 **Primary source**: `expansions/shield/shield-reference.md` (BGG community wiki)
 **Cross-check**: Card images in `expansions/shield/`
 **Pass 1 date**: 2026-04-05
-**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 5 card types (Heroes 16, Villains 8, Adapting Masterminds 8, Schemes 4, S.H.I.E.L.D. Officers 8) clean. Adapting-Mastermind structure (no lead/Epic, 4 rotating tactics, all VP 6) confirmed correct; villain copy counts reference-specified (groups total 8). Normalized class terminology "Ranged"→"Range" / "[RANGED]"→"[RANGE]" to match DB convention. Open Pass-3/build items (not errors): Taskmaster printed 3+/VP4 vs errata 3/VP2 (dual-noted — choose at build); Hail Hydra "11 Twists" vs effects ending at Twist 10 (confirmed a quirk of the physical card, preserved).
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 5 card types (Heroes 16, Villains 8, Adapting Masterminds 8, Schemes 4, S.H.I.E.L.D. Officers 8) clean. Adapting-Mastermind structure (no lead/Epic, 4 rotating tactics, all VP 6) confirmed correct; villain copy counts reference-specified (groups total 8). Normalized class terminology "Ranged"→"Range" / "[RANGED]"→"[RANGE]" to match DB convention. Pass-3 spot-check 2026-06-22: Taskmaster confirmed printed **3+/VP4** (recorded; errata 3/VP2 is a build-time choice). Hail Hydra "11 Twists" confirmed as a quirk of the physical card (effects end at Twist 10), preserved. Heroes (Coulson, Quake, Deathlok), Thor's Hammer tactic, Sharon Carter Officer all confirmed clean.
 
 ---
 
@@ -80,10 +80,10 @@ Both groups are **8 cards each** (all villains ×2 copies).
 | A.I.M., HYDRA Offshoot | Graviton | 2 | 6 | 4 |
 | A.I.M., HYDRA Offshoot | Mentallo | 2 | 3+ | 3 |
 | A.I.M., HYDRA Offshoot | Superia | 2 | 5 | 3 |
-| A.I.M., HYDRA Offshoot | Taskmaster | 2 | 3⚠️ | 2⚠️ |
+| A.I.M., HYDRA Offshoot | Taskmaster | 2 | 3+ | 4 |
 
 > Mentallo: "3+" = gets +1 Attack for each Officer he has captured.
-> ⚠️ Taskmaster: Official erratum corrects Attack from 3+ (printed) to 3, and VP from 4 (printed) to 2. Errata values recorded above; verify which values to use for implementation.
+> Taskmaster: **Printed values 3+ / VP 4 recorded above (Pass 3 physical card confirmed).** An official erratum lowers these to Attack 3 / VP 2 — **build-time choice** (printed vs errata) deferred to implementation; not an inventory error.
 
 ---
 
@@ -289,8 +289,8 @@ Attack: 5 | VP: 3
 Ambush: Put a card from the S.H.I.E.L.D. Officer Stack into the Escape Pile.
 Fight: Each player must reveal as many Hero colors (including grey) as the Hydra Level or gain a Wound.
 Escape: Same effect.
-Attack: 3 | VP: 2
-> ⚠️ Official erratum: printed card shows 3+ Attack and 4 VP. Errata corrects to 3 Attack and 2 VP. Errata values recorded above.
+Attack: 3+ | VP: 4
+> Printed values (3+ / 4) recorded — Pass 3 physical card confirmed. Official erratum lowers to Attack 3 / VP 2; build-time choice (printed vs errata) deferred to implementation.
 
 ---
 
