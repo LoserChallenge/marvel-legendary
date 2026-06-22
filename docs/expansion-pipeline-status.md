@@ -1,6 +1,6 @@
 # Expansion Pipeline Status
 
-Last updated: 2026-06-21 (Shadows of Nightmare FINALIZED through Pass 3. Weapon X + Messiah Complex + New Mutants Pass 2 complete (reference-first, all clean; minor Pass-3 items noted per draft). Remaining Pass 2: shield, world-war-hulk. Inventory protocol changed to reference-first; see card-reading-rules.md.)
+Last updated: 2026-06-21 (Shadows of Nightmare FINALIZED through Pass 3. Weapon X + Messiah Complex + New Mutants + SHIELD Pass 2 complete (reference-first, all clean; minor Pass-3 items noted per draft). Remaining Pass 2: world-war-hulk only (400 cards — own session). Inventory protocol changed to reference-first; see card-reading-rules.md.)
 
 ## Pipeline Tracks
 
@@ -40,7 +40,7 @@ Last updated: 2026-06-21 (Shadows of Nightmare FINALIZED through Pass 3. Weapon 
 | into-the-cosmos | A | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ | — | — |
 | messiah-complex | A | ✅ 2026-04-05 | ✅ 2026-06-21 | ✅ 2026-06-21 (clean; 1 fix, ~5 Pass-3 notes) | — | — | — | — |
 | shadows-of-nightmare | A | ✅ 2026-04-05 | ✅ 2026-06-21 | ✅ 2026-06-21 (clean) | ✅ 2026-06-21 | ✅ 2026-06-21 | — | — |
-| shield | A | ✅ 2026-04-04 | ✅ 2026-04-05 | — | — | — | — | — |
+| shield | A | ✅ 2026-04-04 | ✅ 2026-04-05 | ✅ 2026-06-21 (clean) | — | — | — | — |
 | new-mutants | A | ✅ 2026-04-05 | ✅ 2026-06-21 | ✅ 2026-06-21 (clean; 1 Pass-3 item) | — | — | — | — |
 | weapon-x | A | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ 2026-06-21 (clean; 2 villain Pass-3 items) | — | — | — | — |
 | world-war-hulk | A | ✅ 2026-04-05 | ✅ 2026-06-21 | — | — | — | — | — |

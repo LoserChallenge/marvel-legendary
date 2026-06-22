@@ -6,7 +6,7 @@
   Henchmen: — (none in expansion)
   Bystanders/Sidekicks: — (none in expansion)
   S.H.I.E.L.D. Officers: ✅
-  Last updated: 2026-04-05
+  Last updated: 2026-06-21 (Pass 2 complete)
 -->
 
 # S.H.I.E.L.D. — Card Inventory
@@ -14,7 +14,7 @@
 **Primary source**: `expansions/shield/shield-reference.md` (BGG community wiki)
 **Cross-check**: Card images in `expansions/shield/`
 **Pass 1 date**: 2026-04-05
-**Pass 2 status**: Pending — run `/inventory-verifier` in a fresh session
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 5 card types (Heroes 16, Villains 8, Adapting Masterminds 8, Schemes 4, S.H.I.E.L.D. Officers 8) clean. Adapting-Mastermind structure (no lead/Epic, 4 rotating tactics, all VP 6) confirmed correct; villain copy counts reference-specified (groups total 8). Normalized class terminology "Ranged"→"Range" / "[RANGED]"→"[RANGE]" to match DB convention. Open Pass-3/build items (not errors): Taskmaster printed 3+/VP4 vs errata 3/VP2 (dual-noted — choose at build); Hail Hydra "11 Twists" vs effects ending at Twist 10 (confirmed a quirk of the physical card, preserved).
 
 ---
 
@@ -41,10 +41,10 @@ All four heroes are S.H.I.E.L.D. team.
 | Agent Phil Coulson | Build the Strike Team | Common B | 5 | 4 | S.H.I.E.L.D. | Covert | 2 | 0 |
 | Agent Phil Coulson | Approve Orbital Strike | Uncommon | 3 | 6 | S.H.I.E.L.D. | Tech | 0+ | 0 |
 | Agent Phil Coulson | Fake But Inspiring Death | Rare | 1 | 8 | S.H.I.E.L.D. | Covert | 4+ | 0 |
-| Quake | Going Underground | Common A | 5 | 3 | S.H.I.E.L.D. | Ranged | 0 | 3 |
-| Quake | Aftershock | Common B | 5 | 4 | S.H.I.E.L.D. | Ranged | 2+ | 0 |
+| Quake | Going Underground | Common A | 5 | 3 | S.H.I.E.L.D. | Range | 0 | 3 |
+| Quake | Aftershock | Common B | 5 | 4 | S.H.I.E.L.D. | Range | 2+ | 0 |
 | Quake | Tectonic Wave | Uncommon | 3 | 6 | S.H.I.E.L.D. | Covert | 2+ | 0 |
-| Quake | Roil the Earth | Rare | 1 | 7 | S.H.I.E.L.D. | Ranged | 0+ | 0 |
+| Quake | Roil the Earth | Rare | 1 | 7 | S.H.I.E.L.D. | Range | 0+ | 0 |
 | Deathlok | Authorize Lethal Force | Common A | 5 | 2 | S.H.I.E.L.D. | Tech | 0+ | 0 |
 | Deathlok | Reanimate Into Service | Common B | 5 | 4 | S.H.I.E.L.D. | Tech | 2 | 0 |
 | Deathlok | Headlok | Uncommon | 3 | 5 | S.H.I.E.L.D. | Strength | 0+ | 3 |
@@ -146,7 +146,7 @@ Both groups are **8 cards each** (all villains ×2 copies).
 | Melinda May | 2 | 3 | Instinct | 0 | 2 |
 | Sharon Carter | 2 | 3 | Covert | 0 | 2 |
 | Victoria Hand | 2 | 3 | Covert | 0 | 2 |
-| "Yo-Yo" Rodriguez | 2 | 3 | Ranged | 0 | 2 |
+| "Yo-Yo" Rodriguez | 2 | 3 | Range | 0 | 2 |
 
 > Sharon Carter: 2 Recruit base, but sends herself Undercover for +1 Recruit (effective 3 Recruit if you use the Undercover).
 
@@ -184,7 +184,7 @@ Both groups are **8 cards each** (all villains ×2 copies).
 
 **Going Underground** (Common A)
 - SPECIAL ABILITY: To play this, you must discard a S.H.I.E.L.D. Hero.
-- SUPERPOWER: [RANGED]: You may send the Hero you discarded Undercover.
+- SUPERPOWER: [RANGE]: You may send the Hero you discarded Undercover.
 
 **Aftershock** (Common B)
 - SPECIAL ABILITY: S.H.I.E.L.D. Level 2: You get +2 Attack.
@@ -352,7 +352,7 @@ Fight: Count your [TECH] Heroes, then draw that many cards. Adapt.
 Attack: 12 | VP: 6
 
 **Thor's Hammer** (Tactic)
-Master Strike: Each player reveals a [RANGED] Hero or gains a Wound. Adapt.
+Master Strike: Each player reveals a [RANGE] Hero or gains a Wound. Adapt.
 Fight: For each of your [STRENGTH] Heroes, KO one of your Heroes. Adapt.
 Attack: 14 | VP: 6
 
@@ -379,7 +379,7 @@ Twist 10: Evil Wins!
 
 **HYDRA Helicarriers Hunt Heroes**
 Setup: 8 Twists. Add an extra Hero.
-Twist: Stack this Twist next to the Scheme. Then for each Twist stacked there, choose a different Hero Class ([STRENGTH], [INSTINCT], [COVERT], [TECH], [RANGED]), to a maximum of 5. KO each Hero from the HQ that has any of those Hero Classes.
+Twist: Stack this Twist next to the Scheme. Then for each Twist stacked there, choose a different Hero Class ([STRENGTH], [INSTINCT], [COVERT], [TECH], [RANGE]), to a maximum of 5. KO each Hero from the HQ that has any of those Hero Classes.
 Evil Wins: When there are 18 non-grey Heroes in the KO pile.
 
 ---
