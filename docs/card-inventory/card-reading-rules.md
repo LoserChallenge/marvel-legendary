@@ -13,6 +13,7 @@ The reference document is the foremost authority for **every** field — names, 
 - **Card images verify the reference; they never override it.** Read images to confirm reference values and to catch the rare reference typo or fill a genuine reference gap. When an image read conflicts with the reference, **the reference wins** UNLESS the image clearly and unambiguously shows the reference is wrong — then flag `⚠️` for the user's Pass 3. Never silently swap in an image-derived value.
 - Class icons, team icons, and inline `[ClassName]:` / `[TeamName]:` trigger icons are the **most error-prone image reads** — repeated false positives have come from reading these off the art when the answer was already in the reference. Never let an icon read override the reference's class/team/trigger.
 - **Build order:** fill every field from the reference (or DB) first; then use images to verify and to flag suspected reference errors. Reconcile field-by-field — do not spot-check.
+- **Card-image filenames are staging-derived and can be mislabeled — never treat a filename as the card title.** Take the title from the reference and confirm against the card art. E.g. Shadows of Nightmare's `MasterOfTheSanctum` / `FleetingDarkMagic` / `MedallionOfManyCoats` filenames were wrong while the printed titles matched the reference.
 
 ## Mastermind Tactics — stat inheritance
 
@@ -49,8 +50,13 @@ Hero card effects use this format:
 - Use `NA` when a card has no Special Ability or no Superpower
 - Attack/Recruit shown as `0+` means "starts at 0, modified by ability"; `-` means not applicable
 - **Thrown Artifact base values:** Cards that are pure Thrown Artifacts (produce attack/recruit only when thrown) have no printed base value — use `-` in the Attack and Recruit columns, not `0+`.
+- **Hero rarity → copy-count mapping** is normalized at the orchestrator/assembly step, not per-reader: 5 copies → Common, 3 → Uncommon, 1 → Rare (a standard hero = 5/5/3/1 across two Commons, one Uncommon, one Rare = 14 cards). **Non-standard distributions exist** — flag them ⚠️ and map explicitly rather than forcing 5/5/3/1 (e.g. Messiah Complex clone heroes use 4/4/4/2; the DB rarity mapping will not match).
 
 This distinction matters for code: Superpowers require checking `classPlayedThisTurn` or equivalent flag.
+
+## Inventory Pass Execution (scaling)
+
+- Run inventory passes with **parallel subagents — one per card type** (the orchestrator keeps only the returned summaries, so its context stays lean regardless of set size). **Chunk further when a card type has a large image set** — e.g. WWH Heroes = 78 images → ~5 subagents split by hero-group; a single reader over 78 images exceeds reliable context. WWH (400 cards, ~12 readers) fit in one session with context to spare because each reader burns its own.
 
 ## DB Quantity & Scoring Gotchas
 
