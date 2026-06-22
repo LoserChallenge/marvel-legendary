@@ -24,7 +24,7 @@ The Changes 1–3 tooling is built (see Recently completed). The remaining open 
 ## 🔁 Ongoing
 
 - **Expansion pipeline (the core mission).** Bring expansions into the game one at a time. Status table: `docs/expansion-pipeline-status.md`.
-  - Remaining inventory work: **Pass 1** for messiah-complex, shadows-of-nightmare, new-mutants, world-war-hulk; **Pass 2** for shield, weapon-x. Then user review → `final/` → `/analyze-expansion` → `/new-expansion`.
+  - ✅ **All 16 inventories FINALIZED through Pass 3** (2026-06-22) — every file in `docs/card-inventory/final/`; `drafts/` empty. Inventory phase complete. Next per expansion: pick one → `/analyze-expansion` → `/new-expansion`.
   - Next expansion to *implement* not yet selected.
 - **Periodic maintenance:** `/legendary-sweep` (~per expansion), `/audit-project` + `/optimize-project` (when structure/workflow drifts), `/audit-surface` (when editing persistent reference files).
 
