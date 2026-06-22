@@ -15,6 +15,7 @@
 **Cross-check**: Card images in `expansions/weapon-x/` (verification/backup).
 **Pass 1 date**: 2026-04-05
 **Pass 2 status**: ✅ Complete 2026-06-21 — verified clean against the reference. Heroes (16), Masterminds (18), Schemes (3), Enraging Wounds (10) all clean, zero corrections. Both villain open items RESOLVED by physical count 2026-06-22: (1) per-card copy counts now set from the physical cards — Berserkers: Cyber 1 / Feral 3 / Thornn 2 / Wild Child 2; Weapon Plus: Daken 1 / Huntsman 1 / Nuke 2 / Skinless Man 1 / Typhoid Mary 2 / Ultimaton 1 (each group sums to 8). Online search (web-researcher 2026-06-22) had confirmed the counts are unpublished anywhere — physical count was the only path. (2) Feral villain-side VP = none printed — confirmed (dual card → gain as a Hero on defeat); the earlier image-read guess of "3" was wrong. Pass-3 spot-check 2026-06-22 (8 cards across all types incl. Three Brains, Metabolic Overdrive, Violent Conditioning, Wild Child, Typhoid Mary, Epic Romulus, Wipe Heroes' Memories, Last Breath) confirmed all clean — Wild Child's "Fail:" line is correctly recorded.
+**Pass 3 status**: ✅ FINALIZED 2026-06-22 — all flags resolved (villain copy counts, Feral VP, Omega Red "leads any group", Violent Conditioning cost 3, Wipe Heroes' Memories twist count). No open inventory-data items.
 
 ---
 

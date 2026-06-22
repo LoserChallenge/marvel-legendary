@@ -13,7 +13,8 @@
 **Primary source**: Card images in `expansions/messiah-complex/` (effect text + card titles) — card art is authoritative for effect text and titles.
 **Cross-check**: `expansions/messiah-complex/messiah-complex-reference.md` (BGG-derived; authoritative for structured fields). Rules PDF: `expansions/messiah-complex/Lgd_MessiahComplex_Rulesheet_Compressed.pdf`.
 **Pass 1 date**: 2026-06-21
-**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 7 card types (Heroes 32, Villains 20, Masterminds 18, Schemes 8 sides, Henchmen 2, Bystanders 3, Sidekicks 7) clean. One correction: "Me, Myself, and I" trigger X-Factor → Instinct (see effects). 4/4/4/2 clone-hero distribution confirmed correct (Multiple Man, Shatterstar, Stepford Cuckoos, M). Pass-3 spot-check 2026-06-22 resolved several: Silver Samurai Fight line IS printed (draft correct); "Reveal Evil Clones" Twist clones from **Hero Deck** only (reference right; "HQ or" image read corrected); Boom-Boom 0+ base confirmed printed. **Still open:** Epic Bastion passive "Sentinel enemies" (card) vs "Masterminds" (Normal/reference) — confirm Epic card prints "enemies" (real gameplay diff, not typo); Clan Yashida asterisk-Attack meaning (rules-PDF question); Rockslide+Prodigy 0-vs-— base-value DB convention.
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 7 card types (Heroes 32, Villains 20, Masterminds 18, Schemes 8 sides, Henchmen 2, Bystanders 3, Sidekicks 7) clean. One correction: "Me, Myself, and I" trigger X-Factor → Instinct (see effects). 4/4/4/2 clone-hero distribution confirmed correct (Multiple Man, Shatterstar, Stepford Cuckoos, M). Pass-3 spot-check 2026-06-22 resolved several: Silver Samurai Fight line IS printed (draft correct); "Reveal Evil Clones" Twist clones from **Hero Deck** only (reference right; "HQ or" image read corrected); Boom-Boom 0+ base confirmed printed. Pass-3 also confirmed: Epic Bastion prints "Sentinel ENEMIES" (real Epic-vs-Normal diff), Scarlet Samurai villain-side VP = none (dual card like Feral), Multiple Man trigger = Instinct.
+**Pass 3 status**: ✅ FINALIZED 2026-06-22 — all inventory-data flags resolved. Deferred to build / `/analyze-expansion` (not inventory data): Clan Yashida asterisk-Attack meaning (rules-PDF question), sidekick 0-vs-— DB notation, clone 4/4/4/2 rarity mapping, Brotherhood team icon, Tactical Formation engine treatment.
 
 > **Set composition (per reference):** 200 cards — 8 Heroes (14 cards each), 3 Masterminds (5 cards each), 4 Villain Groups (8 cards each), 2 Henchmen Groups (10 cards each), 4 double-sided Veiled/Unveiled Schemes (8 sides), 7 special Sidekicks (2 each), 3 special Bystanders (1 each). Teams used: X-Men, X-Force, X-Factor (and villains reference "Brotherhood").
 
@@ -121,11 +122,11 @@ Standard villain group total: **8 cards** each.
 | Group | Card Name | Count | Fight Value | VP |
 |---|---|---|---|---|
 | Clan Yashida | Silver Samurai | 2 | 3* | 3 |
-| Clan Yashida | Scarlet Samurai | 2 | 3* | ⚠️ none printed |
+| Clan Yashida | Scarlet Samurai | 2 | 3* | — |
 | Clan Yashida | Lord Shingen | 2 | 4* | 5 |
 | Clan Yashida | Gorgon | 2 | 5* | 4 |
 
-*⚠️ Scarlet Samurai is a dual Villain/Hero card (Fight: gain it as a Hero) — its villain side prints no VP (see flags). ⚠️ Clan Yashida asterisk-Attacks have no controlling text printed on the cards (unlike the Acolyte self-Shatter lines) — meaning of `*` for Yashida is a Pass-2 / rules question.*
+*Scarlet Samurai is a dual Villain/Hero card (Fight: gain it as a Hero) — its villain side prints no VP (confirmed Pass 3, same pattern as Weapon X's Feral). ⚠️ Clan Yashida asterisk-Attacks have no controlling text printed on the cards (unlike the Acolyte self-Shatter lines) — meaning of `*` for Yashida is a rules-PDF / `/analyze-expansion` question (not an inventory-data item).*
 
 ---
 
@@ -464,7 +465,7 @@ Attack: 3* | VP: 3
 **Scarlet Samurai** (×2) — Villain side
 Chivalrous Duel
 Fight: Gain this as a Hero.
-Attack: 3* | VP: ⚠️ none printed (see flags)
+Attack: 3* | VP: — (none printed — dual Villain/Hero card; gain as Hero on defeat. Confirmed Pass 3.)
 
 **Scarlet Samurai** — Hero side (gained on Fight)
 Team: Crime Syndicate | Class: Instinct
@@ -728,9 +729,9 @@ Cost: 2
 1. **Warlock-equivalent title checks:** Strong Guy common prints "X-Factor **Investigations**" (plural; reference singular) → image wins. Scheme "Hire Singularity **Investigations**" (filename `Investigators` wrong). Unveiled scheme "…**Control** the Mutant Messiah" (reference Main-list "Manipulate" wrong). Cloning Technician (not "Clone Technician"). Rusty "Firefist" Collins (full printed name). Sentinel Squad O*N*E* (reference effect-text typo "Squard").
 2. Reference typos corrected from card art throughout (Pretty Boy "get", Stryker "one Sidekick", Epic LDS "their deck", Epic Exodus "plus"/"Immortality", Stretching Claws "your Heroes").
 
-**Open ⚠️ — need spot-check:**
-3. **Multiple Man "Me, Myself, and I" clone trigger:** ✅ RESOLVED (Pass 2). Trigger is **Instinct** per the reference; the earlier "X-Factor" was the corner team icon misread, not the inline trigger. Draft corrected to [INSTINCT]: Clone. (Gene-Spliced Creation's two-icon trigger [RANGE],[INSTINCT] also confirmed.) Worth a physical glance in Pass 3 as an inline-icon.
-4. **Scarlet Samurai VP** — NO VP printed on the villain side of the card OR in the reference. Likely a no-VP dual Villain/Hero card, but confirm against physical card / rules.
+**Pass-3 physical checks — ALL RESOLVED (2026-06-22). Items below tagged ✅ are confirmed; remaining untagged items (#7, #10) are build / `/analyze-expansion` questions, not inventory-data checks:**
+3. **✅ RESOLVED (Pass 3) — Multiple Man "Me, Myself, and I" clone trigger = [INSTINCT].** Physical card confirms Instinct; the earlier "X-Factor" was the corner team-icon misread, not the inline trigger. (Gene-Spliced Creation's two-icon trigger [RANGE],[INSTINCT] also confirmed.)
+4. **✅ RESOLVED (Pass 3) — Scarlet Samurai VP = none printed.** Physical card confirms no villain-side VP — it's a dual Villain/Hero card (Fight: gain as a Hero), same pattern as Weapon X's Feral. Recorded `—`.
 5. **✅ RESOLVED (Pass 3) — Silver Samurai Fight line** "Fight: KO a card from your discard pile" IS printed on the physical card (reference omitted it). Draft is correct as recorded.
 6. **✅ RESOLVED (Pass 3) — Epic Bastion passive = "All Sentinel ENEMIES".** Physical Epic card confirmed: it prints "enemies" (broader than Normal Bastion's / the reference's "Masterminds"). Real Epic-vs-Normal gameplay difference — at build, Epic Bastion's passive must apply to all Sentinel enemies (villains + henchmen + masterminds), not just masterminds.
 7. **Clan Yashida asterisk-Attacks (3*/3*/4*/5*)** — no controlling text on the cards (unlike Acolyte self-Shatter lines). Determine what `*` means for Yashida (likely Shatter-able / Chivalrous-Duel-related) via rules PDF.

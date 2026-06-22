@@ -14,7 +14,8 @@
 **Primary source**: `expansions/shield/shield-reference.md` (BGG community wiki)
 **Cross-check**: Card images in `expansions/shield/`
 **Pass 1 date**: 2026-04-05
-**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 5 card types (Heroes 16, Villains 8, Adapting Masterminds 8, Schemes 4, S.H.I.E.L.D. Officers 8) clean. Adapting-Mastermind structure (no lead/Epic, 4 rotating tactics, all VP 6) confirmed correct; villain copy counts reference-specified (groups total 8). Normalized class terminology "Ranged"→"Range" / "[RANGED]"→"[RANGE]" to match DB convention. Pass-3 spot-check 2026-06-22: Taskmaster confirmed printed **3+/VP4** (recorded; errata 3/VP2 is a build-time choice). Hail Hydra "11 Twists" confirmed as a quirk of the physical card (effects end at Twist 10), preserved. Heroes (Coulson, Quake, Deathlok), Thor's Hammer tactic, Sharon Carter Officer all confirmed clean.
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 5 card types (Heroes 16, Villains 8, Adapting Masterminds 8, Schemes 4, S.H.I.E.L.D. Officers 8) clean. Adapting-Mastermind structure (no lead/Epic, 4 rotating tactics, all VP 6) confirmed correct; villain copy counts reference-specified (groups total 8). Normalized class terminology "Ranged"→"Range" / "[RANGED]"→"[RANGE]" to match DB convention. Pass-3 spot-check 2026-06-22: Taskmaster confirmed printed **3+/VP4** (recorded; errata 3/VP2 is a build-time choice). Hail Hydra "11 Twists" confirmed as a quirk of the physical card (effects end at Twist 10), preserved. Heroes (Coulson, Quake, Deathlok), Thor's Hammer tactic, Sharon Carter Officer all confirmed clean. Hail Hydra confirmed 11 Twists / Evil Wins at 10 (11th is a safety-margin card).
+**Pass 3 status**: ✅ FINALIZED 2026-06-22 — all inventory-data flags resolved. One build-time decision deferred (not inventory data): Taskmaster printed 3+/VP4 vs errata 3/VP2 — choose at implementation.
 
 ---
 
@@ -125,11 +126,11 @@ Both groups are **8 cards each** (all villains ×2 copies).
 | Scheme Name | Twist Count | Bystander Count |
 |---|---|---|
 | S.H.I.E.L.D. vs. HYDRA War | 7 | — |
-| Hail Hydra | 11⚠️ | — |
+| Hail Hydra | 11 | — |
 | HYDRA Helicarriers Hunt Heroes | 8 | — |
 | Secret Empire of Betrayal | 11 | — |
 
-> ⚠️ Hail Hydra: Setup says 11 Twists, but twist effects only describe Twists 1-9 and Twist 10 (Evil Wins). Twist 11 is unaccounted for — may be an error in the reference or a safety margin. Verify against physical card.
+> ✅ Hail Hydra (Pass 3 confirmed): setup is genuinely **11 Twists**, with **Evil Wins at Twist 10**. The 11th twist is a real safety-margin card past the win condition — not an error. Recorded as 11.
 
 ---
 
@@ -373,7 +374,7 @@ Evil Wins: When the Hydra Level is 11.
 Setup: 11 Twists.
 Twist 1-9: Choose one: Say "I'd never abandon S.H.I.E.L.D.", and you can't fight this turn. Or whisper "Hail Hydra", you can't recruit this turn, and a Villain captures a Bystander.
 Twist 10: Evil Wins!
-> ⚠️ Setup says 11 Twists but effects only describe up to Twist 10. Twist 11 may also be Evil Wins, or the setup count may be an error. Verify against physical card.
+> ✅ Pass 3 confirmed: setup is 11 Twists with Evil Wins at Twist 10; the 11th is a safety-margin card past the win condition. Recorded as 11.
 
 ---
 

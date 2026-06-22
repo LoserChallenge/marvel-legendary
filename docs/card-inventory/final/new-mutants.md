@@ -14,6 +14,7 @@
 **Cross-check**: `expansions/new-mutants/new-mutants-reference.md` (BGG-derived; authoritative for structured fields — copy counts, costs, fight values, VP, class/team). Rules PDF also present: `expansions/new-mutants/2020_Marvel_Legendary_NewMutants_Rules_compressed.pdf`.
 **Pass 1 date**: 2026-06-21
 **Pass 2 status**: ✅ Complete 2026-06-21 — verified reference-first. All 4 card types (Heroes 20, Villains 11, Masterminds 12, Schemes 4) clean. Both villain groups total 8 (reference specifies copy counts). Pass-3 spot-check 2026-06-22 resolved the one open item: Karma "Control Like a Puppet" trigger = **[X-MEN]** (physical card confirms reference was right; the Pass-1/2 image read of "Covert" was wrong — effect line corrected). Draft already fixed several reference text typos (Contempt for Weaklings, "that group", "player", "and the Streets").
+**Pass 3 status**: ✅ FINALIZED 2026-06-22 — Karma trigger ([X-MEN]) was the only open item; resolved against the physical card. No open inventory items.
 
 > **Set composition (per reference):** 100 cards — 5 Heroes (14 cards each, all X-Men team), 2 Masterminds (5 cards each), 2 Villain Groups (8 cards each), 4 Schemes. No henchmen, bystanders, or sidekicks.
 
