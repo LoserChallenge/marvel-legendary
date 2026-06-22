@@ -13,7 +13,8 @@
 **Primary source**: Card images in `expansions/shadows-of-nightmare/` (effect text + card titles) — the actual card art is authoritative for effect text and titles.
 **Cross-check**: `expansions/shadows-of-nightmare/shadows-of-nightmare-reference.md` (BGG-derived; authoritative for structured fields — copy counts, costs, fight values, VP, class/team).
 **Pass 1 date**: 2026-06-21
-**Pass 2 status**: ✅ Complete 2026-06-21 — verified clean against the reference, zero corrections. Awaiting user Pass 3 physical-card spot-check.
+**Pass 2 status**: ✅ Complete 2026-06-21 — verified clean against the reference, zero corrections.
+**Pass 3 status**: ✅ Complete 2026-06-21 — user spot-checked a 6-card hero-class spread (all 5 classes, incl. the two reference-vs-image conflict cards) against physical cards; all confirmed. **FINALIZED.**
 
 > **Set composition (per reference):** 100 cards — 5 Heroes (14 cards each), 2 Masterminds (5 cards each), 2 Villain Groups (8 cards each), 4 Schemes. No henchmen, bystanders, or sidekicks.
 
