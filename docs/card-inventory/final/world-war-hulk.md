@@ -5,7 +5,7 @@
   Schemes: ✅
   Henchmen: ✅
   Bystanders/Sidekicks: ✅ (bystanders only; no sidekicks)
-  Last updated: 2026-06-21
+  Last updated: 2026-06-22 — FINALIZED through Pass 3
 -->
 
 # World War Hulk — Card Inventory
@@ -13,7 +13,8 @@
 **Primary source (reference-first)**: `expansions/world-war-hulk/world-war-hulk-reference.md` (BGG-derived) — foremost authority for EVERY field (names, counts, costs, values, class, team, effect text). Card images in `expansions/world-war-hulk/` are a verification/backup source only. Rules PDF: `expansions/world-war-hulk/Legendary_Rules-World_War_Hulk.pdf`.
 *(Note: Pass 1 was built under the OLD image-primary rule; Pass 2 reconciled all card-vs-reference conflicts reference-first — see "Pass 2 Verification Results" at the bottom.)*
 **Pass 1 date**: 2026-06-21
-**Pass 2 status**: ✅ Complete 2026-06-21 (reference-first; 0 ❌, all 4 carry-over flags resolved, 3 minor items for physical Pass 3 — see bottom)
+**Pass 2 status**: ✅ Complete 2026-06-21 (reference-first; 0 ❌, all 4 carry-over flags resolved)
+**Pass 3 status**: ✅ Complete 2026-06-22 (user physical-card check) — Korg Forged-by-Fire = two [STRENGTH][STRENGTH]; Infini-Tendrils = 4+ (reference typo corrected); Destiny Force = no printed attack/recruit (0). **FINALIZED.**
 
 > **Set composition (per reference):** 400 cards — 15 Transforming Heroes (14 Hero cards each + transform cards), 6 Transforming Masterminds (double-sided, 5 physical cards each), 7 Villain Groups (8 cards each), 3 Henchmen Groups (10 each), 8 Schemes, 4 special Bystanders. Teams: Avengers, S.H.I.E.L.D., Warbound, Crime Syndicate, Champions (and a "Brotherhood" referenced elsewhere; the Void Unchained / A-Bomb are unaffiliated).
 > **Title verification (handoff concern):** all 78 hero image titles were confirmed to match their filenames — the staging deductions were correct. The `UltraMassiveArmor` "promo" worry is cleared (it is the genuine transform card).
@@ -80,7 +81,7 @@ Standard structure per hero: 4 acquirable cards in 5/5/3/1 copies (Common A, Com
 | Korg | Move Mountains | Common B | 5 | 4 | Warbound | Strength | 2 | 0 |
 | Korg | Forged by Fire | Uncommon | 3 | 3 | Warbound | Strength | 0 | 2 |
 | Korg | Kronan Tactician | Rare | 1 | 8 | Warbound | Strength | 0+ | 0 |
-| Korg | Lord of Granite | Transform | 3 | 5 | Warbound | Covert ⚠️ | 0+ | 0 |
+| Korg | Lord of Granite | Transform | 3 | 5 | Warbound | Covert | 0+ | 0 |
 | Miek the Unhived | This Bug Smashes You | Common A | 5 | 3 | Warbound | Instinct | 2+ | 0 |
 | Miek the Unhived | Devouring Frenzy | Common B | 5 | 4 | Warbound | Instinct | 0 | 2 |
 | Miek the Unhived | Endless Appetite | Uncommon | 3 | 5 | Warbound | Instinct | 3 | 0 |
@@ -102,7 +103,7 @@ Standard structure per hero: 4 acquirable cards in 5/5/3/1 copies (Common A, Com
 | Rick Jones | Caught in Kree-Skrull War | Rare | 1 | 7 | S.H.I.E.L.D. | Covert | 4 | 0 |
 | Rick Jones | Captain Marvel | Transform | 5 | 5 | Avengers | Range | 2 | 0 |
 | Rick Jones | A-Bomb | Transform | 3 | 6 | (none) | Strength | 0+ | 0 |
-| Rick Jones | The Destiny Force | Transform | 1 | 9 | Avengers | Range | 0+ | 0 |
+| Rick Jones | The Destiny Force | Transform | 1 | 9 | Avengers | Range | 0 | 0 |
 | Sentry | Agoraphobia | Common A | 5 | 2 | Avengers | Covert | 0 | 0 |
 | Sentry | Rival Personalities | Common B | 5 | 4 | Avengers | Strength | 2+ | 0 |
 | Sentry | Mournful Sentinel | Uncommon | 3 | 3 | Avengers | Range | 0 | 2 |
@@ -134,11 +135,11 @@ Standard group total: **8 cards** each. `N*` = Shatter-style/variable Attack; `N
 |---|---|---|---|---|
 | Aspects of the Void | Black Anti-Hurricane | 2 | 6 | 4 |
 | Aspects of the Void | Demonform | 1 | 7 | 5 |
-| Aspects of the Void | Infini-Tendrils | 2 | 4+ ⚠️ | 3 |
+| Aspects of the Void | Infini-Tendrils | 2 | 4+ | 3 |
 | Aspects of the Void | Psychotic Break | 1 | — (Trap!) | 2 |
 | Aspects of the Void | Shadow Man | 2 | 5 | 3 |
 
-*⚠️ Infini-Tendrils Attack: card art reads **4+**; reference says **6+**. Recorded card value (image-primary); resolve in Pass 2/3. Wounded Fury on Infini-Tendrils; Feast on Demonform; Trap! on Psychotic Break.*
+*Infini-Tendrils Attack **4+** confirmed (Pass 3 physical card); reference's 6+ is a typo. Wounded Fury on Infini-Tendrils; Feast on Demonform; Trap! on Psychotic Break.*
 
 **Code Red** (8) — Covert-Hero themed throughout
 
@@ -270,7 +271,7 @@ The Sentry / The Void Tactics:  Pacifying Light, Power of a Million Exploding Su
 | Death's Heads | Death's Heads | 10 | 3 | 1 |
 | Sakaaran Hivelings | Sakaaran Hivelings | 10 | 3 | 1 |
 
-*⚠️ Printed name is "Cytoplasm Spikes" (the reference Main-list's "Cytoplasmic Spikes" is the outlier typo). Feast on Cytoplasm Spikes + Sakaaran Hivelings; Outwit on Death's Heads.*
+*Printed name is "Cytoplasm Spikes" (the reference Main-list's "Cytoplasmic Spikes" is the outlier typo) — confirmed. Feast on Cytoplasm Spikes + Sakaaran Hivelings; Outwit on Death's Heads.*
 
 ---
 
@@ -466,14 +467,14 @@ The Sentry / The Void Tactics:  Pacifying Light, Power of a Million Exploding Su
 
 **Forged by Fire** (Uncommon)
 - SPECIAL ABILITY: 2 Recruit.
-- SUPERPOWER: [STRENGTH] ⚠️: Transform this into Lord of Granite. *(⚠️ card art shows a single Strength trigger icon; reference shows two [STRENGTH][STRENGTH] — verify icon count in Pass 2)*
+- SUPERPOWER: [STRENGTH][STRENGTH]: Transform this into Lord of Granite. *(Pass 3 confirmed: two Strength trigger icons)*
 - TRANSFORM: → Lord of Granite (no destination printed → default to hand)
 
 **Kronan Tactician** (Rare)
 - SPECIAL ABILITY: Put all cards from the HQ on the bottom of the Hero Deck in random order. You get their total printed Attack.
 - SUPERPOWER: NA
 
-**Lord of Granite** (Transform) *(⚠️ class: reference says Covert; art ambiguous — verify Pass 2)*
+**Lord of Granite** (Transform)
 - SPECIAL ABILITY: Draw a card. Smash 3
 - SUPERPOWER: NA
 
@@ -637,7 +638,7 @@ The Sentry / The Void Tactics:  Pacifying Light, Power of a Million Exploding Su
 
 **Anger Management** (Common A)
 - SPECIAL ABILITY: 1+ Attack.
-- SUPERPOWER: [STRENGTH] ⚠️: Smash 3 *(⚠️ reference says Strength trigger; card-art icon read gray — verify Pass 2)*
+- SUPERPOWER: [STRENGTH]: Smash 3
 
 **Scarred Past** (Common B)
 - SPECIAL ABILITY: 2+ Attack.
@@ -676,7 +677,7 @@ Attack: 7 | VP: 5
 **Infini-Tendrils** (×2)
 Wounded Fury
 Ambush: Infini-Tendrils captures a Bystander.
-Attack: 4+ ⚠️ (reference says 6+) | VP: 3
+Attack: 4+ | VP: 3
 
 **Psychotic Break** (×1)
 Trap!
@@ -1153,10 +1154,10 @@ VP: 1
 - **Cytoplasm Spikes henchman name → ✅ confirmed** "Cytoplasm Spikes" (card art); reference Main-list "Cytoplasmic" is the typo. Flag cleared.
 - Card-wins typos confirmed (draft already correct, no change): "Tectonic" (Hulkbuster Common B), "Cross-Dimensional" (Fall of the Hulks), Primus Vand "adjacent to him", Ironclad "or KOs", Battle of Wits "your new hand".
 
-**⚠️ Items for physical Pass 3 (3 total):**
-1. **Korg "Forged by Fire" Superpower trigger icon count.** Reference shows TWO `[STRENGTH][STRENGTH]:`; Pass-1 draft (effect line) records ONE. Reference-first resolves to **two** (card art is ambiguous — a second adjacent icon can't be ruled out). *Pass 3: count the inline icons on the physical card; if two, change the draft's "Forged by Fire" Superpower from `[STRENGTH]` to `[STRENGTH][STRENGTH]`.*
-2. **Infini-Tendrils (Aspects of the Void) Fight value.** Card art unambiguously reads **4+** (clear "4"); reference says 6+ (typo). Draft's 4+ stands. *Pass 3: confirm the physical card's lower-right Fight number is 4.*
-3. **Rick Jones "The Destiny Force" base Attack notation.** Draft records `0+`, but it's an effect-only card with no printed attack value (it draws cards). Cleaner as `0` or `—`. *Pass 3: confirm no printed attack icon, then adjust notation.* (Notation only — no play impact.)
+**Physical Pass 3 (2026-06-22) — all 3 items RESOLVED:**
+1. **Korg "Forged by Fire" trigger → two `[STRENGTH][STRENGTH]`** (user confirmed two icons). Effect line updated.
+2. **Infini-Tendrils Fight → `4+`** (user confirmed; reference's 6+ was a typo). Table + effect updated.
+3. **Rick Jones "The Destiny Force" → Attack `0`** (user confirmed: no printed attack/recruit, just its cost). Table updated `0+`→`0`.
 
 **Undefined-here keywords (NOT Pass-3 inventory items — for `/analyze-expansion` + rules PDF):** Feast, Trap!, and the Void/Illuminati variants of Cross-Dimensional Rampage are not defined in this set's reference (carry from prior sets). Captured verbatim everywhere; do not flag their absence.
 
