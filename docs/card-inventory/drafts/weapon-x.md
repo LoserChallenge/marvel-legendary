@@ -106,7 +106,7 @@ Both groups are **8 cards each** (verified against reference total: 100 cards = 
 | Sabretooth | 8+ | 6 | Berserkers |
 | Epic Sabretooth | 9+ | 6 | Berserkers |
 
-> ⚠️ Omega Red "Always Leads: Any Villain Group" — unusual; most masterminds lead a specific group. Verify against physical card.
+> ✅ Omega Red "Always Leads: Any Villain Group" — confirmed (physical Pass 3). Genuinely leads any villain group, unlike the usual single-group lead.
 > Romulus: "+" = Weapon X Sequence (or Doubled for Epic) modifies fight value based on HQ card costs.
 > Sabretooth: "+" = Berserks once per Savagery stacked (Epic adds two more Berserks on top).
 
@@ -128,7 +128,7 @@ Sabretooth Tactics:
 | Scheme Name | Twist Count | Bystander Count |
 |---|---|---|
 | Condition Logan into Weapon X | 8 | — |
-| Go After Heroes' Loved Ones | 8/10/11⚠️ | — |
+| Go After Heroes' Loved Ones | 8/10/11 (1p=8 ✅) | — |
 | Wipe Heroes' Memories | Players + 4 | — |
 
 > "Go After Heroes' Loved Ones": 1 player: 8 Twists, 2-4 players: 10 Twists, 5 players: 11 Twists.

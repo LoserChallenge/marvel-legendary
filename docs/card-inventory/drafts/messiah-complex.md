@@ -458,7 +458,7 @@ Attack: 10* | VP: 4
 **Silver Samurai** (×2)
 Chivalrous Duel
 Ambush: The Villain in the city worth the most VP captures a Bystander.
-Fight: KO a card from your discard pile. *(⚠️ this Fight line is on the card but MISSING from the reference)*
+Fight: KO a card from your discard pile. *(Pass 3 confirmed printed on the card; reference omitted it.)*
 Attack: 3* | VP: 3
 
 **Scarlet Samurai** (×2) — Villain side
@@ -526,7 +526,7 @@ Master Strike: A card from the Bystander Stack ascends to become a 3 Attack "Pri
 Attack: 4+ | VP: 6
 
 **Epic Bastion, Fused Sentinel**
-Passive: All Sentinel enemies get +1 Attack for each Master Strike in the KO pile, even after Bastion is defeated. *(⚠️ Epic card prints "enemies"; Normal Bastion + reference say "Masterminds" — see flags)*
+Passive: All Sentinel enemies get +1 Attack for each Master Strike in the KO pile, even after Bastion is defeated. *(Pass 3 confirmed: Epic card prints "enemies" — broader than Normal Bastion's "Masterminds"; real Epic-vs-Normal gameplay difference.)*
 Always Leads: Purifiers and any Sentinel Henchmen Group.
 Master Strike: A card from the Bystander Stack ascends to become a 4 Attack "Prime Sentinel" Mastermind with "Fight: Rescue this. Master Strike: Each player reveals the top card of their deck and KOs it if it costs 1 or more."
 Attack: 6+ | VP: 6
@@ -700,7 +700,7 @@ Cost: 2
 
 **Boom-Boom** (×2)
 X-Force | Range
-- 0+ Attack *(⚠️ on card art; reference omits a base value — verify Pass 2)*
+- 0+ Attack *(Pass 3 confirmed printed on the card; reference omitted it.)*
 - Choose one of her nicknames:
   - "Time Bomb": You get +1 Attack and put this on top of your deck.
   - "Boomer": You get +3 Attack and put this on the bottom of the Sidekick Stack.
