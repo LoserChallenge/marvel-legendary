@@ -4741,6 +4741,9 @@ const villains = [
         ambushEffect: "None",
         fightEffect: "apocalypticMagnetoFight",
         escapeEffect: "apocalypticMagnetoEscape",
+        // Escape ascends Magneto to a Mastermind (keystone). Flag read by handleVillainEscape to
+        // skip the escaped-villain count — an ascending villain becomes a board threat, not an escapee.
+        ascendsToMastermind: true,
         fightCondition: "None",
         conditionType: "None",
         condition: "None",

@@ -697,7 +697,7 @@ async function resizeCityForScheme(activeSpaceIndices) {
         await new Promise((resolve) => {
           showPopup("Villain Escape", occupant, resolve);
         });
-        await handleVillainEscape(occupant); // pushes to escapedVillainsDeck + increments count once
+        await handleVillainEscape(occupant); // pushes to escapedVillainsDeck + increments count once (skipped for villains that ascend to a Mastermind)
         addHRToTopWithInnerHTML();
       }
       // KO any Location sitting in the destroyed space.
@@ -6177,13 +6177,20 @@ function handleVillainEscape(escapedVillain) {
   escapedVillain.ambushEffect = "organizedCrimeAmbush";
 }
 
-    // Move the villain itself to the Escaped Villains deck
-    escapedVillainsDeck.push(escapedVillain);
-    escapedVillainsCount++; // Increment the count of escaped villains
+    // Reasoned interpretation (Secret Wars Vol.1, Apocalyptic Magneto): a villain that ascends to a
+    // Mastermind on Escape does NOT count as an escaped villain. It transforms into a board-present
+    // threat (a new must-defeat Mastermind via its escapeEffect), it doesn't get away — so it must
+    // not feed escapedVillainsCount, which drives real escape-loss conditions. Skip the deck push +
+    // count for ascending villains; the escapeEffect (ascension) still runs in handleVillainEscapeActions.
+    if (!escapedVillain.ascendsToMastermind) {
+      // Move the villain itself to the Escaped Villains deck
+      escapedVillainsDeck.push(escapedVillain);
+      escapedVillainsCount++; // Increment the count of escaped villains
 
-    onscreenConsole.log(
-      `<span class="console-highlights">${escapedVillain.name}</span> has escaped.`,
-    );
+      onscreenConsole.log(
+        `<span class="console-highlights">${escapedVillain.name}</span> has escaped.`,
+      );
+    }
 
     // Call the function to handle KO action and discard action, and return its promise
     return handleVillainEscapeActions(escapedVillain).then(() => {
