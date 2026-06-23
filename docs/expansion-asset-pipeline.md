@@ -95,6 +95,18 @@ Prefix = CamelCase expansion name, no spaces (e.g. `Revelations_`, `HeroesOfAsga
 
 **Output:** `docs/card-inventory/drafts/[expansion].md`, following `docs/card-inventory/TEMPLATE.md` exactly. After all passes complete, move from `drafts/` to `final/` (same filename).
 
+## Team & Class Icon Source
+
+Official faction/team and class icon art (the small triangle team badges + the five class icons) lives **outside the repo** at:
+
+`D:\Games\Digital\Marvel Legendary\assets\LegendaryDividerLabelsKit\LegendaryDividerLabelsKit\Icon PNG files\`
+
+Standalone full-color PNGs, no extraction needed. This is the kit the already-shipped FantasticFour/GuardiansOfTheGalaxy team icons came from — use it as the default source for any new expansion's team icons. Available teams include: Avengers, X-Men, X-Force, Hydra, Brotherhood, Sinister Six, Enemies of Asgard, Crime Syndicate, Marvel Knights, Fantastic Four, Guardians of the Galaxy, **Cabal**, **Illuminati** (several have `_v2` refreshed variants — prefer `_v2` when present). Plus class icons (strength/instinct/covert/tech/ranged) and shield/spiderman/xmen/xforce/avengers marks.
+
+These are display-as-is art, not monochrome mask glyphs — render via `<img>`/`background-image`, don't recolor via CSS `mask-image` (would lose the art). Copy the needed ones into `Visual Assets/` per the team-icon path convention during build.
+
+(A separate `assets\icons_v2.svg\icons_v2.svg` sprite sheet also exists but the PNG kit above is the simpler source — individual files, no sprite-slicing.)
+
 ## Pipeline Status
 
 See `docs/expansion-pipeline-status.md` for the full status table and per-expansion session handoff notes.
