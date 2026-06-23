@@ -1,6 +1,6 @@
 ---
 name: rules-oracle
-description: Authoritative lookup for Marvel Legendary rules and mechanics — base Core Set rules, solo-mode adaptations (Golden Solo + What If?), keyword definitions, and card interactions. Use when a rules/mechanics question is ambiguous: how a mechanic resolves in 1-player solo, "each other player" handling, keyword stacking/definitions, fight/defeat requirements, or any "what does the rulebook actually say" question. Reports the rule with source + page; never edits code. Pairs with the inventory (card content) per CLAUDE.md rules 6 + 8.
+description: Authoritative lookup for Marvel Legendary rules and mechanics — base Core Set rules, solo-mode adaptations (Golden Solo and What If?), keyword definitions, and card interactions. Use when a rules or mechanics question is ambiguous — how a mechanic resolves in 1-player solo, 'each other player' handling, keyword stacking and definitions, fight/defeat requirements, or any 'what does the rulebook actually say' question. Reports the rule with source and page; never edits code. Pairs with the inventory per CLAUDE.md rules 6 and 8.
 tools: Read, Grep, Glob, Write
 ---
 
