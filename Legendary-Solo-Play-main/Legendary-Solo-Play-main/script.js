@@ -11763,6 +11763,15 @@ if (card.temporaryTeleport === true) {
     if (card.temporaryTeleport === true) {
       delete card.temporaryTeleport;
       card.keyword3 = "None";
+      // Strip the temporary "Teleport" keyword granted THIS turn (Azazel / Inferno Nightcrawler
+      // pattern) so a granted-but-unplayed hand card doesn't keep Teleport permanently — play-time
+      // eligibility reads card.keywords (script.js:11288). Mirrors the cardsPlayedThisTurn cleanup
+      // (~script.js:11620). Gated to temporaryTeleport cards only, so innate-Teleport cards are
+      // untouched (grant logic never sets temporaryTeleport on a card that already has Teleport).
+      // SWV1 Finding D / base-game-bug-audit B7.
+      if (card.keywords && Array.isArray(card.keywords)) {
+        card.keywords = card.keywords.filter((keyword) => keyword !== "Teleport");
+      }
     }
   });
 
