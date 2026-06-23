@@ -61,14 +61,27 @@ Does NOT touch `sidekickRecruited` or recruit points (per insert: gain ≠ recru
 - Authoring: front section + keystone authored by lead; 4 per-card drafts via parallel subagents (inventory + mechanics-doc inputs), every block reviewed against the inventory before freeze.
 - **HOLD Phase 3** pending coordinator review of the frozen spec + ratification of Open Questions Q1–Q7. None block the keystone (3a-1); Q1–Q7 gate specific consumers in 3b–3e.
 
-## Phase 3: Effects — ⬜ Not started
-- 3a-1 **KEYSTONE — Multiple Masterminds engine** (core change, infrastructure-first): ⬜
-- 3a-2 Other keywords & helpers: ⬜
+## Phase 3: Effects — 🟨 In progress
+- 3a-1 **KEYSTONE — Multiple Masterminds engine** (core change, infrastructure-first): ✅ built (commit `7e58d01`) + coordinator-reviewed (PASS) + **dual-mode `/game-test` PASS 2026-06-23** (see below).
+- 3a-2 Other keywords & helpers: 🟨 `gainSidekick()` helper built (expansionSecretWarsVol1.js) — cost-free/cap-free, empty-stack guard, 3 destinations; validator + code-review clean. Remaining 3a-2 keywords (Teleport grant, Cross-Dim Rampage, no-rules-text predicate, etc.) still ⬜.
 - 3b Heroes (14): ⬜
-- 3c Villains (4 groups; incl. Magneto ascension → keystone consumer; Manhattan/Thor-Corps gain-as-hero): ⬜
+- 3c Villains: 🟨 **Apocalyptic Magneto built EARLY** (keystone consumer) — `apocalypticMagnetoFight` (reuses `recruitXMen`), `apocalypticMagnetoEscape` (reuses keystone `ascendToMastermind` + base `magnetoStrike`). Remaining Domain/Limbo/Manhattan/Sentinel villains ⬜.
 - 3d Masterminds (Madelyne + Demon Goblins/fight-gate; Nimrod ≥6-recruit gate): ⬜
 - 3e Schemes (8; Dark Alliance → keystone consumer; 3 gated on open decisions): ⬜
 - 3f Henchmen/Bystanders (M.O.D.O.K.s, Thor Corps, Banker): ⬜
+
+### Keystone dual-mode `/game-test` — ✅ PASS (2026-06-23), both `golden` + `whatif`
+Validated via Apocalyptic Magneto ascension (state-injection; randomize-all start, then direct fn calls):
+1. **Escape → secondary** ✅ `apocalypticMagnetoEscape` registers 1 ascended secondary (attack 8, VP 6, 0 tactics, `masterStrike:"magnetoStrike"`); `#mastermind-2` slot renders with "8" overlay + correct art.
+2. **Master Strike → both fire** ✅ real `handleMasterStrike` loop fires the main MM's strike AND the secondary's (`magnetoStrike`); `mastermindDefeated` stays false.
+3. **One-fight defeat → VP-6 Villain** ✅ spend 8 → ascended Magneto lands in Victory Pile as `type:"Villain", victoryPoints:6`; slot hides.
+4. **Win gate** ✅ both directions: win fires ONLY when main MM defeated AND `allSecondaryMastermindsDefeated()`; a live secondary blocks the win even with main defeated.
+5. **Golden Assertion 4** ✅ `secondaryMasterminds` referenced nowhere in Final-Showdown/cumulative-points math (grep-confirmed: only master-strike loop, win-gate helpers, registration, slot render, click listener) — secondary is a separate must-kill gate, NOT folded into Showdown points; main 4-defeat→Showdown flow unchanged.
+6. **Fight smoke** ✅ `apocalypticMagnetoFight` → X-Men HQ slots selectable, non-X-Men greyed, chosen hero → discard, slot refilled. ⚠️ **but** recruit went 0→+3 (hero.cost), see finding below.
+
+### Findings surfaced this session (for coordinator)
+- ⚠️ **`recruitXMen` over-credits recruit (pre-existing BASE bug, not introduced here).** `recruitHeroConfirmed` no longer deducts cost (script.js:18843-18389 — caller does via `spendRecruitCost`), but `recruitXMen` still does `totalRecruitPoints += hero.cost` with no offsetting spend → net **+cost** recruit instead of free (net 0). Affects base Magneto "Bitter Captor" tactic AND Apocalyptic Magneto Fight. **Recommend** central 1-line fix in `recruitXMen` (drop the `+= hero.cost` / negative-zone twin) — benefits base too. NOT unilaterally patched (shared base code; affects shipped base Magneto). Decision needed.
+- ℹ️ **Escape double-existence (cosmetic).** On escape the engine pushes Magneto to `escapedVillainsDeck` + increments `escapedVillainsCount` (script.js:6181-6182) BEFORE the escape effect ascends him. No double-VP (ascended is a separate logical object; revert uses `createVillainCopy(sourceCard)`). But Magneto also counts as an "escaped villain" toward escape-based loss conditions. Minor; flag for ruling — arguably an ascended MM shouldn't count as escaped.
 
 ## Phase 4: Validation — ⬜ Not started
 <!-- /expansion-audit + MANDATORY dual-mode gate (multi-mastermind touches rows 4/6/8) + guided test -->
