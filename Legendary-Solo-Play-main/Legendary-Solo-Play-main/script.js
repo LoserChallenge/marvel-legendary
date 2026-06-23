@@ -896,6 +896,12 @@ let popupMinimized = false;
 let deadpoolRare = false;
 let gameIsOver = false;
 let mastermindDefeated = false;
+// Secret Wars Vol.1 — Multiple-Masterminds keystone. The MAIN mastermind keeps the existing
+// single-mastermind flow (DOM radio + getSelectedMastermind + the 4-defeats/Final-Showdown win).
+// Additional masterminds (ascended villains like Apocalyptic Magneto, or scheme-added ones like
+// Dark Alliance) live here as an array of must-kill gates. `mastermindDefeated` (above) means the
+// WHOLE mastermind battle is won = main defeated AND every secondary defeated.
+let secondaryMasterminds = [];
 let alwaysLeadsText = "";
 let moonKnightGoldenAnkhOfKhonshuBystanders = false;
 let moonKnightLunarCommunionKO = 0;
@@ -5836,8 +5842,27 @@ function handleMasterStrike(masterStrikeCard) {
       return;
     }
 
-    // Then always handle the Master Strike effect
-    await handleMasterStrikeEffect(masterStrikeCard);
+    // Multiple Masterminds: fire the MAIN mastermind's Master Strike (only if it isn't yet
+    // defeated), then each undefeated secondary mastermind's Master Strike in turn. In solo the
+    // active player resolves them sequentially ("pick order" is moot with one of each in scope).
+    const mainMM = getSelectedMastermind();
+    if (!isMastermindDefeated(mainMM)) {
+      await handleMasterStrikeEffect(masterStrikeCard);
+    } else {
+      // Main already defeated but a secondary keeps the battle going — the strike card is still
+      // KO'd here; a defeated main fires nothing.
+      playSFX("master-strike");
+      koPile.push(masterStrikeCard);
+      onscreenConsole.log(
+        `<span class="console-highlights">Master Strike!</span> <span class="console-highlights">${mainMM.name}</span> is already defeated — no effect from them.`,
+      );
+    }
+
+    for (const sm of secondaryMasterminds) {
+      if (!sm.defeated && sm.masterStrike) {
+        await fireSecondaryMasterStrike(sm);
+      }
+    }
 
     const incomingDetectors = playerArtifacts.filter((card) => card.name === "Rocket Raccoon - Incoming Detector");
 for (let i = 0; i < incomingDetectors.length; i++) {
@@ -8957,6 +8982,7 @@ if (stackedTwistNextToMastermind > 0) {
       }
 
       updateMastermindOverlay();
+      updateSecondaryMastermindSlot(); // Multiple Masterminds: render the 2nd mastermind board slot
 
       const mastermind = getSelectedMastermind();
       const mastermindContainer = document.getElementById("mastermind");
@@ -12909,7 +12935,10 @@ function createVillainCopy(villainCard) {
     // fight-effect can show "Dr. Calvin Zabo" vs "Mister Hyde". Captured from the last render
     // (correct — position can't change between render and the defeat click). NOT mutated onto
     // card.name (that is the findIndex identity key and would corrupt lookups).
-    usesRecruitToFight: villainCard.usesRecruitToFight
+    usesRecruitToFight: villainCard.usesRecruitToFight,
+    // Secret Wars Vol.1 — Multiple Masterminds: ascension config (e.g. Apocalyptic Magneto) must
+    // survive the fight copy so the Escape handler can read it when the villain leaves the city.
+    ascendsToMastermind: villainCard.ascendsToMastermind
   };
 }
 
@@ -15560,6 +15589,15 @@ document
   .getElementById("mastermind")
   .addEventListener("click", handleMastermindClick);
 
+// Multiple Masterminds: the 2nd mastermind slot routes clicks to the active secondary mastermind.
+const secondaryMastermindSlot = document.getElementById("mastermind-2");
+if (secondaryMastermindSlot) {
+  secondaryMastermindSlot.addEventListener("click", () => {
+    const sm = secondaryMasterminds.find((m) => !m.defeated);
+    if (sm) handleSecondaryMastermindClick(sm);
+  });
+}
+
 function showMastermindAttackButton() {
   let mastermind = getSelectedMastermind();
   const mastermindAttackButton = document.getElementById(
@@ -15756,7 +15794,13 @@ async function confirmMastermindAttack() {
       victoryPile.push(finalBlowCard);
       updateGameBoard();
 
-      if (gameMode === GOLDEN_SOLO) {
+      if (hasActiveSecondaryMastermind()) {
+        // Multiple Masterminds: the main mastermind is beaten but another mastermind is still in
+        // play — the battle isn't won until every mastermind is defeated. Don't declare victory yet.
+        onscreenConsole.log(
+          `You defeated <span class="console-highlights">${mastermind.name}</span>, but another Mastermind still stands — defeat them too to win!`,
+        );
+      } else if (gameMode === GOLDEN_SOLO) {
         onscreenConsole.log(
           `<span class="console-highlights">ULTIMATE VICTORY!</span> You won the Final Showdown against <span class="console-highlights">${mastermind.name}</span>!`,
         );
@@ -15765,7 +15809,7 @@ async function confirmMastermindAttack() {
           `You delivered the Final Blow to <span class="console-highlights">${mastermind.name}</span>!`,
         );
       }
-      checkWinCondition(); // will succeed now that tactics=0 and finalBlowDelivered=true
+      checkWinCondition(); // succeeds only once tactics=0, finalBlowDelivered=true, AND all secondaries defeated
     }
 
     // Collect all possible operations
@@ -16538,9 +16582,305 @@ document.getElementById("finish-turn-button").addEventListener("click", () => {
 function checkWinCondition() {
   const mastermind = getSelectedMastermind();
 
-  if (isMastermindDefeated(mastermind)) {
+  // Multiple Masterminds: the game's mastermind battle is only won when the MAIN mastermind is
+  // defeated AND every additional (secondary) mastermind is defeated. While any secondary survives,
+  // a defeated main does NOT end the game — `mastermindDefeated` stays false so Master Strikes and
+  // defeat checks keep running. Re-called whenever a secondary is defeated, so the win fires then.
+  if (isMastermindDefeated(mastermind) && allSecondaryMastermindsDefeated()) {
     showFinishTurnPopup();
-    mastermindDefeated = true; // your existing flag
+    mastermindDefeated = true; // your existing flag — now means the FULL battle is won
+  }
+}
+
+// Multiple Masterminds keystone helpers ------------------------------------------------------
+function allSecondaryMastermindsDefeated() {
+  return secondaryMasterminds.every((sm) => sm.defeated);
+}
+
+function hasActiveSecondaryMastermind() {
+  return secondaryMasterminds.some((sm) => !sm.defeated);
+}
+
+// Points available to defeat a secondary mastermind, mirroring the main fight's basic rules
+// (Negative Zone swaps Recruit for Attack; recruitUsedToAttack lets Recruit top up Attack).
+// NOTE: the secondary fight intentionally skips the main fight's forcefield/Bribe/counter machinery
+// — no in-scope secondary mastermind (Apocalyptic Magneto, Dark Alliance) carries those.
+function secondaryAvailablePoints() {
+  if (negativeZoneAttackAndRecruit) return totalRecruitPoints;
+  let pts = totalAttackPoints;
+  if (recruitUsedToAttack) pts += totalRecruitPoints;
+  return pts;
+}
+
+function spendForSecondaryDefeat(required) {
+  if (negativeZoneAttackAndRecruit) {
+    totalRecruitPoints -= required;
+    return;
+  }
+  let remaining = required;
+  const fromAttack = Math.min(totalAttackPoints, remaining);
+  totalAttackPoints -= fromAttack;
+  remaining -= fromAttack;
+  if (remaining > 0 && recruitUsedToAttack) {
+    totalRecruitPoints -= remaining;
+  }
+}
+
+// Register an ASCENDED mastermind (e.g. Apocalyptic Magneto on Escape): no Tactics, defeated by a
+// single fight at `defeatAttack` (its printed villain Attack), then reverts to a normal VP villain.
+function ascendToMastermind(sourceCard, opts = {}) {
+  const {
+    masterStrikeFn = null,
+    masterStrikeConsoleLog = "",
+    defeatAttack = (sourceCard && (sourceCard.originalAttack || sourceCard.attack)) || 0,
+    vp = 6,
+    name = sourceCard ? sourceCard.name : "Ascended Mastermind",
+    image = sourceCard ? sourceCard.image : "",
+  } = opts;
+
+  const sm = {
+    name,
+    image,
+    attack: defeatAttack, // no Tactics → this is the one-fight defeat cost
+    victoryPoints: vp,
+    tactics: [],
+    ascended: true,
+    sourceCard,
+    masterStrike: masterStrikeFn, // function name (string) OR direct fn
+    masterStrikeConsoleLog,
+    defeated: false,
+  };
+  secondaryMasterminds.push(sm);
+  onscreenConsole.log(
+    `<span class="console-highlights">${name}</span> has ascended to become a Mastermind! Defeat every Mastermind to win.`,
+  );
+  updateGameBoard();
+  return sm;
+}
+
+// Register a FULL secondary mastermind (e.g. Dark Alliance's added Mastermind) — real strength,
+// accrues Tactics over Twists (Phase 3e wires the scheme specifics). Defeated like a normal
+// mastermind: one fight clears one Tactic; fully defeated once no Tactics remain.
+function addSecondaryMastermind(config = {}) {
+  const sm = {
+    name: config.name,
+    image: config.image,
+    attack: config.attack || 0,
+    victoryPoints: config.victoryPoints || 0,
+    tactics: config.tactics || [],
+    ascended: false,
+    sourceCard: null,
+    masterStrike: config.masterStrike || null,
+    masterStrikeConsoleLog: config.masterStrikeConsoleLog || "",
+    defeated: false,
+  };
+  secondaryMasterminds.push(sm);
+  onscreenConsole.log(
+    `<span class="console-highlights">${sm.name}</span> joins the battle as an additional Mastermind!`,
+  );
+  updateGameBoard();
+  return sm;
+}
+
+async function fireSecondaryMasterStrike(sm) {
+  const fn =
+    typeof sm.masterStrike === "function" ? sm.masterStrike : window[sm.masterStrike];
+  onscreenConsole.log(
+    `<span class="console-highlights">Master Strike!</span> ${sm.masterStrikeConsoleLog || `<span class="console-highlights">${sm.name}</span> strikes!`}`,
+  );
+  playSFX("master-strike");
+  await showSecondaryMasterStrikePopup(sm);
+  if (typeof fn === "function") {
+    try {
+      await fn();
+    } catch (error) {
+      console.error(`Secondary Master Strike error (${sm.name}): ${error}`);
+    }
+  }
+  addHRToTopWithInnerHTML();
+}
+
+// Self-contained announcement popup for a secondary mastermind's Master Strike (showPopup's
+// "Master Strike" branch reads the MAIN mastermind's text, so it can't be reused here). Modeled
+// on showTacticPopup. The strike's actual effect runs after this popup is dismissed; the
+// highlighted effect text is logged to the on-screen console by fireSecondaryMasterStrike.
+function showSecondaryMasterStrikePopup(sm) {
+  return new Promise((resolve) => {
+    const popup = document.querySelector(".info-or-choice-popup");
+    const popupTitle = document.querySelector(".info-or-choice-popup-title");
+    const popupContext = document.querySelector(".info-or-choice-popup-instructions");
+    const popupImage = document.querySelector(".info-or-choice-popup-preview");
+    const confirmBtn = document.getElementById("info-or-choice-popup-confirm");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const closeButton = document.querySelector(".info-or-choice-popup-closebutton");
+    const otherChoice = document.getElementById("info-or-choice-popup-otherchoice");
+    const nothanks = document.getElementById("info-or-choice-popup-nothanks");
+
+    popupTitle.innerText = "Master Strike";
+    popupImage.style.display = "block";
+    popupImage.style.backgroundImage = `url("${sm.image}")`;
+    popupContext.textContent = `${sm.name} unleashes a Master Strike!`;
+    confirmBtn.innerText = getRandomConfirmText();
+    if (otherChoice) otherChoice.style.display = "none";
+    if (nothanks) nothanks.style.display = "none";
+
+    popup.style.display = "block";
+    modalOverlay.style.display = "block";
+
+    const onConfirm = () => {
+      closeInfoChoicePopup();
+      resolve();
+    };
+    confirmBtn.onclick = onConfirm;
+    closeButton.onclick = onConfirm;
+  });
+}
+
+async function handleSecondaryMastermindClick(sm) {
+  if (!sm || sm.defeated) return;
+  const required = sm.attack;
+  const available = secondaryAvailablePoints();
+  const icon = negativeZoneAttackAndRecruit
+    ? `<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">`
+    : `<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">`;
+
+  if (available < required) {
+    onscreenConsole.log(
+      `You need ${required}${icon} to defeat <span class="console-highlights">${sm.name}</span>. You have ${available}.`,
+    );
+    return;
+  }
+
+  const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+    `Spend ${required}${icon} to defeat <span class="console-highlights">${sm.name}</span>?`,
+    "Defeat",
+    "Not yet",
+  );
+  document.querySelector(".info-or-choice-popup-title").textContent = sm.name;
+  const previewArea = document.querySelector(".info-or-choice-popup-preview");
+  if (previewArea && sm.image) {
+    previewArea.style.backgroundImage = `url('${sm.image}')`;
+    previewArea.style.backgroundSize = "contain";
+    previewArea.style.backgroundRepeat = "no-repeat";
+    previewArea.style.backgroundPosition = "center";
+    previewArea.style.display = "block";
+  }
+
+  confirmButton.onclick = async () => {
+    closeInfoChoicePopup();
+    await confirmSecondaryMastermindAttack(sm);
+  };
+  denyButton.onclick = () => {
+    closeInfoChoicePopup();
+  };
+}
+
+async function confirmSecondaryMastermindAttack(sm) {
+  if (!sm || sm.defeated) return;
+  const required = sm.attack;
+  if (secondaryAvailablePoints() < required) {
+    onscreenConsole.log(
+      `Not enough points to defeat <span class="console-highlights">${sm.name}</span>.`,
+    );
+    return;
+  }
+  playSFX("attack");
+  spendForSecondaryDefeat(required);
+  updateReserveAttackAndRecruit();
+  onscreenConsole.log(
+    `You spent ${required} to attack <span class="console-highlights">${sm.name}</span>!`,
+  );
+  defeatSecondaryMastermind(sm);
+  updateGameBoard();
+}
+
+function defeatSecondaryMastermind(sm) {
+  // Full secondary masterminds (Dark Alliance) clear one Tactic per fight; only fully defeated once
+  // no Tactics remain. Ascended masterminds (Apocalyptic Magneto) have no Tactics → one fight.
+  if (sm.tactics && sm.tactics.length > 0) {
+    const tactic = sm.tactics.pop();
+    if (tactic && !tactic.transformsToLocation) victoryPile.push(tactic);
+    onscreenConsole.log(
+      `You cleared one of <span class="console-highlights">${sm.name}</span><span class="bold-spans">'s</span> Tactics — ${sm.tactics.length} remaining.`,
+    );
+    updateGameBoard();
+    return;
+  }
+
+  sm.defeated = true;
+
+  if (sm.ascended && sm.sourceCard) {
+    // The ascended Mastermind reverts to a normal Villain card in the Victory Pile (printed VP).
+    const villain = createVillainCopy(sm.sourceCard);
+    villain.type = "Villain";
+    villain.attack = sm.sourceCard.originalAttack || sm.sourceCard.attack || sm.attack;
+    villain.victoryPoints = sm.victoryPoints;
+    villain.fightEffect = "";
+    villain.ascendsToMastermind = false;
+    victoryPile.push(villain);
+    onscreenConsole.log(
+      `You defeated <span class="console-highlights">${sm.name}</span>! They join your Victory Pile as a ${sm.victoryPoints}-VP Villain.`,
+    );
+  } else {
+    victoryPile.push({
+      name: sm.name,
+      type: "Mastermind",
+      victoryPoints: sm.victoryPoints,
+      image: sm.image,
+    });
+    onscreenConsole.log(
+      `You defeated <span class="console-highlights">${sm.name}</span>!`,
+    );
+  }
+
+  updateGameBoard();
+  checkWinCondition();
+}
+
+// Render the second mastermind board slot (#mastermind-2). In scope there is at most one active
+// secondary mastermind at a time; the slot hides when none is active (so the board layout is
+// unaffected in normal games). Shows the card image, its defeat value, and any Tactic count.
+function updateSecondaryMastermindSlot() {
+  const slot = document.getElementById("mastermind-2");
+  if (!slot) return;
+  const placeholder = document.getElementById("mastermind-2-image-placeholder");
+  const sm = secondaryMasterminds.find((m) => !m.defeated);
+
+  if (!sm) {
+    slot.style.display = "none";
+    if (placeholder) placeholder.replaceChildren();
+    slot.classList.remove("attackable");
+    return;
+  }
+
+  slot.style.display = "flex";
+  if (placeholder) {
+    placeholder.replaceChildren();
+    const img = document.createElement("img");
+    img.src = sm.image;
+    img.alt = sm.name;
+    img.classList.add("card-image");
+    const attackOverlay = document.createElement("div");
+    attackOverlay.className = "mastermind-attack-overlay";
+    attackOverlay.textContent = sm.attack;
+    placeholder.appendChild(img);
+    placeholder.appendChild(attackOverlay);
+  }
+
+  const tacticLabel = document.getElementById("mastermind-2-tactic-count");
+  if (tacticLabel) {
+    if (sm.tactics && sm.tactics.length > 0) {
+      tacticLabel.textContent = `Tactics: ${sm.tactics.length}`;
+      tacticLabel.style.display = "block";
+    } else {
+      tacticLabel.style.display = "none";
+    }
+  }
+
+  if (secondaryAvailablePoints() >= sm.attack) {
+    slot.classList.add("attackable");
+  } else {
+    slot.classList.remove("attackable");
   }
 }
 
