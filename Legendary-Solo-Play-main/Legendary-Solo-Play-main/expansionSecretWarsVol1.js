@@ -84,7 +84,82 @@ function crossDimensionalRampage(familyNames, villainName) {
   });
 }
 
+// gainVillainAsHero() — SHARED converter for "Fight: Gain this as a Hero" (Manhattan Earth-1610
+// villains + Thor Corps henchmen). Generalizes gainScarletWitchAsHero() (expansionRevelations.js):
+// runs on the fight COPY during defeat, flips it to its Hero form, and routes it to the discard pile.
+// The real card's `gainAsHero` DB flag already skipped the Victory-Pile push (script.js defeat
+// handlers), so this is the only place the card lands. Rules (insert p.1): a gained Hero's cost = its
+// old Villain Attack value — passed in heroForm.cost. The installed ability fields fire only when the
+// card is LATER played as a Hero (engine play-flow), never at gain time.
+function gainVillainAsHero(villainCopy, heroForm) {
+  if (!villainCopy) return;
+  villainCopy.type = "Hero";
+  villainCopy.heroName = heroForm.heroName || villainCopy.name;
+  villainCopy.team = heroForm.team;
+  villainCopy.classes = [...heroForm.classes];
+  villainCopy.color = heroForm.color;
+  villainCopy.cost = heroForm.cost;
+  villainCopy.attack = heroForm.attack || 0;
+  villainCopy.recruit = heroForm.recruit || 0;
+  villainCopy.attackIcon = !!heroForm.attackIcon;
+  villainCopy.recruitIcon = !!heroForm.recruitIcon;
+  villainCopy.bonusAttack = heroForm.bonusAttack || 0;
+  villainCopy.bonusRecruit = heroForm.bonusRecruit || 0;
+  // Flat (non-multiplied) superpower payout — bonusAttack() reads these and takes its simple path.
+  villainCopy.multiplier = "None";
+  villainCopy.multiplierAttribute = "None";
+  villainCopy.multiplierLocation = "None";
+  villainCopy.unconditionalAbility = heroForm.unconditionalAbility || "None";
+  villainCopy.conditionalAbility = heroForm.conditionalAbility || "None";
+  villainCopy.conditionType = heroForm.conditionType || "None";
+  villainCopy.condition = heroForm.condition || "None";
+  villainCopy.invulnerability = "None";
+  villainCopy.keywords = heroForm.keywords ? [...heroForm.keywords] : [];
+  // Strip villain residue so the gained Hero carries no fight/escape/ambush behavior or attack overlay.
+  villainCopy.fightEffect = "";
+  villainCopy.escapeEffect = "None";
+  villainCopy.ambushEffect = "None";
+  villainCopy.gainAsHero = false;
+  villainCopy.attackFromScheme = 0;
+  villainCopy.overlayTextAttack = "";
+  playerDiscardPile.push(villainCopy);
+  onscreenConsole.log(
+    `You defeated <span class="console-highlights">${villainCopy.name}</span> and gained it as a Hero — added to your discard pile.`,
+  );
+  updateGameBoard();
+}
+
 // --- HERO CARD ABILITIES ---
+
+// Manhattan — Ultimate Captain America hero form: "You get +1 Attack for each color of Hero you have."
+// Unconditional (fires every play). Solo = active player. Counts DISTINCT colors among Heroes in play
+// this turn (cardsPlayedThisTurn, type Hero — includes this card). Updates BOTH attack totals (the
+// Final-Showdown cumulative twin rule). NOTE: "color of Hero you have" scope is the narrowest reading
+// that satisfies the frozen spec assertion ("3 distinct colors in play → +3"); flagged to coordinator.
+function ultimateCaptainAmericaBonusAttack(card) {
+  const heroesInPlay = cardsPlayedThisTurn.filter((c) => c && c.type === "Hero");
+  const distinctColors = new Set(heroesInPlay.map((c) => c.color).filter(Boolean));
+  const bonus = distinctColors.size;
+  totalAttackPoints += bonus;
+  cumulativeAttackPoints += bonus;
+  onscreenConsole.log(
+    `<span class="console-highlights">Ultimate Captain America</span> — +${bonus}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> for ${bonus} distinct Hero color${bonus !== 1 ? "s" : ""} in play.`,
+  );
+  updateGameBoard();
+}
+
+// Manhattan — Ultimate Wasp hero form: "[COVERT]: You get +2 Attack." Superpower (conditionType
+// "playedCards", condition "Covert"). Mirrors the base ThorBonusAttack pattern: log + bonusAttack(),
+// which adds card.bonusAttack (=2) to both attack totals.
+function ultimateWaspBonusAttack(card) {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+  onscreenConsole.log(
+    `+2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  bonusAttack();
+}
 
 // --- VILLAIN CARD EFFECTS ---
 
@@ -393,6 +468,79 @@ async function infernoNightcrawlerFight(villainCard) {
     eligible = eligible.filter((c) => c !== choice);
   }
   updateGameBoard();
+}
+
+// Manhattan (Earth-1610) — all four: "Fight: Gain this as a Hero." The DB entries carry gainAsHero:true
+// (skips the Victory-Pile push, script.js defeat handlers) and a fightEffect that calls the shared
+// gainVillainAsHero() converter with the card's Hero form (inventory Section 1 hero-stats table).
+// Hero cost = old Villain Attack value (insert p.1). These have no VP (gained as Heroes, not scored).
+
+// Ultimate Captain America (DB id 289, Villain Attack 6) → Avengers / Strength / 0+ Attack,
+// "You get +1 Attack for each color of Hero you have" (unconditional, fires on later play).
+async function ultimateCaptainAmericaFight(villainCopy) {
+  gainVillainAsHero(villainCopy, {
+    team: "Avengers",
+    classes: ["Strength"],
+    color: "Green",
+    cost: 6,
+    attack: 0,
+    attackIcon: true,
+    unconditionalAbility: "ultimateCaptainAmericaBonusAttack",
+  });
+}
+
+// Ultimate Captain Marvel (DB id 290, Villain Attack 4) → Avengers / Range / 2 Recruit, Teleport keyword.
+async function ultimateCaptainMarvelFight(villainCopy) {
+  gainVillainAsHero(villainCopy, {
+    team: "Avengers",
+    classes: ["Range"],
+    color: "Blue",
+    cost: 4,
+    recruit: 2,
+    recruitIcon: true,
+    keywords: ["Teleport"],
+  });
+}
+
+// Ultimate Thor (DB id 291, Villain Attack 7) → Avengers / Range / 3+ Attack, "[RANGED]: You get +3
+// Attack" (superpower → reuse base ThorBonusAttack + bonusAttack:3, condition Range).
+async function ultimateThorFight(villainCopy) {
+  gainVillainAsHero(villainCopy, {
+    team: "Avengers",
+    classes: ["Range"],
+    color: "Blue",
+    cost: 7,
+    attack: 3,
+    attackIcon: true,
+    bonusAttack: 3,
+    conditionalAbility: "ThorBonusAttack",
+    conditionType: "playedCards",
+    condition: "Range",
+  });
+}
+
+// Ultimate Thor Escape: "Cross-Dimensional Thor Rampage." SHARED helper — reveal a "Thor"-family card
+// (name contains "Thor") in hand / played / Victory Pile, or gain a Wound. Independent of the Fight
+// converter (an escaping Thor is never gained as a Hero).
+async function ultimateThorEscape(villainCard) {
+  await crossDimensionalRampage(["Thor"], "Ultimate Thor");
+}
+
+// Ultimate Wasp (DB id 292, Villain Attack 5) → Avengers / Covert / 2+ Attack, "[COVERT]: You get +2
+// Attack" (superpower → ultimateWaspBonusAttack + bonusAttack:2, condition Covert).
+async function ultimateWaspFight(villainCopy) {
+  gainVillainAsHero(villainCopy, {
+    team: "Avengers",
+    classes: ["Covert"],
+    color: "Red",
+    cost: 5,
+    attack: 2,
+    attackIcon: true,
+    bonusAttack: 2,
+    conditionalAbility: "ultimateWaspBonusAttack",
+    conditionType: "playedCards",
+    condition: "Covert",
+  });
 }
 
 // --- SCHEME TWIST EFFECTS ---

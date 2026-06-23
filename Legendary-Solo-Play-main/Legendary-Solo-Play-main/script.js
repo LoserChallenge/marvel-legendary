@@ -12962,7 +12962,10 @@ function createVillainCopy(villainCard) {
     usesRecruitToFight: villainCard.usesRecruitToFight,
     // Secret Wars Vol.1 — Multiple Masterminds: ascension config (e.g. Apocalyptic Magneto) must
     // survive the fight copy so the Escape handler can read it when the villain leaves the city.
-    ascendsToMastermind: villainCard.ascendsToMastermind
+    ascendsToMastermind: villainCard.ascendsToMastermind,
+    // Secret Wars Vol.1 — Villains/Henchmen gained as Heroes (Manhattan Earth-1610, Thor Corps):
+    // the gain-as-Hero converter runs on the fight COPY, so the flag must survive the copy.
+    gainAsHero: villainCard.gainAsHero
   };
 }
 
@@ -13410,7 +13413,9 @@ async function handlePostDefeat(
       }
     } else {
       try {
-        if (!villainCard.skrulled && villainCard.team !== "Infinity Gems") {
+        // Secret Wars Vol.1: gainAsHero villains (Manhattan Earth-1610, Thor Corps) skip the
+        // Victory-Pile push — their fightEffect converter routes them to the discard pile as a Hero.
+        if (!villainCard.skrulled && !villainCard.gainAsHero && villainCard.team !== "Infinity Gems") {
           victoryPile.push(villainCard);
           onscreenConsole.log(
             `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
@@ -13817,7 +13822,8 @@ async function handleHQPostDefeat(
     }
 
     // 8. Non-burrowing villain defeat
-    if (!villainCard.skrulled) {
+    // Secret Wars Vol.1: gainAsHero villains skip the Victory-Pile push (gained as Heroes).
+    if (!villainCard.skrulled && !villainCard.gainAsHero) {
       try {
         victoryPile.push(villainCard);
         onscreenConsole.log(
@@ -14146,7 +14152,8 @@ async function defeatNonPlacedVillain(villainCard) {
       }
     } else {
       try {
-        if (!villainCard.skrulled && villainCard.team !== "Infinity Gems") {
+        // Secret Wars Vol.1: gainAsHero villains skip the Victory-Pile push (gained as Heroes).
+        if (!villainCard.skrulled && !villainCard.gainAsHero && villainCard.team !== "Infinity Gems") {
           victoryPile.push(villainCard);
           onscreenConsole.log(
             `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
