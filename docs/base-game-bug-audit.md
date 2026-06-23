@@ -44,6 +44,13 @@ Sets `hq[i] = null` then calls `refillHQSlot(i)` in a **forward** loop; in Golde
 ### B5 — `KOAllHeroesInHQ()` under-refill (`cardAbilities.js:16763`)
 When all 5 HQ slots are heroes, the post-loop refill reads the shortened `hq.length` and under-refills. Minor. Status: CANDIDATE (code-traced, not reproduced).
 
+### B6 — `recruitXMen()` over-credits recruit by the hero's cost (found via Secret Wars reuse, 2026-06-23)
+- **Symptom (code-traced):** recruiting an X-Men hero via `recruitXMen()` nets **+hero.cost Recruit** (the recruit is effectively free *and* refunds its cost) instead of being free.
+- **Why it's real:** `recruitHeroConfirmed` was changed so the caller now spends via `spendRecruitCost`, and `recruitHeroConfirmed` no longer deducts. But `recruitXMen()` still does `totalRecruitPoints += hero.cost` (plus its Final-Showdown cumulative twin) with **no offsetting deduction** — a leftover from the old flow. Net effect: +cost.
+- **Scope — base-game, NOT Secret Wars-specific:** hits any base card routing through `recruitXMen`, including the **base Magneto "Bitter Captor" tactic**. Surfaced because SWV1 Apocalyptic Magneto's Fight reuses `recruitXMen()`; SWV1 inherits the existing base behavior, it does not introduce the bug.
+- **Fix direction (for the base-code pass, NOT applied):** drop the `totalRecruitPoints += hero.cost` and its `cumulativeRecruitPoints` twin in `recruitXMen` (one central fix repairs base + every reuse). Verify against the current `spendRecruitCost` flow before applying.
+- **Status:** CANDIDATE (code-traced via SWV1 build, not reproduced live). **Not patched** — base fix, deferred to the dedicated base-code branch per this catalog's discipline.
+
 ---
 
 ## CLEARED (investigated this session)
