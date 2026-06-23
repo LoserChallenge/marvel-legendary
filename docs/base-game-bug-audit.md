@@ -57,7 +57,21 @@ When all 5 HQ slots are heroes, the post-loop refill reads the shortened `hq.len
 - **Resolution — fixed on the `secret-wars-vol1` branch (coordinator ruling 2026-06-23), NOT deferred to the base pass.** Distinguishing principle from B6: this base bug breaks a **NEW expansion card's spec**, and the only non-duplicative fix is in shared cleanup code. Fix = add a `"Teleport"` keyword-strip alongside the existing `temporaryTeleport` delete at ~`11762` (must stay gated to `temporaryTeleport` cards so innate-Teleport cards are untouched). One line repairs Nightcrawler AND base Azazel.
 - **Status:** FIXED on SW branch — **verify it has merged to master before any base-code-pass work touches Azazel** (so it isn't redone or reverted).
 
-**Policy note (B6 vs B7):** base bugs a NEW expansion card's spec directly depends on → minimal fix on the expansion branch + catalogued here as fixed-on-branch. Pure-inheritance base bugs with no expansion-spec impact (B6) → catalogued here untouched, await the dedicated base-code branch.
+**Policy note (B6 vs B7):** base bugs a NEW expansion card's spec directly depends on → minimal fix on the expansion branch + catalogued here as fixed-on-branch. Pure-inheritance base bugs with no expansion-spec impact (B6) → catalogued here untouched, await the dedicated base-code branch. **Third pattern (B8/B9):** the defect lives in a BASE card's handling of a general mechanic *class* (villain→hero converters), and the same bug already ships for a base card — catalogue here even though a new expansion mechanic (`gainAsHero`) adds another instance; the SW converter cards themselves are correct, so nothing is fixed on the SW branch.
+
+### B8 — Mr. Fantastic "Ultimate Nullifier" negating a villain→hero converter makes the villain VANISH (found via SWV1 Manhattan, 2026-06-23)
+- **Symptom:** if Ultimate Nullifier negates a "gain this as a Hero" defeat converter, the villain is neither gained as a Hero nor placed in the Victory Pile — it disappears from the game entirely.
+- **Scope — base/shared:** shipped **Scarlet Witch** (`gainScarletWitchAsHero`) has the IDENTICAL interaction; SWV1's new `gainAsHero` flag is just another instance of the same converter class. Very low frequency (needs FF + the converter expansion in play + the player choosing to nullify a beneficial-to-them effect).
+- **Fix direction (base branch):** Ultimate Nullifier's negation of a villain→hero converter should fall back to the NORMAL defeat outcome (villain → Victory Pile for its VP), not vanish. Cover BOTH `skrulled`/`gainScarletWitchAsHero` AND `gainAsHero` (the latter requires SWV1 merged first).
+- **Open rules sub-question (for the base fix):** when "gain as a Hero" is nullified, does the villain go to the Victory Pile as a normally-defeated villain (coordinator lean — nullify the special reward, keep the ordinary defeat), or is it treated as un-defeated? Confirm via rules-oracle at fix time.
+- **Status:** CANDIDATE (code-traced via SWV1, not reproduced live). **Not patched** — base/shared, deferred to the base-code branch.
+
+### B9 — Professor X "Mind Control" double-gains a villain→hero converter (found via SWV1 Manhattan, 2026-06-23)
+- **Symptom:** using Professor X "Mind Control" on a villain that has a "gain as a Hero" converter yields TWO Heroes from one villain — the Mind Control gain AND the converter both fire.
+- **Why:** the Mind Control call-site condition gates only on `hasProfessorXMindControl`, not on the villain→hero converter flags, so both paths resolve.
+- **Scope — base/shared:** shipped **Scarlet Witch** has the identical double-gain; SWV1 `gainAsHero` adds another instance. More plausible in real play than B8 (Professor X + Manhattan villains can co-occur in an SWV1 game).
+- **Fix direction (base branch):** add `&& !skrulled && !gainAsHero` (i.e. exclude all villain→hero converters) to the Professor X Mind Control call-site condition. `gainAsHero` coverage requires SWV1 merged first.
+- **Status:** CANDIDATE (code-traced via SWV1, not reproduced live). **Not patched** — base/shared, deferred to the base-code branch.
 
 ---
 
