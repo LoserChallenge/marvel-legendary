@@ -225,6 +225,176 @@ async function apocalypticWeaponXEscape(villainCard) {
   );
 }
 
+// Limbo — Inferno Colossus (DB id 285, Attack 5 / VP 3).
+// Ambush: "The Mastermind captures a Bystander." The bystander attaches to the MASTERMIND (its
+// .bystanders array), not to Colossus. Reuse the bystanderDeck source (mirrors demogoblinAmbush) +
+// the MM-capture plumbing attachBystanderToMastermindFromVillainDeck() (popup + attach to the main
+// mastermind via getSelectedMastermind). Multi-mastermind "the Mastermind" picker is deferred to 3e
+// (secondary-MM captured-bystander wiring); main mastermind is correct for the common case.
+async function infernoColossusAmbush(villainCard) {
+  onscreenConsole.log(
+    `Ambush! <span class="console-highlights">Inferno Colossus</span> — the Mastermind captures a Bystander.`,
+  );
+  if (bystanderDeck.length === 0) {
+    onscreenConsole.log("There are no Bystanders left to be captured.");
+    return;
+  }
+  const card = bystanderDeck.pop();
+  await attachBystanderToMastermindFromVillainDeck(card);
+}
+
+// Fight: "KO one of your Heroes." Reuse FightKOHeroYouHave() (parameterized title + empty-pool guard).
+async function infernoColossusFight(villainCard) {
+  await FightKOHeroYouHave("Inferno Colossus");
+}
+
+// Limbo — Inferno Cyclops (DB id 286, Attack 6 / VP 4).  (confidence: LOW)
+// Ambush: "Inferno Cyclops captures a Bystander." The bystander attaches to THIS villain card
+// (city[index].bystander array) — mirror demogoblinAmbush exactly.
+async function infernoCyclopsAmbush(villainCard) {
+  onscreenConsole.log(
+    `Ambush! <span class="console-highlights">Inferno Cyclops</span> captures a Bystander.`,
+  );
+  if (bystanderDeck.length === 0) {
+    onscreenConsole.log("There are no Bystanders left to be captured.");
+    return;
+  }
+  const card = bystanderDeck.pop();
+  const cyclopsIndex = city.findIndex((c) => c === villainCard);
+  if (cyclopsIndex === -1) {
+    onscreenConsole.log("Inferno Cyclops is not in the city — Bystander not captured.");
+    return;
+  }
+  await attachBystanderToVillain(cyclopsIndex, card);
+}
+
+// Escape: "The Mastermind captures all the Bystanders this Villain had. (Players still discard for the
+// Bystander being carried away.)" handleVillainEscape() runs FIRST and, by default, pushes a villain's
+// attached bystanders to escapedVillainsDeck (lost) and fires the carry-away discard (showDiscardCardPopup,
+// 1 card) via handleVillainEscapeActions.handleDiscard — both BEFORE this escapeEffect runs. So this
+// effect REDIRECTS those bystanders out of escapedVillainsDeck and onto the Mastermind's .bystanders
+// (the card OVERRIDES the default "bystander is lost"); the discard penalty has already been applied by
+// the default path, satisfying "players still discard." Main mastermind per the 3e multi-MM deferral.
+async function infernoCyclopsEscape(villainCard) {
+  const carried = villainCard.bystander || [];
+  if (carried.length === 0) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Inferno Cyclops</span> was carrying no Bystanders.`,
+    );
+    return;
+  }
+  const mastermind = getSelectedMastermind();
+  if (!mastermind.bystanders) mastermind.bystanders = [];
+  carried.forEach((b) => {
+    const i = escapedVillainsDeck.indexOf(b); // undo the default "escaped with the villain" push
+    if (i !== -1) escapedVillainsDeck.splice(i, 1);
+    mastermind.bystanders.push(b);
+  });
+  villainCard.bystander = []; // transferred to the Mastermind
+  updateMastermindOverlay();
+  onscreenConsole.log(
+    `The Mastermind captures ${carried.length} Bystander${carried.length !== 1 ? "s" : ""} that <span class="console-highlights">Inferno Cyclops</span> was carrying.`,
+  );
+  updateGameBoard();
+}
+
+// Limbo — Inferno Darkchilde (DB id 287, Attack 5 / VP 3).
+// Fight: "Reveal the top card of your deck. KO it or Teleport it." Same reveal→choice shape as
+// Apocalyptic Blink, but the non-Teleport branch KOs (koPile) instead of drawing (mirrors demogoblinFeast's
+// KO-the-deck-top: koPile.push + koBonuses).
+async function infernoDarkchildeFight(villainCard) {
+  if (playerDeck.length === 0) {
+    if (playerDiscardPile.length === 0) {
+      onscreenConsole.log("Your deck and discard pile are empty — nothing to reveal.");
+      return;
+    }
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+    updateGameBoard();
+  }
+  const revealed = playerDeck[playerDeck.length - 1];
+  onscreenConsole.log(
+    `<span class="console-highlights">Inferno Darkchilde</span> — revealed <span class="console-highlights">${revealed.name}</span> from the top of your deck. KO it or Teleport it.`,
+  );
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Reveal: ${revealed.name}. KO it or Teleport it?`,
+      "KO it",
+      "Teleport it",
+    );
+    const title = document.querySelector(".info-or-choice-popup-title");
+    if (title) title.textContent = "Inferno Darkchilde";
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      const card = playerDeck.pop();
+      koPile.push(card);
+      koBonuses();
+      updateGameBoard();
+      resolve();
+    };
+    denyButton.onclick = async () => {
+      closeInfoChoicePopup();
+      const card = playerDeck.pop();
+      playerHand.push(card); // teleport() removes it from hand into the next-turn queue
+      await teleport(card);
+      resolve();
+    };
+  });
+}
+
+// Escape: "Each player Teleports a random card from their hand." Solo: the active player Teleports ONE
+// engine-chosen random hand card (returns next turn via the real teleport()). Empty hand → no-op.
+async function infernoDarkchildeEscape(villainCard) {
+  if (playerHand.length === 0) {
+    onscreenConsole.log("Your hand is empty — nothing to Teleport.");
+    return;
+  }
+  const idx = Math.floor(Math.random() * playerHand.length);
+  const card = playerHand[idx];
+  onscreenConsole.log(
+    `<span class="console-highlights">Inferno Darkchilde</span> — you Teleport a random card (<span class="console-highlights">${card.name}</span>) from your hand.`,
+  );
+  await teleport(card);
+}
+
+// Limbo — Inferno Nightcrawler (DB id 288, Attack 4 / VP 2).
+// Fight: "Up to two cards in your hand that have a Recruit icon gain Teleport this turn." Player may
+// grant Teleport to 0, 1, or 2 eligible hand cards (recruitIcon === true, not already Teleport). Reuse
+// the Azazel grant pattern (keywords.push("Teleport"); temporaryTeleport = true) — the engine's
+// end-of-turn / on-teleport cleanup strips the temp keyword. Up-to-2 via a loop over the proven
+// showCardSelectionPopup() with a "DONE" sentinel tile (no bespoke multi-select needed).
+async function infernoNightcrawlerFight(villainCard) {
+  let eligible = playerHand.filter(
+    (c) => c.recruitIcon === true && !(c.keywords || []).includes("Teleport"),
+  );
+  if (eligible.length === 0) {
+    onscreenConsole.log(
+      "No cards with a Recruit icon in your hand to gain Teleport.",
+    );
+    return;
+  }
+  let granted = 0;
+  while (granted < 2 && eligible.length > 0) {
+    const doneTile = { name: "Done", text: "DONE", _doneSentinel: true };
+    const choice = await showCardSelectionPopup({
+      title: "Inferno Nightcrawler",
+      instructions: `Choose a card with a Recruit icon to gain Teleport this turn (${granted}/2 chosen), or choose DONE.`,
+      confirmText: "CONFIRM",
+      items: [...eligible, doneTile],
+    });
+    if (!choice || choice._doneSentinel) break;
+    if (!choice.keywords) choice.keywords = [];
+    choice.keywords.push("Teleport");
+    choice.temporaryTeleport = true;
+    granted++;
+    onscreenConsole.log(
+      `<span class="console-highlights">${choice.name}</span> gains Teleport this turn.`,
+    );
+    eligible = eligible.filter((c) => c !== choice);
+  }
+  updateGameBoard();
+}
+
 // --- SCHEME TWIST EFFECTS ---
 
 // --- MASTERMIND EFFECTS ---
