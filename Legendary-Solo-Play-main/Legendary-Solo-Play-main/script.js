@@ -6131,6 +6131,14 @@ function handleVillainEscape(escapedVillain) {
 
 
   if (escapedVillain) {
+    // TODO (resolve in Phase 3e): Finding C — an ascended Mastermind KEEPS its captured bystanders
+    // (ruling 2026-06-23: ascension isn't escape, so nothing he's holding escapes with him; rescued
+    // on his defeat). These attached-card pushes (bystander/plutonium/XCutionerHeroes) run BEFORE the
+    // ascendsToMastermind guard below, so a bystander on an ascending villain (Apocalyptic Magneto)
+    // currently lands in escapedVillainsDeck (safe interim — counts as lost, not orphaned). Do NOT
+    // naively skip the push (that orphans the bystander into limbo). Implement transfer onto the
+    // secondary Mastermind's captured list in 3e, where the same secondary-MM captured-bystander
+    // wiring is built for Dark Alliance (T5-6 main-MM-attach). Grab a rules-oracle cite then.
     // If the villain has bystanders attached, move them as well
     if (escapedVillain.bystander && escapedVillain.bystander.length > 0) {
       escapedVillain.bystander.forEach((bystander) => {
