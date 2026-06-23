@@ -3,10 +3,11 @@
 Cache for Rules Oracle findings on Secret Wars Vol. 1 (solo-framed). Authoritative-source quotes with page cites. Solo rulesets win where they speak; base rule labeled INFERRED where solo is silent.
 
 Sources used:
-- Secret Wars rules insert: `expansions/secret-wars-vol1/Legendary_Rules_Secret_Wars_v1.pdf` (2-page insert; image-text, sections quoted below)
+- Secret Wars rules insert: `expansions/secret-wars-vol1/Legendary_Rules_Secret_Wars_v1.pdf` (also `rules/Legendary_Rules_Secret_Wars_v1.pdf`) (2-page insert; image-text, sections quoted below)
 - Finalized inventory (card content): `docs/card-inventory/final/secret-wars-vol1.md`
 - Golden Solo ruleset: `rules/marvel-legendary-the-golden-solo-ruleset.pdf` (1 page)
 - What If? rulebook: `rules/WhatIf_Rulebook.pdf` (28 pages; pages cited by printed page number)
+- Core Set rulebook: `rules/Legendary_Rules-Core_Set.pdf`
 
 ---
 
@@ -143,3 +144,55 @@ Smallest faithful way to honor the two in-scope cards:
 - **Dark Alliance:** add a random real second Mastermind, give it 1 Tactic on Twist 1 and +1 Tactic on each of Twists 2–4 (if still in play, cap 4), both Masterminds capture a Bystander on Twists 5–6, and Twist 7 = Evil Wins (instant loss). The second Mastermind uses its own normal strength; win requires defeating both.
 
 ONE thing to double-check (flagged): the inventory's **Teleport** gloss ("put on top of your deck") contradicts the authoritative insert ("set aside; add to your new hand at end of turn as an extra card") — implement the insert wording, not the inventory's. Also worth a physical-card Pass-3 confirm that Dark Alliance's second Mastermind is full-strength (no printed reduction; inferred from absence).
+
+---
+
+# BATCH 2 — Spec OPEN-QUESTIONS adjudication (2026-06-22, Rules Oracle)
+These map to the FROZEN spec's "OPEN QUESTIONS" Q2–Q7 (different numbering from the Batch-1 Q's above). Solo-framed; both modes noted where they diverge.
+
+## SPEC-Q2 — Colossus of Future Past: "Don't play a Villain card at the beginning of next turn." → SKIP ONE villain card
+- **Card (inventory/spec):** Sentinel Territories — Colossus of Future Past, Fight: "*Colossus changes the future:* Don't play a Villain card at the beginning of next turn." Attack 5 / VP 3.
+- **Ruling: skip exactly ONE villain card next turn** (implementer's rec HOLDS). "A Villain card" = a single card. The Core turn structure's villain phase is "Step 1) Play the top card of the Villain Deck" — "play a Villain card" is the rulebook's own name for revealing/resolving ONE villain-deck card, NOT the whole phase. The card says "a Villain card" (singular), so it removes one such reveal.
+- **Solo translation of the draw count:**
+  - **Golden Solo:** draws 2 villain cards/round (Golden Solo ruleset p.1, "Villain Deck Gameplay": "draw TWO cards instead of one"). Colossus → next round draw **1** instead of 2.
+  - **What If? Solo:** the solo villain phase plays **1** villain card/turn (What If? p.24 solo setup uses the normal single villain-deck draw; the 2 extra Henchmen are a first-turn setup add, not the per-turn count). Colossus → next turn the single villain card is **skipped** (0 played that turn). Mechanically identical primitive ("decrement next turn's villain plays by 1"), different baseline.
+- **Note:** It's the same as the existing "bystander discard to prevent ONE new villain card" lever (Golden Solo ruleset p.1, "Bystander Discard": "prevent ONE new villain card from being drawn"). Reuse that decrement primitive. Stacks cumulatively if two Colossus copies are fought (−2).
+- SOURCE: Core Set p.6/8 (villain phase = "play the top card of the Villain Deck", singular); Golden Solo ruleset p.1; What If? p.24.
+- CONFIDENCE: **SETTLED** (singular wording + rulebook's own "play a villain card" = one reveal).
+
+## SPEC-Q3 — Crush Them With My Bare Hands: Master-Strike counting under multiple masterminds → ONE event per trigger
+- **Card (inventory/spec):** "Evil Wins: When 8 Master Strikes have taken effect." Each of its 5 Twists "becomes a Master Strike that takes effect immediately."
+- **Ruling: count ONE per Master-Strike TRIGGER, not one per mastermind** (implementer's rec HOLDS). The keystone rule (What If? p.19 / insert p.1) says on each Master Strike, *each* Mastermind fires *its* Master Strike *ability* — that's about resolving each mastermind's ABILITY, not multiplying the count of "Master Strikes." A Master Strike (the event — a Twist becoming one, or a natural Master Strike card surfacing) is a single occurrence; the multi-mastermind rule just makes that one occurrence resolve N abilities. "8 Master Strikes have taken effect" counts Master-Strike events.
+- **Caveat (worth a Pass-3/physical-card eyeball):** the rulebooks do NOT explicitly define whether the scheme counter is "events" or "ability resolutions." This is an INFERENCE from the natural-language distinction (a Master Strike is the trigger; "each Mastermind does its Master Strike ABILITY" is the resolution). The 1-event reading is the standard community/RAW reading and avoids the scheme self-accelerating purely from a 2nd mastermind. But it is not nailed by a verbatim rulebook line.
+- **Also confirmed:** 5 Twists alone can't reach 8 — natural Master Strike cards from the villain deck also increment the counter. (Counter must capture both sources.)
+- SOURCE: What If? p.19 (multiple-mastermind Master Strike resolution); insert p.1.
+- CONFIDENCE: **INFERRED** (1-event is the faithful/standard reading; rulebooks don't spell out the counter's unit. Recommend building it as 1-per-event and flagging to Paul that this is an interpretation, not a quoted rule.)
+
+## SPEC-Q4 — Black Bolt "Destructive Whisper": reveal source → FROM HAND
+- **Card (inventory/spec):** "You get +1 Attack if you reveal four cards with no rules text."
+- **Ruling: reveal from your HAND** (implementer's rec HOLDS). Legendary's "reveal N [trait] cards" abilities reveal from the player's HAND by default (the hand is the only place "reveal" a held card makes sense). Contrast the sibling card Hypersonic Scream, which explicitly scopes to "you played this turn" — Destructive Whisper deliberately OMITS that qualifier, so it is not a played-this-turn count; it's a reveal-from-hand check. Reveal 4 no-rules-text cards from hand → +1 Attack; can't reveal four → no bonus.
+- **Caveat:** there is no Secret Wars insert or Core rulebook line that defines a generic "reveal" keyword source — this rests on Legendary convention + the deliberate contrast with Hypersonic Scream's wording, NOT a quoted rule. The "no rules text" predicate itself is a build-time scope decision (which whole-game cards get the flag), separate from this source question.
+- SOURCE: card text contrast (inventory `secret-wars-vol1.md`); Legendary reveal-from-hand convention. No verbatim rulebook definition of "reveal" source exists in Core/insert.
+- CONFIDENCE: **INFERRED** (from-hand is the strongly-supported convention + the Hypersonic-Scream contrast; not a quoted rulebook line — flag as interpretation).
+
+## SPEC-Q5 — Lady Thor "Once per turn" scope → ONCE TOTAL PER TURN per card title
+- **Cards (inventory/spec):** Mysterious Origin / Chosen by Asgard / Living Thunderstorm — each "Once per turn, if you made at least 6 Recruit this turn, [draw / +2 Attack / +6 Attack]."
+- **Ruling: "Once per turn" = the effect fires at most once that turn** (implementer's rec HOLDS in substance). The phrase gates THE EFFECT to one resolution per turn. Practically: a second copy of the SAME title played the same turn grants nothing additional from that title's once-per-turn effect.
+- **Important nuance for the build:** "Once per turn" in Legendary is per-EFFECT/per-card-title, but it does NOT pool across DIFFERENT titles. The three Lady Thor cards are three DISTINCT once-per-turn effects — playing Mysterious Origin AND Chosen by Asgard AND Living Thunderstorm the same turn (≥6 Recruit) fires ALL THREE (draw + 2 Attack + 6 Attack), each once. So implement the guard per-card-title (one flag per title), not one global Lady-Thor flag.
+- **Caveat:** Marvel Legendary has no single rulebook glossary entry quoting "Once per turn." This is the consistent published-card convention (each "Once per turn" effect = once per turn for that effect). Treat as SETTLED-by-convention; the per-title (not pooled-across-titles) detail is the load-bearing implementation point.
+- SOURCE: card text (inventory `secret-wars-vol1.md`); standard Legendary keyword convention.
+- CONFIDENCE: **SETTLED** (convention is unambiguous and uniform across the game; per-title guard is the correct build).
+
+## SPEC-Q6 — Superior to Others: equal-cost tie → DRAW NOTHING
+- **Card (inventory/spec):** "[RANGED]: Look at the top two cards of your deck. If one of them has a higher cost than the other, draw it. Put the rest back in any order."
+- **Ruling: on an equal-highest-cost tie, draw NOTHING — both cards go back on top in any order** (implementer's rec HOLDS). The draw is conditional: "IF one of them has a higher cost than the other, draw it." On a tie, neither card "has a higher cost than the other," so the condition is false → no card is drawn → "put the rest back" (here: both) on top. Dead-draw outcome confirmed.
+- SOURCE: card text (inventory `secret-wars-vol1.md`) — the conditional "if ... higher ... than the other" is self-resolving on a tie.
+- CONFIDENCE: **SETTLED** (pure card-text logic; no rule needed).
+
+## SPEC-Q7 — Build an Army of Annihilation Twist: escalation / VP-recycle → CONFIRMED
+- **Card (inventory/spec):** "Setup: 9 Twists. Put 10 extra [Annihilation] Henchmen in [the] KO pile. Twist: KO all Annihilation Henchmen from the players' Victory Piles. Stack this Twist next to the Scheme. Then, for each Twist in that stack, put an Annihilation Henchman from the KO pile next to the Mastermind. Players can fight those Henchmen. Evil Wins: When there are 10 Annihilation Henchmen next to the Mastermind." (M.O.D.O.K. stand-in already settled — not re-litigated.)
+- **Ruling: escalation + VP-recycle reading is CORRECT.** Each Twist: (1) any Annihilation Henchmen sitting in the player's Victory Pile are KO'd back out (recycle VP→KO pool); (2) the Twist is stacked next to the Scheme; (3) "for each Twist in that stack" → place that-many Annihilation Henchmen (from the KO pool) next to the Mastermind. So the count placed escalates with the Twist-stack size: Twist 1 places 1, Twist 2 places 2, etc. Because step (1) clears any you've defeated-into-VP back to the pool first, the number standing next to the Mastermind is re-derived each Twist (bounded by available pool / by 10). Evil Wins when 10 stand next to the Mastermind simultaneously.
+- **Subtlety the build must honor (RAW):** "for each Twist in that stack, put an Annihilation Henchman" places one PER TWIST IN THE STACK each time — combined with step (1) emptying your VP-captured ones back to the pool, the next-to-Mastermind count is effectively `min(twistStackSize, poolAvailable)` re-evaluated each Twist. Defeating them buys a one-turn reprieve but they come back (and grow) next Twist. This is a pure escalation race.
+- **"players' Victory Piles" in solo:** = the single (active) player's Victory Pile. No "each other player" issue here ("players'" possessive includes you).
+- SOURCE: card text (inventory `secret-wars-vol1.md`); escalation logic is self-contained in the Twist wording.
+- CONFIDENCE: **SETTLED** for the mechanical escalation/recycle (card text is explicit). The M.O.D.O.K. substitution is a separate, already-settled design call (not re-opened here).
