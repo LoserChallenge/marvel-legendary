@@ -832,6 +832,14 @@ let totalBystanders = 30;
 let extraCardsDrawnThisTurn = 0;
 let nextTurnsDraw = 6;
 let cardsToBeDrawnNextTurn = [];
+// Secret Wars Vol.1 — Sentinel Territories "alters/changes the future" deferred next-turn effects.
+// Solo: "next player's turn" = the active player's own next turn. Each is consumed + cleared by its
+// turn-start consumer (Colossus → drawVillainCard; Kate Pryde recruit + Rachel attack-delta promote →
+// endTurn tail). A deferred flag with no consumer is a dead effect — keep set/consume sites paired.
+let sentinelSkipVillainNextTurn = 0;     // Colossus of Future Past: skip N villain-card draws next turn (stacks)
+let sentinelRecruitNextTurn = 0;          // Kate Pryde of Future Past: +N Recruit at the start of next turn
+let sentinelVillainAttackDelta = 0;       // Rachel Summers: ±N to ALL villains + Mastermind, active THIS turn
+let sentinelVillainAttackDeltaNextTurn = 0; // Rachel Summers Fight: pending delta promoted to active next turn
 let rescueExtraBystanders = 0;
 let extraThreeRecruitAvailable = 0;
 // War Machine (Revelations) arm-a-turn defeat triggers — paid out in defeatBonuses() on each
@@ -5264,6 +5272,10 @@ async function drawVillainCard() {
       }
     }
 
+    // Secret Wars Vol.1 — Colossus of Future Past: "Don't play a Villain card at the beginning of
+    // next turn." Reduce this round's villain draws by the pending skip count (stacks if fought twice).
+    villainDrawCount = applySentinelVillainDrawSkip(villainDrawCount);
+
     // Step 4: Draw villain cards
     for (let i = 0; i < villainDrawCount; i++) {
       await processVillainCard();
@@ -5280,13 +5292,35 @@ async function drawVillainCard() {
       }
     }
 
-    const drawCount = isFirstTurn ? 3 : 1;
+    let drawCount = isFirstTurn ? 3 : 1;
     isFirstTurn = false;
+
+    // Secret Wars Vol.1 — Colossus of Future Past: skip N villain cards next turn (see Golden branch).
+    drawCount = applySentinelVillainDrawSkip(drawCount);
 
     for (let i = 0; i < drawCount; i++) {
       await processVillainCard();
     }
   }
+}
+
+// Secret Wars Vol.1 — Colossus of Future Past consumer. Returns the reduced villain-draw count and
+// consumes (clears) the pending skip. Clamped at 0 (never negative). Mode-agnostic — called from both
+// the Golden Solo (2/round) and What If? Solo (1/turn) branches of drawVillainCard(). Solo "next
+// player's turn" = the active player's own next turn (rules-notes SPEC-Q2).
+function applySentinelVillainDrawSkip(count) {
+  if (sentinelSkipVillainNextTurn > 0) {
+    const reduced = Math.max(0, count - sentinelSkipVillainNextTurn);
+    const skipped = count - reduced;
+    if (skipped > 0) {
+      onscreenConsole.log(
+        `<span class="console-highlights">Colossus of Future Past</span> changed the future — ${skipped} fewer Villain card${skipped !== 1 ? "s" : ""} ${skipped !== 1 ? "are" : "is"} played this turn.`,
+      );
+    }
+    sentinelSkipVillainNextTurn = 0; // consume
+    return reduced;
+  }
+  return count;
 }
 
 // ---------------------------------
@@ -10575,6 +10609,9 @@ function recalculateHQVillainAttack(villainCard) {
 
   let finalAttack = baseAttack + totalAttackModifiers;
 
+  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack to ALL villains (HQ twin).
+  finalAttack += sentinelVillainAttackDelta;
+
   return Math.max(0, finalAttack);
 }
 
@@ -11857,6 +11894,23 @@ if (card.temporaryTeleport === true) {
 
   sortPlayerCards();
 
+  // Secret Wars Vol.1 — Sentinel Territories deferred next-turn consumers (turn-start payout).
+  // Kate Pryde of Future Past: pay out the scheduled +N Recruit now (start of this new turn).
+  // Twin rule: update BOTH the current-turn total AND the Final-Showdown cumulative total.
+  if (sentinelRecruitNextTurn > 0) {
+    totalRecruitPoints += sentinelRecruitNextTurn;
+    cumulativeRecruitPoints += sentinelRecruitNextTurn;
+    onscreenConsole.log(
+      `<span class="console-highlights">Kate Pryde of Future Past</span> altered the future — you start this turn with +${sentinelRecruitNextTurn}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
+    );
+    sentinelRecruitNextTurn = 0; // consume
+  }
+  // Rachel Summers of Future Past: the active delta from the turn just ending expires; promote any
+  // pending Fight (-N next turn) delta into the active slot for the turn now beginning. A Rachel Escape
+  // resolving during the villain draw below (+N this turn) then stacks on top of this promoted value.
+  sentinelVillainAttackDelta = sentinelVillainAttackDeltaNextTurn;
+  sentinelVillainAttackDeltaNextTurn = 0;
+
   healingPossible = true;
   updateGameBoard();
   await drawVillainCard();
@@ -12403,6 +12457,9 @@ updateVillainAttackValues(villainCard, cityIndex);
   }
 
   // REMOVED: All the individual scheme and effect calculations since they're now in updateVillainAttackValues
+
+  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack to ALL city villains (this turn).
+  finalAttack += sentinelVillainAttackDelta;
 
   return Math.max(0, finalAttack);
 }
@@ -15374,6 +15431,9 @@ if (mastermind.name === "Thanos") {
   // Start with the mastermind's base attack value
   let mastermindAttack =
     mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards + mastermind.attackFromOwnEffects - mastermind.attackFromGems - mastermind.attackFromRings;
+
+  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack also hits the Mastermind.
+  mastermindAttack += sentinelVillainAttackDelta;
 
   // Ensure mastermindAttack doesn't drop below 0
   if (mastermindAttack < 0) {

@@ -543,6 +543,78 @@ async function ultimateWaspFight(villainCopy) {
   });
 }
 
+// Sentinel Territories (Earth-1610) — "alters/changes the future" delayed effects. Each schedules a
+// bonus/penalty for the active player's OWN next turn (solo: "the next player" = you). Deferred via the
+// engine flags declared in script.js, consumed at their turn-start sites (Colossus → drawVillainCard;
+// Kate Pryde recruit + Rachel attack-delta promote → endTurn tail). Rules-notes SPEC-Q2 (Colossus).
+
+// Colossus of Future Past (DB id 293, Attack 5 / VP 3).
+// Fight: "Colossus changes the future: Don't play a Villain card at the beginning of next turn."
+// = skip ONE villain card next turn (Golden 2→1, What If? 1→0). Stacks if fought twice (rules-notes
+// SPEC-Q2). Sets the deferred skip counter; drawVillainCard() consumes + clears it next turn.
+async function colossusOfFuturePastFight(villainCard) {
+  sentinelSkipVillainNextTurn += 1;
+  onscreenConsole.log(
+    `<span class="console-highlights">Colossus of Future Past</span> changes the future — one fewer Villain card will be played at the start of your next turn.`,
+  );
+}
+
+// Kate Pryde of Future Past (DB id 294, Attack 4 / VP 2).
+// Fight: "You get +1 Recruit. Then, Kate Pryde alters the future: At the beginning of the next
+// player's turn, that player gets +1 Recruit." Solo: +1 Recruit now + +1 Recruit at the start of your
+// own next turn. Twin rule: both grants update totalRecruitPoints AND cumulativeRecruitPoints (the
+// deferred one pays out in endTurn).
+async function katePrydeOfFuturePastFight(villainCard) {
+  totalRecruitPoints += 1;
+  cumulativeRecruitPoints += 1;
+  sentinelRecruitNextTurn += 1; // paid out at the start of next turn (endTurn consumer)
+  onscreenConsole.log(
+    `<span class="console-highlights">Kate Pryde of Future Past</span> — you get +1<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> now, and +1<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> at the start of your next turn.`,
+  );
+  updateGameBoard();
+}
+
+// Rachel Summers of Future Past (DB id 295, Attack 6 / VP 4).
+// Fight: "Rachel Summers alters the future: During the next player's turn, all Villains and the
+// Mastermind get -1 Attack." Solo: schedule -1 to all villains + Mastermind during your next turn
+// (deferred delta promoted to active in endTurn). Escape: this turn, +1 to all villains + Mastermind.
+async function rachelSummersOfFuturePastFight(villainCard) {
+  sentinelVillainAttackDeltaNextTurn -= 1;
+  onscreenConsole.log(
+    `<span class="console-highlights">Rachel Summers of Future Past</span> alters the future — all Villains and the Mastermind get -1<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> during your next turn.`,
+  );
+}
+
+// Escape: "This turn, all Villains and the Mastermind get +1 Attack." Applies immediately (active
+// delta) for the turn the player is about to take; expires at the next endTurn promote.
+async function rachelSummersOfFuturePastEscape(villainCard) {
+  sentinelVillainAttackDelta += 1;
+  onscreenConsole.log(
+    `<span class="console-highlights">Rachel Summers of Future Past</span> escapes — all Villains and the Mastermind get +1<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> this turn.`,
+  );
+  updateGameBoard();
+}
+
+// Wolverine of Future Past (DB id 296, Attack 7 / VP 5).
+// Fight: "Wolverine alters the future: At the start of the next player's turn, you draw a card, and
+// that player draws a card." Solo: "you" and "that player" are the same active player → draw 2 cards
+// at the start of next turn. Reuse the engine's nextTurnsDraw mechanic (consumed in endTurn).
+async function wolverineOfFuturePastFight(villainCard) {
+  nextTurnsDraw += 2;
+  onscreenConsole.log(
+    `<span class="console-highlights">Wolverine of Future Past</span> alters the future — you draw 2 extra cards at the start of your next turn.`,
+  );
+}
+
+// Escape: "Cross-Dimensional Wolverine Rampage." SHARED helper — reveal a Wolverine-family card
+// (name contains "Wolverine", "Weapon X", or "Old Man Logan") or gain a Wound.
+async function wolverineOfFuturePastEscape(villainCard) {
+  await crossDimensionalRampage(
+    ["Wolverine", "Weapon X", "Old Man Logan"],
+    "Wolverine of Future Past",
+  );
+}
+
 // --- SCHEME TWIST EFFECTS ---
 
 // --- MASTERMIND EFFECTS ---
