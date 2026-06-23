@@ -51,6 +51,14 @@ When all 5 HQ slots are heroes, the post-loop refill reads the shortened `hq.len
 - **Fix direction (for the base-code pass, NOT applied):** drop the `totalRecruitPoints += hero.cost` and its `cumulativeRecruitPoints` twin in `recruitXMen` (one central fix repairs base + every reuse). Verify against the current `spendRecruitCost` flow before applying.
 - **Status:** CANDIDATE (code-traced via SWV1 build, not reproduced live). **Not patched** — base fix, deferred to the dedicated base-code branch per this catalog's discipline.
 
+### B7 — Granted "Teleport" (`temporaryTeleport`) leaks on unplayed hand cards — FIXED ON SW BRANCH
+- **Symptom:** a card granted temporary Teleport via the Azazel pattern (`keywords.push("Teleport")` + `temporaryTeleport = true`) that is **not played** keeps Teleport permanently. End-of-turn cleanup for PLAYED cards strips the keyword (`script.js:11616-11622`), but the `playerHand` cleanup (`script.js:11762-11767`) only deletes the `temporaryTeleport` flag, NOT the keyword from the `keywords` array — and eligibility reads the array (`script.js:11288`).
+- **Scope:** pre-existing base bug; affects shipped **Azazel** identically. Surfaced because SWV1 **Inferno Nightcrawler** reuses the Azazel grant pattern verbatim, and Nightcrawler's frozen spec assertion ("end turn → temp Teleport cleaned off") fails under the current engine.
+- **Resolution — fixed on the `secret-wars-vol1` branch (coordinator ruling 2026-06-23), NOT deferred to the base pass.** Distinguishing principle from B6: this base bug breaks a **NEW expansion card's spec**, and the only non-duplicative fix is in shared cleanup code. Fix = add a `"Teleport"` keyword-strip alongside the existing `temporaryTeleport` delete at ~`11762` (must stay gated to `temporaryTeleport` cards so innate-Teleport cards are untouched). One line repairs Nightcrawler AND base Azazel.
+- **Status:** FIXED on SW branch — **verify it has merged to master before any base-code-pass work touches Azazel** (so it isn't redone or reverted).
+
+**Policy note (B6 vs B7):** base bugs a NEW expansion card's spec directly depends on → minimal fix on the expansion branch + catalogued here as fixed-on-branch. Pure-inheritance base bugs with no expansion-spec impact (B6) → catalogued here untouched, await the dedicated base-code branch.
+
 ---
 
 ## CLEARED (investigated this session)
