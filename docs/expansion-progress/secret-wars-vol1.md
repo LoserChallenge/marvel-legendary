@@ -55,8 +55,11 @@ async function gainSidekick(destination = "discard") { // "discard" | "hand" | "
 Does NOT touch `sidekickRecruited` or recruit points (per insert: gain ≠ recruit). Consumers: Magik Rally, King of Wakanda (×3, deckTop via Illuminati), Maximus Enslave, Namor Lead, Ultimate Spidey Marvel Team-Up; also Corrupt-the-Next-Gen "gain to deck top". Mirrors `recruitSidekick()` destination branches minus the cap/cost.
 <!-- index.html dropdowns + create expansionSecretWarsVol1.js skeleton + script tag + sw.js FILES_TO_CACHE entry -->
 
-## Phase 2.5: Behavioral Specs frozen — ⬜ Not started
-<!-- docs/expansion-specs/secret-wars-vol1.md — committed before Phase 3; LOW-confidence flags on ambiguous cards -->
+## Phase 2.5: Behavioral Specs frozen — ✅ Complete / FROZEN (2026-06-23)
+- `docs/expansion-specs/secret-wars-vol1.md` — ~87 card blocks, **36 LOW-confidence markers** (30 cards + keystone/shared-mechanics blocks; each LOW = mandatory dynamic `/game-test` in Phase 3). Committed BEFORE any Phase 3 code (the Phase-4 blind-compare contract).
+- Front-loaded: **Open Questions for ratification** (Q1 "each other player" solo rule + per-card calls; Q2–Q7 scheme/card reading calls) + **Shared Mechanics & Keystone** (Multiple Masterminds engine spec, gainSidekick w/ empty-stack guard, Teleport, Cross-Dim Rampage, dual-class, no-rules-text predicate, gain-as-hero converter, free-defeat, Banker reserve, ≥6-recruit gate, Demon Goblins).
+- Authoring: front section + keystone authored by lead; 4 per-card drafts via parallel subagents (inventory + mechanics-doc inputs), every block reviewed against the inventory before freeze.
+- **HOLD Phase 3** pending coordinator review of the frozen spec + ratification of Open Questions Q1–Q7. None block the keystone (3a-1); Q1–Q7 gate specific consumers in 3b–3e.
 
 ## Phase 3: Effects — ⬜ Not started
 - 3a-1 **KEYSTONE — Multiple Masterminds engine** (core change, infrastructure-first): ⬜
