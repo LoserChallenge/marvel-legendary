@@ -35,7 +35,8 @@ Branch: `secret-wars-vol1` (worktree)
 - **Epic toggle:** SW masterminds have no `epic{}` → `script.js:973` (`if (mastermind.epic)`) auto-hides the toggle. No toggle exposed. ✓
 - **Verified:** `node --check` clean (skeleton + cardDatabase); grep confirms 6/2/4/2/14 registrations, both team filters, 0 epic blocks, removed schemes absent.
 - **ASSET GAP (flag):** no `Illuminati.svg` / `Cabal.svg` team icons exist (staging shipped none) — using `Unaffiliated.svg` placeholder for those 8 heroes + 2 team filters. Reversible; needs proper icons before ship.
-- **NOT live-smoke-tested:** local-server start was permission-denied; structural verification only. A `/game-test` load smoke test is the recommended pre-3 confirmation.
+- **LIVE SMOKE TEST — ✅ PASS (`/game-test`, 2026-06-23):** game loads with no real console errors (only known sw.js 404); all dropdowns populate (14/4/2/6/2 + Cabal/Illuminati filters); Epic toggle stays hidden for Madelyne; full game started (Madelyne + Pan-Dimensional Plague + Limbo + M.O.D.O.K.s + 3 SWV1 heroes) — **12 SWV1 board images all loaded (naturalWidth>0), 0 broken**; M.O.D.O.K.s/Madelyne/Limbo render with full art. Setup validation correctly reads scheme `requiredHeroes:3` / What-If `requiredVillains:1`. Screenshot: `docs/playwright-runs/2026-06-23/swv1-phase2-smoke-board.jpeg`.
+- **Minor observation (benign):** empty `backingTrack:""` on SWV1 schemes emits a one-time `console.warn` "No scheme or backingTrack found, using default" (`script.js:19100`) and plays default music — working as designed (falsy-safe). Optional polish: assign an existing track name per scheme.
 
 ### (c) gainSidekick() helper — proposed design (read-only; for Phase 3a-2 build)
 Cost-free, cap-free Sidekick gain is genuinely missing (`recruitSidekick()` @ script.js:17782 always sets `sidekickRecruited` + deducts cost). Proposed:
