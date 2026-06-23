@@ -19,3 +19,6 @@ expansions/
 
 # Playwright MCP scratch output (snapshots, screenshots, console logs from /game-test)
 .playwright-mcp/
+
+# Playwright verification screenshots — disposable, re-runnable binary artifacts
+docs/playwright-runs/
