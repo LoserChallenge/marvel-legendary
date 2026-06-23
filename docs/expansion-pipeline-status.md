@@ -34,7 +34,7 @@ Last updated: 2026-06-22 — **🎉 ALL 16 EXPANSIONS FINALIZED through Pass 3.*
 | guardians-of-the-galaxy | B | n/a | ✅ 2026-04-03 | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | n/a | n/a |
 | paint-the-town-red | B | n/a | ✅ 2026-04-03 | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | n/a | n/a |
 | revelations | A | ✅ | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | ✅ 2026-04-05 | ✅ merged to master 2026-06-20 |
-| secret-wars-vol1 | A | ✅ | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | — | — |
+| secret-wars-vol1 | A | ✅ | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | ✅ 2026-06-22 | — |
 | heroes-of-asgard | A | ✅ | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ 2026-04-04 | ✅ | — | — |
 | x-men | A | ✅ | ✅ 2026-04-04 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ | — | — |
 | into-the-cosmos | A | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ 2026-04-05 | ✅ | — | — |
@@ -81,6 +81,8 @@ Remaining notes:
 
 ### Secret Wars Vol. 1
 ✅ All passes complete (2026-04-04). Finalized at `docs/card-inventory/final/secret-wars-vol1.md`. 14 heroes, 6 villain groups (incl. dual-nature Manhattan Earth-1610), 4 masterminds, 8 schemes, 3 henchmen groups (incl. dual-nature Thor Corps), 1 bystander, 1 sidekick type, 30 Ambitions. New keywords: Teleport, Rise of the Living Dead, Cross-Dimensional Rampage, Bribe. Pass 2 applied 8 corrections: tactic name typo ("Love to Have You for Dinner"), class icon fix (Revert to Bruce Banner: STRENGTH→TECH), 4 Sentinel Territories flavor prefixes already present in file, 2 minor wording fixes. All 11 icon flags resolved via BGG reference. Tactic VP/Fight values filled (user confirmed). **Deferred:** Deadlands/Wasteland/Ambitions implementation — unique rules, low priority.
+
+`/analyze-expansion` complete (2026-06-22). Mechanics reference: `docs/expansion-mechanics/secret-wars-vol1.md`; rules notes: `docs/rules-notes/secret-wars-vol1.md`. **Build scope locked to the staged assets only** — IN: 14 heroes, 4 villain groups (Domain of Apocalypse, Limbo, Manhattan Earth-1610, Sentinel Territories), 2 masterminds (Madelyne Pryor, Nimrod), 8 schemes, 2 henchmen (M.O.D.O.K.s, Thor Corps), Banker, Sidekicks. DEFERRED: Wasteland + Deadlands groups, Wasteland Hulk + Zombie Green Goblin masterminds, all 30 Ambitions + the Ambition mode, Ghost Racers henchmen → Bribe + Rise of the Living Dead keywords have no in-scope cards. **Keystone decision:** Multiple-Masterminds support (Apocalyptic Magneto ascension + Dark Alliance scheme) — build it, using What If? p.19 rules + agreed Golden Solo adaptation (precedent in `docs/expansion-decisions.md`). Most other mechanics are REUSE/ADAPT (Teleport, Sidekicks, villain→hero, capture, restricted-points). Open build-time questions: Fragmented Realities solo shape; Build-an-Army henchman stand-in; a missing cost-free `gainSidekick()` helper; dual-class via 2-element `classes` array. **Next:** `/new-expansion` (in a worktree).
 
 ### X-Men
 ✅ All passes complete (2026-04-05). Finalized at `docs/card-inventory/final/x-men.md`. Pass 2 found 4 ❌ errors (Dark Angel X-Gene text, Guillotine Roller Coaster spelling, 2x Deathbird token compound words) + 4 ⚠️ spot-checks. Pass 3 physical check resolved all: Ninjutsu ✅, Nemesis 5→5+, Animatronic discrepancy confirmed (Trap=3, Token=4 — genuine printing error, token authoritative), Jubilee 5+ ✅.
