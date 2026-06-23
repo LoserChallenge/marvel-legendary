@@ -6,9 +6,9 @@ Sources: `expansions/secret-wars-vol1/Legendary_Rules_Secret_Wars_v1.pdf`, `rule
 
 ## Scope (this build)
 
-**IN:** 14 heroes; 4 villain groups (Domain of Apocalypse, Limbo, Manhattan Earth-1610, Sentinel Territories); 2 masterminds (Madelyne Pryor, Nimrod); 8 schemes; 2 henchmen groups (M.O.D.O.K.s, Thor Corps); Banker bystander; Sidekicks (reuse existing stack).
+**IN:** 14 heroes; 4 villain groups (Domain of Apocalypse, Limbo, Manhattan Earth-1610, Sentinel Territories); 2 masterminds (Madelyne Pryor, Nimrod); **6 of 8 schemes** (2 deferred — see below); 2 henchmen groups (M.O.D.O.K.s, Thor Corps); Banker bystander; Sidekicks (reuse existing stack).
 
-**DEFERRED (out of scope, per user 2026-06-22):** Wasteland group, The Deadlands (zombie) group, all 30 Ambitions + the Ambition Row / "A Player is the Mastermind" mode, and the two masterminds tied to the deferred groups (Wasteland Hulk, Zombie Green Goblin). Consequently the **Bribe** and **Rise of the Living Dead** keywords have zero in-scope cards and are not implemented this build.
+**DEFERRED (out of scope, per user 2026-06-22):** Wasteland group, The Deadlands (zombie) group, all 30 Ambitions + the Ambition Row / "A Player is the Mastermind" mode, and the two masterminds tied to the deferred groups (Wasteland Hulk, Zombie Green Goblin). Consequently the **Bribe** and **Rise of the Living Dead** keywords have zero in-scope cards and are not implemented this build. **Two schemes deferred** (cost-disproportionate, decided 2026-06-22): **Smash Two Dimensions Together** (needs a genuinely-new parallel/second city dimension) and **Fragmented Realities** (per-player dimensions collapse to nothing at 1 player).
 
 ---
 
@@ -249,8 +249,8 @@ RECOMMENDATION: BUILD NEW — build the multi-mastermind keystone first; this sc
 
 ## Open Questions
 
-1. **Fragmented Realities — solo shape.** Per-player-dimension setup is degenerate at 1 player. Decide a faithful solo adaptation (e.g. a single dimension with the active player's split-less Villain Deck + 2 Twists, Evil Wins at 5 non-grey Heroes KO'd) or defer/skip the scheme. → build-time decision with the user.
-2. **Build an Army of Annihilation — henchman source.** "Annihilation Wave Henchmen" aren't in this box. Pick a stand-in (e.g. an in-scope henchman group, or treat as a generic scheme-token henchman). → build-time decision.
+1. ~~**Fragmented Realities — solo shape.**~~ **RESOLVED 2026-06-22: DEFERRED** (per-player dimensions collapse at 1 player; not worth a degenerate adaptation). Also defers **Smash Two Dimensions Together** (parallel-dimension build cost-disproportionate). → 6 of 8 schemes ship.
+2. ~~**Build an Army of Annihilation — henchman source.**~~ **RESOLVED 2026-06-22: use M.O.D.O.K.s as the "Annihilation Wave" stand-in.** Research (`C:\Users\Paul\.claude\research\2026-06-22-secret-wars-annihilation-wave-henchmen.md`) found "Annihilation Wave" is a **printing error** — the named group was cut before release and exists in no Legendary product. Community consensus (no official UD errata) is to designate any henchman group, so M.O.D.O.K.s is rules-as-intended, not a house rule. Scheme spawns its own 10-henchman "Annihilation" army (separate from the villain-deck henchmen) using M.O.D.O.K. art/stats.
 3. **Magneto ascension (minor physical confirm).** "Fight once / no Tactics / defeat at printed Attack 8" is imported from the What If? rulebook (sister set), not literally on the Secret Wars insert. Same shared mechanic — almost certainly identical — but a one-card physical glance confirms it.
 4. **Dark Alliance 2nd mastermind strength** — "full strength" inferred from absence of a reduction clause; physical Pass-3 confirm worthwhile.
 5. **Teleport inventory gloss fix** — correct final/secret-wars-vol1.md L13 from "top of deck" to the rulebook wording (tracking item; engine already correct).
