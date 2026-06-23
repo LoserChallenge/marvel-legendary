@@ -26,8 +26,16 @@ Branch: `secret-wars-vol1` (worktree)
 - **(d) dual-class:** RESOLVED safe — zero `classes[0]` reads in codebase; all consumers use `.includes()`/`.some()`/iteration; icon renderer already does `classes.slice(0,3)`. Stored dual-class as 2-element arrays (e.g. `["Covert","Tech"]`); color = first class's color (color is display + Grey-check only).
 - **Open/flag:** masterminds have NO `epic{}` block (inventory captured no Epic-side data) — confirm whether Epic variants are in scope before 3d. Scheme `endGame`/`twistEffect` are camelCase placeholders to wire in 3e. `backingTrack: ""` (falsy-safe, default music).
 
-## Phase 2: Setup Screen — ⬜ Not started
-<!-- index.html dropdowns (incl. new Illuminati/Cabal team filters) + create expansionSecretWarsVol1.js skeleton + script tag + sw.js FILES_TO_CACHE -->
+## Phase 2: Setup Screen — ✅ Complete (2026-06-22)
+- **Scheme scope applied (coordinator decision):** removed Fragmented Realities (id 41, skipped) + Smash Two Dimensions Together (id 44, deferred) from cardDatabase.js + deleted their 2 images. 6 schemes remain (Build an Army of Annihilation, Corrupt the Next Generation, Crush Them With My Bare Hands, Dark Alliance, Master of Tyrants, Pan-Dimensional Plague).
+  - Build an Army of Annihilation: at 3e use **M.O.D.O.K.s as the "Annihilation Wave Henchmen" stand-in** (named group is a pre-release printing error; rules-as-intended — scheme spawns its own 10-henchman army from M.O.D.O.K. art/stats).
+- **index.html registration:** OVERALL SET + heroes-section Sets filter get "Secret Wars Vol. 1" (matches Revelations' partial pattern — per-section scheme/MM/villain/henchmen Sets filters were never given Revelations either; left as-is). Card entries: 6 schemes, 2 masterminds, 4 villain groups, 2 henchmen, 14 heroes (each behind `<hr data-set="Revelations">`).
+- **Team filters:** added `Cabal` + `Illuminati` to #heroteamfilter.
+- **expansionSecretWarsVol1.js** skeleton created; script tag wired into the load chain (after Revelations, before updatesContent); added to `sw.js` FILES_TO_CACHE (CACHE_NAME stays `legendary-v5` — bump at merge).
+- **Epic toggle:** SW masterminds have no `epic{}` → `script.js:973` (`if (mastermind.epic)`) auto-hides the toggle. No toggle exposed. ✓
+- **Verified:** `node --check` clean (skeleton + cardDatabase); grep confirms 6/2/4/2/14 registrations, both team filters, 0 epic blocks, removed schemes absent.
+- **ASSET GAP (flag):** no `Illuminati.svg` / `Cabal.svg` team icons exist (staging shipped none) — using `Unaffiliated.svg` placeholder for those 8 heroes + 2 team filters. Reversible; needs proper icons before ship.
+- **NOT live-smoke-tested:** local-server start was permission-denied; structural verification only. A `/game-test` load smoke test is the recommended pre-3 confirmation.
 
 ### (c) gainSidekick() helper — proposed design (read-only; for Phase 3a-2 build)
 Cost-free, cap-free Sidekick gain is genuinely missing (`recruitSidekick()` @ script.js:17782 always sets `sidekickRecruited` + deducts cost). Proposed:
