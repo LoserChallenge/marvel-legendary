@@ -131,23 +131,6 @@ function gainVillainAsHero(villainCopy, heroForm) {
 
 // --- HERO CARD ABILITIES ---
 
-// Manhattan — Ultimate Captain America hero form: "You get +1 Attack for each color of Hero you have."
-// Unconditional (fires every play). Solo = active player. Counts DISTINCT colors among Heroes in play
-// this turn (cardsPlayedThisTurn, type Hero — includes this card). Updates BOTH attack totals (the
-// Final-Showdown cumulative twin rule). NOTE: "color of Hero you have" scope is the narrowest reading
-// that satisfies the frozen spec assertion ("3 distinct colors in play → +3"); flagged to coordinator.
-function ultimateCaptainAmericaBonusAttack(card) {
-  const heroesInPlay = cardsPlayedThisTurn.filter((c) => c && c.type === "Hero");
-  const distinctColors = new Set(heroesInPlay.map((c) => c.color).filter(Boolean));
-  const bonus = distinctColors.size;
-  totalAttackPoints += bonus;
-  cumulativeAttackPoints += bonus;
-  onscreenConsole.log(
-    `<span class="console-highlights">Ultimate Captain America</span> — +${bonus}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> for ${bonus} distinct Hero color${bonus !== 1 ? "s" : ""} in play.`,
-  );
-  updateGameBoard();
-}
-
 // Manhattan — Ultimate Wasp hero form: "[COVERT]: You get +2 Attack." Superpower (conditionType
 // "playedCards", condition "Covert"). Mirrors the base ThorBonusAttack pattern: log + bonusAttack(),
 // which adds card.bonusAttack (=2) to both attack totals.
@@ -477,6 +460,10 @@ async function infernoNightcrawlerFight(villainCard) {
 
 // Ultimate Captain America (DB id 289, Villain Attack 6) → Avengers / Strength / 0+ Attack,
 // "You get +1 Attack for each color of Hero you have" (unconditional, fires on later play).
+// RULING (Finding G, rules-notes BATCH 3): this is a reskin of Core "Captain America – Perfect
+// Teamwork" — identical effect. REUSE the shipped counter CaptainAmericaCountUniqueColorsAndAddAttack
+// (cardAbilities.js), which counts DISTINCT Hero colors across HAND + Artifacts + play this turn
+// (includes this card), updating both Attack totals. (Only 5 colors exist, so the +5 cap is implicit.)
 async function ultimateCaptainAmericaFight(villainCopy) {
   gainVillainAsHero(villainCopy, {
     team: "Avengers",
@@ -485,7 +472,7 @@ async function ultimateCaptainAmericaFight(villainCopy) {
     cost: 6,
     attack: 0,
     attackIcon: true,
-    unconditionalAbility: "ultimateCaptainAmericaBonusAttack",
+    unconditionalAbility: "CaptainAmericaCountUniqueColorsAndAddAttack",
   });
 }
 
