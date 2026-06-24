@@ -677,7 +677,8 @@ async function blackPantherKingOfWakandaIlluminati() {
   );
   for (const sk of kingOfWakandaGainedSidekicks) {
     const idx = playerDiscardPile.indexOf(sk);
-    if (idx >= 0) playerDiscardPile.splice(idx, 1);
+    if (idx < 0) continue; // already moved out of discard — don't duplicate it onto the deck
+    playerDiscardPile.splice(idx, 1);
     playerDeck.push(sk); // top of deck = end of array
     sk.revealed = true;
   }
@@ -871,14 +872,13 @@ function ultimateSpiderManWebSlinger() {
 // (subtype==='Henchman') villains in the city — Henchmen are city-only in this engine (HQ holds Heroes).
 // No-op gracefully if none. (The Mastermind / regular-Villain free-defeat branches are built later.)
 async function maximusMentalDomination() {
-  const targets = city
-    .map((card, idx) => ({ card, idx }))
-    .filter((x) => x.card && x.card.subtype === "Henchman");
-  if (targets.length === 0) {
+  // Pass ORIGINAL city card refs (not copies) so the target can be resolved by identity at defeat
+  // time — robust to any city shift while the modal is open (mirrors Pieces on a Chessboard).
+  const items = city.filter((c) => c && c.subtype === "Henchman");
+  if (items.length === 0) {
     onscreenConsole.log("No Henchman Villain in the city to defeat for free.");
     return;
   }
-  const items = targets.map((t) => ({ ...t.card, _idx: t.idx }));
   const chosen = await showCardSelectionPopup({
     title: "Defeat a Henchman for Free",
     instructions:
@@ -887,10 +887,12 @@ async function maximusMentalDomination() {
     items,
   });
   if (!chosen) return;
+  const idx = city.indexOf(chosen);
+  if (idx < 0) return;
   onscreenConsole.log(
     `<img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> <span class="console-highlights">Mental Domination</span> — defeated <span class="console-highlights">${chosen.name}</span> for free (no Attack spent).`,
   );
-  await defeatVillain(chosen._idx, true);
+  await defeatVillain(idx, true);
 }
 
 // --- Singles: deck-peek (reuse drawCard) ---
@@ -944,7 +946,11 @@ function oldManLoganNoMoreHeroes() {
   onscreenConsole.log(
     `<span class="console-highlights">No More Heroes</span> — reveal your hand.`,
   );
-  const playedHas = cardsPlayedThisTurn.some((c) => tags.includes(c.team));
+  // Strip copy/simulation residue from the played scan (null self = exclude nothing) so an
+  // affordability-simulation artifact can't falsely deny the bonus — consistent with other counts.
+  const playedHas = otherRealCardsPlayedThisTurn(null).some((c) =>
+    tags.includes(c.team),
+  );
   const handHas = playerHand.some((c) => tags.includes(c.team));
   if (!playedHas && !handHas) {
     onscreenConsole.log(
