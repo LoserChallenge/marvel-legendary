@@ -966,6 +966,101 @@ function oldManLoganNoMoreHeroes() {
   }
 }
 
+// --- Teleport-keyword riders (RULING 2026-06-24: either/or — rider fires ONLY on the PLAY branch) ---
+// These 3 cards carry keywords:["Teleport"], so the engine routes them through playOrTeleport():
+// the player MAY set the card aside (Teleport → rejoins next turn's hand as a bonus card, SKIPS these
+// riders) OR PLAY it (playOrTeleport's play branch runs the card's abilities below). No special-casing,
+// no Nightcrawler both-fire override — these cards lack an "or Teleport" trigger.
+
+// Magik — Dimensional Portal (Uncommon). "Teleport. For each Sidekick you played this turn, +1 Attack."
+function magikDimensionalPortal(card) {
+  const sidekickCount = otherRealCardsPlayedThisTurn(card).filter(
+    (c) => c.secondaryType === "Sidekick",
+  ).length;
+  onscreenConsole.log(
+    `Sidekicks played this turn: ${sidekickCount}. +${sidekickCount}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += sidekickCount;
+  cumulativeAttackPoints += sidekickCount;
+  updateGameBoard();
+}
+
+// Magik — Wield the Soulsword (Rare). "Teleport. Choose a Villain or Mastermind in your Victory Pile.
+// You get +Attack equal to its printed VP."
+async function magikWieldTheSoulsword(card) {
+  const targets = victoryPile.filter(
+    (c) => c.type === "Villain" || c.type === "Mastermind",
+  );
+  if (targets.length === 0) {
+    onscreenConsole.log("No Villain or Mastermind in your Victory Pile.");
+    return;
+  }
+  const chosen = await showCardSelectionPopup({
+    title: "Wield the Soulsword",
+    instructions:
+      "Choose a Villain or Mastermind in your Victory Pile — gain +Attack equal to its printed VP.",
+    confirmText: "CHOOSE",
+    items: targets,
+  });
+  if (!chosen) return;
+  const vp = chosen.victoryPoints || 0;
+  onscreenConsole.log(
+    `Chose <span class="console-highlights">${chosen.name}</span> (VP ${vp}). +${vp}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += vp;
+  cumulativeAttackPoints += vp;
+  updateGameBoard();
+}
+
+// Thanos — Transdimensional Overlord (Common B). "Teleport. You may KO a Bystander from your Victory
+// Pile. If you do, +2 Attack." The inner "may KO" is a SECOND nested 'may' on the play branch — distinct
+// from Teleport's own optional choice (which the engine already handled before this rider runs).
+async function thanosTransdimensionalOverlord(card) {
+  const bystanders = victoryPile.filter((c) => c.type === "Bystander");
+  if (bystanders.length === 0) {
+    onscreenConsole.log("No Bystander in your Victory Pile to KO.");
+    return;
+  }
+  const wantsTo = await new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      "Transdimensional Overlord: KO a Bystander from your Victory Pile for +2 Attack?",
+      "Yes",
+      "No",
+    );
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(true);
+    };
+    denyButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(false);
+    };
+  });
+  if (!wantsTo) return;
+  let chosen;
+  if (bystanders.length === 1) {
+    chosen = bystanders[0];
+  } else {
+    chosen = await showCardSelectionPopup({
+      title: "KO a Bystander",
+      instructions: "Choose a Bystander from your Victory Pile to KO.",
+      confirmText: "KO",
+      items: bystanders,
+    });
+    if (!chosen) return;
+  }
+  const idx = victoryPile.indexOf(chosen);
+  if (idx < 0) return;
+  victoryPile.splice(idx, 1);
+  koPile.push(chosen);
+  onscreenConsole.log(
+    `KO'd <span class="console-highlights">${chosen.name}</span> from your Victory Pile. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += 2;
+  cumulativeAttackPoints += 2;
+  updateGameBoard();
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).
