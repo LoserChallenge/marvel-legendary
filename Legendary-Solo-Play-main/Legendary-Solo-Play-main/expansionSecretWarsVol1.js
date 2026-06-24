@@ -175,9 +175,9 @@ function otherRealCardsPlayedThisTurn(self) {
 // conditional ability, no keyword, and no superpower bonus icon. The explicit DB flag
 // `noRulesText: true` is honored first as an override (set on Black Bolt "Speak No Words" + Proxima
 // "Inspiration Through Power"); the runtime fallback also catches the ubiquitous vanilla no-text cards
-// game-wide (basic S.H.I.E.L.D. Troopers/Agents, plain Sidekicks) so Black Bolt counts them as intended
-// — without it, Black Bolt would almost never fire. A naive ability-fields-only check would wrongly
-// count keyword-only cards as no-text; checking `keywords` fixes that false positive.
+// game-wide (basic S.H.I.E.L.D. Troopers/Agents and other vanilla cards) so Black Bolt counts them as
+// intended — without it, Black Bolt would almost never fire. A naive ability-fields-only check would
+// wrongly count keyword-only cards as no-text; checking `keywords` fixes that false positive.
 function cardHasNoRulesText(card) {
   if (!card) return false;
   if (card.noRulesText === true) return true;
