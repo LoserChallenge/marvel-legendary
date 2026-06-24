@@ -355,6 +355,32 @@ function superiorIronManArmorUpgrades() {
   updateGameBoard();
 }
 
+// --- Family 3: gainSidekick() consumers (cost-free, cap-free; insert p.1: gain != recruit) ---
+
+// Magik — Rally the New Mutants (Common A). Special: "Gain a Sidekick." Superpower [COVERT]: "Gain
+// another Sidekick." Two separate functions: unconditional gains 1, the Covert superpower adds 1 more.
+async function magikRallyTheNewMutants() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Rally the New Mutants</span> — gain a Sidekick.`,
+  );
+  await gainSidekick("discard");
+}
+async function magikRallyTheNewMutantsCovert() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero played. Superpower Ability activated — gain another Sidekick.`,
+  );
+  await gainSidekick("discard");
+}
+
+// Namor, the Sub-Mariner — Lead the Armies of Atlantis (Common A). Superpower [INSTINCT]: "Gain a
+// Sidekick." (to discard, cost-free, does not burn the 1/turn recruit cap).
+async function namorTheSubMarinerLeadTheArmiesOfAtlantis() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero played. Superpower Ability activated — gain a Sidekick.`,
+  );
+  await gainSidekick("discard");
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).
