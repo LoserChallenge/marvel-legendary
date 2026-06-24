@@ -893,6 +893,73 @@ async function maximusMentalDomination() {
   await defeatVillain(chosen._idx, true);
 }
 
+// --- Singles: deck-peek (reuse drawCard) ---
+
+// Superior Iron Man — Superior to Others (Uncommon, [RANGE] superpower).
+// "Look at the top two cards of your deck. If one has a higher cost than the other, draw it. Put the
+// rest back in any order." SPEC-Q6: equal cost → draw NOTHING (neither is strictly higher), both stay.
+// Reshuffles the discard pile in if fewer than 2 cards remain (existing deck stays on top).
+function superiorIronManSuperiorToOthers() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+  if (playerDeck.length < 2 && playerDiscardPile.length > 0) {
+    const reshuffled = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+    playerDeck = [...reshuffled, ...playerDeck]; // existing deck cards stay on top
+    updateGameBoard();
+  }
+  if (playerDeck.length < 2) {
+    onscreenConsole.log("Not enough cards in your deck to look at the top two.");
+    return;
+  }
+  const len = playerDeck.length;
+  const top = playerDeck[len - 1];
+  const second = playerDeck[len - 2];
+  if (top.cost === second.cost) {
+    onscreenConsole.log(
+      `Top two cards (<span class="console-highlights">${top.name}</span>, <span class="console-highlights">${second.name}</span>) have equal cost — draw nothing; both stay on top.`,
+    );
+    return;
+  }
+  if (second.cost > top.cost) {
+    // Swap so the higher-cost card is on top, then reuse drawCard() (handles hand + tracking).
+    playerDeck[len - 1] = second;
+    playerDeck[len - 2] = top;
+  }
+  const higher = playerDeck[len - 1];
+  onscreenConsole.log(
+    `Drawing the higher-cost card (<span class="console-highlights">${higher.name}</span>, cost ${higher.cost}); the other stays on top.`,
+  );
+  drawCard();
+}
+
+// Old Man Logan — No More Heroes (Rare, special).
+// "Reveal your hand. You get +5 Attack if you haven't played any S.H.I.E.L.D. or HYDRA cards this turn
+// and don't have any in your hand." Team tags confirmed in cardDatabase.js: "S.H.I.E.L.D." / "HYDRA".
+// Old Man Logan is X-Men, so it never self-disqualifies. (HYDRA Base is a villain group, not a
+// player-deck card team, so it is intentionally excluded.)
+function oldManLoganNoMoreHeroes() {
+  const tags = ["S.H.I.E.L.D.", "HYDRA"];
+  onscreenConsole.log(
+    `<span class="console-highlights">No More Heroes</span> — reveal your hand.`,
+  );
+  const playedHas = cardsPlayedThisTurn.some((c) => tags.includes(c.team));
+  const handHas = playerHand.some((c) => tags.includes(c.team));
+  if (!playedHas && !handHas) {
+    onscreenConsole.log(
+      `No S.H.I.E.L.D. or HYDRA cards played this turn or in your hand. +5<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 5;
+    cumulativeAttackPoints += 5;
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(
+      `A S.H.I.E.L.D. or HYDRA card is ${playedHas ? "among those played this turn" : "in your hand"} — no bonus.`,
+    );
+  }
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).
