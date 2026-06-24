@@ -4927,6 +4927,14 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   isFirstTurn = true;
   finalBlowDelivered = false;
 
+  // Secret Wars Vol.1 — clear Sentinel Territories deferred next-turn flags per game. They are
+  // normally consumed by their turn-start consumers, but a game ending mid-turn with one pending
+  // would otherwise leak into a new game started without a page reload (cross-game state bleed).
+  sentinelSkipVillainNextTurn = 0;
+  sentinelRecruitNextTurn = 0;
+  sentinelVillainAttackDelta = 0;
+  sentinelVillainAttackDeltaNextTurn = 0;
+
   // City size per scheme. Schemes may declare a `citySpaces` array (e.g. Earthquake's
   // 7-space "Low Tide" layout); otherwise use the default 5. Set this explicitly every
   // game so a prior 7-space game resets back to 5 — citySize/citySpaces are persistent
@@ -10566,6 +10574,11 @@ if (villain.shards && villain.shards > 0 && !villain.noShardBonus) {
 } else {
   villain.attackFromShards = 0;
 }
+
+  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack to ALL villains. Added to the
+  // attackFromScheme bucket (after all scheme assignments) so BOTH the attack-number overlay and the
+  // recalculate cost-sum read it consistently. += (not =) preserves any scheme-set value.
+  villain.attackFromScheme += sentinelVillainAttackDelta;
 }
 
 function recalculateHQVillainAttack(villainCard) {
@@ -10608,9 +10621,6 @@ function recalculateHQVillainAttack(villainCard) {
     attackFromShards;
 
   let finalAttack = baseAttack + totalAttackModifiers;
-
-  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack to ALL villains (HQ twin).
-  finalAttack += sentinelVillainAttackDelta;
 
   return Math.max(0, finalAttack);
 }
@@ -10829,6 +10839,10 @@ if (villain.shards && villain.shards > 0 && !villain.noShardBonus) {
 } else {
   villain.attackFromShards = 0;
 }
+
+  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack to ALL villains (HQ twin of
+  // updateVillainAttackValues — keep in sync). attackFromScheme bucket feeds overlay + cost-sum.
+  villain.attackFromScheme += sentinelVillainAttackDelta;
 }
 
 document.getElementById("play-all-button").addEventListener("click", () => {
@@ -12457,9 +12471,6 @@ updateVillainAttackValues(villainCard, cityIndex);
   }
 
   // REMOVED: All the individual scheme and effect calculations since they're now in updateVillainAttackValues
-
-  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack to ALL city villains (this turn).
-  finalAttack += sentinelVillainAttackDelta;
 
   return Math.max(0, finalAttack);
 }
