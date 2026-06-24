@@ -772,6 +772,64 @@ async function drStrangeSorcererSupreme() {
   }
 }
 
+// --- Family 5: Lady Thor — "Once per turn, if you made >=6 Recruit this turn" (deferred) ---
+// Mirrors throgHighRecruitReward: grant immediately if cumulativeRecruitPoints is already >=6, else
+// set a *Pending flag (script.js) that updateGameBoard pays out once 6 Recruit is crossed. Per-title
+// once-per-turn via the *Used guard (SPEC-Q5). Reads cumulativeRecruitPoints (total GENERATED this
+// turn) so spending Recruit doesn't re-lock. Flags declared/reset in script.js.
+
+function ladyThorMysteriousOrigin() {
+  if (ladyThorMysteriousOriginUsed) return; // once per turn
+  if (cumulativeRecruitPoints >= 6) {
+    ladyThorMysteriousOriginUsed = true;
+    onscreenConsole.log(
+      `<span class="console-highlights">Mysterious Origin</span> — already made 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn. Draw a card.`,
+    );
+    drawCard();
+  } else {
+    ladyThorMysteriousOriginPending = true;
+    onscreenConsole.log(
+      `<span class="console-highlights">Mysterious Origin</span> — once this turn, if you make at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">, draw a card.`,
+    );
+  }
+}
+
+function ladyThorChosenByAsgard() {
+  if (ladyThorChosenByAsgardUsed) return;
+  if (cumulativeRecruitPoints >= 6) {
+    ladyThorChosenByAsgardUsed = true;
+    onscreenConsole.log(
+      `<span class="console-highlights">Chosen by Asgard</span> — already made 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 2;
+    cumulativeAttackPoints += 2;
+    updateGameBoard();
+  } else {
+    ladyThorChosenByAsgardPending = true;
+    onscreenConsole.log(
+      `<span class="console-highlights">Chosen by Asgard</span> — once this turn, if you make at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">, +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
+    );
+  }
+}
+
+function ladyThorLivingThunderstorm() {
+  if (ladyThorLivingThunderstormUsed) return;
+  if (cumulativeRecruitPoints >= 6) {
+    ladyThorLivingThunderstormUsed = true;
+    onscreenConsole.log(
+      `<span class="console-highlights">Living Thunderstorm</span> — already made 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn. +6<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 6;
+    cumulativeAttackPoints += 6;
+    updateGameBoard();
+  } else {
+    ladyThorLivingThunderstormPending = true;
+    onscreenConsole.log(
+      `<span class="console-highlights">Living Thunderstorm</span> — once this turn, if you make at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">, +6<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
+    );
+  }
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).

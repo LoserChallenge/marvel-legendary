@@ -880,6 +880,16 @@ let sewerRooftopDefeats = 0;
 let thingCrimeStopperRescue = false;
 let spiderWomanArachnoRecruit = false;
 let throgRecruit = false;
+// Secret Wars Vol.1 — Lady Thor "Once per turn, if you made >=6 Recruit this turn" deferred rewards.
+// Per SPEC-Q5 each of the 3 titles fires at most once per turn, independently. *Pending = played
+// before reaching 6 Recruit (paid out in updateGameBoard once 6 is crossed); *Used = already granted
+// this turn (once-per-turn guard). Both reset in endTurn. Consumed in updateGameBoard.
+let ladyThorMysteriousOriginPending = false;
+let ladyThorMysteriousOriginUsed = false;
+let ladyThorChosenByAsgardPending = false;
+let ladyThorChosenByAsgardUsed = false;
+let ladyThorLivingThunderstormPending = false;
+let ladyThorLivingThunderstormUsed = false;
 let bystandersRescuedThisTurn = 0;
 let galactusForceOfEternityDraw = false;
 let galactusDestroyedCityDelay = false;
@@ -8254,6 +8264,35 @@ cumulativeAttackPoints += 2;
 throgRecruit = false;
 }
 
+  // Secret Wars Vol.1 — Lady Thor deferred >=6-Recruit rewards (paid once 6 Recruit is crossed).
+  // Flags cleared BEFORE granting so drawCard()'s re-entrant updateGameBoard can't double-fire.
+  if (ladyThorChosenByAsgardPending && cumulativeRecruitPoints >= 6) {
+    ladyThorChosenByAsgardPending = false;
+    ladyThorChosenByAsgardUsed = true;
+    onscreenConsole.log(
+      `You have made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn — <span class="console-highlights">Chosen by Asgard</span>: +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 2;
+    cumulativeAttackPoints += 2;
+  }
+  if (ladyThorLivingThunderstormPending && cumulativeRecruitPoints >= 6) {
+    ladyThorLivingThunderstormPending = false;
+    ladyThorLivingThunderstormUsed = true;
+    onscreenConsole.log(
+      `You have made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn — <span class="console-highlights">Living Thunderstorm</span>: +6<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 6;
+    cumulativeAttackPoints += 6;
+  }
+  if (ladyThorMysteriousOriginPending && cumulativeRecruitPoints >= 6) {
+    ladyThorMysteriousOriginPending = false;
+    ladyThorMysteriousOriginUsed = true;
+    onscreenConsole.log(
+      `You have made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn — <span class="console-highlights">Mysterious Origin</span>: draw a card.`,
+    );
+    drawCard();
+  }
+
   if (playerArtifacts.some(card => card.artifactAbilityUsed !== true)) {
   document.getElementById('artifact-deck-image').style.animation = "pulseGlowArtifact 2s infinite ease-in-out";
   document.getElementById('artifact-deck-image').style.border = "3px solid rgb(92, 60, 159)";
@@ -11778,6 +11817,13 @@ if (card.temporaryTeleport === true) {
   thingCrimeStopperRescue = false;
   spiderWomanArachnoRecruit = false;
   throgRecruit = false;
+  // Secret Wars Vol.1 — Lady Thor once-per-turn / deferred >=6-Recruit reward flags.
+  ladyThorMysteriousOriginPending = false;
+  ladyThorMysteriousOriginUsed = false;
+  ladyThorChosenByAsgardPending = false;
+  ladyThorChosenByAsgardUsed = false;
+  ladyThorLivingThunderstormPending = false;
+  ladyThorLivingThunderstormUsed = false;
   bystandersRescuedThisTurn = 0;
   mastermindCosmicThreatResolved = false;
   galactusDestroyedCityDelay = false;
