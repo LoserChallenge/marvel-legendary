@@ -651,6 +651,127 @@ function thanosGalacticDomination() {
   );
 }
 
+// --- Family 3 (cont.): King of Wakanda — gain 3 Sidekicks, relocate to deck top on [ILLUMINATI] ---
+
+// Tracks the Sidekicks gained by King of Wakanda's special so its [ILLUMINATI] superpower can relocate
+// exactly those cards. The engine runs the unconditional ability immediately before the conditional one
+// in the same play, so this scratch state is always fresh by the time the superpower reads it.
+let kingOfWakandaGainedSidekicks = [];
+
+// Black Panther — King of Wakanda (Rare). Special: "Gain three Sidekicks." (to discard, cost-free,
+// cap-free). Superpower [ILLUMINATI]: "Put them on top of your deck."
+async function blackPantherKingOfWakanda() {
+  kingOfWakandaGainedSidekicks = [];
+  onscreenConsole.log(
+    `<span class="console-highlights">King of Wakanda</span> — gain three Sidekicks.`,
+  );
+  for (let i = 0; i < 3; i++) {
+    const sk = await gainSidekick("discard");
+    if (sk) kingOfWakandaGainedSidekicks.push(sk);
+  }
+}
+async function blackPantherKingOfWakandaIlluminati() {
+  if (kingOfWakandaGainedSidekicks.length === 0) return;
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Illuminati.png" alt="Illuminati Icon" class="console-card-icons"> Hero played. Superpower Ability activated — put the gained Sidekicks on top of your deck.`,
+  );
+  for (const sk of kingOfWakandaGainedSidekicks) {
+    const idx = playerDiscardPile.indexOf(sk);
+    if (idx >= 0) playerDiscardPile.splice(idx, 1);
+    playerDeck.push(sk); // top of deck = end of array
+    sk.revealed = true;
+  }
+  kingOfWakandaGainedSidekicks = [];
+  updateGameBoard();
+}
+
+// --- Thanos / Maximus / Dr. Strange singles (reuse) ---
+
+// Thanos — Revel in Destruction (Common A, [CABAL] superpower).
+// "KO a Bystander from the Bystander Stack. Then +1 Recruit for every three Bystanders in the KO pile."
+// The just-KO'd Bystander counts toward the running total before the recruit calc (floor(count/3)).
+function thanosRevelInDestruction() {
+  if (bystanderDeck.length > 0) {
+    const bystander = bystanderDeck.pop();
+    koPile.push(bystander);
+    onscreenConsole.log(
+      `<img src="Visual Assets/Icons/Cabal.png" alt="Cabal Icon" class="console-card-icons"> Hero played. Superpower Ability activated — KO'd a Bystander (<span class="console-highlights">${bystander.name}</span>) from the Bystander Stack.`,
+    );
+  } else {
+    onscreenConsole.log(
+      `<img src="Visual Assets/Icons/Cabal.png" alt="Cabal Icon" class="console-card-icons"> Hero played. Superpower Ability activated — the Bystander Stack is empty.`,
+    );
+  }
+  const bystandersInKO = koPile.filter((c) => c.type === "Bystander").length;
+  const recruitGain = Math.floor(bystandersInKO / 3);
+  onscreenConsole.log(
+    `${bystandersInKO} Bystander(s) in the KO pile → +${recruitGain}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+  );
+  totalRecruitPoints += recruitGain;
+  cumulativeRecruitPoints += recruitGain;
+  updateGameBoard();
+}
+
+// Maximus — Pieces on a Chessboard (Uncommon, special).
+// "You may have a Henchman Villain from your Victory Pile enter the city. If you do, draw a card."
+// Re-entering costs the player that card's VP (it leaves the Victory Pile) — intended.
+async function maximusPiecesOnAChessboard() {
+  const henchmen = victoryPile.filter((c) => c.subtype === "Henchman");
+  if (henchmen.length === 0) {
+    onscreenConsole.log("No Henchman Villain in your Victory Pile.");
+    return;
+  }
+  const wantsTo = await new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      "Pieces on a Chessboard: have a Henchman from your Victory Pile re-enter the city?",
+      "Yes",
+      "No",
+    );
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(true);
+    };
+    denyButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(false);
+    };
+  });
+  if (!wantsTo) return;
+  const chosen = await showCardSelectionPopup({
+    title: "Henchman to Re-enter",
+    instructions: "Choose a Henchman Villain to enter the city.",
+    confirmText: "ENTER CITY",
+    items: henchmen,
+  });
+  if (!chosen) return;
+  const idx = victoryPile.indexOf(chosen);
+  if (idx >= 0) victoryPile.splice(idx, 1);
+  await enterCityFromRight(chosen);
+  onscreenConsole.log(
+    `<span class="console-highlights">${chosen.name}</span> re-enters the city — draw a card.`,
+  );
+  drawCard();
+}
+
+// Dr. Strange — Sorcerer Supreme (Rare, special).
+// "Reveal the top three cards of your deck. Draw any number of them and Teleport the rest." Implemented
+// as a per-card reveal→Draw/Teleport loop over the top 3 (reuse map's prescribed shape) — net: all 3
+// end up in hand by end of turn (drawn now or Teleported back), Teleported ones skip this turn's play.
+async function drStrangeSorcererSupreme() {
+  const available = playerDeck.length + playerDiscardPile.length;
+  const n = Math.min(3, available);
+  if (n === 0) {
+    onscreenConsole.log("Your deck and discard pile are empty — nothing to reveal.");
+    return;
+  }
+  onscreenConsole.log(
+    `<span class="console-highlights">Sorcerer Supreme</span> — reveal the top ${n} card(s) of your deck. Draw any number and Teleport the rest.`,
+  );
+  for (let i = 0; i < n; i++) {
+    await revealTopThenDrawOrTeleport("Sorcerer Supreme");
+  }
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).
