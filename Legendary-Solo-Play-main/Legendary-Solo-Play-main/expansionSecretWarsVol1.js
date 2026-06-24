@@ -830,6 +830,69 @@ function ladyThorLivingThunderstorm() {
   }
 }
 
+// --- Family 8: position-restricted reserve attack (reuse cityReserveAttack / mastermindReserveAttack) ---
+// Restricted attack is a separate per-target pool (NOT totalAttackPoints) consumed at fight time, so it
+// does NOT touch the cumulative totals (mirrors moleManSecretTunnel). Space indices resolved by LABEL
+// (citySpaceLabels.indexOf) — resize-safe; never hardcoded. No-op gracefully if a space is absent.
+
+// Namor, the Sub-Mariner — Ruler of the Seas (Common B, [STRENGTH] superpower).
+// "You get +2, usable only against Villains on the Bridge or the Mastermind."
+function namorTheSubMarinerRulerOfTheSeas() {
+  const bridgeIdx = citySpaceLabels.indexOf("The Bridge");
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Hero played. Superpower Ability activated. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> usable only against Villains on the Bridge or the Mastermind.`,
+  );
+  if (bridgeIdx >= 0) cityReserveAttack[bridgeIdx] += 2;
+  mastermindReserveAttack += 2;
+  updateGameBoard();
+}
+
+// Ultimate Spider-Man — Web-Slinger (Uncommon, special).
+// "+2 Attack usable only against the Mastermind or Villains on the Rooftops or Bridge. Reveal the top
+// card of your deck. If it costs 2 or less, draw it."
+function ultimateSpiderManWebSlinger() {
+  const rooftopsIdx = citySpaceLabels.indexOf("The Rooftops");
+  const bridgeIdx = citySpaceLabels.indexOf("The Bridge");
+  onscreenConsole.log(
+    `<span class="console-highlights">Web-Slinger</span> — +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> usable only against the Mastermind or Villains on the Rooftops or Bridge.`,
+  );
+  if (rooftopsIdx >= 0) cityReserveAttack[rooftopsIdx] += 2;
+  if (bridgeIdx >= 0) cityReserveAttack[bridgeIdx] += 2;
+  mastermindReserveAttack += 2;
+  updateGameBoard();
+  revealTopDrawIfCost(2);
+}
+
+// --- Family 6 (REUSE half): Henchman free-defeat ---
+
+// Maximus — Mental Domination (Common A, [COVERT] superpower).
+// "Defeat a Henchman Villain for free." Reuses defeatVillain(idx, true) (the instant-defeat path runs
+// the full chain incl. the target's Fight effect, no Attack spend). Targets restricted to Henchman-class
+// (subtype==='Henchman') villains in the city — Henchmen are city-only in this engine (HQ holds Heroes).
+// No-op gracefully if none. (The Mastermind / regular-Villain free-defeat branches are built later.)
+async function maximusMentalDomination() {
+  const targets = city
+    .map((card, idx) => ({ card, idx }))
+    .filter((x) => x.card && x.card.subtype === "Henchman");
+  if (targets.length === 0) {
+    onscreenConsole.log("No Henchman Villain in the city to defeat for free.");
+    return;
+  }
+  const items = targets.map((t) => ({ ...t.card, _idx: t.idx }));
+  const chosen = await showCardSelectionPopup({
+    title: "Defeat a Henchman for Free",
+    instructions:
+      "Choose a Henchman Villain to defeat for free — its Fight effect still triggers, no Attack is spent.",
+    confirmText: "DEFEAT",
+    items,
+  });
+  if (!chosen) return;
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> <span class="console-highlights">Mental Domination</span> — defeated <span class="console-highlights">${chosen.name}</span> for free (no Attack spent).`,
+  );
+  await defeatVillain(chosen._idx, true);
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).
