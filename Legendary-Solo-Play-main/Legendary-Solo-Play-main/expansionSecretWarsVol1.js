@@ -144,6 +144,217 @@ function ultimateWaspBonusAttack(card) {
   bonusAttack();
 }
 
+// ============================================================================
+// PHASE 3b — HERO CARD ABILITIES
+// ============================================================================
+//
+// Build map: docs/expansion-progress/secret-wars-vol1-3b-heroes-reusemap.md
+// Frozen specs: docs/expansion-specs/secret-wars-vol1.md (lines 105-513)
+// Engine dispatch (script.js:11363-11481): the engine adds base card.attack/recruit and gates
+// conditionalAbility superpowers via isConditionMet() BEFORE calling fn(card). It does NOT
+// auto-apply card.bonusAttack — flat/computed grants are applied directly to BOTH totals here.
+
+// Shared: real (non-copied / non-simulated) cards played this turn EXCLUDING `self` — backs every
+// "for each OTHER card you played this turn" count. Excludes the playing card by object identity
+// (the engine pushes it to cardsPlayedThisTurn before firing its ability) and strips copy/simulation
+// residue so it can't inflate counts.
+function otherRealCardsPlayedThisTurn(self) {
+  return cardsPlayedThisTurn.filter(
+    (c) =>
+      c !== self &&
+      !c.isCopied &&
+      !c.sidekickToDestroy &&
+      !c.markedToDestroy &&
+      !c.markedForDeletion &&
+      !c.isSimulation,
+  );
+}
+
+// --- Family 1: count cardsPlayedThisTurn / HQ by predicate → grant (IronManArcReactor pattern) ---
+
+// Apocalyptic Kitty Pryde — Disrupt Circuits (Uncommon, special).
+// "You get +1 Attack for each [TECH] Hero in the HQ." Counts dual-class Tech cards; empty HQ slots
+// guarded. Source is the HQ (`hq`), NOT cards played this turn.
+function apocalypticKittyPrydeDisruptCircuits() {
+  const techInHQ = hq.filter(
+    (c) => c && c.classes && c.classes.includes("Tech"),
+  ).length;
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Heroes in the HQ: ${techInHQ}. +${techInHQ}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += techInHQ;
+  cumulativeAttackPoints += techInHQ;
+  updateGameBoard();
+}
+
+// Black Panther — Multifaceted Genius (Common B, special).
+// "You get +1 Attack for each other multicolored card you played this turn." Multicolored = dual-class
+// (classes.length >= 2). Excludes self (Multifaceted Genius is itself dual-class).
+function blackPantherMultifacetedGenius(card) {
+  const count = otherRealCardsPlayedThisTurn(card).filter(
+    (c) => c.classes && c.classes.length >= 2,
+  ).length;
+  onscreenConsole.log(
+    `Other multicolored cards played this turn: ${count}. +${count}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += count;
+  cumulativeAttackPoints += count;
+  updateGameBoard();
+}
+
+// Captain Marvel — Absorb Energies (Common A, [RANGE] superpower).
+// "For each other [RANGED] Hero you have played this turn, you get +1 Recruit." DB class string is
+// "Range". Excludes self. (Engine already confirmed a Range Hero this turn before calling.)
+function captainMarvelAbsorbEnergies(card) {
+  const count = otherRealCardsPlayedThisTurn(card).filter(
+    (c) => c.classes && c.classes.includes("Range"),
+  ).length;
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+  onscreenConsole.log(
+    `Other Range Heroes played this turn: ${count}. +${count}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+  );
+  totalRecruitPoints += count;
+  cumulativeRecruitPoints += count;
+  updateGameBoard();
+}
+
+// Captain Marvel — Marvelous Strength (Uncommon, [STRENGTH] superpower). Twin of Absorb Energies,
+// Attack instead of Recruit. "For each other [STRENGTH] Hero you have played this turn, +1 Attack."
+function captainMarvelMarvelousStrength(card) {
+  const count = otherRealCardsPlayedThisTurn(card).filter(
+    (c) => c.classes && c.classes.includes("Strength"),
+  ).length;
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+  onscreenConsole.log(
+    `Other Strength Heroes played this turn: ${count}. +${count}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += count;
+  cumulativeAttackPoints += count;
+  updateGameBoard();
+}
+
+// Proxima Midnight — Master Combatant (Common B, special).
+// "If the most recent Hero you have played this turn has a Recruit icon, +2 Recruit. If it has an
+// Attack icon, +2 Attack." Looks at the most recent OTHER Hero (the one before this card). A card with
+// both icons grants both. No prior Hero → nothing.
+function proximaMidnightMasterCombatant(card) {
+  const priorHeroes = otherRealCardsPlayedThisTurn(card).filter(
+    (c) => c.type === "Hero",
+  );
+  const recent = priorHeroes[priorHeroes.length - 1];
+  if (!recent) {
+    onscreenConsole.log(
+      `No prior Hero played this turn — <span class="console-highlights">Master Combatant</span> grants nothing.`,
+    );
+    return;
+  }
+  if (recent.recruitIcon) {
+    onscreenConsole.log(
+      `<span class="console-highlights">${recent.name}</span> has a Recruit icon. +2<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+    );
+    totalRecruitPoints += 2;
+    cumulativeRecruitPoints += 2;
+  }
+  if (recent.attackIcon) {
+    onscreenConsole.log(
+      `<span class="console-highlights">${recent.name}</span> has an Attack icon. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 2;
+    cumulativeAttackPoints += 2;
+  }
+  updateGameBoard();
+}
+
+// Ultimate Spider-Man — Hero from Another Dimension (Rare, special).
+// "You get +2 Attack for each other card you have played this turn that costs 1 or 2." Excludes self.
+function ultimateSpiderManHeroFromAnotherDimension(card) {
+  const count = otherRealCardsPlayedThisTurn(card).filter(
+    (c) => c.cost === 1 || c.cost === 2,
+  ).length;
+  const bonus = count * 2;
+  onscreenConsole.log(
+    `Other cost-1/2 cards played this turn: ${count}. +${bonus}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += bonus;
+  cumulativeAttackPoints += bonus;
+  updateGameBoard();
+}
+
+// --- Trivial special abilities: draw a card ---
+
+function blackPantherCatlikeReflexes() {
+  onscreenConsole.log(`<span class="console-highlights">Catlike Reflexes</span> — draw a card.`);
+  drawCard();
+}
+
+function captainMarvelSupersonicFlight() {
+  onscreenConsole.log(`<span class="console-highlights">Supersonic Flight</span> — draw a card.`);
+  drawCard();
+}
+
+function superiorIronManOptimizedTechnology() {
+  onscreenConsole.log(`<span class="console-highlights">Optimized Technology</span> — draw a card.`);
+  drawCard();
+}
+
+// --- Trivial flat icon-gated superpowers (condition already met by the engine) ---
+
+// Captain Marvel — Cosmic Energies (Rare): [RANGE][RANGE][STRENGTH][STRENGTH] → +6 Attack.
+function captainMarvelCosmicEnergies() {
+  onscreenConsole.log(
+    `Superpower Ability activated. +6<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += 6;
+  cumulativeAttackPoints += 6;
+  updateGameBoard();
+}
+
+// Lady Thor — Heir to the Hammer (Uncommon): [RANGE][STRENGTH] → +2 Attack.
+function ladyThorHeirToTheHammer() {
+  onscreenConsole.log(
+    `Superpower Ability activated. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += 2;
+  cumulativeAttackPoints += 2;
+  updateGameBoard();
+}
+
+// Proxima Midnight — General of the Black Order (Uncommon): [INSTINCT] → +3 Recruit.
+function proximaMidnightGeneralOfTheBlackOrder() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero played. Superpower Ability activated. +3<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+  );
+  totalRecruitPoints += 3;
+  cumulativeRecruitPoints += 3;
+  updateGameBoard();
+}
+
+// Proxima Midnight — Supernova Spear (Rare): [COVERT] → +4 Recruit and +4 Attack.
+function proximaMidnightSupernovaSpear() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero played. Superpower Ability activated. +4<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> and +4<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalRecruitPoints += 4;
+  cumulativeRecruitPoints += 4;
+  totalAttackPoints += 4;
+  cumulativeAttackPoints += 4;
+  updateGameBoard();
+}
+
+// Superior Iron Man — Armor Upgrades (Common A): [TECH] → +2 Attack.
+function superiorIronManArmorUpgrades() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero played. Superpower Ability activated. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += 2;
+  cumulativeAttackPoints += 2;
+  updateGameBoard();
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).
