@@ -381,6 +381,125 @@ async function namorTheSubMarinerLeadTheArmiesOfAtlantis() {
   await gainSidekick("discard");
 }
 
+// --- Family 2: KO one card from the COMBINED hand+discard pool → conditional rider ---
+
+// koOneFromHandOrDiscard() — ratified scout correction: CLAUDE.md's KO1To4FromDiscard is
+// DISCARD-ONLY / 1-4 / returns nothing, so it does NOT fit "KO a card from your hand OR discard
+// pile." This purpose-built helper offers the OPTIONAL ("may") KO over BOTH pools and RETURNS the
+// KO'd card object (or null if declined / empty pool) so the caller can branch (e.g. Last Survivor
+// checks type==="Wound"; others branch on KO-happened). Reuses the shared single-select picker
+// showCardSelectionPopup (cardAbilitiesSidekicks.js) wrapped in a yes/no may-gate.
+async function koOneFromHandOrDiscard(
+  promptText = "You may KO a card from your hand or discard pile.",
+) {
+  const pool = [...playerHand, ...playerDiscardPile];
+  if (pool.length === 0) {
+    onscreenConsole.log("No cards in your hand or discard pile to KO.");
+    return null;
+  }
+  const wantsTo = await new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      promptText,
+      "KO a card",
+      "Decline",
+    );
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(true);
+    };
+    denyButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(false);
+    };
+  });
+  if (!wantsTo) {
+    onscreenConsole.log("Declined to KO a card.");
+    return null;
+  }
+  const chosen = await showCardSelectionPopup({
+    title: "KO a Card",
+    instructions: "Select a card from your hand or discard pile to KO.",
+    confirmText: "KO CARD",
+    items: pool,
+  });
+  if (!chosen) return null;
+  // Remove the chosen card from its source array by object identity, then KO it.
+  let idx = playerHand.indexOf(chosen);
+  if (idx >= 0) {
+    playerHand.splice(idx, 1);
+  } else {
+    idx = playerDiscardPile.indexOf(chosen);
+    if (idx >= 0) playerDiscardPile.splice(idx, 1);
+  }
+  koPile.push(chosen);
+  onscreenConsole.log(
+    `KO'd <span class="console-highlights">${chosen.name}</span>.`,
+  );
+  updateGameBoard();
+  return chosen;
+}
+
+// Apocalyptic Kitty Pryde — Phase Out (Common A, [COVERT] superpower).
+// "You may KO a card from your hand or discard pile. If you do, you get +1 Attack."
+async function apocalypticKittyPrydePhaseOut() {
+  const koed = await koOneFromHandOrDiscard(
+    "Phase Out: you may KO a card from your hand or discard pile for +1 Attack.",
+  );
+  if (koed) {
+    onscreenConsole.log(
+      `+1<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 1;
+    cumulativeAttackPoints += 1;
+    updateGameBoard();
+  }
+}
+
+// Dr. Strange — Trust Me, I'm a Doctor (Common B, [ILLUMINATI] superpower).
+// "You may KO a card from your hand or discard pile. If you do, you get +1 Recruit." Recruit twin.
+async function drStrangeTrustMeImADoctor() {
+  const koed = await koOneFromHandOrDiscard(
+    "Trust Me, I'm a Doctor: you may KO a card from your hand or discard pile for +1 Recruit.",
+  );
+  if (koed) {
+    onscreenConsole.log(
+      `+1<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+    );
+    totalRecruitPoints += 1;
+    cumulativeRecruitPoints += 1;
+    updateGameBoard();
+  }
+}
+
+// Namor, the Sub-Mariner — Feed the Sharks (Uncommon, special).
+// "You may KO a card from your hand or discard pile. If you do, draw a card."
+async function namorTheSubMarinerFeedTheSharks() {
+  const koed = await koOneFromHandOrDiscard(
+    "Feed the Sharks: you may KO a card from your hand or discard pile to draw a card.",
+  );
+  if (koed) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Feed the Sharks</span> — draw a card.`,
+    );
+    drawCard();
+  }
+}
+
+// Old Man Logan — Last Survivor (Common A, [INSTINCT] superpower).
+// "You may KO a card from your hand or discard pile. If you KO a Wound this way, draw a card."
+// Draw is gated on the KO'd card being a Wound (type==="Wound"), not merely on a KO happening.
+async function oldManLoganLastSurvivor() {
+  const koed = await koOneFromHandOrDiscard(
+    "Last Survivor: you may KO a card from your hand or discard pile. Draw if it's a Wound.",
+  );
+  if (koed && koed.type === "Wound") {
+    onscreenConsole.log(
+      `KO'd a Wound — <span class="console-highlights">Last Survivor</span> draws a card.`,
+    );
+    drawCard();
+  }
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).
