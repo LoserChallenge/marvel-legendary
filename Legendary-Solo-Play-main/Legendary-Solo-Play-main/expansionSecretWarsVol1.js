@@ -500,6 +500,157 @@ async function oldManLoganLastSurvivor() {
   }
 }
 
+// --- Family 7: reveal top of deck → conditional draw on cost ---
+
+// revealTopDrawIfCost(maxCost) — reveal the top card of the player's deck; draw it if its cost
+// <= maxCost, else leave it revealed on top. Reshuffles the discard pile in if the deck is empty.
+// Consumers: Marvel Team-Up (<=2), Leaping Spider (<=2), Web-Slinger (<=2; built with Family 8).
+function revealTopDrawIfCost(maxCost) {
+  if (playerDeck.length === 0) {
+    if (playerDiscardPile.length === 0) {
+      onscreenConsole.log("Your deck and discard pile are empty — nothing to reveal.");
+      return;
+    }
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+    updateGameBoard();
+  }
+  const top = playerDeck[playerDeck.length - 1];
+  if (top.cost <= maxCost) {
+    onscreenConsole.log(
+      `Revealed <span class="console-highlights">${top.name}</span> (cost ${top.cost}) — drawing it.`,
+    );
+    drawCard();
+  } else {
+    onscreenConsole.log(
+      `Revealed <span class="console-highlights">${top.name}</span> (cost ${top.cost}) — too costly, left on top of your deck.`,
+    );
+    top.revealed = true;
+    updateGameBoard();
+  }
+}
+
+// --- Family 4: reveal top of deck → Draw or Teleport (shared with Apocalyptic Blink) ---
+
+// revealTopThenDrawOrTeleport(label) — reveal the player's deck top; two-button choice Draw it (to
+// hand) or Teleport it (set aside via the real teleport() so it returns next turn as a bonus card).
+// Reshuffles if the deck is empty. The villain Apocalyptic Blink has an inline copy of this flow
+// (committed/working); a future DRY pass can route it through here too.
+async function revealTopThenDrawOrTeleport(label) {
+  if (playerDeck.length === 0) {
+    if (playerDiscardPile.length === 0) {
+      onscreenConsole.log("Your deck and discard pile are empty — nothing to reveal.");
+      return;
+    }
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+    updateGameBoard();
+  }
+  const revealed = playerDeck[playerDeck.length - 1];
+  onscreenConsole.log(
+    `<span class="console-highlights">${label}</span> — revealed <span class="console-highlights">${revealed.name}</span> from the top of your deck. Draw it or Teleport it.`,
+  );
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Reveal: ${revealed.name}. Draw it or Teleport it?`,
+      "Draw it",
+      "Teleport it",
+    );
+    const title = document.querySelector(".info-or-choice-popup-title");
+    if (title) title.textContent = label;
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      drawCard(); // pops the revealed top card into hand
+      resolve();
+    };
+    denyButton.onclick = async () => {
+      closeInfoChoicePopup();
+      const card = playerDeck.pop(); // the revealed top card
+      playerHand.push(card); // teleport() expects the card in hand; it queues it for next turn
+      await teleport(card);
+      resolve();
+    };
+  });
+}
+
+// Dr. Strange — Cloak of Levitation (Common A, [RANGE] superpower).
+// "Reveal the top card of your deck. Draw it or Teleport it." Same flow as Apocalyptic Blink.
+async function drStrangeCloakOfLevitation() {
+  return revealTopThenDrawOrTeleport("Cloak of Levitation");
+}
+
+// Ultimate Spider-Man — Marvel Team-Up (Common A, special).
+// "Gain a Sidekick. Reveal the top card of your deck. If it costs 2 or less, draw it."
+async function ultimateSpiderManMarvelTeamUp() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Marvel Team-Up</span> — gain a Sidekick.`,
+  );
+  await gainSidekick("discard");
+  revealTopDrawIfCost(2);
+}
+
+// Ultimate Spider-Man — Leaping Spider (Common B).
+// Special: "Reveal the top card of your deck. If it costs 2 or less, draw it." Superpower [STRENGTH]: +2 Attack.
+function ultimateSpiderManLeapingSpider() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Leaping Spider</span> — reveal the top card of your deck.`,
+  );
+  revealTopDrawIfCost(2);
+}
+function ultimateSpiderManLeapingSpiderStrength() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Hero played. Superpower Ability activated. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += 2;
+  cumulativeAttackPoints += 2;
+  updateGameBoard();
+}
+
+// Magik — Travel through Limbo (Common B): [RANGE] superpower → +2 Attack. (The card's "Teleport."
+// special ability is the Teleport keyword, handled by the engine play-flow; this is only the +2A
+// superpower, which fires when the card is PLAYED — not when teleported.)
+function magikTravelThroughLimboRange() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero played. Superpower Ability activated. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += 2;
+  cumulativeAttackPoints += 2;
+  updateGameBoard();
+}
+
+// Old Man Logan — Rage Out (Uncommon, [INSTINCT] superpower).
+// "Cross-Dimensional Wolverine Rampage. For each other player who gained a Wound this way, +1 Attack."
+// Reuses crossDimensionalRampage (Wolverine family). The "+1 per OTHER player who Wounded" rider = 0
+// in solo (no other players), so no Attack is granted — only the self reveal-or-Wound resolves.
+function oldManLoganRageOut() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+  return crossDimensionalRampage(
+    ["Wolverine", "Weapon X", "Old Man Logan"],
+    "Rage Out",
+  );
+}
+
+// Superior Iron Man — #Humblebrag (Rare, special).
+// "Draw a card for each other player who has fewer cards in their Victory Pile than you." Solo: no
+// other players → 0 → draw 0 (no-op per the ratified Q1 source/comparison rule).
+function superiorIronManHumblebrag() {
+  onscreenConsole.log(
+    `<span class="console-highlights">#Humblebrag</span> — in solo there are no other players with a smaller Victory Pile, so no cards are drawn.`,
+  );
+}
+
+// Thanos — Galactic Domination (Uncommon, [RANGE] superpower).
+// "Each other player reveals a [RANGED] Hero or surrenders a Bystander from their Victory Pile. You
+// rescue those Bystanders." RATIFIED NO-OP (2026-06-24): pulls from OTHER players' piles = source
+// with no solo equivalent → nothing happens in solo.
+function thanosGalacticDomination() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero played. Superpower Ability activated — but in solo there are no other players to surrender a Bystander, so nothing happens.`,
+  );
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).
