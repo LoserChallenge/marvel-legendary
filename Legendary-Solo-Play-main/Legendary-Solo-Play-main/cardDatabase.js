@@ -12661,6 +12661,7 @@ const heroes = [
         condition: "None",
         invulnerability: "None",
         keywords: [],
+        noRulesText: true,
         image: "Visual Assets/Heroes/Secret Wars Vol. 1/SecretWarsVol1_BlackBoltIlluminati_SpeakNoWords.webp",
       },
       {
@@ -13660,6 +13661,7 @@ const heroes = [
         condition: "None",
         invulnerability: "None",
         keywords: [],
+        noRulesText: true,
         image: "Visual Assets/Heroes/Secret Wars Vol. 1/SecretWarsVol1_ProximaMidnight_InspirationThroughPower.webp",
       },
       {

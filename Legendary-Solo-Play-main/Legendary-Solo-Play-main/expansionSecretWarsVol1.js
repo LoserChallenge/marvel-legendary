@@ -170,6 +170,99 @@ function otherRealCardsPlayedThisTurn(self) {
   );
 }
 
+// --- Shared: "card with no rules text" predicate (Black Bolt) ---
+// A card "has no rules text" when it carries no rules-bearing fields: no unconditional ability, no
+// conditional ability, no keyword, and no superpower bonus icon. The explicit DB flag
+// `noRulesText: true` is honored first as an override (set on Black Bolt "Speak No Words" + Proxima
+// "Inspiration Through Power"); the runtime fallback also catches the ubiquitous vanilla no-text cards
+// game-wide (basic S.H.I.E.L.D. Troopers/Agents, plain Sidekicks) so Black Bolt counts them as intended
+// — without it, Black Bolt would almost never fire. A naive ability-fields-only check would wrongly
+// count keyword-only cards as no-text; checking `keywords` fixes that false positive.
+function cardHasNoRulesText(card) {
+  if (!card) return false;
+  if (card.noRulesText === true) return true;
+  const noUncond = !card.unconditionalAbility || card.unconditionalAbility === "None";
+  const noCond = !card.conditionalAbility || card.conditionalAbility === "None";
+  const noKeywords = !card.keywords || card.keywords.length === 0;
+  const noBonus =
+    (!card.bonusAttack || card.bonusAttack === 0) &&
+    (!card.bonusRecruit || card.bonusRecruit === 0);
+  return noUncond && noCond && noKeywords && noBonus;
+}
+
+// --- Black Bolt (Illuminati) — no-rules-text family ---
+
+// Black Bolt — Destructive Whisper (Common A, special). "You get +1 Attack if you reveal four cards
+// with no rules text." SPEC-Q4 ruling: reveal from HAND (contrasts Hypersonic Scream's explicit
+// "played this turn" scoping). Black Bolt is already in cardsPlayedThisTurn and has rules text, so the
+// hand scan never counts it.
+function blackBoltDestructiveWhisper() {
+  const count = playerHand.filter(cardHasNoRulesText).length;
+  onscreenConsole.log(
+    `<span class="console-highlights">Destructive Whisper</span> — reveal your hand: ${count} card(s) with no rules text.`,
+  );
+  if (count >= 4) {
+    totalAttackPoints += 1;
+    cumulativeAttackPoints += 1;
+    updateGameBoard();
+    onscreenConsole.log(
+      `Four or more no-rules-text cards revealed. +1<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+  } else {
+    onscreenConsole.log(`Fewer than four no-rules-text cards — no bonus.`);
+  }
+}
+
+// Black Bolt — Silence is Golden (Uncommon, special). "Choose a card you played this turn with no
+// rules text. You get its Recruit and Attack again." Re-grants the chosen card's printed icon values a
+// second time, to BOTH current-turn and Final-Showdown cumulative totals. No qualifying card → no-op.
+async function blackBoltSilenceIsGolden() {
+  const items = otherRealCardsPlayedThisTurn(null).filter(cardHasNoRulesText);
+  if (items.length === 0) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Silence is Golden</span> — no no-rules-text card was played this turn; nothing to repeat.`,
+    );
+    return;
+  }
+  const chosen = await showCardSelectionPopup({
+    title: "Silence is Golden",
+    instructions:
+      "Choose a card you played this turn with no rules text. You get its Recruit and Attack again.",
+    confirmText: "REPEAT",
+    items,
+  });
+  if (!chosen) return;
+  const addAttack = chosen.attack || 0;
+  const addRecruit = chosen.recruit || 0;
+  totalAttackPoints += addAttack;
+  cumulativeAttackPoints += addAttack;
+  totalRecruitPoints += addRecruit;
+  cumulativeRecruitPoints += addRecruit;
+  updateGameBoard();
+  onscreenConsole.log(
+    `<span class="console-highlights">Silence is Golden</span> repeats <span class="console-highlights">${chosen.name}</span>: +${addRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> +${addAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
+  );
+}
+
+// Black Bolt — Hypersonic Scream (Rare, special). "For each card with no rules text you played this
+// turn, draw a card." Hypersonic Scream itself has rules text → excluded by the predicate. drawCard()
+// auto-reshuffles the discard when the deck runs out; guard against an exhausted deck + discard.
+function blackBoltHypersonicScream() {
+  const count = otherRealCardsPlayedThisTurn(null).filter(cardHasNoRulesText).length;
+  onscreenConsole.log(
+    `<span class="console-highlights">Hypersonic Scream</span> — ${count} no-rules-text card(s) played this turn.`,
+  );
+  let drawn = 0;
+  for (let i = 0; i < count; i++) {
+    if (playerDeck.length === 0 && playerDiscardPile.length === 0) break;
+    drawCard();
+    drawn++;
+  }
+  if (drawn > 0) {
+    onscreenConsole.log(`Drew ${drawn} card(s).`);
+  }
+}
+
 // --- Family 1: count cardsPlayedThisTurn / HQ by predicate → grant (IronManArcReactor pattern) ---
 
 // Apocalyptic Kitty Pryde — Disrupt Circuits (Uncommon, special).
