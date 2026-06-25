@@ -1315,13 +1315,16 @@ async function freeDefeatVillainFromCityOrHQ(filterFn, title, instructions) {
   return defeatCityOrHQVillainByRef(chosen);
 }
 
-// Free-defeat the MAIN mastermind: ONE mastermind fight with no Attack spent. Mirrors
-// handleMastermindPostDefeat's tactic branch — mastermind-defeat bonuses + pop ONE Tactic (its effect +
-// win check run via revealMastermindTactic → showTacticPopup → checkMastermindState) — minus the spend.
+// Free-defeat the MAIN mastermind: ONE mastermind fight with no Attack spent. Reuses the engine's own
+// normal mastermind-defeat tail (createMastermindCopy → collectMastermindRescueOperations →
+// handleMastermindPostDefeat), so a free defeat fires the SAME path a paid fight does — captured-
+// Bystander rescue, shards, rescueExtraBystanders, defeat bonuses, and popping ONE Tactic (its effect +
+// win check via revealMastermindTactic → checkMastermindState) — minus only the Attack spend.
 // There is NO separate "4-defeat" integer counter: the Golden 4 defeats / What If? progress are both
-// modeled as the 4 Tactics, so removing one Tactic IS one defeat. It deliberately does NOT deliver the
-// Golden Final Showdown (a free defeat removes a Tactic; it never skips the strength+4 finale) — if no
-// Tactics remain it is a graceful no-op. [INTERIM Golden-interaction read — flagged to coordinator.]
+// modeled as the 4 Tactics, so removing one Tactic IS one defeat. The tactics===0 guard keeps a free
+// defeat from delivering the Golden Final Showdown (a free defeat removes a Tactic; it never skips the
+// strength+4 finale) — if no Tactics remain it is a graceful no-op. [INTERIM Golden-interaction read —
+// flagged to coordinator.]
 async function freeDefeatMastermind() {
   const mastermind = getSelectedMastermind();
   if (mastermind.tactics.length === 0) {
@@ -1334,15 +1337,18 @@ async function freeDefeatMastermind() {
   onscreenConsole.log(
     `You defeat <span class="console-highlights">${mastermind.name}</span> once for free — no Attack spent.`,
   );
-  isMastermindDefeat = true;
-  try {
-    await defeatBonuses();
-  } finally {
-    isMastermindDefeat = false;
+  const mastermindCopy = createMastermindCopy(mastermind);
+  const operations = await collectMastermindRescueOperations(mastermindCopy);
+  if (operations.length > 1) {
+    await executeOperationsInPlayerOrder(operations, mastermindCopy);
+  } else if (operations.length === 1) {
+    await operations[0].execute();
   }
-  updateMastermindOverlay();
-  updateGameBoard();
-  revealMastermindTactic(mastermind); // pops one Tactic; resolves its effect + win check on dismiss
+  await handleMastermindPostDefeat(
+    mastermind,
+    mastermindCopy,
+    recalculateMastermindAttack(mastermind),
+  );
 }
 
 // Namor — Imperius Rex (Rare). Special: "Defeat a Villain for free." Superpower

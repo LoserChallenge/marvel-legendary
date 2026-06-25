@@ -18881,19 +18881,22 @@ async function recruitHeroConfirmed(hero, hqIndex) {
   playSFX("recruit");
 
   // Secret Wars Vol.1 — Loner (Old Man Logan): "If you don't recruit any Heroes this turn, +2 Attack."
-  // Recruiting a Hero invalidates that, so flag it and claw back any provisional +2 already applied
-  // (from both totals — it was never truly earned). Sidekick recruits use recruitSidekick(), not this,
-  // so they correctly don't count. May drive Attack negative if the +2 was already spent — an accepted
-  // rare edge for a card whose whole point is NOT recruiting Heroes.
-  heroRecruitedThisTurn = true;
-  if (lonerAttackApplied > 0) {
-    totalAttackPoints -= lonerAttackApplied;
-    cumulativeAttackPoints -= lonerAttackApplied;
-    onscreenConsole.log(
-      `You recruited a Hero — <span class="console-highlights">Loner</span><span class="bold-spans">'s</span> +${lonerAttackApplied}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> is removed.`,
-    );
-    lonerAttackApplied = 0;
-    updateGameBoard();
+  // Recruiting a Hero invalidates that, so flag it and claw back any provisional +2 already applied.
+  // Gate on type === "Hero": Sidekick recruits use recruitSidekick() (not this), and the Save Humanity
+  // scheme routes Bystander rescues through THIS function — a Bystander is not a Hero, so it must not
+  // count or claw back. Floor at 0: if the provisional +2 was already spent the points are gone, so
+  // don't drive the totals negative (a negative cumulative would corrupt the Final Showdown math).
+  if (hero && hero.type === "Hero") {
+    heroRecruitedThisTurn = true;
+    if (lonerAttackApplied > 0) {
+      totalAttackPoints = Math.max(0, totalAttackPoints - lonerAttackApplied);
+      cumulativeAttackPoints = Math.max(0, cumulativeAttackPoints - lonerAttackApplied);
+      onscreenConsole.log(
+        `You recruited a Hero — <span class="console-highlights">Loner</span><span class="bold-spans">'s</span> +${lonerAttackApplied}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> is removed.`,
+      );
+      lonerAttackApplied = 0;
+      updateGameBoard();
+    }
   }
 
   // Try multiple ways to find the card element
