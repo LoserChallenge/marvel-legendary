@@ -15,12 +15,14 @@ You prevent reinvention. For each new mechanic a Marvel Legendary expansion intr
 ## Process
 
 For each mechanic listed in the mechanics doc:
-1. Characterize the mechanic in implementation terms ("shuffle specific hero cards into the villain deck", "transform a scheme mid-game", "capture a hero onto a villain", "fixed recruit-only fight cost", "extra villain group", "city resize").
-2. Search the codebase for existing implementations of that same shape — grep for the behavior, not the card name. Look across all expansion files and `script.js`.
+1. Characterize the mechanic TWO ways:
+   - **By effect** (what the card does): "shuffle specific hero cards into the villain deck", "fight a villain on top of the villain deck", "capture a hero onto a villain".
+   - **By engine primitives** (what the code must TOUCH): the globals, state, functions, and DOM surfaces it would operate on — e.g. `villainDeck` top, `defeatNonPlacedVillain`, `city[]` / `data-city-index`, `cumulativeAttackPoints`, `createVillainCopy`, a specific popup helper. **Reuse most often lives at THIS layer**, not the effect layer.
+2. Search the codebase BOTH ways — grep the behavior phrasings AND grep the engine primitives. Crucially, **search by primitive even when the effect theme differs**: two cards that do thematically different things (e.g. "defeat the top villain for free" vs "pay Attack to fight the top villain") routinely share ~90% of the same plumbing. The function whose card name and effect look unrelated is exactly the reuse a theme-only search misses. Look across all expansion files and `script.js`.
 3. Classify the result:
-   - **REUSE** — an existing implementation does essentially the same thing; extract/parameterize and reuse.
-   - **ADAPT** — a near-match exists; adapt it with modifications.
-   - **BUILD NEW** — no precedent in the codebase.
+   - **REUSE** — an existing implementation does essentially the same thing OR shares the core plumbing; extract/parameterize and reuse.
+   - **ADAPT** — a near-match exists (often a shared-plumbing match under a different effect); adapt it with modifications.
+   - **BUILD NEW (PROVISIONAL)** — no precedent found. Mark it provisional, NOT settled: you search semantically and can miss reuse that's filed under mismatched naming/framing, so the implementer MUST re-verify in-code at build time before treating "no precedent" as fact. State this caveat in the entry so a downstream brief never relays BUILD NEW as established risk.
 
 ## Output Format
 
@@ -30,7 +32,7 @@ Append a section to `docs/expansion-mechanics/<expansion>.md` under the exact he
 MECHANIC: <name> — <one-line implementation characterization>
 PRIOR ART: <existing scheme/card/function names with file:line pointers, or "none found">
 HOW IT WORKS: <1–2 sentences on how the existing implementation works>
-RECOMMENDATION: REUSE — <what to extract/parameterize> | ADAPT — <what to change> | BUILD NEW (no precedent)
+RECOMMENDATION: REUSE — <what to extract/parameterize> | ADAPT — <what to change> | BUILD NEW (PROVISIONAL — no precedent found by semantic search; verify in-code at build before treating as settled)
 ```
 
 ### Worked example (the canonical case this scout exists to catch)
@@ -41,6 +43,18 @@ PRIOR ART: Secret Invasion of the Skrull Shapeshifters scheme (script.js:4287, 4
 HOW IT WORKS: Skrull Shapeshifters injects designated hero cards into the villain deck at setup and handles them as villain-deck entries during play.
 RECOMMENDATION: REUSE — extract the inject-heroes-into-villain-deck logic into a helper parameterized on hero name; call it for House of M with Scarlet Witch.
 ```
+
+### Worked example 2 (shared plumbing under a DIFFERENT effect — the miss this scout most often makes)
+
+```
+MECHANIC (by effect): Fight the Future — pay Attack to fight a villain on TOP of the Villain Deck
+MECHANIC (by primitive): reveal villainDeck top → popup → run fightEffect → villainDeck.pop() → defeatNonPlacedVillain
+PRIOR ART (found via the PRIMITIVE search, NOT the theme): punisherHailOfBulletsDefeat (cardAbilitiesDarkCity.js:~3131) → defeatNonPlacedVillain (script.js:14248)
+HOW IT WORKS: Punisher reveals the top villain and DEFEATS IT FOR FREE. Different effect (free vs paid), but the reveal-deck-top → defeat-non-placed-villain plumbing is ~90% identical.
+RECOMMENDATION: ADAPT — clone Punisher's reveal/defeat path; add the Attack-payment gate. A theme-only search for "fight a villain" misses this because Punisher is filed under "defeat for free".
+```
+
+This case was real and was missed by a theme-only search, then mis-scoped downstream as a "highest-risk, no-precedent" build. The primitive-level search is what surfaces it.
 
 ## Notes
 
