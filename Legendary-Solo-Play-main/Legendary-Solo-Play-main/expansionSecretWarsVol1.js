@@ -866,6 +866,162 @@ async function drStrangeSorcererSupreme() {
   }
 }
 
+// Dr. Strange — Fight the Future (Uncommon, [INSTINCT] superpower). SPEC L233-238 (LOW).
+// "Reveal the top card of the Villain Deck. If it's a Villain, you get +2 Attack and may fight that
+// Villain this turn." [INSTINCT] gate handled by the engine dispatch (conditionType "playedCards" /
+// condition "Instinct"); this function runs only when met.
+//
+// DESIGN — Option A (coordinator-confirmed 2026-06-25): the fight is resolved at THIS card's play-time
+// via a popup, NOT a persistent deck-top fight target. The defeatVillain pipeline is hard-wired to
+// city[]/HQ DOM slots, so a "fight in place on the deck" target would need a synthetic slot + a 4th
+// affordability gate + turn-end lifecycle (HIGH risk); a popup-at-resolution is faithful (the player
+// controls play order — play Attack generators first, then this) and matches the SHIPPED reveal-top-
+// villain fight precedent below.
+//
+// REUSE — a paid-fight clone of punisherHailOfBulletsDefeat() (cardAbilitiesDarkCity.js:3131): peek the
+// villain-deck top, run its fightEffect (with the Mr. Fantastic negate prompt), villainDeck.pop(), then
+// defeatNonPlacedVillain() (script.js:14248 — already SWV1-aware: skips the VP push for skrulled /
+// gainAsHero villains, fires defeatBonuses, and tallies a defeated Henchman for Inhuman Mastery). The
+// ONLY addition vs Punisher (which defeats for free) is paying the villain's Attack. No createVillainCopy
+// whitelist concern — this path operates on the live card, never a copy.
+//
+// NO DOUBLE-RESOLVE: if the player can't afford it or declines, the card is LEFT on top of the Villain
+// Deck and the next villain-draw step's processVillainCard() pop() resolves it normally. Only a fought
+// villain is popped here. "If it's a Villain" gate = type === "Villain" (matches Punisher; in this engine
+// Henchmen carry type "Villain", so a deck-top Henchman is a valid target too).
+async function drStrangeFightTheFuture() {
+  if (villainDeck.length === 0) {
+    onscreenConsole.log("The Villain Deck is empty — nothing to reveal.");
+    return;
+  }
+
+  const topCard = villainDeck[villainDeck.length - 1];
+  topCard.revealed = true;
+
+  if (topCard.type !== "Villain") {
+    onscreenConsole.log(
+      `<span class="console-highlights">Fight the Future</span> — revealed <span class="console-highlights">${topCard.name}</span> from the top of the Villain Deck. Not a Villain — no Attack gained; it stays on top of the Villain Deck.`,
+    );
+    updateGameBoard();
+    return;
+  }
+
+  // It's a Villain → +2 Attack (BOTH current-turn AND Final-Showdown cumulative), unconditional on the
+  // optional fight. Granted first so it counts toward affording the fight.
+  totalAttackPoints += 2;
+  cumulativeAttackPoints += 2;
+  onscreenConsole.log(
+    `<span class="console-highlights">Fight the Future</span> — revealed <span class="console-highlights">${topCard.name}</span> from the top of the Villain Deck. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  updateGameBoard();
+
+  // Honor a villain's fightCondition exactly as showAttackButton does (position-independent check).
+  if (
+    topCard.fightCondition &&
+    topCard.fightCondition !== "None" &&
+    !isVillainConditionMet(topCard)
+  ) {
+    onscreenConsole.log(
+      `You cannot fight <span class="console-highlights">${topCard.name}</span> right now (its fight condition is not met). It stays on top of the Villain Deck.`,
+    );
+    return;
+  }
+
+  // Effective Attack cost — recalculateVillainAttack honors attackFrom* modifiers (e.g. a global delta)
+  // and skips city-location buffs because the card isn't placed (city.findIndex returns -1).
+  const cost = recalculateVillainAttack(topCard);
+
+  // Affordability — mirror getAvailableAttackForFight (the engine's non-city fight gate): recruit-as-
+  // attack (Thor "God of Thunder") and Negative Zone honored; a deck-top villain has no reserved attack.
+  const available = negativeZoneAttackAndRecruit
+    ? totalRecruitPoints
+    : totalAttackPoints + (recruitUsedToAttack ? totalRecruitPoints : 0);
+
+  if (available < cost) {
+    onscreenConsole.log(
+      `You don't have enough Attack to fight <span class="console-highlights">${topCard.name}</span> (need ${cost}). It stays on top of the Villain Deck and will be drawn normally.`,
+    );
+    return;
+  }
+
+  // "may fight that Villain" — optional.
+  const wantsToFight = await new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Fight ${topCard.name} now for ${cost} Attack? Its Fight effect will trigger.`,
+      "Fight it",
+      "Not now",
+    );
+    const title = document.querySelector(".info-or-choice-popup-title");
+    if (title) title.textContent = "Fight the Future";
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(true);
+    };
+    denyButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(false);
+    };
+  });
+
+  if (!wantsToFight) {
+    onscreenConsole.log(
+      `You chose not to fight <span class="console-highlights">${topCard.name}</span>. It stays on top of the Villain Deck and will be drawn normally.`,
+    );
+    return;
+  }
+
+  // Pay the cost — mirror payLocationAttackCost minus the reserve term (a deck card has no reserve).
+  playSFX("attack");
+  if (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) {
+    const result = await showCounterPopup(topCard, cost);
+    totalAttackPoints -= result.attackUsed || 0;
+    totalRecruitPoints -= result.recruitUsed || 0;
+    onscreenConsole.log(
+      `You used ${result.attackUsed || 0}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and ${result.recruitUsed || 0}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${topCard.name}</span>.`,
+    );
+  } else if (negativeZoneAttackAndRecruit) {
+    totalRecruitPoints -= cost;
+    onscreenConsole.log(
+      `You used ${cost}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to fight <span class="console-highlights">${topCard.name}</span>.`,
+    );
+  } else {
+    totalAttackPoints -= cost;
+    onscreenConsole.log(
+      `You used ${cost}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight <span class="console-highlights">${topCard.name}</span>.`,
+    );
+  }
+  updateReserveAttackAndRecruit();
+
+  // Remove the fought villain from the top of the deck (nothing mutates villainDeck during the awaited
+  // popup, so the top is still topCard). Pop BEFORE the fight effect — matches punisherHailOfBulletsDefeat
+  // ordering, so a fight effect that itself peeks the villain-deck top doesn't see the card being defeated.
+  villainDeck.pop();
+
+  // Run the villain's Fight effect, with the Mr. Fantastic negate prompt (verbatim Punisher pattern).
+  try {
+    if (topCard.fightEffect && topCard.fightEffect !== "None") {
+      const fightEffectFunction = window[topCard.fightEffect];
+      if (typeof fightEffectFunction === "function") {
+        let negate = false;
+        if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+          negate = await promptNegateFightEffectWithMrFantastic(topCard, topCard);
+        }
+        if (!negate) {
+          await fightEffectFunction(topCard);
+        }
+      } else {
+        console.error(`Fight effect function ${topCard.fightEffect} not found`);
+      }
+    }
+  } catch (error) {
+    console.error(`Error in Fight the Future fight effect: ${error}`);
+  }
+
+  // Non-placed defeat completion: VP push (SWV1-aware), Soul Gem, defeatBonuses, Henchman tally, etc.
+  await defeatNonPlacedVillain(topCard);
+  updateGameBoard();
+}
+
 // --- Family 5: Lady Thor — "Once per turn, if you made >=6 Recruit this turn" (deferred) ---
 // Mirrors throgHighRecruitReward: grant immediately if cumulativeRecruitPoints is already >=6, else
 // set a *Pending flag (script.js) that updateGameBoard pays out once 6 Recruit is crossed. Per-title
