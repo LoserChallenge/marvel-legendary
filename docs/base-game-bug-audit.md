@@ -73,6 +73,12 @@ When all 5 HQ slots are heroes, the post-loop refill reads the shortened `hq.len
 - **Fix direction (base branch):** add `&& !skrulled && !gainAsHero` (i.e. exclude all villain→hero converters) to the Professor X Mind Control call-site condition. `gainAsHero` coverage requires SWV1 merged first.
 - **Status:** CANDIDATE (code-traced via SWV1, not reproduced live). **Not patched** — base/shared, deferred to the base-code branch.
 
+### B10 — `recalculateVillainAttack` reads `cityPermBuff[-1]` for off-grid (non-city) villains → NaN (found via SWV1 Fight the Future, 2026-06-25)
+- **Symptom:** a non-city villain (cityIndex −1 / off-grid) passed through `updateVillainAttackValues`/`recalculateVillainAttack` reads `cityPermBuff[-1]` (undefined); under the **"Portals to the Dark Dimension"** scheme it flows into `attackFromScheme` → NaN attack.
+- **Scope — base:** latent for ANY off-grid caller of `recalculateVillainAttack`. SWV1 **Fight the Future** is the FIRST non-city caller (it fights a villain on top of the Villain Deck), so it newly *exposes* the edge — it does not introduce it. SWV1 guards itself LOCALLY (printed-Attack fallback inside the FtF function) — no SW spec broken, no shared-base edit.
+- **Fix direction (base branch):** guard `currentPermBuff → 0 when i < 0` at `script.js:~10459`. One line; hardens all future off-grid callers.
+- **Status:** CANDIDATE (code-traced via SWV1, locally guarded). **Not patched** in shared code — base-branch candidate. Low frequency (one scheme).
+
 ---
 
 ## CLEARED (investigated this session)
