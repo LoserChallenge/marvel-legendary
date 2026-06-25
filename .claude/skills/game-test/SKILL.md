@@ -94,6 +94,16 @@ Driving the harness:
 - **Python `http.server` is single-threaded** — bursts of webp/m4a requests throw `ERR_CONNECTION_REFUSED` and break card ART in screenshots (counts/DOM/logic unaffected). Use a threaded server for clean screenshots.
 - **Detect DOM state with STRUCTURAL selectors, not geometry** — broken images collapse layout, so bounding-box/`offsetParent` tests are unreliable. Use `#player-hand-element.children.length`, `.cell-label` text, `.card-container[data-city-index]`, `.popup-card`; for `position:fixed` popups (`#defeat-popup`) test `getComputedStyle(el).display`, not `offsetParent===null`.
 - **Drain the start popup QUEUE via real buttons before driving popup-heavy abilities** — `display:none` does NOT dequeue; later loops reusing the shared `.info-or-choice-popup` element collide with un-dequeued start popups (looks like an "orphaned Master Strike"). Close via `#intro-popup-close-button`, then `#info-or-choice-popup-confirm` until none remain.
+- **An awaited choice-popup ability DEADLOCKS inside a single `browser_evaluate`** — `await ability(card)` can't return until the popup's button is pressed, but you can't issue a click while blocked in that same evaluate, so it hangs until an *external* click (the human manually pressing it). The popup buttons are plain `.onclick` (NOT trusted-`pointerdown`), so a scripted click works fine — the problem is timing, not trust. FIX: install a concurrent in-page auto-dismiss interval BEFORE invoking the ability, so the click fires from the page's own event loop while the ability awaits:
+  ```js
+  window.__autoPopup ??= setInterval(() => {
+    document.querySelectorAll('#info-or-choice-popup-confirm, [id$="-popup-confirm"], .info-or-choice-popup-closebutton').forEach(b => {
+      const p = b.closest('.info-or-choice-popup, .card-choice-popup, .popup');
+      if (p && getComputedStyle(p).display !== 'none' && !b.disabled) b.click();
+    });
+  }, 100);
+  ```
+  `clearInterval(window.__autoPopup); window.__autoPopup = null;` when done. This auto-CONFIRMS yes/no + "proceed" popups (and incidentally drains the start-popup queue above). CAVEAT: for card-SELECTION popups (pick WHICH card to KO/discard/gain), drive the specific selection yourself BEFORE the confirm fires — auto-confirm alone picks nothing or the default. Use `getComputedStyle(popup).display`, not `offsetParent`, for visibility (broken-image layout collapse makes geometry unreliable — see structural-selector note above).
 - **Live UI-refresh tests must go through the real play path** (`selectedCards=[idx]` → `confirmActions()`, or `endTurn()`) — abilities rely on the single trailing `updateGameBoard()`; an isolated ability call leaves the DOM stale and falsely reads as a refresh bug.
 - **The Playwright page can close mid-session with the server still up** — re-navigate + re-`resize(1920×1080)` to recover.
 
