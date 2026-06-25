@@ -1054,7 +1054,7 @@ All icon reads confirmed by BGG reference microbadge labels. Revert to Bruce Ban
 
 - The Deadlands (all 8 villain cards) — **deferred**
 - Wasteland (all 4 villain cards) — **deferred**
-- Ghost Racers (henchmen)
+- Ghost Racers (henchmen) — **FIGHT effect IMPLEMENTED in SWV1 Phase 3f (commit `40081cb`, ratified in-scope 2026-06-25); art still missing (CardBack placeholder).** Only the **Ambush ("Rise of the Living Dead")** + the rest of the Deadlands zombie set remain deferred. **A future Deadlands session must NOT rebuild the Fight effect** — only add the Ambush + zombie villains. *(This entry was previously untagged, which is what made the whole henchman look deferred.)*
 - Wasteland Hulk + 4 tactics (mastermind) — **deferred**
 - Zombie Green Goblin + 4 tactics (mastermind) — **deferred**
 - All 30 Ambitions — **deferred**

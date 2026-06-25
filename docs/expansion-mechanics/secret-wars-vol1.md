@@ -6,9 +6,9 @@ Sources: `expansions/secret-wars-vol1/Legendary_Rules_Secret_Wars_v1.pdf`, `rule
 
 ## Scope (this build)
 
-**IN:** 14 heroes; 4 villain groups (Domain of Apocalypse, Limbo, Manhattan Earth-1610, Sentinel Territories); 2 masterminds (Madelyne Pryor, Nimrod); 8 schemes; 2 henchmen groups (M.O.D.O.K.s, Thor Corps); Banker bystander; Sidekicks (reuse existing stack).
+**IN:** 14 heroes; 4 villain groups (Domain of Apocalypse, Limbo, Manhattan Earth-1610, Sentinel Territories); 2 masterminds (Madelyne Pryor, Nimrod); 8 schemes; **3 henchmen groups (M.O.D.O.K.s, Thor Corps, Ghost Racers — Fight effect only, ratified in-scope 2026-06-25)**; Banker bystander; Sidekicks (reuse existing stack).
 
-**DEFERRED (out of scope, per user 2026-06-22):** Wasteland group, The Deadlands (zombie) group, all 30 Ambitions + the Ambition Row / "A Player is the Mastermind" mode, and the two masterminds tied to the deferred groups (Wasteland Hulk, Zombie Green Goblin). Consequently the **Bribe** and **Rise of the Living Dead** keywords have zero in-scope cards and are not implemented this build.
+**DEFERRED (out of scope, per user 2026-06-22; Ghost Racers Fight added back in 2026-06-25):** Wasteland group, The Deadlands (zombie) group, all 30 Ambitions + the Ambition Row / "A Player is the Mastermind" mode, and the two masterminds tied to the deferred groups (Wasteland Hulk, Zombie Green Goblin). The **Bribe** keyword has zero in-scope cards (not implemented). The **Ghost Racers henchman Fight effect IS built** (Phase 3f, commit `40081cb`); only its Deadlands Ambush **"Rise of the Living Dead"** stays deferred (the keyword has no other in-scope cards).
 
 ---
 
