@@ -895,8 +895,10 @@ async function drStrangeFightTheFuture() {
     return;
   }
 
+  // Peek the top without marking it revealed: on any non-fight exit the card is left face-down on the
+  // deck (the console message + fight popup already show the player its identity), so the deck-top
+  // thumbnail doesn't render face-up and spoil the next villain draw. Matches punisherHailOfBulletsDefeat.
   const topCard = villainDeck[villainDeck.length - 1];
-  topCard.revealed = true;
 
   if (topCard.type !== "Villain") {
     onscreenConsole.log(
@@ -928,14 +930,21 @@ async function drStrangeFightTheFuture() {
   }
 
   // Effective Attack cost — recalculateVillainAttack honors attackFrom* modifiers (e.g. a global delta)
-  // and skips city-location buffs because the card isn't placed (city.findIndex returns -1).
-  const cost = recalculateVillainAttack(topCard);
+  // and skips city-location buffs because the card isn't placed (city.findIndex returns -1). Guard NaN:
+  // updateVillainAttackValues reads cityPermBuff[-1] (undefined) for an off-grid card and, under the
+  // "Portals to the Dark Dimension" scheme, assigns it straight into attackFromScheme → NaN cost. Fall
+  // back to the printed Attack (the off-grid card has no city-position perm-buff anyway). [base-code edge
+  // in updateVillainAttackValues — flagged to coordinator; guarded locally here.]
+  let cost = recalculateVillainAttack(topCard);
+  if (!Number.isFinite(cost) || cost < 0) cost = Math.max(0, topCard.attack || 0);
 
-  // Affordability — mirror getAvailableAttackForFight (the engine's non-city fight gate): recruit-as-
-  // attack (Thor "God of Thunder") and Negative Zone honored; a deck-top villain has no reserved attack.
+  // Affordability — mirror the engine fight gate (showAttackButton): recruit-as-attack (Thor "God of
+  // Thunder"), Negative Zone, and Bribe (recruit pays a Bribe villain's Attack) honored; a deck-top
+  // villain has no reserved attack. A revealed deck-top card can be any in-play villain incl. Bribe ones.
+  const hasBribe = topCard.keywords && topCard.keywords.includes("Bribe");
   const available = negativeZoneAttackAndRecruit
-    ? totalRecruitPoints
-    : totalAttackPoints + (recruitUsedToAttack ? totalRecruitPoints : 0);
+    ? totalRecruitPoints + (hasBribe ? totalAttackPoints : 0)
+    : totalAttackPoints + ((recruitUsedToAttack || hasBribe) ? totalRecruitPoints : 0);
 
   if (available < cost) {
     onscreenConsole.log(
@@ -970,9 +979,10 @@ async function drStrangeFightTheFuture() {
     return;
   }
 
-  // Pay the cost — mirror payLocationAttackCost minus the reserve term (a deck card has no reserve).
+  // Pay the cost — mirror defeatVillain minus the reserve term (a deck card has no reserve). Bribe and
+  // recruit-as-attack both route through the counter-popup so the player picks the Attack/Recruit split.
   playSFX("attack");
-  if (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) {
+  if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) || hasBribe) {
     const result = await showCounterPopup(topCard, cost);
     totalAttackPoints -= result.attackUsed || 0;
     totalRecruitPoints -= result.recruitUsed || 0;
