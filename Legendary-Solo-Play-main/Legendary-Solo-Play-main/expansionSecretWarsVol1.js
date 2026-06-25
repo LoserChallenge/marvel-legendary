@@ -1154,6 +1154,302 @@ async function thanosTransdimensionalOverlord(card) {
   updateGameBoard();
 }
 
+// ============================================================================
+// PHASE 3b — BUILD-NEW ENGINE SURFACES (mid-risk batch)
+// ============================================================================
+// Each pairs with an engine flag/hook in script.js (declared near the Sentinel flags, reset in
+// endTurn + initGame). See docs/expansion-progress/secret-wars-vol1-3b-heroes-reusemap.md (Family 10).
+
+// --- Surface 10d: Loner (Old Man Logan) — recruit-this-turn tracker ---
+// "If you don't recruit any Heroes this turn, you get +2 Attack." Provisional grant: +2 now if no Hero
+// recruited yet (heroRecruitedThisTurn); recruitHeroConfirmed() claws it back from BOTH totals if a Hero
+// is later recruited. A Sidekick recruit is NOT a Hero recruit (it uses recruitSidekick()). Multiple
+// Loners each stack +2 via lonerAttackApplied.
+function oldManLoganLoner() {
+  if (!heroRecruitedThisTurn) {
+    totalAttackPoints += 2;
+    cumulativeAttackPoints += 2;
+    lonerAttackApplied += 2;
+    onscreenConsole.log(
+      `<span class="console-highlights">Loner</span> — no Hero recruited yet this turn: +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained (removed if you recruit a Hero this turn).`,
+    );
+    updateGameBoard();
+  } else {
+    onscreenConsole.log(
+      `<span class="console-highlights">Loner</span> — you already recruited a Hero this turn, so no bonus.`,
+    );
+  }
+}
+
+// --- Surface 10e: Infiltrate HQ (Apocalyptic Kitty Pryde) — per-card cost reduction ---
+// "You may put a Hero from the HQ on the bottom of the Hero Deck. The Hero that replaces it in the HQ
+// costs 1 less during this turn." Optional (the card picker is cancellable = decline). Reuses
+// returnHeroToDeck() (hero → bottom of Hero Deck, slot refills — mode-aware: Golden rotates the new card
+// to the rightmost slot, What If? fills in place). The discount is tagged on the replacement CARD object
+// (not the slot) so it stays with that specific Hero across rotation, and is read in showHeroRecruitButton().
+async function apocalypticKittyPrydeInfiltrateHQ() {
+  const heroesInHQ = hq.filter((c) => c && c.type === "Hero");
+  if (heroesInHQ.length === 0) {
+    onscreenConsole.log("No Hero in the HQ to put on the bottom of the Hero Deck.");
+    return;
+  }
+  const chosen = await showCardSelectionPopup({
+    title: "Infiltrate HQ",
+    instructions:
+      "You may put a Hero from the HQ on the bottom of the Hero Deck — its replacement costs 1 less this turn.",
+    confirmText: "INFILTRATE",
+    items: heroesInHQ,
+  });
+  if (!chosen) return; // cancel = decline the optional "may"
+  const hqIndex = hq.indexOf(chosen);
+  if (hqIndex < 0) return;
+  // Capture the replacement BEFORE the move: both refill modes pop the current top of the Hero Deck, so
+  // the top element is the replacement regardless of Golden-rotate vs What If?-in-place. (Empty deck →
+  // no replacement to discount.)
+  const replacement = heroDeck.length > 0 ? heroDeck[heroDeck.length - 1] : null;
+  onscreenConsole.log(
+    `<span class="console-highlights">Infiltrate HQ</span> — <span class="console-highlights">${chosen.name}</span> goes to the bottom of the Hero Deck.`,
+  );
+  returnHeroToDeck(hqIndex); // hero → bottom of deck, slot refills (mode-aware), logs + redraws
+  if (replacement) {
+    replacement.infiltrateHQCostReduction =
+      (replacement.infiltrateHQCostReduction || 0) + 1;
+    infiltrateHQDiscountedCards.push(replacement);
+    onscreenConsole.log(
+      `<span class="console-highlights">${replacement.name}</span> costs 1 less <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to recruit this turn.`,
+    );
+  }
+}
+
+// --- Surface 10c: per-turn space-keyed / any-villain defeat listeners ---
+
+// Black Panther — Stalk the Urban Jungle (Uncommon, special). "Whenever you defeat a Villain on the
+// Rooftops or Streets this turn, you may KO one of your cards or a card from your discard pile."
+// Arms the listener; handlePostDefeat (script.js) fires the optional KO on each qualifying defeat. The
+// forward-looking "this turn" buff applies only to defeats AFTER this card is played (SPEC reading).
+function blackPantherStalkTheUrbanJungle() {
+  blackPantherStalkActive = true;
+  onscreenConsole.log(
+    `<span class="console-highlights">Stalk the Urban Jungle</span> — this turn, whenever you defeat a Villain on the Rooftops or Streets, you may KO a card from your hand or discard pile.`,
+  );
+}
+
+// Maximus — Enslave the Will (Common B, [TECH] superpower). "Whenever you defeat a Villain this turn,
+// you gain a Sidekick." Arms the listener; defeatBonuses (cardAbilities.js) gains a Sidekick on every
+// Villain defeat this turn (cost-free, cap-free; does NOT touch the 1-per-turn recruit cap). The engine
+// only calls this when a [TECH] Hero was played this turn.
+function maximusEnslaveTheWill() {
+  maximusEnslaveActive = true;
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero played. Superpower Ability activated — <span class="console-highlights">Enslave the Will</span>: this turn, whenever you defeat a Villain, gain a Sidekick.`,
+  );
+}
+
+// --- Surface 6 (consumer) / 10c: Maximus — Inhuman Mastery (Rare) ---
+// Special: "Each other player reveals a [TECH] Hero or chooses a Henchman Villain from their Victory
+// Pile. You defeat all those Henchmen for free." RATIFIED NO-OP (2026-06-24): pulls from OTHER players'
+// Victory Piles = a source with no solo equivalent → nothing happens in solo (Family-9 / Q1 split rule).
+function maximusInhumanMastery() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Inhuman Mastery</span> — the special asks each OTHER player to surrender a Henchman from their Victory Pile; in solo there are no other players, so nothing happens.`,
+  );
+}
+
+// Superpower [CABAL]: "You get +1 Attack for each Henchman you defeated this turn." Reads the engine's
+// henchmenDefeatedThisTurn tally (incremented in the 3 villain post-defeat handlers, so it captures
+// defeats by ANY means this turn — normal fights, Mental Domination, Enslave-driven, etc.), not just
+// this card. Engine only calls this when a [CABAL] Hero (team) was played this turn.
+function maximusInhumanMasteryCabal() {
+  const bonus = henchmenDefeatedThisTurn;
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Cabal.png" alt="Cabal Icon" class="console-card-icons"> Hero played. Superpower Ability activated — Henchmen you defeated this turn: ${bonus}. +${bonus}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+  );
+  totalAttackPoints += bonus;
+  cumulativeAttackPoints += bonus;
+  updateGameBoard();
+}
+
+// --- Surface 6: free defeat of a city/HQ Villain or the (MAIN) Mastermind ---
+// "Defeat a Villain/Mastermind for free" = run the full defeat chain (the target's Fight effect still
+// fires) with NO Attack spent. City villains → defeatVillain(idx, true); HQ villains →
+// instantDefeatHQVillain(idx); the Mastermind → freeDefeatMastermind(). Under the Multiple-Masterminds
+// keystone, "the Mastermind" = the MAIN mastermind (task brief / rules-notes Q1). Henchmen carry
+// type:"Villain", so a type-Villain filter includes them.
+
+// Defeat the city/HQ Villain referenced by `chosen` (by object identity) for free. Returns true on hit.
+async function defeatCityOrHQVillainByRef(chosen) {
+  const cityIdx = city.indexOf(chosen);
+  if (cityIdx >= 0) {
+    await defeatVillain(cityIdx, true);
+    return true;
+  }
+  const hqIdx = hq.indexOf(chosen);
+  if (hqIdx >= 0) {
+    await instantDefeatHQVillain(hqIdx);
+    return true;
+  }
+  return false;
+}
+
+// Present a picker over city + HQ Villains passing filterFn; free-defeat the chosen one. Returns true if
+// a villain was defeated, false if there were no targets or the player cancelled.
+async function freeDefeatVillainFromCityOrHQ(filterFn, title, instructions) {
+  const targets = [];
+  city.forEach((c) => {
+    if (c && c.type === "Villain" && filterFn(c)) targets.push(c);
+  });
+  hq.forEach((c) => {
+    if (c && c.type === "Villain" && filterFn(c)) targets.push(c);
+  });
+  if (targets.length === 0) return false;
+  const chosen = await showCardSelectionPopup({
+    title,
+    instructions,
+    confirmText: "DEFEAT",
+    items: targets,
+  });
+  if (!chosen) return false;
+  onscreenConsole.log(
+    `Defeated <span class="console-highlights">${chosen.name}</span> for free (no Attack spent).`,
+  );
+  return defeatCityOrHQVillainByRef(chosen);
+}
+
+// Free-defeat the MAIN mastermind: ONE mastermind fight with no Attack spent. Mirrors
+// handleMastermindPostDefeat's tactic branch — mastermind-defeat bonuses + pop ONE Tactic (its effect +
+// win check run via revealMastermindTactic → showTacticPopup → checkMastermindState) — minus the spend.
+// There is NO separate "4-defeat" integer counter: the Golden 4 defeats / What If? progress are both
+// modeled as the 4 Tactics, so removing one Tactic IS one defeat. It deliberately does NOT deliver the
+// Golden Final Showdown (a free defeat removes a Tactic; it never skips the strength+4 finale) — if no
+// Tactics remain it is a graceful no-op. [INTERIM Golden-interaction read — flagged to coordinator.]
+async function freeDefeatMastermind() {
+  const mastermind = getSelectedMastermind();
+  if (mastermind.tactics.length === 0) {
+    onscreenConsole.log(
+      `<span class="console-highlights">${mastermind.name}</span> has no Tactics left to remove — defeat them in the Final Showdown to win.`,
+    );
+    checkMastermindState();
+    return;
+  }
+  onscreenConsole.log(
+    `You defeat <span class="console-highlights">${mastermind.name}</span> once for free — no Attack spent.`,
+  );
+  isMastermindDefeat = true;
+  try {
+    await defeatBonuses();
+  } finally {
+    isMastermindDefeat = false;
+  }
+  updateMastermindOverlay();
+  updateGameBoard();
+  revealMastermindTactic(mastermind); // pops one Tactic; resolves its effect + win check on dismiss
+}
+
+// Namor — Imperius Rex (Rare). Special: "Defeat a Villain for free." Superpower
+// [INSTINCT][INSTINCT][STRENGTH][STRENGTH]: "Instead, defeat the Mastermind once for free." The
+// superpower REPLACES the special (either/or), so this is a SINGLE unconditional ability that checks the
+// threshold itself and offers the choice — the DB's conditionalAbility is "None" (a two-function split
+// would let the engine fire BOTH, double-resolving "Instead"). The threshold uses the same
+// isConditionMet() the engine would, which excludes this card via slice(0,-1).
+async function namorTheSubMarinerImperiusRex(card) {
+  const superpowerMet = isConditionMet(
+    "playedCards",
+    "Instinct&Instinct&Strength&Strength",
+  );
+  if (!superpowerMet) {
+    await imperiusRexDefeatVillainFree();
+    return;
+  }
+  const choseMastermind = await new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      "Imperius Rex — your superpower is active. Defeat the Mastermind once for free, or instead defeat a Villain for free?",
+      "Defeat the Mastermind",
+      "Defeat a Villain",
+    );
+    const title = document.querySelector(".info-or-choice-popup-title");
+    if (title) title.textContent = "Imperius Rex";
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(true);
+    };
+    denyButton.onclick = () => {
+      closeInfoChoicePopup();
+      resolve(false);
+    };
+  });
+  if (choseMastermind) {
+    await freeDefeatMastermind();
+  } else {
+    await imperiusRexDefeatVillainFree();
+  }
+}
+
+async function imperiusRexDefeatVillainFree() {
+  const defeated = await freeDefeatVillainFromCityOrHQ(
+    () => true,
+    "Imperius Rex",
+    "Choose a Villain to defeat for free — its Fight effect still triggers, no Attack is spent.",
+  );
+  if (!defeated) {
+    onscreenConsole.log("No Villain available to defeat for free.");
+  }
+}
+
+// Thanos — Utter Annihilation (Rare, special). "KO six Bystanders from the Bystander Stack. Then, defeat
+// any Villain or Mastermind whose Attack is less than the number of Bystanders in the KO pile."
+// Sequencing: KO up to 6 FIRST (so they count toward the threshold), THEN compare each target's LIVE
+// (recalculated) Attack — strictly less-than. The Mastermind option = the MAIN mastermind (keystone).
+async function thanosUtterAnnihilation(card) {
+  // (1) KO up to six Bystanders from the Bystander Stack (fewer if the Stack is short).
+  let koed = 0;
+  for (let i = 0; i < 6 && bystanderDeck.length > 0; i++) {
+    koPile.push(bystanderDeck.pop());
+    koed++;
+  }
+  onscreenConsole.log(
+    `<span class="console-highlights">Utter Annihilation</span> — KO'd ${koed} Bystander(s) from the Bystander Stack.`,
+  );
+  updateGameBoard();
+  // (2) Count Bystanders now in the KO pile (includes the ones just KO'd).
+  const threshold = koPile.filter((c) => c.type === "Bystander").length;
+  // (3) Build the eligible-target list: city/HQ Villains + the MAIN Mastermind whose LIVE Attack < threshold.
+  const items = [];
+  city.forEach((c) => {
+    if (c && c.type === "Villain" && recalculateVillainAttack(c) < threshold) items.push(c);
+  });
+  hq.forEach((c) => {
+    if (c && c.type === "Villain" && recalculateVillainAttack(c) < threshold) items.push(c);
+  });
+  const mastermind = getSelectedMastermind();
+  let mmItem = null;
+  if (recalculateMastermindAttack(mastermind) < threshold) {
+    // A lightweight pseudo-item for the picker; resolved by object identity below.
+    mmItem = { name: mastermind.name, image: mastermind.image, _utterAnnihilationMM: true };
+    items.push(mmItem);
+  }
+  if (items.length === 0) {
+    onscreenConsole.log(
+      `No Villain or Mastermind has Attack less than ${threshold} — nothing is defeated.`,
+    );
+    return;
+  }
+  const chosen = await showCardSelectionPopup({
+    title: "Utter Annihilation",
+    instructions: `Defeat any Villain or Mastermind whose Attack is less than ${threshold} for free — its Fight effect still triggers, no Attack is spent.`,
+    confirmText: "DEFEAT",
+    items,
+  });
+  if (!chosen) return;
+  if (chosen === mmItem) {
+    await freeDefeatMastermind();
+    return;
+  }
+  onscreenConsole.log(
+    `Defeated <span class="console-highlights">${chosen.name}</span> for free (no Attack spent).`,
+  );
+  await defeatCityOrHQVillainByRef(chosen);
+}
+
 // --- VILLAIN CARD EFFECTS ---
 
 // Domain of Apocalypse — Apocalyptic Magneto (DB id 282, Attack 8 / VP 6).

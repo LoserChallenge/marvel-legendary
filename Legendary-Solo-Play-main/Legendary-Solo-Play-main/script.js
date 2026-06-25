@@ -880,6 +880,26 @@ let sewerRooftopDefeats = 0;
 let thingCrimeStopperRescue = false;
 let spiderWomanArachnoRecruit = false;
 let throgRecruit = false;
+// Secret Wars Vol.1 — Phase 3b Heroes per-turn state.
+// Loner (Old Man Logan): +2 Attack provisionally granted on play if no Hero recruited yet; clawed back
+// (both totals) by recruitHeroConfirmed if a Hero is later recruited. lonerAttackApplied = currently
+// applied amount (supports multiple Loners). heroRecruitedThisTurn flips true on any HQ Hero recruit
+// (Sidekicks go through recruitSidekick, so they don't count). Reset in endTurn + initGame.
+let heroRecruitedThisTurn = false;
+let lonerAttackApplied = 0;
+// Enslave the Will (Maximus [TECH]): once armed, every Villain defeat this turn grants a Sidekick
+// (paid in defeatBonuses, mirroring militaryComplexRecruit — catches city/HQ/free-defeats). Reset each turn.
+let maximusEnslaveActive = false;
+// Stalk the Urban Jungle (Black Panther): once armed, every Villain defeated on the Rooftops/Streets
+// this turn offers an optional KO from hand/discard (paid in handlePostDefeat's location-bonus section).
+let blackPantherStalkActive = false;
+// Inhuman Mastery [CABAL] superpower reads this: # of Henchmen the player defeated this turn by ANY
+// means (incremented in the 3 villain post-defeat handlers, so free-defeats count too). Reset each turn.
+let henchmenDefeatedThisTurn = 0;
+// Infiltrate HQ (Apocalyptic Kitty Pryde): the replacement Hero costs 1 less this turn. The discount
+// lives on the card object (card.infiltrateHQCostReduction); these are the cards tagged this turn, so
+// endTurn can clear the flag wherever the card has moved. Reset each turn.
+let infiltrateHQDiscountedCards = [];
 // Secret Wars Vol.1 — Lady Thor "Once per turn, if you made >=6 Recruit this turn" deferred rewards.
 // Per SPEC-Q5 each of the 3 titles fires at most once per turn, independently. *Pending = played
 // before reaching 6 Recruit (paid out in updateGameBoard once 6 is crossed); *Used = already granted
@@ -4944,6 +4964,15 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   sentinelRecruitNextTurn = 0;
   sentinelVillainAttackDelta = 0;
   sentinelVillainAttackDeltaNextTurn = 0;
+
+  // Secret Wars Vol.1 — Phase 3b per-turn flags, cleared per game so a game ending mid-turn with one
+  // set doesn't leak into a new game started without a page reload (same rationale as the sentinels).
+  heroRecruitedThisTurn = false;
+  lonerAttackApplied = 0;
+  maximusEnslaveActive = false;
+  blackPantherStalkActive = false;
+  henchmenDefeatedThisTurn = 0;
+  infiltrateHQDiscountedCards = [];
 
   // City size per scheme. Schemes may declare a `citySpaces` array (e.g. Earthquake's
   // 7-space "Low Tide" layout); otherwise use the default 5. Set this explicitly every
@@ -11817,6 +11846,19 @@ if (card.temporaryTeleport === true) {
   thingCrimeStopperRescue = false;
   spiderWomanArachnoRecruit = false;
   throgRecruit = false;
+  // Secret Wars Vol.1 — Phase 3b per-turn flags. Loner (do NOT pre-claw lonerAttackApplied here — the
+  // points already reset to 0 above; just clear the trackers), Enslave/Stalk listeners, henchman tally.
+  heroRecruitedThisTurn = false;
+  lonerAttackApplied = 0;
+  maximusEnslaveActive = false;
+  blackPantherStalkActive = false;
+  henchmenDefeatedThisTurn = 0;
+  // Infiltrate HQ — strip the per-card cost discount wherever the tagged card has moved (HQ / deck /
+  // discard), then clear the tracker for the new turn.
+  infiltrateHQDiscountedCards.forEach((c) => {
+    if (c) delete c.infiltrateHQCostReduction;
+  });
+  infiltrateHQDiscountedCards = [];
   // Secret Wars Vol.1 — Lady Thor once-per-turn / deferred >=6-Recruit reward flags.
   ladyThorMysteriousOriginPending = false;
   ladyThorMysteriousOriginUsed = false;
@@ -13626,6 +13668,22 @@ async function handlePostDefeat(
           console.error("moonKnightGoldenAnkhOfKhonshuBystanderCalculation function not found!");
         }
       }
+
+      // Secret Wars Vol.1 "Stalk the Urban Jungle" (Black Panther): once armed this turn, each Villain
+      // defeated on the Rooftops or Streets lets the player optionally KO a card from hand or discard.
+      // Spaces resolved by LABEL (resize-safe), unlike the legacy hardcoded indices above.
+      if (blackPantherStalkActive && typeof koOneFromHandOrDiscard === 'function') {
+        const rooftopsIdx = citySpaceLabels.indexOf("The Rooftops");
+        const streetsIdx = citySpaceLabels.indexOf("The Streets");
+        if (cityIndex === rooftopsIdx || cityIndex === streetsIdx) {
+          onscreenConsole.log(
+            `You defeated <span class="console-highlights">${villainCard.name}</span> on the ${cityIndex === rooftopsIdx ? "Rooftops" : "Streets"} — <span class="console-highlights">Stalk the Urban Jungle</span> lets you KO a card.`,
+          );
+          await koOneFromHandOrDiscard(
+            "Stalk the Urban Jungle: you may KO a card from your hand or discard pile.",
+          );
+        }
+      }
     } catch (error) {
       console.error("Error processing location bonuses:", error);
     }
@@ -13738,6 +13796,10 @@ async function handlePostDefeat(
         console.error("Error clearing bystander array:", error);
       }
     }
+
+    // Secret Wars Vol.1 — Inhuman Mastery [CABAL] tally: count Henchmen defeated this turn by ANY means
+    // (city / HQ / free-defeat all funnel through these handlers).
+    if (villainCard && villainCard.subtype === "Henchman") henchmenDefeatedThisTurn++;
 
     // 20. Final cleanup
     try {
@@ -14105,6 +14167,9 @@ async function handleHQPostDefeat(
       }
     }
 
+    // Secret Wars Vol.1 — Inhuman Mastery [CABAL] tally: count Henchmen defeated this turn by ANY means.
+    if (villainCard && villainCard.subtype === "Henchman") henchmenDefeatedThisTurn++;
+
     // 21. Final cleanup
     try {
       if (typeof defeatBonuses === 'function') {
@@ -14398,6 +14463,9 @@ async function defeatNonPlacedVillain(villainCard) {
         console.error("Error processing nullified Infinity Gem:", error);
       }
     }
+
+      // Secret Wars Vol.1 — Inhuman Mastery [CABAL] tally: count Henchmen defeated this turn by ANY means.
+    if (villainCard && villainCard.subtype === "Henchman") henchmenDefeatedThisTurn++;
 
       // 13. Final cleanup
     try {
@@ -18495,7 +18563,10 @@ function showHeroRecruitButton(hqIndex, hero) {
   }
 
   const reservedRecruit = getHQReserved(hqIndex);
-  const cost = hero.cost;
+  // Secret Wars Vol.1 "Infiltrate HQ" (Apocalyptic Kitty Pryde): the replacement Hero costs 1 less this
+  // turn. The discount lives on the card object so it follows the card across HQ rotation/refill; both
+  // the affordability gate and the charge below read this single `cost`. Floored at 0.
+  const cost = Math.max(0, hero.cost - (hero.infiltrateHQCostReduction || 0));
   const verb =
     scheme.name === "Save Humanity" && hero.type === "Bystander"
       ? "rescue"
@@ -18808,6 +18879,22 @@ function calculateBezierPoint(t, p0, p1, p2, p3) {
 
 async function recruitHeroConfirmed(hero, hqIndex) {
   playSFX("recruit");
+
+  // Secret Wars Vol.1 — Loner (Old Man Logan): "If you don't recruit any Heroes this turn, +2 Attack."
+  // Recruiting a Hero invalidates that, so flag it and claw back any provisional +2 already applied
+  // (from both totals — it was never truly earned). Sidekick recruits use recruitSidekick(), not this,
+  // so they correctly don't count. May drive Attack negative if the +2 was already spent — an accepted
+  // rare edge for a card whose whole point is NOT recruiting Heroes.
+  heroRecruitedThisTurn = true;
+  if (lonerAttackApplied > 0) {
+    totalAttackPoints -= lonerAttackApplied;
+    cumulativeAttackPoints -= lonerAttackApplied;
+    onscreenConsole.log(
+      `You recruited a Hero — <span class="console-highlights">Loner</span><span class="bold-spans">'s</span> +${lonerAttackApplied}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> is removed.`,
+    );
+    lonerAttackApplied = 0;
+    updateGameBoard();
+  }
 
   // Try multiple ways to find the card element
   let cardElement;

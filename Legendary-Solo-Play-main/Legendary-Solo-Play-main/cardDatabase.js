@@ -13509,9 +13509,12 @@ const heroes = [
         multiplierAttribute: "None",
         multiplierLocation: "None",
         unconditionalAbility: "namorTheSubMarinerImperiusRex",
-        conditionalAbility: "namorTheSubMarinerImperiusRexInstinctInstinctStrengthStrength",
-        conditionType: "playedCards",
-        condition: "Instinct&Instinct&Strength&Strength",
+        // Either/or "Instead" superpower is handled INSIDE the unconditional ability (it checks the
+        // [INSTINCT][INSTINCT][STRENGTH][STRENGTH] threshold itself and offers the choice). A separate
+        // conditionalAbility would let the engine fire BOTH, double-resolving the replacement.
+        conditionalAbility: "None",
+        conditionType: "None",
+        condition: "None",
         invulnerability: "None",
         keywords: [],
         image: "Visual Assets/Heroes/Secret Wars Vol. 1/SecretWarsVol1_NamorTheSubmariner_ImperiusRex.webp",
