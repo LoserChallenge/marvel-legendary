@@ -2181,4 +2181,206 @@ async function wolverineOfFuturePastEscape(villainCard) {
 
 // --- MASTERMIND EFFECTS ---
 
-// --- HENCHMEN EFFECTS ---
+// ============================================================================
+// PHASE 3f — HENCHMEN FIGHT EFFECTS
+// ============================================================================
+//
+// Henchmen are DB cards with type:"Villain" + henchmen:true, shuffled into the villain deck and
+// fought from the city via the SAME defeat path as villains. Their `fightEffect` string is dispatched
+// (and awaited) through window[fightEffect](villainCopy) inside collectDefeatOperations
+// (script.js:13158), receiving the fight COPY — identical to the Manhattan Earth-1610 villain pattern
+// above.
+//
+// Frozen specs (build-to contract): docs/expansion-specs/secret-wars-vol1.md →
+//   "Henchmen — M.O.D.O.K.s" (HIGH) and "Henchmen — Thor Corps" (LOW).
+//   Ghost Racers has NO frozen-spec block — the /analyze-expansion + spec phases scoped it OUT with
+//   the deferred Deadlands "Rise of the Living Dead" theme. It is built here to the inventory text
+//   (docs/card-inventory/final/secret-wars-vol1.md → "Ghost Racers"), Fight effect ONLY (its Deadlands
+//   Ambush stays deferred). Flagged to the coordinator for a ratified spec block + KO-pool reading.
+
+// Shared: KO a specific Hero the player controls, locating it by object identity wherever it currently
+// lives (HQ / Played-this-turn / Artifacts / Hand / Discard) and applying the standard KO convention
+// (mirrors FightKOHeroYouHave @ cardAbilities.js:8811): push to koPile BEFORE koBonuses() (koBonuses
+// reads koPile[last]); a played-this-turn card is flagged markedToDestroy (removed at end of turn),
+// not spliced; an HQ Hero is KO'd then its slot refilled via refillHQSlot() (mode-correct: Golden
+// rotates, What If? fills in place).
+function koControlledHeroByIdentity(hero) {
+  if (!hero) return;
+  const hqIdx = hq.indexOf(hero);
+  if (hqIdx !== -1) {
+    koPile.push(hero);
+    refillHQSlot(hqIdx);
+  } else {
+    if (cardsPlayedThisTurn.includes(hero)) {
+      hero.markedToDestroy = true; // removed at end of turn; not spliced out now
+    } else {
+      let i = playerArtifacts.indexOf(hero);
+      if (i !== -1) playerArtifacts.splice(i, 1);
+      else if ((i = playerHand.indexOf(hero)) !== -1) playerHand.splice(i, 1);
+      else if ((i = playerDiscardPile.indexOf(hero)) !== -1) playerDiscardPile.splice(i, 1);
+    }
+    koPile.push(hero);
+  }
+  koBonuses();
+  onscreenConsole.log(
+    `<span class="console-highlights">${hero.name}</span> has been KO'd.`,
+  );
+  updateGameBoard();
+}
+
+// Ghost Racers (×10) — Fight: "Reveal a [COVERT] Hero or KO one of your Heroes with an Attack icon."
+// Attack 3 / VP 1. Reveal is the free escape (mirrors revealClassOrWound @ expansionRevelations.js:2329):
+// if you can show a Covert Hero you suffer nothing. Otherwise KO one of your Heroes that carries an
+// Attack icon. "One of your Heroes" (no source qualifier) = the FightKOHeroYouHave pool — Artifacts +
+// Hand + Played-this-turn — NOT discard (M.O.D.O.K.s names discard explicitly; Ghost Racers does not).
+// [BUILD FLAG] No frozen spec — KO-pool reading (your-heroes incl. attack icon) is the worker's, pending
+// coordinator ratification.
+async function ghostRacersFight(villainCopy) {
+  const cardsYouHave = [
+    ...playerHand,
+    ...playerArtifacts,
+    ...cardsPlayedThisTurn.filter(
+      (c) =>
+        !c.isCopied &&
+        !c.sidekickToDestroy &&
+        !c.markedToDestroy &&
+        !c.markedForDeletion &&
+        !c.isSimulation,
+    ),
+  ];
+  const canReveal = cardsYouHave.some((c) => c.classes && c.classes.includes("Covert"));
+  const koPool = [
+    ...playerArtifacts.filter((c) => c.type === "Hero" && c.attackIcon === true),
+    ...playerHand.filter((c) => c.type === "Hero" && c.attackIcon === true),
+    ...cardsPlayedThisTurn.filter(
+      (c) =>
+        c.type === "Hero" &&
+        c.attackIcon === true &&
+        !c.isCopied &&
+        !c.sidekickToDestroy &&
+        !c.markedToDestroy &&
+        !c.markedForDeletion &&
+        !c.isSimulation,
+    ),
+  ];
+
+  // Resolve the "or": only offer a real choice when BOTH sides are payable. Otherwise the single
+  // possible outcome resolves automatically (and if neither is possible, the effect is a no-op).
+  if (canReveal && koPool.length > 0) {
+    const reveal = await new Promise((resolve) => {
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `Reveal a <img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero, or KO one of your Heroes with an <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> icon?`,
+        "Reveal Covert Hero",
+        "KO an Attack Hero",
+      );
+      const t = document.querySelector(".info-or-choice-popup-title");
+      if (t) t.textContent = "Ghost Racers";
+      confirmButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(true);
+      };
+      denyButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(false);
+      };
+    });
+    if (reveal) {
+      onscreenConsole.log(
+        `You revealed a <img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero — no Hero KO'd.`,
+      );
+      return;
+    }
+  } else if (canReveal) {
+    // Have a Covert Hero but no Attack-icon Hero to KO → reveal is the only payable side.
+    onscreenConsole.log(
+      `<span class="console-highlights">Ghost Racers</span> — you revealed a <img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero. No Hero KO'd.`,
+    );
+    return;
+  } else if (koPool.length === 0) {
+    // No Covert Hero to reveal AND no Attack-icon Hero to KO → nothing to do.
+    onscreenConsole.log(
+      `<span class="console-highlights">Ghost Racers</span> — no <img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero to reveal and no Hero with an <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> icon to KO.`,
+    );
+    return;
+  }
+
+  // KO branch: forced (no Covert Hero) or chosen (declined the reveal).
+  const chosen = await showCardSelectionPopup({
+    title: "Ghost Racers",
+    instructions:
+      'KO one of your Heroes with an <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> icon.',
+    confirmText: "KO HERO",
+    items: koPool,
+  });
+  if (!chosen) return;
+  koControlledHeroByIdentity(chosen);
+}
+
+// M.O.D.O.K.s (×10) — Fight: "KO a Hero from your discard pile or the HQ. If that Hero has a Recruit
+// icon, you get +1 Recruit." Attack 3 / VP 1. Combined picker over discard-pile Heroes + HQ Heroes
+// (showCardSelectionPopup). Recruit-icon check captured BEFORE the KO (a Hero with a Recruit icon, i.e.
+// recruitIcon true or a printed Recruit value). Mandatory when any Hero is available in either pool.
+async function modoksFight(villainCopy) {
+  const discardHeroes = playerDiscardPile.filter((c) => c.type === "Hero");
+  const hqHeroes = hq.filter((c) => c && c.type === "Hero");
+  const pool = [...discardHeroes, ...hqHeroes];
+  if (pool.length === 0) {
+    onscreenConsole.log(
+      `<span class="console-highlights">M.O.D.O.K.s</span> — no Hero in your discard pile or the HQ to KO.`,
+    );
+    return;
+  }
+  const chosen = await showCardSelectionPopup({
+    title: "M.O.D.O.K.s",
+    instructions: "KO a Hero from your discard pile or the HQ.",
+    confirmText: "KO HERO",
+    items: pool,
+  });
+  if (!chosen) return;
+  const hadRecruitIcon = chosen.recruitIcon === true || (chosen.recruit || 0) > 0;
+  koControlledHeroByIdentity(chosen);
+  if (hadRecruitIcon) {
+    totalRecruitPoints += 1;
+    cumulativeRecruitPoints += 1;
+    updateGameBoard();
+    onscreenConsole.log(
+      `That Hero had a <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> icon. +1<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+    );
+  }
+}
+
+// Thor Corps (×10, dual-nature Henchman/Hero) — Fight: "Gain this as a Hero." Attack 3 / VP 0.
+// Hero form: Avengers / Strength + Range (dual-class) / 2+ Recruit; "[STRENGTH][RANGED]: You get +1
+// Recruit". Reuses the SHARED gainVillainAsHero() converter (same path as the Manhattan villains). The
+// DB entry carries gainAsHero:true so the henchman defeat path skips the Victory-Pile push
+// (script.js:13581 names Thor Corps); the flag is whitelisted in createVillainCopy() (script.js:13124).
+// Hero cost = old henchman Attack value (3, insert p.1). Color = first class's color (Strength = Green).
+// The superpower fires only when the gained Hero is LATER played.
+async function thorCorpsFight(villainCopy) {
+  gainVillainAsHero(villainCopy, {
+    team: "Avengers",
+    classes: ["Strength", "Range"],
+    color: "Green",
+    cost: 3,
+    recruit: 2,
+    recruitIcon: true,
+    bonusRecruit: 1,
+    conditionalAbility: "thorCorpsBonusRecruit",
+    conditionType: "playedCards",
+    condition: "Strength&Range",
+  });
+}
+
+// Thor Corps hero-form superpower: "[STRENGTH][RANGED]: You get +1 Recruit." Gate is engine-standard
+// (isConditionMet excludes the playing card, so the Strength + Range symbols must come from OTHER cards
+// played this turn — consistent with base Thor "Call Lightning" and the Manhattan Ultimate Thor). On
+// fire, bonusRecruit() reads the just-played card's bonusRecruit (1) and adds it to BOTH recruit totals.
+function thorCorpsBonusRecruit() {
+  onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"><img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+  onscreenConsole.log(
+    `+1<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+  );
+  bonusRecruit();
+}

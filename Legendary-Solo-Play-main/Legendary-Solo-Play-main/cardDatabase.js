@@ -2291,9 +2291,26 @@ const henchmen = [
     originalAttack: 3,
     victoryPoints: 0,
     fightEffect: "thorCorpsFight",
+    gainAsHero: true, // "Fight: Gain this as a Hero" — skips the Victory-Pile push (script.js:13581)
     classes: [],
     keywords: [],
     image: "Visual Assets/Henchmen/SecretWarsVol1_ThorCorps.webp",
+  },
+  {
+    id: 11,
+    name: "Ghost Racers",
+    team: "Ghost Racers",
+    type: "Villain",
+    henchmen: true,
+    attack: 3,
+    originalAttack: 3,
+    victoryPoints: 1,
+    fightEffect: "ghostRacersFight",
+    classes: [],
+    keywords: [],
+    // No official card art (inventory: imageless). CardBack placeholder until art exists. Deadlands
+    // Ambush "Rise of the Living Dead" is deferred — Fight effect only (see expansionSecretWarsVol1.js 3f).
+    image: "Visual Assets/CardBack.webp",
   },
 ];
 
