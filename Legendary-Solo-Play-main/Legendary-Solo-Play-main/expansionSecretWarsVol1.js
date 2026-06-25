@@ -1347,6 +1347,103 @@ function oldManLoganLoner() {
   }
 }
 
+// --- Surface 10a: Untouchable (Apocalyptic Kitty Pryde) — reactive cancel of a Fight effect ---
+// "When any player defeats a Villain or Mastermind with a 'Fight' effect, you may discard this card to
+// cancel that fight effect. If you do, draw three cards." A REACTIVE from-hand interceptor — the same
+// engine primitive as Mr. Fantastic's Ultimate Nullifier (promptNegateFightEffectWithMrFantastic): both
+// cancel a pending Villain/Mastermind Fight effect at the resolution window. Hooked alongside that prompt
+// in collectDefeatOperations() (all Villain/Henchman defeats) and resolveTacticEffects() (Mastermind
+// tactics) in script.js — offered only when the player did NOT already negate with Mr. Fantastic. Solo
+// "any player" = the active player. Cancels ONLY the Fight effect; the Villain/tactic is still defeated
+// (the Victory-Pile push happens separately in the caller, exactly as for the Mr. Fantastic negate).
+// Locations and the Burrow keyword are NOT card Fight effects → deliberately out of scope (no hook there).
+
+// On play: Untouchable's value is its reactive from-hand cancel (offerUntouchableCancel below). Playing
+// the card just yields its printed Recruit and prints this reminder — the interception happens later,
+// during Villain/Mastermind Fight-effect resolution while the card sits in hand. Mirrors Hellcat's
+// hellcatSecondChanceAtLife (expansionRevelations.js).
+function apocalypticKittyPrydeUntouchable() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Untouchable</span>: while this card is in your hand, you may discard it to cancel a Villain or Mastermind Fight effect, then draw three cards.`,
+  );
+}
+
+// Reactive from-hand interceptor. Returns true if the Fight effect was cancelled (caller must skip it),
+// false otherwise. No-op (no prompt) unless the player holds Untouchable in hand. On accept: discard
+// Untouchable from hand (plain discard) and draw three cards. effectLabel = the Villain/tactic name, for
+// the prompt + log only.
+async function offerUntouchableCancel(effectLabel) {
+  const card = playerHand.find(
+    (c) => c && c.name === "Apocalyptic Kitty Pryde - Untouchable",
+  );
+  if (!card) return false;
+
+  const accepted = await askToDiscardUntouchable(card, effectLabel);
+  if (!accepted) return false;
+
+  // Discard Untouchable from hand (plain discard — not an invulnerability-return card).
+  const idx = playerHand.findIndex((c) => c === card);
+  if (idx !== -1) playerHand.splice(idx, 1);
+  playerDiscardPile.push(card);
+
+  // Draw three cards (drawCard, not drawOne — the latter is the turn-cleanup queue wrapper).
+  drawCard();
+  drawCard();
+  drawCard();
+
+  onscreenConsole.log(
+    `<span class="console-highlights">Untouchable</span> discarded to cancel ${
+      effectLabel
+        ? `<span class="console-highlights">${effectLabel}</span>'s`
+        : "the"
+    } Fight effect. Drew three cards.`,
+  );
+  updateGameBoard();
+  return true;
+}
+
+// Yes/No popup for Untouchable — mirrors askToDiscardSecondChance (expansionRevelations.js).
+async function askToDiscardUntouchable(card, effectLabel) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `${
+          effectLabel
+            ? `<span class="console-highlights">${effectLabel}</span>'s`
+            : "This"
+        } Fight effect is about to resolve. Discard <span class="console-highlights">${card.name}</span> to cancel it and draw three cards?`,
+        "Yes",
+        "No",
+      );
+
+      // Title is a plain constant string — textContent (not innerHTML) is equivalent and safe.
+      const titleEl = document.querySelector(".info-or-choice-popup-title");
+      if (titleEl) titleEl.textContent = "Apocalyptic Kitty Pryde - Untouchable";
+
+      const previewArea = document.querySelector(
+        ".info-or-choice-popup-preview",
+      );
+      if (previewArea && card.image) {
+        previewArea.style.backgroundImage = `url('${card.image}')`;
+        previewArea.style.backgroundSize = "contain";
+        previewArea.style.backgroundRepeat = "no-repeat";
+        previewArea.style.backgroundPosition = "center";
+        previewArea.style.display = "block";
+      }
+
+      confirmButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(true);
+      };
+
+      denyButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(false);
+      };
+    }, 10);
+  });
+}
+
 // --- Surface 10e: Infiltrate HQ (Apocalyptic Kitty Pryde) — per-card cost reduction ---
 // "You may put a Hero from the HQ on the bottom of the Hero Deck. The Hero that replaces it in the HQ
 // costs 1 less during this turn." Optional (the card picker is cancellable = decline). Reuses

@@ -13167,6 +13167,13 @@ async function collectDefeatOperations(villainCopy, villainCard) {
             if (typeof promptNegateFightEffectWithMrFantastic === "function") {
               negate = await promptNegateFightEffectWithMrFantastic(villainCopy, villainCard);
             }
+            // Untouchable (Secret Wars Vol.1): reactive from-hand cancel of a Villain Fight effect,
+            // offered only if not already negated by Mr. Fantastic. No-op (no prompt) unless the player
+            // holds Untouchable in hand. Cancels the Fight effect only — the Villain is still defeated
+            // and pushed to the Victory Pile by the caller (same as the Mr. Fantastic negate).
+            if (!negate && typeof offerUntouchableCancel === "function") {
+              negate = await offerUntouchableCancel(villainCopy.name);
+            }
             if (!negate) {
               await fightEffectFunction(villainCopy);
             }
@@ -16313,6 +16320,13 @@ async function resolveTacticEffects(tacticCard) {
   (!tacticCard.name || tacticCard.name !== "Mysterio Mastermind Tactic")
 ) {
       negate = await promptNegateFightEffectWithMrFantastic();
+      // Untouchable (Secret Wars Vol.1): reactive from-hand cancel of a Mastermind tactic Fight effect,
+      // offered only if not already negated by Mr. Fantastic. Inherits the Mysterio exclusion (this whole
+      // block is skipped for the Mysterio Mastermind Tactic). No-op unless the player holds Untouchable in
+      // hand. The tactic is still defeated/scored (VP push below + at revealMastermindTactic).
+      if (!negate && typeof offerUntouchableCancel === "function") {
+        negate = await offerUntouchableCancel(tacticCard.name || "Mastermind Tactic");
+      }
       // M1 (PT-8 negate edge): a transform-tactic's VP push was suppressed at revealMastermindTactic
       // because its fightEffect normally places the scoring Location. If the fight effect is negated
       // (Mr. Fantastic — Ultimate Nullifier cancels the ability, not the card's VP), no Location is
