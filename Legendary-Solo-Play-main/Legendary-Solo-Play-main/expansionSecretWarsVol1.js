@@ -2384,3 +2384,61 @@ function thorCorpsBonusRecruit() {
   );
   bonusRecruit();
 }
+
+// ============================================================================
+// PHASE 3f — BYSTANDER (Banker)
+// ============================================================================
+
+// getBankHQReserveIndex() — resolve the 1-indexed HQ reserve slot (for getHQReserved/setHQReserved,
+// hq1..hq5ReserveRecruit) of the HQ space directly UNDER the Bank city space. Resize-aware. Returns
+// null when there is no Bank in the current layout, or no HQ cell sits under it.
+//
+// WHY this mapping rather than a hardcoded index (cf. FF moleManUndergroundRiches @
+// expansionFantasticFour.js:2640, which hardcodes hq2ReserveRecruit for "under the Streets"): the
+// engine has NO general city→HQ map; moleMan's hardcode is correct ONLY for the default 5-space
+// layout and silently breaks under city-resize schemes. The HQ is always hq.length (5) cells
+// (#hq-1..#hq-5) and RIGHT-aligns under the rightmost hq.length city spaces. Empirically verified
+// in-browser (2026-06-25), both layouts:
+//   - default 5-space: city space i ↔ HQ cell i+1 exactly (Bank city index 3 ↔ #hq-4 → reserve 4),
+//     matching moleMan's Streets(1)→hq2.
+//   - Earthquake (Revelations) 7-space: two extra "Low Tide" spaces are added on the LEFT
+//     (cardDatabase.js citySpaces), shifting the Bank to city index 5; HQ stays 5 cells, so the Bank
+//     still maps to reserve 4 (the 4th of the 5 canonical spaces Bridge/Streets/Rooftops/Bank/Sewers →
+//     hq1..hq5). The 7-vs-5 rows don't pixel-align, but hq4 is both the canonical and the nearest cell.
+// So the HQ cell under city space C = C - (citySize - hq.length); the reserve var is 1-indexed (+1).
+// Resolved off the LIVE citySpaceLabels every call (resize-safe, like isBankOrStreets @ script.js:10398).
+// ASSUMPTION (only resize pattern shipped): extra city spaces are added on the LEFT (Earthquake) — a
+// future scheme that extends the city on the RIGHT would need this offset revisited.
+function getBankHQReserveIndex() {
+  const bankCityIndex = citySpaceLabels.indexOf("The Bank");
+  if (bankCityIndex === -1) return null; // Bank not in this layout (defensive — no shipped scheme
+  // removes the Bank; Tsunami destroys city indices 0-3 only and the Bank stays active). Future
+  // Bank-less layouts no-op gracefully.
+  const leftExtra = citySize - hq.length; // # of extra city spaces added on the left (0 by default)
+  const hqSlot0 = bankCityIndex - leftExtra; // 0-indexed HQ cell sitting under the Bank
+  if (hqSlot0 < 0 || hqSlot0 > 4) return null; // only 5 reserve slots exist (hq1..hq5) → no HQ under it
+  return hqSlot0 + 1; // 1-indexed reserve hqIndex for getHQReserved/setHQReserved
+}
+
+// Banker (×3, VP 1) — "When you rescue this Bystander, you get +2 Recruit, usable only to recruit
+// Heroes in the HQ space under the Bank." Reuses the position-keyed reserve-recruit pool
+// (hq1..hq5ReserveRecruit via getHQReserved/setHQReserved) that showHeroRecruitButton @ script.js:18583
+// consumes ONLY when recruiting that slot's Hero — identical machinery to FF moleManUndergroundRiches.
+// Additive: multiple Bankers stack (+= via the get→set). This restricted pool is SEPARATE from
+// totalRecruitPoints/cumulativeRecruitPoints by design (restricted-use), so the cumulative-twin rule
+// deliberately does NOT apply. Dispatched on rescue via rescueBystanderAbility() (the DB rows carry
+// bystanderUnconditionalAbility:'bystanderBanker'). No-op gracefully if the Bank space is absent.
+function bystanderBanker() {
+  const hqIndex = getBankHQReserveIndex();
+  if (hqIndex === null) {
+    onscreenConsole.log(
+      `You rescued the <span class="console-highlights">Banker</span>, but there is no Bank space in the city right now — no reserved <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> granted.`,
+    );
+    return;
+  }
+  setHQReserved(hqIndex, getHQReserved(hqIndex) + 2);
+  onscreenConsole.log(
+    `You rescued the <span class="console-highlights">Banker</span>. +2 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> usable only to recruit the Hero in the HQ space under the Bank.`,
+  );
+  updateGameBoard();
+}

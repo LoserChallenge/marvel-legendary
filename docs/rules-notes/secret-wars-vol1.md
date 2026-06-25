@@ -196,3 +196,14 @@ These map to the FROZEN spec's "OPEN QUESTIONS" Q2–Q7 (different numbering fro
 - **"players' Victory Piles" in solo:** = the single (active) player's Victory Pile. No "each other player" issue here ("players'" possessive includes you).
 - SOURCE: card text (inventory `secret-wars-vol1.md`); escalation logic is self-contained in the Twist wording.
 - CONFIDENCE: **SETTLED** for the mechanical escalation/recycle (card text is explicit). The M.O.D.O.K. substitution is a separate, already-settled design call (not re-opened here).
+
+# BATCH 6 — Ghost Racers KO-zone: "one of your Heroes" (2026-06-25, Rules Oracle; relayed by coordinator)
+
+## Ghost Racers Fight — "KO one of your Heroes with an Attack icon" → CONTROLLED HEROES (hand + played + artifacts); discard/deck/VP EXCLUDED
+- **Card (inventory):** "Fight: Reveal a [COVERT] Hero or KO one of your Heroes with an Attack icon." (Ghost Racers henchman, ×10, Attack 3 / VP 1.)
+- **Question:** What zones does "one of your Heroes" cover for the KO? (Hand only? + played this turn? + discard? + deck?)
+- **Ruling: "your Heroes" = the Heroes you currently control = your HAND + the cards you have PLAYED this turn (+ Artifacts in play). Your DECK, DISCARD PILE, and Victory Pile are EXCLUDED.** This is rulebook-STATED, not inferred: Core p.16 ("Your Heroes" / play area) defines the Heroes you have as the cards in your hand plus the cards you've played this turn; Core p.15 ("KO") operates on cards you can KO from those zones. Cards in your deck or discard pile are not "your Heroes" for a generic "one of your Heroes" instruction — an effect that wants the discard pile names it explicitly (as the sibling M.O.D.O.K.s does: "KO a Hero from your discard pile or the HQ"). That explicit-naming contrast is a CORROBORATOR, not the primary authority (the primary authority is the Core "your Heroes" zone definition).
+- **Attack-icon filter:** the "with an Attack icon" clause NARROWS the eligible pool within those zones; it does NOT widen the zones. If no controlled Hero carries an Attack icon, that branch cannot be chosen — the player takes the Covert-reveal branch, or if neither is payable, does as much as possible (here: nothing). Matches the standard "do as much as you can" handling.
+- **Solo note:** single-player — no "each other player" dimension; "your Heroes" = the active (only) player's controlled Heroes.
+- SOURCE: Core rulebook p.15 ("KO"), p.16 ("Your Heroes" / play area); corroborated by the M.O.D.O.K.s explicit-discard contrast (inventory `secret-wars-vol1.md`).
+- CONFIDENCE: **SETTLED** (rulebook-stated zone definition, not convention/inference). Implemented in SWV1 Phase 3f (`ghostRacersFight` → `koControlledHeroByIdentity` over Artifacts+Hand+Played with `attackIcon===true`, excluding discard), commit `40081cb`.
