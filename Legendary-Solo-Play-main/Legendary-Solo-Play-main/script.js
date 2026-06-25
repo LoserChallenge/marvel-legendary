@@ -16315,11 +16315,15 @@ async function resolveTacticEffects(tacticCard) {
     const fightEffectFunction = window[tacticCard.fightEffect]; // Access the function by name from the global scope
 
     let negate = false;
-    if (
-  typeof promptNegateFightEffectWithMrFantastic === "function" && 
-  (!tacticCard.name || tacticCard.name !== "Mysterio Mastermind Tactic")
-) {
-      negate = await promptNegateFightEffectWithMrFantastic();
+    // Entry is gated ONLY on the Mysterio exclusion, NOT on Fantastic Four being loaded — the Mr.
+    // Fantastic prompt is itself `typeof`-guarded inside, so Untouchable (Secret Wars Vol.1) is offered
+    // for Mastermind tactics whether or not Fantastic Four is present. This matches the FF-independent
+    // villain-defeat hook in collectDefeatOperations; the previous nested form skipped Untouchable
+    // entirely when FF was absent (asymmetry).
+    if (!tacticCard.name || tacticCard.name !== "Mysterio Mastermind Tactic") {
+      if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+        negate = await promptNegateFightEffectWithMrFantastic();
+      }
       // Untouchable (Secret Wars Vol.1): reactive from-hand cancel of a Mastermind tactic Fight effect,
       // offered only if not already negated by Mr. Fantastic. Inherits the Mysterio exclusion (this whole
       // block is skipped for the Mysterio Mastermind Tactic). No-op unless the player holds Untouchable in
