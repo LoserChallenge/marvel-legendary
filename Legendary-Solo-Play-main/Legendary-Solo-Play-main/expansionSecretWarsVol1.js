@@ -3189,9 +3189,9 @@ function gainCorruptedSidekick(villainCopy) {
 // BATCH 8 ④ / Q1) we use the M.O.D.O.K.s henchman art + stats (Attack 3, VP 1) as a scheme-spawned,
 // dedicated 10-Henchman army — NOT the villain-deck M.O.D.O.K.s group, and NOT shuffled into the deck.
 //
-// STATE (script.js): `annihilationSupply` (off-board KO/reserve pool, seeded to 10 at setup in initGame)
-// and `annihilationHenchmenNextToMM` (LIVE count next to the Mastermind = the loss meter). The
-// escalating per-twist amount reuses `stackedTwistNextToMastermind`. This is the HYDRA-Traitor
+// STATE (script.js): `annihilationSupply` (off-board KO/reserve pool, seeded to 10 at setup in initGame),
+// `annihilationHenchmenNextToMM` (LIVE count next to the Mastermind = the loss meter), and the dedicated
+// `annihilationTwistStack` (escalating per-twist placement amount). This is the HYDRA-Traitor
 // next-to-scheme pattern (expansionRevelations.js) adapted: a count-badge of fightable entities with a
 // click-to-fight affordance, paying 3 Attack — but defeat sends the Henchman to the Victory Pile
 // (scores VP 1), and each twist first recycles defeated ones from the Victory Pile back to the supply.
@@ -3232,12 +3232,13 @@ async function buildAnArmyOfAnnihilationTwist() {
     );
   }
 
-  // Step 2: stack this Twist next to the Scheme (escalating count).
-  stackedTwistNextToMastermind++;
+  // Step 2: stack this Twist next to the Scheme (escalating count). Dedicated counter — see the
+  // annihilationTwistStack declaration note (avoids the shared stackedTwistNextToMastermind badge).
+  annihilationTwistStack++;
 
   // Step 3: for each Twist in that stack, put an Annihilation Henchman from the supply next to the
   // Mastermind. ADDITIVE — adds to whatever is already there, bounded by the supply.
-  const toPlace = Math.min(stackedTwistNextToMastermind, annihilationSupply);
+  const toPlace = Math.min(annihilationTwistStack, annihilationSupply);
   annihilationSupply -= toPlace;
   annihilationHenchmenNextToMM += toPlace;
   onscreenConsole.log(

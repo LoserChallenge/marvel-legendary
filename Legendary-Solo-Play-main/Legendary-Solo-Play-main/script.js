@@ -939,10 +939,14 @@ let stackedTwistNextToMastermind = 0;
 // with a real M.O.D.O.K.s villain group or Madelyne's Demon Goblins. `annihilationSupply` = the
 // scheme's off-board KO/reserve pool (M.O.D.O.K. stand-ins not yet placed; seeded to 10 at setup).
 // `annihilationHenchmenNextToMM` = the LIVE count of fightable Henchmen next to the Mastermind (the
-// loss meter: Evil Wins at 10). Each twist adds `stackedTwistNextToMastermind` more from the supply
-// (ADDITIVE — accumulates), after first recycling any defeated ones out of the Victory Pile.
+// loss meter: Evil Wins at 10). `annihilationTwistStack` = the escalating "Twists stacked next to the
+// Scheme" count (each twist adds this many MORE Henchmen from the supply, ADDITIVE). A DEDICATED
+// counter, not the shared `stackedTwistNextToMastermind`: that one is read by an unconditional badge
+// render (#stacked-mastermind-cards) that would otherwise show a stray card-back count during this
+// scheme — every other next-to-X mechanic (hydraOfficersNextToScheme, demonGoblinDeck) is dedicated too.
 let annihilationSupply = 0;
 let annihilationHenchmenNextToMM = 0;
+let annihilationTwistStack = 0;
 let popupMinimized = false;
 let deadpoolRare = false;
 let gameIsOver = false;
@@ -5078,13 +5082,15 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   mastermind.bystanders = [];
   secondaryMasterminds = []; // clear any secondary Masterminds (ascended Magneto / Dark Alliance) from a prior game
   hqWound = [null, null, null, null, null]; // clear Pan-Dimensional Plague HQ-slot Wounds from a prior game
-  // Reset the escalating "twists stacked next to the Mastermind" counter per game. It was previously
-  // only initialised at module load, so a second game in the same session inherited the prior game's
-  // value (latent cross-game leak affecting Capture Baby Hope / FF / GotG schemes too). Build an Army
-  // of Annihilation's loss accounting depends on this starting at 0, so reset it unconditionally here.
+  // Reset the shared escalating "twists stacked next to the Mastermind" counter per game. It was
+  // previously only initialised at module load, so a second game in the same session inherited the
+  // prior game's value — a latent cross-game leak affecting Capture Baby Hope / FF / GotG schemes.
+  // (Base-engine bug, fixed here as cheap one-line insurance; reported separately. Build an Army uses
+  // its OWN counter below, so this reset is not load-bearing for it.)
   stackedTwistNextToMastermind = 0;
   // Build an Army of Annihilation (Secret Wars Vol.1): reset + seed the scheme-owned 10-Henchman army.
   annihilationHenchmenNextToMM = 0;
+  annihilationTwistStack = 0;
   annihilationSupply = scheme.name === "Build an Army of Annihilation" ? 10 : 0;
   const mastermindDeck = generateMastermindDeck(mastermind);
 
