@@ -2242,6 +2242,15 @@ function nimrodIconHTML(icon) {
 // discard ALL hand cards with it. Reveal-or-penalty control flow mirrors revealClassOrWound
 // (expansionRevelations.js:2329). Dispatched (and awaited) by handleMasterStrikeEffect.
 async function nimrodStrike() {
+  // Defer past the Master Strike popup's own close. handleMasterStrikeEffect runs us inside
+  // showPopup's confirm callback, which calls confirmCallback() then SYNCHRONOUSLY closePopup()
+  // (closeInfoChoicePopup). Both share the .info-or-choice-popup element, so opening our prompt
+  // before yielding a macrotask would have it closed out from under us → the await never resolves
+  // (hang). One macrotask hop lets closePopup() run first, then we open our popup cleanly. Same
+  // reason LokiRevealStrengthOrWound (cardAbilities.js:10427) wraps its popup in setTimeout. The
+  // 4 Tactics don't need this — their dispatch (revealMastermindTactic onConfirm) closes the tactic
+  // popup BEFORE running the fight effect.
+  await new Promise((r) => setTimeout(r, 0));
   const cardsYouHave = [
     ...playerHand,
     ...playerArtifacts,
@@ -2379,8 +2388,12 @@ async function nimrodScatterTheMutants() {
   for (const card of matching) {
     const idx = hq.indexOf(card);
     if (idx === -1) continue;
-    heroDeck.unshift(card); // bottom of the Hero Deck (top = end, drawn via heroDeck.pop())
+    // Refill FIRST (draws from the current top), THEN put the scattered card on the bottom — order
+    // matters: unshift-then-refill would let refillHQSlot's heroDeck.pop() pull the just-scattered
+    // card straight back into the vacated slot when the Hero Deck is otherwise empty (the card we
+    // captured in `card` survives the refill, which evicts it from HQ).
     refillHQSlot(idx);
+    heroDeck.unshift(card); // bottom of the Hero Deck (top = end, drawn via heroDeck.pop())
     onscreenConsole.log(
       `<span class="console-highlights">${card.name}</span> put on the bottom of the Hero Deck.`,
     );
