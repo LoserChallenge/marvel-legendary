@@ -4870,6 +4870,15 @@ if (scheme.name === "Unite the Shards") {
     deck.push(...stamped);
   }
 
+  if (scheme.name === "Master of Tyrants") {
+    // Setup: "Choose 3 other Masterminds, and shuffle their 12 Tactics into the Villain Deck. Those
+    // Tactics are 'Tyrant Villains' with their printed Attack and no abilities." buildMasterOfTyrants
+    // Tyrants (expansionSecretWarsVol1.js) picks 3 distinct eligible Masterminds (excl. the main) and
+    // stamps their 12 Tactics as Tyrant Villains (printed Attack = source MM Attack, VP = the Tactic's
+    // own printed VP, no abilities, isTyrant). Rulings: rules-notes BATCH 8 ⑤.
+    deck.push(...buildMasterOfTyrantsTyrants());
+  }
+
   for (let i = 0; i < 5; i++) {
     deck.push({
       name: "Master Strike",
@@ -9759,6 +9768,18 @@ if (selectedSchemeEndGame) {
           }
           break;
 
+        case "tyrants5Escape":
+          // Master of Tyrants (Secret Wars Vol.1): Evil Wins when 5 Tyrant Villains escape (Twist 8
+          // escape-all OR normal city overflow — any escape counts; isTyrant rides into the escape
+          // pile). Rules-notes BATCH 8 ⑤.
+          if (escapedVillainsDeck.filter((card) => card.isTyrant).length >= 5) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Five Tyrant Villains have escaped to serve ${mastermind.name}. With an army of tyrants at their command, the conquest of Earth is assured. All hope is lost.`;
+            showDefeatPopup();
+          }
+          break;
+
         case "8Twists":
           if (twistCount >= 8) {
             finalTwist = true;
@@ -10725,6 +10746,14 @@ function updateVillainAttackValues(villain, i) {
     villain.attackFromScheme = 3;
   }
 
+  // Master of Tyrants (Secret Wars Vol.1): a Tyrant Villain's base Attack (villain.attack = its source
+  // Mastermind's printed Attack) is boosted +2 per Dark Power Twist stacked under it (cumulative). Keep
+  // identical in updateHQVillainAttackValues (duplicate-fn hazard) — Tyrants are city-only, so the HQ
+  // twin branch is defensive parity. Rulings: rules-notes BATCH 8 ⑤.
+  if (scheme.name === "Master of Tyrants" && villain.isTyrant === true) {
+    villain.attackFromScheme = (villain.darkPower || 0) * 2;
+  }
+
   //Attack from Villain Effects - (Skrulls handled within function)
   // ADDITIVE CONVENTION (D4-b): attackFromOwnEffects is reset to 0 at the top of this
   // function, then every contribution below ACCUMULATES with += (never =). This removes
@@ -11016,6 +11045,13 @@ function updateHQVillainAttackValues(villain) {
     villain.attackFromScheme = 3;
   }
 
+  // Master of Tyrants (Secret Wars Vol.1): Dark Power +2/stack on a Tyrant — twin of the city branch
+  // in updateVillainAttackValues. Tyrants are city-only so this never fires in practice, but kept for
+  // duplicate-fn parity. Rulings: rules-notes BATCH 8 ⑤.
+  if (scheme.name === "Master of Tyrants" && villain.isTyrant === true) {
+    villain.attackFromScheme = (villain.darkPower || 0) * 2;
+  }
+
   //Attack from Villain Effects - (Skrulls handled within function)
   // ADDITIVE CONVENTION (D4-b): mirrors the city twin (updateVillainAttackValues).
   // attackFromOwnEffects is reset to 0 above, then every contribution ACCUMULATES with +=
@@ -11259,6 +11295,11 @@ function updateEvilWinsTracker() {
     case "Build an Army of Annihilation":
       // Plain-text counter (no markup) → textContent (XSS-safe, renders identically to the innerHTML siblings).
       evilWinsText.textContent = `${annihilationHenchmenNextToMM}/10 Henchmen Next to Mastermind`;
+      break;
+
+    case "Master of Tyrants":
+      // Plain-text counter (no markup) → textContent (XSS-safe). Counts escaped Tyrant Villains.
+      evilWinsText.textContent = `${escapedVillainsDeck.filter((card) => card.isTyrant).length}/5 Tyrant Villains Escaped`;
       break;
 
     case "Replace Earth's Leaders with Killbots":
@@ -13364,7 +13405,11 @@ function createVillainCopy(villainCard) {
     ascendsToMastermind: villainCard.ascendsToMastermind,
     // Secret Wars Vol.1 — Villains/Henchmen gained as Heroes (Manhattan Earth-1610, Thor Corps):
     // the gain-as-Hero converter runs on the fight COPY, so the flag must survive the copy.
-    gainAsHero: villainCard.gainAsHero
+    gainAsHero: villainCard.gainAsHero,
+    // Secret Wars Vol.1 — Master of Tyrants: a Tyrant Villain's identity flag and its Dark Power token
+    // count (+2 Attack each) must survive the fight copy so attack-value reads on the copy stay correct.
+    isTyrant: villainCard.isTyrant,
+    darkPower: villainCard.darkPower
   };
 }
 

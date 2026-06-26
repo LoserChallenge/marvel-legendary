@@ -3327,3 +3327,132 @@ function showAnnihilationHenchmanFightPrompt() {
     closeInfoChoicePopup();
   };
 }
+
+// ============================================================================
+// Master of Tyrants scheme (Secret Wars Vol.1) — the last Phase 3e scheme
+// ----------------------------------------------------------------------------
+// "Setup: 8 Twists. Choose 3 other Masterminds, and shuffle their 12 Tactics into the Villain Deck.
+// Those Tactics are 'Tyrant Villains' with their printed Attack and no abilities. / Twists 1-7: Put
+// this Twist under a Tyrant Villain as 'Dark Power.' It gets +2 Attack. / Twist 8: All Tyrant Villains
+// in the city escape. / Evil Wins: When 5 Tyrant Villains escape."
+//
+// RULINGS (rules-notes BATCH 8 ⑤, coordinator-confirmed 2026-06-26):
+//   • "Choose 3 other Masterminds" = RANDOM, 3 DISTINCT, excluding the main, from the Core pool (the 5
+//     `darkAllianceEligible` Masterminds). Reuses the Dark Alliance picker pool.
+//   • Tyrant "printed Attack" = the SOURCE MASTERMIND's Attack (Mastermind Tactic cards print the
+//     Mastermind's Attack; the tactic objects carry no `attack` field of their own).
+//   • Tyrant defeat VP = the Tactic's PRINTED VP (each tactic's own `victoryPoints` — usually 6, but
+//     5 for Dr. Doom). HOUSE INTERPRETATION (rulebook silent; research
+//     ~/.claude/research/2026-06-26-legendary-master-of-tyrants-tyrant-villain-vp.md). The DB tactic
+//     already carries the right value, so the stamp preserves it (skrulled:false → normal VP push).
+//   • Dark Power STACKS: +2 Attack per Twist under the SAME Tyrant (two → +4), via per-villain
+//     `darkPower` count folded into `attackFromScheme` in BOTH updateVillain/HQ attack twins; the
+//     `darkPower`/`isTyrant` fields are whitelisted in createVillainCopy so they survive the fight copy.
+//
+// REUSE: setup-inject via the shared `stampCardsAsInDeckVillains` helper (per source Mastermind, to set
+// the per-MM printed Attack), the Dark Alliance eligible pool, `showCardSelectionPopup` for the Dark
+// Power target, and the Corrupt Twist-8 escape-all pattern. The ONE genuinely-new piece is the
+// persistent villain-identity-keyed `darkPower` +2 token (cityPermBuff is position-keyed,
+// sentinelVillainAttackDelta is global — neither fit; modelled on the per-villain `shards` field).
+
+// Pick 3 DISTINCT eligible Masterminds (Dark Alliance Core pool), excluding the main. Returns [] if the
+// pool is too small (defensive; the 5-MM pool minus the main always yields ≥4, so 3 is safe).
+function pickThreeDistinctTyrantMasterminds() {
+  const main = getSelectedMastermind();
+  const pool = masterminds.filter(
+    (m) => m.darkAllianceEligible === true && m.name !== main.name,
+  );
+  // Fisher-Yates-ish shuffle by repeated random splice, then take 3.
+  const chosen = [];
+  const working = [...pool];
+  while (chosen.length < 3 && working.length > 0) {
+    const idx = Math.floor(Math.random() * working.length);
+    chosen.push(working.splice(idx, 1)[0]);
+  }
+  return chosen;
+}
+
+// Build the 12 Tyrant Villains (3 Masterminds × 4 Tactics). Each Tactic is stamped type:"Villain" with
+// the source Mastermind's printed Attack, no abilities (fightEffect stripped), skrulled:false (defeats
+// to the Victory Pile normally → scores the Tactic's printed VP), and isTyrant:true. Called from
+// generateVillainDeck (script.js) at setup.
+function buildMasterOfTyrantsTyrants() {
+  const chosen = pickThreeDistinctTyrantMasterminds();
+  let tyrants = [];
+  chosen.forEach((mm) => {
+    // stampCardsAsInDeckVillains spreads ...card (keeps the tactic's victoryPoints), sets type:"Villain"
+    // + originalAttack/originalType, then applies this stamp. We override attack to the Mastermind's
+    // printed Attack, clear skrulled (so VP scores), strip the ability, and tag isTyrant + darkPower:0.
+    const stamped = stampCardsAsInDeckVillains(mm.tactics, {
+      attack: mm.attack, // printed Attack = source Mastermind's Attack
+      skrulled: false, // defeat → Victory Pile normally (scores the Tactic's printed VP)
+      fightEffect: "", // "no abilities" — the Tactic's fight effect is stripped
+      conditionalAbility: "None",
+      unconditionalAbility: "None",
+      isTyrant: true,
+      darkPower: 0, // count of Dark Power Twists under this Tyrant (each = +2 Attack)
+      tyrantSource: mm.name, // provenance (display/debug only)
+    });
+    tyrants = tyrants.concat(stamped);
+  });
+  onscreenConsole.log(
+    `<span class="console-highlights">Master of Tyrants</span> — ${chosen.map((m) => m.name).join(", ")} chosen; their ${tyrants.length} Tactics shuffled into the Villain Deck as Tyrant Villains.`,
+  );
+  return tyrants;
+}
+
+async function masterOfTyrantsTwist() {
+  const twist = schemeTwistCount; // 1-based; incremented before this dispatch (Corrupt/Dark Alliance precedent)
+
+  if (twist <= 7) {
+    // Twists 1-7: "Put this Twist under a Tyrant Villain as 'Dark Power.' It gets +2 Attack."
+    // The turn player resolving the Twist chooses which city Tyrant (no random/auto qualifier on the
+    // card). Auto-place if exactly one; no-op if none are in the city.
+    const cityTyrants = city.filter((c) => c && c.isTyrant === true);
+    if (cityTyrants.length === 0) {
+      onscreenConsole.log(
+        `No Tyrant Villain is in the city — this Dark Power Twist has no target.`,
+      );
+      return;
+    }
+    let target = cityTyrants[0];
+    if (cityTyrants.length > 1) {
+      const chosen = await showCardSelectionPopup({
+        title: "DARK POWER",
+        instructions: "Choose a Tyrant Villain to gain Dark Power (+2 Attack).",
+        confirmText: "PLACE DARK POWER",
+        items: cityTyrants,
+      });
+      if (chosen) target = chosen;
+    }
+    target.darkPower = (target.darkPower || 0) + 1;
+    onscreenConsole.log(
+      `Dark Power placed under <span class="console-highlights">${target.name}</span> — +2 Attack (now +${target.darkPower * 2} from Dark Power).`,
+    );
+    updateGameBoard();
+    return;
+  }
+
+  // Twist 8: "All Tyrant Villains in the city escape." Direct push + escapedVillainsCount++ (mirrors
+  // the Corrupt Twist-8 escape-all; plain escape, no KO/discard penalty). The isTyrant flag rides into
+  // escapedVillainsDeck → counted by the tyrants5Escape end-game + the "N/5" tracker twin.
+  let escaped = 0;
+  for (let i = 0; i < city.length; i++) {
+    const c = city[i];
+    if (c && c.isTyrant === true) {
+      city[i] = null;
+      escapedVillainsDeck.push(c);
+      escapedVillainsCount++;
+      escaped++;
+      onscreenConsole.log(
+        `<span class="console-highlights">${c.name}</span> (Tyrant Villain) escapes the city.`,
+      );
+    }
+  }
+  onscreenConsole.log(
+    escaped > 0
+      ? `${escaped} Tyrant ${escaped === 1 ? "Villain" : "Villains"} escaped the city.`
+      : `No Tyrant Villains in the city to escape.`,
+  );
+  updateGameBoard();
+}
