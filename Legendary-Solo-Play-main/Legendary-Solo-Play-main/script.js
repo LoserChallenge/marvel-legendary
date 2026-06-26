@@ -5251,7 +5251,11 @@ function refillHQSlot(index) {
   }
   const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
   hq[index] = newCard;
-  if (!newCard) showHeroDeckEmptyPopup();
+  // B12 guard: showHeroDeckEmptyPopup is never defined anywhere (a latent ReferenceError that
+  // crashed every What If? HQ refill on an empty Hero Deck — M.O.D.O.K.s/Ghost Racers HQ-KO,
+  // Infiltrate HQ, Nimrod Scatter, base refills). The slot is already correctly left empty above
+  // (no card to draw); only the missing notification call crashed. typeof-guard it.
+  if (!newCard && typeof showHeroDeckEmptyPopup === "function") showHeroDeckEmptyPopup();
   return newCard;
 }
 

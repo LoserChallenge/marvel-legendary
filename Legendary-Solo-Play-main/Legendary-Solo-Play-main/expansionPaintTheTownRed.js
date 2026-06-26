@@ -1730,7 +1730,9 @@ function koHero(hero) {
   hq[heroIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
 
   // Check if the HQ space is empty after drawing
-  if (!hq[heroIndex]) {
+  // B12 guard: showHeroDeckEmptyPopup is never defined (see refillHQSlot in script.js) — typeof-guard
+  // so Carrion's HQ-KO doesn't crash on an empty Hero Deck.
+  if (!hq[heroIndex] && typeof showHeroDeckEmptyPopup === "function") {
     showHeroDeckEmptyPopup();
   }
 
