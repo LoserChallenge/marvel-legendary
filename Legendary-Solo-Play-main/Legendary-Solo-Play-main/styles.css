@@ -4804,6 +4804,20 @@ button:disabled:hover {
   transition: all 0.3s ease;
 }
 
+/* Pan-Dimensional Plague (Secret Wars Vol.1): a Wound token sitting next to an HQ slot. Pinned to
+   the top-left corner so it doesn't collide with the centred explosion icon; non-interactive. */
+.hq-wound-token {
+  height: 38%;
+  width: auto;
+  position: absolute;
+  top: 2%;
+  left: 2%;
+  z-index: 2;
+  border-radius: 4%;
+  filter: drop-shadow(0 0 0.6vh #c0392b);
+  pointer-events: none;
+}
+
 #hq-1-explosion-count,
 #hq-2-explosion-count,
 #hq-3-explosion-count,

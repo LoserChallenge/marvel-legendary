@@ -929,6 +929,10 @@ let hqExplosion2 = 0;
 let hqExplosion3 = 0;
 let hqExplosion4 = 0;
 let hqExplosion5 = 0;
+// Pan-Dimensional Plague (Secret Wars Vol.1): one entry per HQ slot (0-4, parallel to the `hq` array).
+// Holds the Wound object sitting next to that slot's Hero, or null. Re-seeded each twist (KO old → place
+// one from the Wound Stack next to each occupied slot); resolved at the recruit instant. Reset at game start.
+let hqWound = [null, null, null, null, null];
 let stackedTwistNextToMastermind = 0;
 let popupMinimized = false;
 let deadpoolRare = false;
@@ -5028,6 +5032,7 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   const mastermind = getSelectedMastermind();
   mastermind.bystanders = [];
   secondaryMasterminds = []; // clear any secondary Masterminds (ascended Magneto / Dark Alliance) from a prior game
+  hqWound = [null, null, null, null, null]; // clear Pan-Dimensional Plague HQ-slot Wounds from a prior game
   const mastermindDeck = generateMastermindDeck(mastermind);
 
   const mastermindCell = document.getElementById("mastermind");
@@ -8605,6 +8610,14 @@ if (stackedTwistNextToMastermind > 0) {
     }
   }
 
+  // Pan-Dimensional Plague: show the Wound token next to any HQ slot currently holding a Wound.
+  // hqWound is only ever populated under this scheme, so a truthy entry alone drives the display.
+  for (let i = 1; i <= 5; i++) {
+    const woundToken = document.getElementById(`hq-${i}-wound`);
+    if (!woundToken) continue;
+    woundToken.style.display = hqWound[i - 1] ? "block" : "none";
+  }
+
   updateDeckCounts();
   toggleArtifactsDeck();
   updateReserveAttackAndRecruit();
@@ -9607,6 +9620,32 @@ if (selectedSchemeEndGame) {
             finalTwist = true;
             document.getElementById("defeat-context").innerHTML =
               `The Wound stack has run out. Too many have fallen to the Legacy Virus, and mutantkind faces extinction. ${mastermind.name} has won.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "plagueWoundStackOut":
+          // Pan-Dimensional Plague (Secret Wars Vol.1): Evil Wins when the Wound Stack runs out.
+          // Plain-prose defeat text (no HTML markup) → textContent (XSS-safe, renders identically).
+          if (woundDeck.length === 0) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `The Wound Stack has run out. The pan-dimensional plague has spread unchecked and the Heroes have no strength left to give. ${mastermind.name} has won.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "crush8MasterStrikes":
+          // Crush Them With My Bare Hands (Secret Wars Vol.1): Evil Wins when 8 Master Strikes have
+          // taken effect — counting BOTH the scheme's twist-driven strikes and natural villain-deck
+          // Master Strike cards (all land in koPile as type "Master Strike"). One event = 1 toward 8
+          // even under multiple Masterminds (rules-notes BATCH 8 ① / SPEC-Q3).
+          if (
+            koPile.filter((card) => card.type === "Master Strike").length >= 8
+          ) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Eight Master Strikes have landed. ${mastermind.name} has crushed the Heroes with their bare hands. All hope is lost.`;
             showDefeatPopup();
           }
           break;
@@ -11072,6 +11111,14 @@ function updateEvilWinsTracker() {
 
     case "Dark Alliance":
       evilWinsText.innerHTML = `${twistCount}/7 Twists`;
+      break;
+
+    case "Crush Them With My Bare Hands":
+      evilWinsText.innerHTML = `${koPile.filter((card) => card.type === "Master Strike").length}/8 Master Strikes`;
+      break;
+
+    case "Pan-Dimensional Plague":
+      evilWinsText.innerHTML = `${woundDeck.length} ${woundDeck.length === 1 ? "Wound" : "Wounds"} left`;
       break;
 
     case "Replace Earth's Leaders with Killbots":
@@ -18802,7 +18849,7 @@ function showHeroRecruitButton(hqIndex, hero) {
     0,
   );
 
-  button.onclick = (e) => {
+  button.onclick = async (e) => {
     e.stopPropagation();
     isRecruiting = true;
 
@@ -18821,6 +18868,14 @@ function showHeroRecruitButton(hqIndex, hero) {
       );
       isRecruiting = false;
       return false;
+    }
+
+    // Pan-Dimensional Plague (Secret Wars Vol.1): if a Wound sits next to this HQ slot, resolve it
+    // at the recruit instant — BEFORE recruitHeroConfirmed refills the slot — so no Wound lingers on
+    // an emptied slot. The hero's own cost is already paid above, so the optional pay-1 is checked
+    // against the recruit left over. (rules-notes BATCH 8 ②.)
+    if (getActiveScheme()?.name === "Pan-Dimensional Plague" && hqWound[hqIndex - 1]) {
+      await resolvePlagueWoundOnRecruit(hqIndex);
     }
 
     recruitHeroConfirmed(hero, hqIndex - 1); // assuming this handles replacing the HQ slot etc.

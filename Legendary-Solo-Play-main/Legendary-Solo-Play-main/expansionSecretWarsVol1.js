@@ -2940,3 +2940,131 @@ async function darkAllianceTwist(villainCard) {
 
   // T7+: Evil Wins — handled by the endGameConditions "darkAllianceTwist7" case (twist count >= 7).
 }
+
+// ============================================================================
+// Crush Them With My Bare Hands scheme (Secret Wars Vol.1)
+// ----------------------------------------------------------------------------
+// Setup: 5 Twists. Solo adds one extra Villain Group (cardDatabase: requiredVillains:2 +
+//        extraVillainGroups:1 — Golden 2->3, What If? bakes the +1 into requiredVillains).
+// Twist: this Twist becomes a Master Strike that takes effect immediately.
+// Evil Wins: when 8 Master Strikes have taken effect — counted in koPile as type "Master Strike",
+//        capturing BOTH these twist-driven strikes AND natural villain-deck Master Strike cards
+//        (the 5 twists alone can't reach 8). One Master-Strike EVENT counts once even under
+//        multiple Masterminds. Wiring: endGameConditions "crush8MasterStrikes" + the
+//        updateEvilWinsTracker "Crush Them With My Bare Hands" twin ("N/8"). Rulings: BATCH 8 ① /
+//        SPEC-Q3 of docs/rules-notes/secret-wars-vol1.md.
+async function crushThemWithMyBareHandsTwist() {
+  const mastermind = getSelectedMastermind();
+  // Same shape as the natural Master Strike card (script.js generateVillainDeck): name + type drive
+  // the koPile tally; image drives the popup. handleMasterStrike fires the active Mastermind(s)'
+  // Strike ability AND pushes this card to koPile, so we must NOT push it ourselves.
+  const masterStrikeCard = {
+    name: "Master Strike",
+    type: "Master Strike",
+    image: mastermind.masterStrikeImage,
+  };
+  onscreenConsole.log(
+    `<span class="console-highlights">Crush Them With My Bare Hands</span> — this Twist becomes a <span class="console-highlights">Master Strike</span> that takes effect immediately.`,
+  );
+  await handleMasterStrike(masterStrikeCard);
+  // Re-run the board update so the "crush8MasterStrikes" end-game check + "N/8" tracker re-evaluate.
+  updateGameBoard();
+}
+
+// ============================================================================
+// Pan-Dimensional Plague scheme (Secret Wars Vol.1)
+// ----------------------------------------------------------------------------
+// Setup: 10 Twists. The default Wound Stack applies (no scheme-specific size).
+// Twist: KO all Wounds next to the HQ (-> KO pile), then place one Wound from the Wound Stack next
+//        to each Hero in the HQ (drains the stack). State = hqWound[slot] (script.js), slot-keyed.
+// Special: recruiting a Hero with a Wound next to its slot resolves the Wound at the recruit instant
+//        (gain it -> discard, or pay 1 Recruit -> back to the Wound Stack) — see
+//        resolvePlagueWoundOnRecruit, hooked into showHeroRecruitButton.
+// Evil Wins: when the Wound Stack runs out (endGameConditions "plagueWoundStackOut" + the
+//        updateEvilWinsTracker "Pan-Dimensional Plague" twin). Rulings: BATCH 8 ② of
+//        docs/rules-notes/secret-wars-vol1.md (slot-keyed = inferred faithful low-bookkeeping read).
+async function panDimensionalPlagueTwist() {
+  // Step 1: KO all Wounds currently next to HQ slots — to the KO pile, NOT back to the Wound Stack.
+  let koCount = 0;
+  for (let i = 0; i < hqWound.length; i++) {
+    if (hqWound[i]) {
+      koPile.push(hqWound[i]);
+      hqWound[i] = null;
+      koCount++;
+    }
+  }
+  if (koCount > 0) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Pan-Dimensional Plague</span> — ${koCount} ${koCount === 1 ? "Wound" : "Wounds"} next to the HQ KO'd.`,
+    );
+  }
+
+  // Step 2: place one Wound from the Wound Stack next to each Hero in the HQ (drains the stack).
+  // If the stack empties mid-placement, stop — the empty stack triggers Evil Wins via the end-game
+  // check that updateGameBoard runs below.
+  let placed = 0;
+  for (let i = 0; i < hq.length && i < hqWound.length; i++) {
+    const card = hq[i];
+    if (card && card.type === "Hero") {
+      if (woundDeck.length === 0) break;
+      hqWound[i] = woundDeck.pop();
+      placed++;
+    }
+  }
+  if (placed > 0) {
+    onscreenConsole.log(
+      `A Wound from the Wound Stack is placed next to each Hero in the HQ — ${placed} drawn (${woundDeck.length} left in the stack).`,
+    );
+  }
+  updateGameBoard();
+}
+
+// Resolve the Wound next to an HQ slot when its Hero is recruited (Pan-Dimensional Plague). Called
+// from showHeroRecruitButton AFTER the hero's own cost is paid and BEFORE the slot refills, so no
+// Wound lingers on an emptied slot. The player may gain the Wound (-> discard) or pay 1 Recruit to
+// return it to the Wound Stack (offered only when at least 1 Recruit remains). hqIndex is 1-based.
+async function resolvePlagueWoundOnRecruit(hqIndex) {
+  const slot = hqIndex - 1;
+  const wound = hqWound[slot];
+  if (!wound) return;
+
+  const recruitIcon = `<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">`;
+  // Use the canonical recruit-currency helpers (NOT a raw totalRecruitPoints check) so the pay-1
+  // path honours engine rules — notably the Negative Zone, where Recruit is paid with Attack. No
+  // reserved pool is passed: the Banker's reserved Recruit is restricted to recruiting Heroes, so
+  // the Wound's 1 Recruit comes from the general pool only.
+  const canPay = canAffordRecruitCost(1);
+
+  let pay = false;
+  if (canPay) {
+    pay = await new Promise((resolve) => {
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `That Hero has a Wound next to it (<span class="console-highlights">Pan-Dimensional Plague</span>). Pay 1 ${recruitIcon} to return the Wound to the Wound Stack, or gain the Wound into your discard pile?`,
+        "Pay 1 Recruit",
+        "Gain Wound",
+      );
+      confirmButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(true);
+      };
+      denyButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(false);
+      };
+    });
+  }
+
+  if (pay) {
+    spendRecruitCost(1); // spend only (cumulative is generation, untouched by spending); honours Negative Zone
+    woundDeck.push(wound);
+    hqWound[slot] = null;
+    onscreenConsole.log(
+      `You paid 1 ${recruitIcon} to return the Wound to the Wound Stack (${woundDeck.length} left).`,
+    );
+  } else {
+    playerDiscardPile.push(wound);
+    hqWound[slot] = null;
+    onscreenConsole.log(`You gained the Wound into your discard pile.`);
+  }
+  updateGameBoard();
+}

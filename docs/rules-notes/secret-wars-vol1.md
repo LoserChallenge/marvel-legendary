@@ -231,3 +231,26 @@ Scheme "Dark Alliance" (SWV1): "Setup: 8 Twists. / T1: Add a random second Maste
 ## Q-D — 2nd-MM Tactic Fight effects resolve; VP lives on Tactics, not the MM card
 - **Ruling (SETTLED):** (1) when you KO/clear a 2nd Mastermind's Tactic by fighting it, that Tactic's **Fight effect RESOLVES** exactly like any Mastermind Tactic → engine must wire `resolveTacticEffects` into the secondary-MM defeat path (GAP-K). (2) Victory Points live on the **Tactic cards, NOT the Mastermind card** → a fully-defeated full 2nd MM's terminal card is worth **0 VP** (its accrued Tactics already carried the VP into the Victory Pile). (3) The 2nd MM is defeated when its ACTUAL accrued Tactic count (1-4, however many it gained over T1-4) is cleared — do NOT hardcode 4.
 - SOURCE: Core rulebook p.14 (Tactic Fight effect + Tactic VP), p.21 (Mastermind-card VP is Final-Showdown-only). CONFIDENCE: **SETTLED**.
+
+# BATCH 8 — Phase 3e chunk 2: the 5 remaining in-scope Schemes (2026-06-26; rulings relayed by coordinator/Paul)
+Source = Secret Wars insert p.1 + Core p.8–10/13/15 + the scheme card text; solo-framed. Two cut schemes (Fragmented Realities, Smash Two Dimensions Together) stay OUT of scope.
+
+## ① CRUSH THEM WITH MY BARE HANDS
+- One Master Strike EVENT = 1 toward the 8, even with multiple Masterminds (insert: one event, each MM fires its ability → still ONE event for counting). Natural villain-deck Master Strikes ALSO count toward 8 alongside the 5 twist-strikes. Solo "+1 Villain Group" is the `extraVillainGroups` mechanism (Golden base 2→3; What If? bakes the +1 into `requiredVillains`).
+- CONFIDENCE: **SETTLED** (1-event-per-trigger is the BATCH-2 SPEC-Q3 reading; recorded there as the faithful/standard reading).
+
+## ② PAN-DIMENSIONAL PLAGUE
+- Wound stays with the HQ **SLOT** (not the Hero), re-seeded each twist. Recruiting a Wound-flagged Hero resolves the wound AT the recruit instant (gain it, or pay 1 Recruit → return to the Wound Stack). TWO destinations: twist "KO all wounds next to HQ" → **KO pile**; recruit pay-1 → **Wound Stack**. Loss counts ONLY Wound-Stack depletion (KO'd wounds do NOT return to the stack).
+- CONFIDENCE: **SETTLED**; slot-keyed attachment is **INFERRED** but the faithful low-bookkeeping reading.
+
+## ③ CORRUPT THE NEXT GENERATION OF HEROES
+- (a) Solo "each player returns a Sidekick from discard" → you return one if present, else skip [INFERRED]. (b) Dynamic Attack (2 + Twists stacked next to this Scheme) applies to Sidekick-Villains in BOTH the Villain Deck and the city [SETTLED]. Defeat a Sidekick → gain it to the TOP of your deck (not VP).
+- CONFIDENCE: a INFERRED, b SETTLED.
+
+## ④ BUILD AN ARMY OF ANNIHILATION
+- Loss = SIMULTANEOUS count of Annihilation Henchmen next to the Mastermind (re-derived each twist = stack size), NOT cumulative; defeated henchmen → your VP pile (normal), lowering the count.
+- ⚠️ FLAG: inventory says 9 Twists but the loss needs 10 next to the MM — coordinator verifying the twist count before chunk 2c. **DO NOT build ④ until cleared.**
+
+## ⑤ MASTER OF TYRANTS
+- "Choose 3 other MMs" = random excluding the main (Core pool, DESIGN default). Dark Power STACKS (+2 Attack each, cumulative on the same Tyrant).
+- ⚠️ Tyrant-Villain defeat VP = INFERRED 0 (verify pending before chunk 2d). **DO NOT build ⑤ until cleared.**

@@ -822,7 +822,12 @@ const schemes = [
     twistCount: 5,
     endGame: "crush8MasterStrikes",
     twistEffect: "crushThemWithMyBareHandsTwist",
-    requiredVillains: 1,
+    // "If playing solo, add an extra Villain Group." Golden Solo: 2 base + extraVillainGroups(1) = 3
+    // (via getEffectiveSetupRequirements). What If? Solo ignores extraVillainGroups and reads
+    // requiredVillains directly, so the +1 is baked into requiredVillains:2 (base 1 + extra 1).
+    // Mirrors the Revelations Earthquake/Tsunami precedent (cardDatabase.js scheme rows).
+    requiredVillains: 2,
+    extraVillainGroups: 1,
     requiredHenchmen: 1,
     requiredHeroes: 3,
     variableTwist: false,
