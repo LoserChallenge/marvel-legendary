@@ -24,6 +24,7 @@ A **persistent, cross-expansion** log of ideas for doing the work **faster, more
 - **Idea:** a reusable inject-state + auto-dismiss-popups + whitelist-sw.js-noise game-test harness snippet, plus a crisp pass/fail assertion shape. Every worker report this build re-handled the popup auto-dismiss and the benign sw.js-404 noise from scratch.
 - **Start:** factor the common harness out of the runs already done; coordinate with the cc-helper automation effort so it isn't built twice.
 - **Caveat:** overlaps the cc-helper "automate expansion builds" scoping — align scope before building.
+- **Specific defect tracked separately:** the concrete popup-hang/timeout defect (auto-dismiss can't cover choice popups) is a tooling bug — now in `docs/known-issues.md` §5 (T1). This entry remains the broader "build a reusable hardened game-test harness" improvement.
 - **Status:** open.
 
 ### 2026-06-25 — Calibrate scout-and-pause vs scout-and-build
