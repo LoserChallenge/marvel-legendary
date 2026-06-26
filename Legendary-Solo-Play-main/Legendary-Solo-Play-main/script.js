@@ -934,6 +934,15 @@ let hqExplosion5 = 0;
 // one from the Wound Stack next to each occupied slot); resolved at the recruit instant. Reset at game start.
 let hqWound = [null, null, null, null, null];
 let stackedTwistNextToMastermind = 0;
+// Build an Army of Annihilation (Secret Wars Vol.1). Dedicated scheme-owned state — NOT the villain
+// deck and NOT the shared demonGoblinDeck — so the 10-Henchman "Annihilation" army never collides
+// with a real M.O.D.O.K.s villain group or Madelyne's Demon Goblins. `annihilationSupply` = the
+// scheme's off-board KO/reserve pool (M.O.D.O.K. stand-ins not yet placed; seeded to 10 at setup).
+// `annihilationHenchmenNextToMM` = the LIVE count of fightable Henchmen next to the Mastermind (the
+// loss meter: Evil Wins at 10). Each twist adds `stackedTwistNextToMastermind` more from the supply
+// (ADDITIVE — accumulates), after first recycling any defeated ones out of the Victory Pile.
+let annihilationSupply = 0;
+let annihilationHenchmenNextToMM = 0;
 let popupMinimized = false;
 let deadpoolRare = false;
 let gameIsOver = false;
@@ -5069,6 +5078,14 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   mastermind.bystanders = [];
   secondaryMasterminds = []; // clear any secondary Masterminds (ascended Magneto / Dark Alliance) from a prior game
   hqWound = [null, null, null, null, null]; // clear Pan-Dimensional Plague HQ-slot Wounds from a prior game
+  // Reset the escalating "twists stacked next to the Mastermind" counter per game. It was previously
+  // only initialised at module load, so a second game in the same session inherited the prior game's
+  // value (latent cross-game leak affecting Capture Baby Hope / FF / GotG schemes too). Build an Army
+  // of Annihilation's loss accounting depends on this starting at 0, so reset it unconditionally here.
+  stackedTwistNextToMastermind = 0;
+  // Build an Army of Annihilation (Secret Wars Vol.1): reset + seed the scheme-owned 10-Henchman army.
+  annihilationHenchmenNextToMM = 0;
+  annihilationSupply = scheme.name === "Build an Army of Annihilation" ? 10 : 0;
   const mastermindDeck = generateMastermindDeck(mastermind);
 
   const mastermindCell = document.getElementById("mastermind");
@@ -8819,6 +8836,30 @@ if (stackedTwistNextToMastermind > 0) {
       console.warn("demon-goblin-deck element not found");
     }
 
+    // Build an Army of Annihilation (Secret Wars Vol.1) — Annihilation Henchmen next to the Mastermind.
+    // Count-badge mirroring #demon-goblin-deck / #hydra-officer-deck. Clicking the badge fights one
+    // (pay 3 Attack → defeat → Victory Pile). Shown whenever any are next to the Mastermind.
+    const annihilationArmyImage = document.getElementById("annihilation-army-deck");
+    const annihilationArmyCount = document.getElementById("annihilation-army-count");
+    if (annihilationArmyImage && annihilationArmyCount) {
+      if (annihilationHenchmenNextToMM > 0) {
+        annihilationArmyImage.style.display = "flex";
+        annihilationArmyCount.textContent = `${annihilationHenchmenNextToMM}`;
+        if (!annihilationArmyImage.dataset.clickBound) {
+          annihilationArmyImage.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (typeof showAnnihilationHenchmanFightPrompt === "function") {
+              showAnnihilationHenchmanFightPrompt();
+            }
+          });
+          annihilationArmyImage.dataset.clickBound = "true";
+        }
+      } else {
+        annihilationArmyImage.style.display = "none";
+        annihilationArmyCount.textContent = ``;
+      }
+    }
+
     // HYDRA — S.H.I.E.L.D. Officers stacked next to the Scheme (PT-3). Reuses the scheme-cell
     // count-badge pattern (cf. demon-goblin-count). Shown whenever any Officer is next to the
     // Scheme, on either HYDRA side. The badge is the click affordance for the Side-A "pay 3
@@ -9695,6 +9736,19 @@ if (selectedSchemeEndGame) {
             finalTwist = true;
             document.getElementById("defeat-context").textContent =
               `Four corrupted Sidekicks have escaped to spread ${mastermind.name}'s influence through the next generation of heroes. All hope is lost.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "annihilation10Henchmen":
+          // Build an Army of Annihilation (Secret Wars Vol.1): Evil Wins when 10 Annihilation
+          // Henchmen are simultaneously next to the Mastermind. This is a LIVE board count
+          // (annihilationHenchmenNextToMM), NOT the twist-stack size — defeating Henchmen lowers it,
+          // each twist adds more (additive). Rules-notes BATCH 8 ④.
+          if (annihilationHenchmenNextToMM >= 10) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Ten Annihilation Henchmen now stand beside ${mastermind.name}. The Annihilation Wave is unstoppable and Earth's defenders are overrun. All hope is lost.`;
             showDefeatPopup();
           }
           break;
@@ -11194,6 +11248,11 @@ function updateEvilWinsTracker() {
 
     case "Corrupt the Next Generation of Heroes":
       evilWinsText.innerHTML = `${escapedVillainsDeck.filter((card) => card.corruptSidekick).length}/4 Sidekicks Escaped`;
+      break;
+
+    case "Build an Army of Annihilation":
+      // Plain-text counter (no markup) → textContent (XSS-safe, renders identically to the innerHTML siblings).
+      evilWinsText.textContent = `${annihilationHenchmenNextToMM}/10 Henchmen Next to Mastermind`;
       break;
 
     case "Replace Earth's Leaders with Killbots":

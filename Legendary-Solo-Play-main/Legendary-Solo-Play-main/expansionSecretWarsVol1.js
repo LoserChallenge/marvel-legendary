@@ -3175,3 +3175,154 @@ function gainCorruptedSidekick(villainCopy) {
   );
   updateGameBoard();
 }
+
+// ============================================================================
+// Build an Army of Annihilation scheme (Secret Wars Vol.1)
+// ----------------------------------------------------------------------------
+// "Setup: 9 Twists. Put 10 extra Annihilation Wave Henchmen in that KO pile. / Twist: KO all
+// Annihilation Henchmen from the players' Victory Piles. Stack this Twist next to the Scheme. Then,
+// for each Twist in that stack, put an Annihilation Henchman from the KO pile next to the Mastermind.
+// Players can fight those Henchmen. / Evil Wins: When there are 10 Annihilation Henchmen next to the
+// Mastermind."
+//
+// STAND-IN: "Annihilation Wave Henchmen" is a pre-release printing error; per the ruling (rules-notes
+// BATCH 8 ④ / Q1) we use the M.O.D.O.K.s henchman art + stats (Attack 3, VP 1) as a scheme-spawned,
+// dedicated 10-Henchman army — NOT the villain-deck M.O.D.O.K.s group, and NOT shuffled into the deck.
+//
+// STATE (script.js): `annihilationSupply` (off-board KO/reserve pool, seeded to 10 at setup in initGame)
+// and `annihilationHenchmenNextToMM` (LIVE count next to the Mastermind = the loss meter). The
+// escalating per-twist amount reuses `stackedTwistNextToMastermind`. This is the HYDRA-Traitor
+// next-to-scheme pattern (expansionRevelations.js) adapted: a count-badge of fightable entities with a
+// click-to-fight affordance, paying 3 Attack — but defeat sends the Henchman to the Victory Pile
+// (scores VP 1), and each twist first recycles defeated ones from the Victory Pile back to the supply.
+//
+// LOSS MODEL (rules-notes BATCH 8 ④, coordinator-confirmed): placement is ADDITIVE — the count
+// ACCUMULATES (worst case, no defeats: 1+2+3+4 = 10 by Twist 4). It is NOT re-derived from the
+// twist-stack size each twist (that snapshot model caps at 9 and makes the loss unreachable).
+
+// Mint one fungible Annihilation Henchman (M.O.D.O.K. stand-in). Stats from the M.O.D.O.K.s henchman
+// (Attack 3, VP 1). `isAnnihilationHenchman` tags it so the per-twist recycle can find it in the
+// Victory Pile. No fightEffect — these are plain Annihilation Henchmen, fought via the badge.
+function makeAnnihilationHenchman() {
+  return {
+    type: "Villain",
+    name: "Annihilation Henchman",
+    team: "M.O.D.O.K.s",
+    henchmen: true,
+    attack: 3,
+    originalAttack: 3,
+    victoryPoints: 1,
+    classes: [],
+    keywords: [],
+    image: "Visual Assets/Henchmen/SecretWarsVol1_MODOKS.webp",
+    isAnnihilationHenchman: true,
+  };
+}
+
+async function buildAnArmyOfAnnihilationTwist() {
+  // Step 1: KO all Annihilation Henchmen from the Victory Pile back to the scheme's supply pool
+  // ("KO all Annihilation Henchmen from the players' Victory Piles"). They leave the Victory Pile,
+  // so the player loses that VP — by design (the recycle re-arms the army).
+  const recovered = victoryPile.filter((c) => c.isAnnihilationHenchman).length;
+  if (recovered > 0) {
+    victoryPile = victoryPile.filter((c) => !c.isAnnihilationHenchman);
+    annihilationSupply += recovered;
+    onscreenConsole.log(
+      `<span class="console-highlights">Build an Army of Annihilation</span> — ${recovered} defeated Annihilation Henchman/Henchmen KO'd from the Victory Pile back to the supply.`,
+    );
+  }
+
+  // Step 2: stack this Twist next to the Scheme (escalating count).
+  stackedTwistNextToMastermind++;
+
+  // Step 3: for each Twist in that stack, put an Annihilation Henchman from the supply next to the
+  // Mastermind. ADDITIVE — adds to whatever is already there, bounded by the supply.
+  const toPlace = Math.min(stackedTwistNextToMastermind, annihilationSupply);
+  annihilationSupply -= toPlace;
+  annihilationHenchmenNextToMM += toPlace;
+  onscreenConsole.log(
+    `Placed ${toPlace} Annihilation Henchman/Henchmen next to <span class="console-highlights">${getSelectedMastermind().name}</span> (${annihilationHenchmenNextToMM} now next to the Mastermind; ${annihilationSupply} left in the supply).`,
+  );
+
+  // updateGameBoard runs the end-game check (Evil Wins at 10 next to the Mastermind) and refreshes
+  // the badge + the "N/10" tracker.
+  updateGameBoard();
+}
+
+// Fight one Annihilation Henchman next to the Mastermind: pay 3 Attack → defeat → Victory Pile (VP 1).
+// Mirrors fightHydraTraitor's attack-spend (honours recruitUsedToAttack via showCounterPopup; spending
+// Attack does NOT touch cumulativeAttackPoints). Unlike the Traitor, the Henchman is DEFEATED (scored
+// to the Victory Pile), not returned to the supply — and no Hero is KO'd.
+async function fightAnnihilationHenchman() {
+  const COST = 3;
+  const activeScheme = getActiveScheme();
+  if (!activeScheme || activeScheme.name !== "Build an Army of Annihilation") {
+    return false;
+  }
+  if (annihilationHenchmenNextToMM <= 0) {
+    onscreenConsole.log("No Annihilation Henchmen are next to the Mastermind.");
+    return false;
+  }
+  const available =
+    totalAttackPoints + (recruitUsedToAttack === true ? totalRecruitPoints : 0);
+  if (available < COST) {
+    onscreenConsole.log(
+      `You need 3 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight an <span class="console-highlights">Annihilation Henchman</span>.`,
+    );
+    return false;
+  }
+
+  // Spend 3 Attack (Demon Goblin / Hydra Traitor pattern).
+  if (recruitUsedToAttack === true) {
+    const result = await showCounterPopup(
+      { name: "Annihilation Henchman", image: makeAnnihilationHenchman().image },
+      COST,
+    );
+    totalAttackPoints -= result.attackUsed || 0;
+    totalRecruitPoints -= result.recruitUsed || 0;
+  } else {
+    totalAttackPoints -= COST;
+  }
+
+  // Defeat: the Henchman leaves the Mastermind and joins the Victory Pile (scores VP 1). The next
+  // Twist's Step 1 will KO it back out to the supply.
+  annihilationHenchmenNextToMM--;
+  victoryPile.push(makeAnnihilationHenchman());
+  onscreenConsole.log(
+    `You defeated an <span class="console-highlights">Annihilation Henchman</span> (3 Attack) — worth 1 VP. (${annihilationHenchmenNextToMM} left next to the Mastermind.)`,
+  );
+
+  if (typeof playSFX === "function") playSFX("attack");
+  updateGameBoard();
+  return true;
+}
+
+// Click affordance on the Annihilation-army badge: confirm the optional fight before resolving
+// (fighting is a choice). Guards keep it scheme-only, count>0, affordable (3 Attack).
+function showAnnihilationHenchmanFightPrompt() {
+  const activeScheme = getActiveScheme();
+  if (!activeScheme || activeScheme.name !== "Build an Army of Annihilation") return;
+  if (annihilationHenchmenNextToMM <= 0) return;
+  const available =
+    totalAttackPoints + (recruitUsedToAttack === true ? totalRecruitPoints : 0);
+  if (available < 3) {
+    onscreenConsole.log(
+      `You need 3 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight an <span class="console-highlights">Annihilation Henchman</span>.`,
+    );
+    return;
+  }
+  const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+    `Pay 3 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight an <span class="console-highlights">Annihilation Henchman</span>? You defeat it (worth 1 VP) and it leaves the Mastermind.`,
+    "Fight (3 Attack)",
+    "Cancel",
+  );
+  const titleEl = document.querySelector(".info-or-choice-popup-title");
+  if (titleEl) titleEl.textContent = "ANNIHILATION HENCHMAN";
+  confirmButton.onclick = async () => {
+    closeInfoChoicePopup();
+    await fightAnnihilationHenchman();
+  };
+  denyButton.onclick = () => {
+    closeInfoChoicePopup();
+  };
+}
