@@ -9472,6 +9472,11 @@ if (stackedTwistNextToMastermind > 0) {
     newCityCell.classList.add("city-cell");
   }
 
+  // Render the secondary-Mastermind slot UNCONDITIONALLY (not only inside the per-city-cell loop
+  // above, which is skipped when the city is empty). A 2nd Mastermind can appear while the city has
+  // no cards (e.g. Dark Alliance's Twist 1 on an empty board), and must still show/refresh its slot.
+  updateSecondaryMastermindSlot();
+
   updateEvilWinsTracker();
 
   if (lastTurn && !lastTurnMessageShown) {
