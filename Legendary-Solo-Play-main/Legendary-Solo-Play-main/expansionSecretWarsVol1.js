@@ -2839,3 +2839,102 @@ function bystanderBanker() {
   );
   updateGameBoard();
 }
+
+// ============================================================================
+// Dark Alliance scheme (Secret Wars Vol.1) — Multiple-Masterminds keystone consumer
+// ----------------------------------------------------------------------------
+// T1   : add a random 2nd Mastermind (Core pool via DB flag darkAllianceEligible) with one Tactic.
+// T2-4 : if the 2nd MM is still in play, it gains another Tactic (accrues 1 -> up to 4).
+// T5-6 : EACH Mastermind (main + 2nd, if alive) captures a Bystander from the Bystander Stack
+//        (Q-B: literal "each" includes the MAIN MM; source is the Stack, empty-stack = no-op).
+// T7   : Evil Wins — handled by the endGameConditions "darkAllianceTwist7" case (twist count >= 7),
+//        with the on-screen counter twin in updateEvilWinsTracker (case "Dark Alliance").
+// The eligible 2nd-MM pool ships as Core Set Masterminds only; widen later by adding the
+// darkAllianceEligible flag to more Masterminds (one-flag change, no picker rewrite). Rulings: BATCH 7
+// of docs/rules-notes/secret-wars-vol1.md.
+
+// Random 2nd-MM picker: opt-in Core pool, excluding the currently-selected MAIN Mastermind, base side.
+function pickRandomDarkAllianceMastermind() {
+  const main = getSelectedMastermind();
+  const pool = masterminds.filter(
+    (m) => m.darkAllianceEligible === true && m.name !== main.name,
+  );
+  if (pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// The live Dark Alliance 2nd Mastermind (the non-ascended secondary it added), if still in play.
+function getDarkAllianceSecondMastermind() {
+  return secondaryMasterminds.find((sm) => sm.darkAlliance && !sm.defeated);
+}
+
+async function darkAllianceTwist(villainCard) {
+  const twistNumber = schemeTwistCount; // already incremented before this dispatch (1-based)
+
+  // T1: add a random 2nd Mastermind with one Tactic.
+  if (twistNumber === 1) {
+    const chosen = pickRandomDarkAllianceMastermind();
+    if (!chosen) {
+      onscreenConsole.log(
+        "No eligible Mastermind is available to join the Dark Alliance.",
+      );
+      return;
+    }
+    // Shuffled Tactic pool (mapped to type:"Mastermind" like generateMastermindDeck), drawn one at a
+    // time over Twists 1-4. Each cleared Tactic later scores its own VP into the Victory Pile.
+    const tacticPool = shuffle(
+      chosen.tactics.map((t) => ({ ...t, type: "Mastermind" })),
+    );
+    const firstTactic = tacticPool.pop();
+    const sm = addSecondaryMastermind({
+      name: chosen.name,
+      image: chosen.image,
+      attack: chosen.attack, // per-Tactic fight cost (printed Attack; escalating bonusAttack omitted)
+      victoryPoints: 0, // VP lives on the Tactic cards, not the MM card (Core p.14/p.21) — terminal card 0 VP
+      tactics: firstTactic ? [firstTactic] : [],
+      masterStrike: chosen.masterStrike,
+      masterStrikeConsoleLog: chosen.masterStrikeConsoleLog,
+      unfightableUnlessRecruit: chosen.unfightableUnlessRecruit || null,
+    });
+    sm.darkAlliance = true;
+    sm.tacticPool = tacticPool;
+    onscreenConsole.log(
+      `<span class="console-highlights">${chosen.name}</span> joins the Dark Alliance with one Mastermind Tactic! Defeat every Mastermind to win.`,
+    );
+    updateGameBoard();
+    return;
+  }
+
+  // T2-4: the 2nd MM gains another Tactic if still in play.
+  if (twistNumber >= 2 && twistNumber <= 4) {
+    const sm = getDarkAllianceSecondMastermind();
+    if (!sm) {
+      onscreenConsole.log(
+        "The second Mastermind has been defeated — no Tactic is added.",
+      );
+      return;
+    }
+    const nextTactic = sm.tacticPool && sm.tacticPool.pop();
+    if (nextTactic) {
+      sm.tactics.push(nextTactic);
+      onscreenConsole.log(
+        `<span class="console-highlights">${sm.name}</span> gains another Mastermind Tactic — now ${sm.tactics.length}.`,
+      );
+    }
+    updateGameBoard();
+    return;
+  }
+
+  // T5-6: EACH Mastermind captures a Bystander from the Bystander Stack.
+  if (twistNumber === 5 || twistNumber === 6) {
+    const main = getSelectedMastermind();
+    captureBystanderFromStackToMastermind(main);
+    const sm = getDarkAllianceSecondMastermind();
+    if (sm) captureBystanderFromStackToMastermind(sm);
+    updateMastermindOverlay();
+    updateGameBoard();
+    return;
+  }
+
+  // T7+: Evil Wins — handled by the endGameConditions "darkAllianceTwist7" case (twist count >= 7).
+}

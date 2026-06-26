@@ -899,6 +899,7 @@ const masterminds = [
     bonusAttack: 3,
     fightCondition: "None",
     victoryPoints: 5,
+    darkAllianceEligible: true, // Core Set Mastermind — eligible as Dark Alliance's random 2nd Mastermind (SWV1). Opt-in; widen the pool by flagging more Masterminds.
     masterStrike: "doomStrike",
     masterStrikeConsoleLog:
       "Each player with exactly six cards in hand reveals a <img src='Visual Assets/Icons/Tech.svg' alt='Tech Icon' class='console-card-icons'> Hero or puts two cards from their hand on top of their deck.",
@@ -960,6 +961,7 @@ const masterminds = [
     bonusAttack: 2,
     fightCondition: "None",
     victoryPoints: 5,
+    darkAllianceEligible: true, // Core Set Mastermind — eligible as Dark Alliance's random 2nd Mastermind (SWV1).
     masterStrike: "LokiRevealStrengthOrWound",
     masterStrikeConsoleLog:
       "Each player reveals a <img src='Visual Assets/Icons/Strength.svg' alt='Strength Icon' class='console-card-icons'> Hero or gains a Wound.",
@@ -1018,6 +1020,7 @@ const masterminds = [
     bonusAttack: 1,
     fightCondition: "None",
     victoryPoints: 5,
+    darkAllianceEligible: true, // Core Set Mastermind — eligible as Dark Alliance's random 2nd Mastermind (SWV1).
     masterStrike: "RedSkullKOHandHero",
     masterStrikeConsoleLog: "Each player KOs a Hero from their hand.",
     masterStrikeImage: "Visual Assets/Masterminds/RedSkull_MasterStrike.webp",
@@ -1079,6 +1082,7 @@ const masterminds = [
     bonusAttack: 2,
     fightCondition: "None",
     victoryPoints: 5,
+    darkAllianceEligible: true, // Core Set Mastermind — eligible as Dark Alliance's random 2nd Mastermind (SWV1).
     masterStrike: "magnetoStrike",
     masterStrikeConsoleLog:
       "Each player reveals an <img src='Visual Assets/Icons/X-Men.svg' alt='X-Men Icon' class='console-card-icons'> Hero or discards down to four cards.",
@@ -1272,6 +1276,7 @@ const masterminds = [
     bonusAttack: 0,
     fightCondition: "None",
     victoryPoints: 6,
+    darkAllianceEligible: true, // Core Set Mastermind — eligible as Dark Alliance's random 2nd Mastermind (SWV1).
     masterStrike: "mephistoStrike",
     masterStrikeConsoleLog:
       "Each player reveals a <img src='Visual Assets/Icons/Marvel Knights.svg' alt='Marvel Knights Icon' class='console-card-icons'> Hero or gains a Wound.",

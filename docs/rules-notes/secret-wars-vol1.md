@@ -207,3 +207,27 @@ These map to the FROZEN spec's "OPEN QUESTIONS" Q2–Q7 (different numbering fro
 - **Solo note:** single-player — no "each other player" dimension; "your Heroes" = the active (only) player's controlled Heroes.
 - SOURCE: Core rulebook p.15 ("KO"), p.16 ("Your Heroes" / play area); corroborated by the M.O.D.O.K.s explicit-discard contrast (inventory `secret-wars-vol1.md`).
 - CONFIDENCE: **SETTLED** (rulebook-stated zone definition, not convention/inference). Implemented in SWV1 Phase 3f (`ghostRacersFight` → `koControlledHeroByIdentity` over Artifacts+Hand+Played with `attackIcon===true`, excluding discard), commit `40081cb`.
+
+# BATCH 7 — Dark Alliance scheme (multiple-Masterminds consumer) (2026-06-26, Rules Oracle; rulings relayed by coordinator/Paul)
+
+Scheme "Dark Alliance" (SWV1): "Setup: 8 Twists. / T1: Add a random second Mastermind with one Tactic. / T2-4: if the 2nd MM is still in play, it gains another Tactic. / T5-6: Each Mastermind captures a Bystander. / T7: Evil Wins!" Implemented Phase 3e.
+
+## Q-A — Random 2nd-Mastermind eligible pool → **Core/base-Set Masterminds only (this build)**
+- **Ruling (DESIGN DECISION, not a rules constraint — Paul, 2026-06-26):** the rulebook imposes NO constraint on which Mastermind is added; "a random Mastermind" means any. This build deliberately ships the eligible pool as **Core Set Masterminds only** (low-hanging fruit), with an **extensible opt-in marker** (`darkAllianceEligible: true` per Mastermind) so widening the pool later is a one-flag change, not a picker rewrite.
+- **Technical filters:** exclude the currently-selected MAIN Mastermind; use the base (non-Epic) side.
+- **Final included pool (5):** Dr. Doom, Loki, Red Skull, Magneto, Mephisto.
+- **Drops:** ZERO. `alwaysLeads` (themed villain/henchman group) is NOT a drop criterion — EVERY Mastermind in the game carries an `alwaysLeads` group, so treating it as "an unmeetable setup condition" would empty the pool. A 2nd MM added mid-game brings only its Tactics + Master Strike (no group); all 5 Core Masterminds' strikes/tactics are self-contained (verified: no group-presence dependency in their effect fns). The themed group simply isn't added — cosmetically absent, functionally irrelevant. *(Diverges from the literal "drop alwaysLeads" example in the brief; reported to coordinator.)*
+- **Known cosmetic nuance (non-blocking):** Mephisto's "wound → top of deck" quirk (`defaultWoundDraw`) keys on the MAIN Mastermind only, so as a 2nd MM that quirk does not apply. Magneto's `recruitXMen` base over-credit (Finding A / base-bug B6) ships consistent with base.
+- SOURCE: design decision (rules-silent); pool membership = Core Set fact. CONFIDENCE: **SETTLED** (scope choice).
+
+## Q-B — T5-6 "Each Mastermind captures a Bystander" → from the **Bystander STACK**, literal "each" includes the MAIN MM
+- **Ruling (SETTLED):** the captured Bystander comes from the **Bystander Stack** (the supply), NOT the villain-deck bystander flow. "Each Mastermind" is LITERAL and includes the **main Mastermind** → with the 2nd MM still in play, Twists 5 and 6 EACH capture 2 Bystanders (main + 2nd). No Golden/What-If divergence. Guard the empty-stack case: if the Bystander Stack is empty, that capture is a no-op.
+- SOURCE: Core rulebook p.10 (Mastermind captures a Bystander), p.14 (Bystander rescued on Tactic/Mastermind defeat), p.15 (the Bystander Stack is the supply). CONFIDENCE: **SETTLED**.
+
+## Q-C — Ascended Mastermind keeps captured Bystanders → **INFERENCE (no printed rule)**
+- **Ruling (SETTLED, SILENT):** the rulebook says nothing about an ascended/added Mastermind retaining Bystanders it captured as a villain. The existing "it KEEPS them (ascension isn't escape; rescued on its defeat)" ruling stands as a sound inference. Closest adjacent printed text: Core p.9 ("Bystanders move with the villain card"). Recorded as **inference, not printed rule** (Finding C).
+- SOURCE: inference; adjacent Core p.9. CONFIDENCE: **SETTLED (as inference).**
+
+## Q-D — 2nd-MM Tactic Fight effects resolve; VP lives on Tactics, not the MM card
+- **Ruling (SETTLED):** (1) when you KO/clear a 2nd Mastermind's Tactic by fighting it, that Tactic's **Fight effect RESOLVES** exactly like any Mastermind Tactic → engine must wire `resolveTacticEffects` into the secondary-MM defeat path (GAP-K). (2) Victory Points live on the **Tactic cards, NOT the Mastermind card** → a fully-defeated full 2nd MM's terminal card is worth **0 VP** (its accrued Tactics already carried the VP into the Victory Pile). (3) The 2nd MM is defeated when its ACTUAL accrued Tactic count (1-4, however many it gained over T1-4) is cleared — do NOT hardcode 4.
+- SOURCE: Core rulebook p.14 (Tactic Fight effect + Tactic VP), p.21 (Mastermind-card VP is Final-Showdown-only). CONFIDENCE: **SETTLED**.

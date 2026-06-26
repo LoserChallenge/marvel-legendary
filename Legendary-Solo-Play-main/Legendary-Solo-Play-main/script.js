@@ -5027,6 +5027,7 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
 
   const mastermind = getSelectedMastermind();
   mastermind.bystanders = [];
+  secondaryMasterminds = []; // clear any secondary Masterminds (ascended Magneto / Dark Alliance) from a prior game
   const mastermindDeck = generateMastermindDeck(mastermind);
 
   const mastermindCell = document.getElementById("mastermind");
@@ -6226,16 +6227,18 @@ function handleVillainEscape(escapedVillain) {
 
 
   if (escapedVillain) {
-    // TODO (resolve in Phase 3e): Finding C — an ascended Mastermind KEEPS its captured bystanders
-    // (ruling 2026-06-23: ascension isn't escape, so nothing he's holding escapes with him; rescued
-    // on his defeat). These attached-card pushes (bystander/plutonium/XCutionerHeroes) run BEFORE the
-    // ascendsToMastermind guard below, so a bystander on an ascending villain (Apocalyptic Magneto)
-    // currently lands in escapedVillainsDeck (safe interim — counts as lost, not orphaned). Do NOT
-    // naively skip the push (that orphans the bystander into limbo). Implement transfer onto the
-    // secondary Mastermind's captured list in 3e, where the same secondary-MM captured-bystander
-    // wiring is built for Dark Alliance (T5-6 main-MM-attach). Grab a rules-oracle cite then.
-    // If the villain has bystanders attached, move them as well
-    if (escapedVillain.bystander && escapedVillain.bystander.length > 0) {
+    // Finding C (ruling 2026-06-23; rules-notes BATCH 7 Q-C — inference, no printed rule): an ascending
+    // Mastermind KEEPS its captured Bystanders — ascension isn't escape, so nothing it holds escapes
+    // with it; they are rescued on its defeat. For an ascending villain we therefore SKIP the
+    // bystander -> escapedVillainsDeck push; the Bystanders ride on escapedVillain.bystander and are
+    // transferred onto the new secondary Mastermind by ascendToMastermind (which then rescues them via
+    // defeatSecondaryMastermind). Plutonium/XCutioner pushes below stay interim-safe — no in-scope
+    // ascending villain captures those.
+    if (
+      !escapedVillain.ascendsToMastermind &&
+      escapedVillain.bystander &&
+      escapedVillain.bystander.length > 0
+    ) {
       escapedVillain.bystander.forEach((bystander) => {
         escapedVillainsDeck.push(bystander);
         onscreenConsole.log(
@@ -9555,6 +9558,15 @@ if (selectedSchemeEndGame) {
           }
           break;
 
+        case "darkAllianceTwist7":
+          if (twistCount >= 7) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `The Dark Alliance is sealed. ${mastermind.name} and a second Mastermind now rule unopposed. All hope is lost.`;
+            showDefeatPopup();
+          }
+          break;
+
         case "5Killbots":
           if (escapedKillbotsCount >= 5) {
             finalTwist = true;
@@ -11048,6 +11060,10 @@ function updateEvilWinsTracker() {
 
     case "Portals to the Dark Dimension":
       evilWinsText.innerHTML = `${twistCount}/7 Portals Opened`;
+      break;
+
+    case "Dark Alliance":
+      evilWinsText.innerHTML = `${twistCount}/7 Twists`;
       break;
 
     case "Replace Earth's Leaders with Killbots":
@@ -15640,8 +15656,11 @@ function onMastermindTacticsChanged(mastermind) {
 // (total GENERATED this turn) so spending Recruit after reaching N does not re-lock. Keys off the
 // MAIN selected mastermind — the only mastermind these surfaces (handleMastermindClick + the
 // #mastermind highlight twins) gate; secondary masterminds use their own click path.
-function isMastermindRecruitLocked() {
-  const mm = getSelectedMastermind();
+// Defaults to the MAIN selected Mastermind, but accepts any Mastermind-like object (e.g. a secondary
+// Mastermind in secondaryMasterminds[]) so the recruit-gate also covers a Dark Alliance random 2nd MM
+// if the eligible pool is ever widened to include Nimrod. Reads cumulativeRecruitPoints (total
+// GENERATED this turn) so spending Recruit after reaching N does not re-lock.
+function isMastermindRecruitLocked(mm = getSelectedMastermind()) {
   return (
     !!mm &&
     !!mm.unfightableUnlessRecruit &&
@@ -16906,6 +16925,28 @@ function hasActiveSecondaryMastermind() {
   return secondaryMasterminds.some((sm) => !sm.defeated);
 }
 
+// Dark Alliance (Secret Wars Vol.1) T5-6: a Mastermind captures ONE Bystander from the Bystander STACK
+// (Core p.10/p.15 — the Stack is the supply, NOT the villain-deck bystander flow). Targets ANY
+// Mastermind-like object: the MAIN selected Mastermind (mastermind.bystanders) OR a secondary
+// Mastermind in secondaryMasterminds[] (sm.bystanders). Empty stack → no-op (Core p.16). The captured
+// Bystander is rescued to the Victory Pile when that Mastermind is defeated (main MM via
+// collectMastermindRescueOperations; secondary MM via defeatSecondaryMastermind's reuse of the same).
+function captureBystanderFromStackToMastermind(targetMM) {
+  if (!targetMM) return;
+  if (!Array.isArray(targetMM.bystanders)) targetMM.bystanders = [];
+  if (bystanderDeck.length === 0) {
+    onscreenConsole.log(
+      `The Bystander Stack is empty — <span class="console-highlights">${targetMM.name}</span> captures no Bystander.`,
+    );
+    return;
+  }
+  const bystander = bystanderDeck.pop();
+  targetMM.bystanders.push(bystander);
+  onscreenConsole.log(
+    `<span class="console-highlights">${bystander.name}</span> captured by <span class="console-highlights">${targetMM.name}</span>.`,
+  );
+}
+
 // Points available to defeat a secondary mastermind, mirroring the main fight's basic rules
 // (Negative Zone swaps Recruit for Attack; recruitUsedToAttack lets Recruit top up Attack).
 // NOTE: the secondary fight intentionally skips the main fight's forcefield/Bribe/counter machinery
@@ -16918,16 +16959,18 @@ function secondaryAvailablePoints() {
 }
 
 function spendForSecondaryDefeat(required) {
+  // Floor-clamp every subtraction at 0 so a point pool can never go negative even if `required`
+  // somehow exceeds what secondaryAvailablePoints() reported (defensive — callers gate on >= first).
   if (negativeZoneAttackAndRecruit) {
-    totalRecruitPoints -= required;
+    totalRecruitPoints = Math.max(0, totalRecruitPoints - required);
     return;
   }
   let remaining = required;
   const fromAttack = Math.min(totalAttackPoints, remaining);
-  totalAttackPoints -= fromAttack;
+  totalAttackPoints = Math.max(0, totalAttackPoints - fromAttack);
   remaining -= fromAttack;
   if (remaining > 0 && recruitUsedToAttack) {
-    totalRecruitPoints -= remaining;
+    totalRecruitPoints = Math.max(0, totalRecruitPoints - remaining);
   }
 }
 
@@ -16949,12 +16992,25 @@ function ascendToMastermind(sourceCard, opts = {}) {
     attack: defeatAttack, // no Tactics → this is the one-fight defeat cost
     victoryPoints: vp,
     tactics: [],
+    bystanders: [], // Finding C: an ascending villain's captured Bystanders transfer here (kept, not escaped)
     ascended: true,
     sourceCard,
     masterStrike: masterStrikeFn, // function name (string) OR direct fn
     masterStrikeConsoleLog,
     defeated: false,
   };
+  // Finding C: an ascending villain's captured Bystanders transfer onto the new Mastermind (kept, not
+  // escaped) and are rescued to the Victory Pile when it is defeated. Villains store captured Bystanders
+  // on `.bystander` (singular); Masterminds use `.bystanders` (plural). handleVillainEscape leaves them
+  // on the villain (skips its escapedVillainsDeck push) precisely so they can ride into ascension here.
+  if (sourceCard && Array.isArray(sourceCard.bystander) && sourceCard.bystander.length > 0) {
+    sm.bystanders.push(...sourceCard.bystander);
+    onscreenConsole.log(
+      `<span class="console-highlights">${name}</span> keeps ${sourceCard.bystander.length} captured Bystander${sourceCard.bystander.length !== 1 ? "s" : ""} — rescued when defeated.`,
+    );
+    sourceCard.bystander = [];
+  }
+
   secondaryMasterminds.push(sm);
   onscreenConsole.log(
     `<span class="console-highlights">${name}</span> has ascended to become a Mastermind! Defeat every Mastermind to win.`,
@@ -16973,10 +17029,14 @@ function addSecondaryMastermind(config = {}) {
     attack: config.attack || 0,
     victoryPoints: config.victoryPoints || 0,
     tactics: config.tactics || [],
+    bystanders: [], // captured Bystanders ride here (Dark Alliance T5-6); rescued on this MM's defeat
     ascended: false,
     sourceCard: null,
     masterStrike: config.masterStrike || null,
     masterStrikeConsoleLog: config.masterStrikeConsoleLog || "",
+    // Carries the recruit-gate flag (Nimrod) so the secondary-fight path can gate on it too if the
+    // Dark Alliance pool is widened to include a recruit-locked Mastermind. Null for the Core pool.
+    unfightableUnlessRecruit: config.unfightableUnlessRecruit || null,
     defeated: false,
   };
   secondaryMasterminds.push(sm);
@@ -17043,6 +17103,14 @@ function showSecondaryMasterStrikePopup(sm) {
 
 async function handleSecondaryMastermindClick(sm) {
   if (!sm || sm.defeated) return;
+  // Recruit-gate (Nimrod-style): if this secondary MM is recruit-locked, block the fight until enough
+  // Recruit was generated this turn. Inert for the Core Dark Alliance pool (none carry the flag).
+  if (isMastermindRecruitLocked(sm)) {
+    onscreenConsole.log(
+      `You can't fight <span class="console-highlights">${sm.name}</span> unless you make at least ${sm.unfightableUnlessRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn.`,
+    );
+    return;
+  }
   const required = sm.attack;
   const available = secondaryAvailablePoints();
   const icon = negativeZoneAttackAndRecruit
@@ -17082,6 +17150,12 @@ async function handleSecondaryMastermindClick(sm) {
 
 async function confirmSecondaryMastermindAttack(sm) {
   if (!sm || sm.defeated) return;
+  if (isMastermindRecruitLocked(sm)) {
+    onscreenConsole.log(
+      `You can't fight <span class="console-highlights">${sm.name}</span> yet — not enough Recruit generated this turn.`,
+    );
+    return;
+  }
   const required = sm.attack;
   if (secondaryAvailablePoints() < required) {
     onscreenConsole.log(
@@ -17095,11 +17169,11 @@ async function confirmSecondaryMastermindAttack(sm) {
   onscreenConsole.log(
     `You spent ${required} to attack <span class="console-highlights">${sm.name}</span>!`,
   );
-  defeatSecondaryMastermind(sm);
+  await defeatSecondaryMastermind(sm);
   updateGameBoard();
 }
 
-function defeatSecondaryMastermind(sm) {
+async function defeatSecondaryMastermind(sm) {
   // Full secondary masterminds (Dark Alliance) clear one Tactic per fight; only fully defeated once
   // no Tactics remain. Ascended masterminds (Apocalyptic Magneto) have no Tactics → one fight.
   if (sm.tactics && sm.tactics.length > 0) {
@@ -17109,10 +17183,24 @@ function defeatSecondaryMastermind(sm) {
       `You cleared one of <span class="console-highlights">${sm.name}</span><span class="bold-spans">'s</span> Tactics — ${sm.tactics.length} remaining.`,
     );
     updateGameBoard();
+    // GAP-K: a cleared Tactic resolves its Fight effect exactly like a main-Mastermind Tactic
+    // (Core p.14). Reuse the shared resolver, which also handles the Mr. Fantastic / Untouchable
+    // negate prompts. Runs AFTER the VP push (mirrors the main reveal-then-resolve order).
+    if (tactic) await resolveTacticEffects(tactic);
     return;
   }
 
   sm.defeated = true;
+
+  // Rescue any Bystanders this Mastermind captured (Dark Alliance T5-6 / Finding C). Reuse the main
+  // MM rescue operations (Victory Pile + bystanderBonuses + on-rescue abilities), then clear them.
+  if (Array.isArray(sm.bystanders) && sm.bystanders.length > 0) {
+    const rescueOps = await collectMastermindRescueOperations(sm);
+    for (const op of rescueOps) {
+      await op.execute();
+    }
+    sm.bystanders = [];
+  }
 
   if (sm.ascended && sm.sourceCard) {
     // The ascended Mastermind reverts to a normal Villain card in the Victory Pile (printed VP).
@@ -17170,6 +17258,23 @@ function updateSecondaryMastermindSlot() {
     attackOverlay.textContent = sm.attack;
     placeholder.appendChild(img);
     placeholder.appendChild(attackOverlay);
+
+    // Captured-Bystander badge (Dark Alliance T5-6). Mirrors the main MM's bystander overlay: a count
+    // plus the first captured Bystander's image. Rescued to the Victory Pile when this MM is defeated.
+    if (Array.isArray(sm.bystanders) && sm.bystanders.length > 0) {
+      const bystanderOverlay = document.createElement("div");
+      bystanderOverlay.className = "bystander-overlay";
+      const countSpan = document.createElement("span");
+      countSpan.className = "bystanderOverlayNumber";
+      countSpan.textContent = sm.bystanders.length;
+      const bystImg = document.createElement("img");
+      bystImg.src = sm.bystanders[0].image;
+      bystImg.alt = "Captured Bystander";
+      bystImg.className = "villain-bystander";
+      bystanderOverlay.appendChild(countSpan);
+      bystanderOverlay.appendChild(bystImg);
+      placeholder.appendChild(bystanderOverlay);
+    }
   }
 
   const tacticLabel = document.getElementById("mastermind-2-tactic-count");
