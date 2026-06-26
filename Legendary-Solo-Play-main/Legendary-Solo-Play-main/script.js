@@ -4974,6 +4974,16 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   henchmenDefeatedThisTurn = 0;
   infiltrateHQDiscountedCards = [];
 
+  // B16 — clear the shared Dark City demonGoblinDeck per game (declared once at module load, only
+  // push/pop'd, never reset elsewhere). A demon-goblin game (Dark City "Transform Citizens Into
+  // Demons" OR a Madelyne Pryor game) ending with goblins still in the pile would otherwise leak
+  // them into the next game started without a page reload — newly surfaced by Madelyne, whose
+  // unfightableWhileDemonGoblins gate would then start a fresh game SPURIOUSLY fight-locked (and
+  // inflate the Dark City scheme's villain attack @ the demonGoblinDeck.length reads). The once-only
+  // initializeDemonGoblinDeck() guard gates only the DOM listener attach, NOT the array — clear it
+  // here (the per-game init path) so it fires on every new game.
+  demonGoblinDeck.length = 0;
+
   // City size per scheme. Schemes may declare a `citySpaces` array (e.g. Earthquake's
   // 7-space "Low Tide" layout); otherwise use the default 5. Set this explicitly every
   // game so a prior 7-space game resets back to 5 — citySize/citySpaces are persistent
