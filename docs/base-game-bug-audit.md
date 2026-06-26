@@ -79,6 +79,19 @@ When all 5 HQ slots are heroes, the post-loop refill reads the shortened `hq.len
 - **Fix direction (base branch):** guard `currentPermBuff → 0 when i < 0` at `script.js:~10459`. One line; hardens all future off-grid callers.
 - **Status:** CANDIDATE (code-traced via SWV1, locally guarded). **Not patched** in shared code — base-branch candidate. Low frequency (one scheme).
 
+### B11 — Mole Man "Underground Riches" hardcodes `hq2ReserveRecruit` → wrong HQ slot under city-resize (found via SWV1 Banker, 2026-06-25)
+- **Symptom:** `moleManUndergroundRiches()` (`expansionFantasticFour.js:2644`) does `hq2ReserveRecruit += 6`, hardcoding "the HQ space under the Streets" to slot 2 — true only in the default 5-space city. Under a resized city (e.g. Revelations **"Earthquake Drains the Ocean"**, 7 spaces) the slot actually under the Streets shifts, so the +6 reserved Recruit lands on the **wrong HQ slot**.
+- **Scope — base/FF:** shipped **Mole Man "Underground Riches"** owns the hardcode. SWV1 **Banker** reuses the same restricted-recruit pool but resolves the slot the resize-safe way (`getBankHQReserveIndex` computes the HQ slot off live `citySpaceLabels`), so SWV1 does NOT inherit or introduce the bug — it built the correct version alongside. (Mole Man's companion `moleManSecretTunnel` restricted-Attack uses city-space plumbing, not the HQ-slot reserve, so it's unaffected.)
+- **Fix direction (base branch):** replace the hardcoded `hq2ReserveRecruit` with the resize-aware resolver — SWV1's `getBankHQReserveIndex` generalizes to any city space (for Streets, `citySpaceLabels.indexOf("The Streets")` → HQ slot via the same offset). The SWV1 resolver is the proven template; reuse it rather than rebuilding.
+- **Status:** CANDIDATE (code-traced + the Bank analogue in-browser-verified during the SWV1 Banker build; Mole Man's Streets case not separately reproduced). **Not patched** — base/FF, deferred to the base-code branch. Low frequency (needs Mole Man + a city-resize scheme).
+
+### B12 — HQ refill on empty Hero Deck calls undefined `showHeroDeckEmptyPopup()` → ReferenceError (found via SWV1 Nimrod, 2026-06-25)
+- **Symptom:** when an HQ slot is refilled and the Hero Deck has no replacement card, `script.js:5193` runs `if (!newCard) showHeroDeckEmptyPopup();` — a function **defined nowhere** (grep-verified: the only references are this call + a dead one at `expansionPaintTheTownRed.js:1734`). Throws a ReferenceError, crashing/softlocking the refill.
+- **Scope — base:** hits ANY caller of the HQ-refill path when the Hero Deck is empty — base refills plus SWV1 cards that KO/refill an HQ slot (**M.O.D.O.K.s HQ-KO**, **Infiltrate HQ**) in What If? Solo (worker confirms the empty-deck path is reachable there). Pre-existing base defect; SWV1 exposes it via new HQ-touching cards, does not introduce it.
+- **Resolution — minimal guard applied on the SW branch (B7 pattern), NOT deferred:** the defect crashes NEW SWV1 cards' normal operation and the only non-duplicative fix is in shared HQ-refill code, so a one-line call-site guard (`if (!newCard && typeof showHeroDeckEmptyPopup === 'function') ...`) is applied on-branch — empty-deck → no refill (slot stays empty) is standard behavior, so a guarded no-op is behaviorally correct and hardens all callers. (Supersedes Nimrod Scatter's local try/catch at `8451d92`, kept as belt-and-suspenders.)
+- **Fix direction (base branch):** decide whether `showHeroDeckEmptyPopup` should exist as a real informational popup or stay a guarded no-op; also clean the `expansionPaintTheTownRed.js:1734` dead-ref. The on-branch guard is the interim; the base pass settles intent.
+- **Status:** CONFIRMED undefined-reference (grep-verified). Guarded on SW branch; base resolution deferred. Low frequency (empty Hero Deck + an HQ refill).
+
 ---
 
 ## CLEARED (investigated this session)
