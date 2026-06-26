@@ -1,71 +1,202 @@
-# Known Issues / Deferred
+# Issues — tracking & fixing
 
-Detailed descriptions of open issues. Summary pointers are in CLAUDE.md.
+The single tracker for issues **outside the active expansion pipeline**: base-game code bugs, design/UX items, and rules decisions. (Bugs in an expansion currently being built go through `/expansion-audit`, not here.)
+
+**Fix discipline:** fixes are batched on a **dedicated base-code branch, between expansions** — NOT on master or an active expansion branch. **PINNED while an expansion build is active** (currently Secret Wars Vol.1) so base work doesn't interrupt it. Confirmed items also feed the `docs/priorities.md` base-engine backlog.
+
+**Intake flow:** raw screen grabs + notes land in the `bugs/` folder (e.g. `bugs/bugs-MMDDYY.md` + `bugs/images/`). The coordinator triages each drop into this tracker (logs it, points to the image, light diagnosis) so nothing is lost. Deep diagnosis + fix happen on the base-code branch.
+
+**Status legend:** CONFIRMED (invariant violation or reproduced) · CANDIDATE (observed, not yet confirmed) · CLEARED (investigated, not a bug).
+
+Base-bug discovery started 2026-06-22. Original screenshot source: Paul's iPad captures, `C:\Users\Paul\Downloads\drive-download-20260623T022021Z-3-001\` (May 2026 sessions).
 
 ---
 
-## Summary panel hero names truncate on narrow screens
+## 1. Incoming / untriaged
 
+_(Raw `bugs/` drops awaiting triage land here first. Currently empty — the 2026-06-25 batch is triaged into §2 as B13–B15.)_
+
+---
+
+## 2. Base-game code bugs
+
+Pre-existing bugs in the **base game** (everything but Revelations — Core Set, Dark City, Fantastic Four, Guardians of the Galaxy, Paint the Town Red). **Fixes deferred to a dedicated base-code branch** (PINNED, per the discipline above).
+
+### CONFIRMED
+
+#### B1 — Unique Rare hero duplicated across HQ and discard
+- **Symptom (user-observed, IMG_0380 + IMG_0381, back-to-back captures):** Invisible Woman Rare **"Invisible Barrier"** (cost 7, 1 copy in game) appears **THREE times at once** — 1 in the HQ (IMG_0380) + 2 in the discard pile (IMG_0381).
+- **Why it's real:** a unique 1-copy card existing 3× is a state-duplication invariant violation, not a display artifact.
+- **User recollection (LOW confidence):** the **Intergalactic Kree Nega-Bomb scheme** was the scheme active at the time — user flags this as correlation, NOT confirmed causation (it may simply have been what was running). Don't anchor the investigation on the scheme. Four-of-a-Kind ruled coincidental (matches the code investigation, which cleared it independently).
+- **Context from console:** same May-22 game had recruits + scheme twists "return a Hero to the Hero Deck" firing.
+- **Status:** CONFIRMED symptom; root cause DIAGNOSED (hypothesis, pending Playwright repro).
+- **Root cause (hypothesis, evidence-traced 2026-06-22):** Golden Solo recruit-flow race. `recruitHeroConfirmed` (`script.js:18321`) removes the card from HQ by a **stale closure-bound index** — `refillHQSlot(hqIndex)` → `goldenRefillHQ` → `hq.splice(hqIndex,1)` (`script.js:5179`) — with **no `hq.indexOf(hero)` guard** before the splice. The re-entry lock `isRecruiting` clears on a **500ms `setTimeout`** (`script.js:18068-18070`) instead of on async completion. If a recruit's awaited branch outlasts 500ms (popup, `await rescueBystanderAbility` ~`18382`, Wall-Crawl awaits), a second recruit interleaves: the first splices a now-shifted slot (removing a different card) and leaves the recruited card in `hq[]` while it's already in `playerDiscardPile[]`.
+- **NOT FF-specific** — affects any hero recruit in Golden Solo where a recruit branch runs >500ms. State-corrupting; high-priority for the base-code pass.
+- **Open caveat (root cause NOT locked):** the recruit-race cleanly explains a *pairwise* duplication (HQ + discard = 2). The observed **3 instances** (1 HQ + 2 discard) need either the race firing twice or a compounding interaction not yet traced. The user's "Nega-Bomb scheme involved" recollection is *consistent* with the race (Nega-Bomb is bystander-heavy → the `await rescueBystanderAbility` recruit branch is exactly the >500ms window that trips it), i.e. the scheme likely supplies the timing rather than duplicating in its own code. Confirm the full mechanism via repro before treating the root cause as settled.
+- **Fix direction (for the fix-pass, NOT applied):** re-derive index by identity right before splice (`const idx = hq.indexOf(hero); if (idx !== -1) hq.splice(idx,1)`); clear `isRecruiting` on promise resolution, not a timer.
+- **Confirm via:** Playwright repro — Golden Solo, ≥2 affordable HQ heroes incl. a slow-async recruit branch; recruit slot 1, then recruit a higher slot before 500ms; assert a 1-copy card lands in both `hq[]` and `playerDiscardPile[]`.
+
+### CANDIDATE (observed, symptom not yet pinned)
+
+#### B2 — Angel "Drop Off A Friend" (IMG_0383, May 23)
+Popup shown ("select a card to discard to gain Recruit equal to its cost"); exact malfunction not yet recalled. Needs Paul's symptom + repro.
+
+#### B3 — Super-Skrull KO popup (IMG_0384, May 25)
+Super-Skrull fight effect KO'ing heroes; popup shown. Exact malfunction not yet recalled. Needs Paul's symptom + repro.
+
+#### User-reported 2026-06-25 — "Detonate the Helicarrier" / Mr. Sinister game
+Game context for B13–B15: Scheme **Detonate the Helicarrier**, Mastermind **Mr. Sinister**, villains Marauders + Dark Avengers, henchmen HYDRA Base, heroes Black Widow / Emma Frost / Angel / Nightcrawler / Invisible Woman / Star-Lord. Source notes: `bugs/bugs-062526.md`.
+
+##### B13 — HQ space renders unselectable and hides its hero behind a card-back
+- **Symptom:** an HQ slot (HQ-5) showed as **unselectable with the card-back image** instead of the hero occupying it (`bugs/images/Screenshot_25-6-2026_202541_.jpeg`). After a later Scheme Twist, **two** HQ slots showed the same unselectable/card-back state (`bugs/images/Screenshot_25-6-2026_20363_.jpeg`).
+- **Likely area:** Detonate the Helicarrier destroys HQ spaces; this looks like the **destroyed-space visual state** rendering wrong (marked dead/covered but mis-displayed). Probably shares a root with **B14** (the functional side of the same destroy-space mechanic).
+- **Status:** CANDIDATE (user-reported, needs repro + diagnosis). Touches the HQ-space machinery also exercised by the Secret Wars Bank/HQ work (cf. B11/B12).
+
+##### B14 — Destroyed HQ space still allowed recruiting the card in it
+- **Symptom:** the HQ space under the **Bridge** was supposed to be destroyed by the active scheme, but it **still let the player recruit** the Star-Lord "Implanted Memory Chip" card sitting there (`bugs/images/Screenshot_25-6-2026_203310_.jpeg`).
+- **Likely area:** the destroy-space mechanic marks the space dead visually but the **recruit path doesn't block** recruiting from a destroyed space. Probable shared root with **B13**.
+- **Status:** CANDIDATE (user-reported, needs repro + diagnosis).
+
+##### B15 — Golden Solo HQ refill on recruit appears in-place instead of rightmost
+- **Symptom:** after recruiting a card from the HQ space under **Rooftops**, the next card to enter (Black Widow "Mission Accomplished") **appeared in that same spot** rather than entering from the rightmost slot (`bugs/images/Screenshot_25-6-2026_20429_.jpeg`). User notes this has happened with other cards too.
+- **Expected (per Golden Solo rules):** new HQ card goes rightmost, others slide left — rotation, not fill-in-place.
+- **To confirm at diagnosis:** whether recruit-refill is *supposed* to rotate-to-rightmost like the round HQ rotation (`goldenHQRotate`/`goldenRefillHQ`), or whether recruit-refill legitimately fills the emptied slot. User's read (a bug) matches the stated Golden Solo refill rule; confirm against intended refill behavior before fixing.
+- **Status:** CANDIDATE (user-reported, repeatable; needs diagnosis to confirm bug vs intended). Touches the same HQ-rotation behavior as the Secret Wars rotation-vs-fill-in-place divergence.
+
+### ADDITIONAL LATENT (found via code-trace, not user-reported)
+
+#### B4 — `morgAmbush` forward-loop HQ index shift (`expansionFantasticFour.js:3215-3224`)
+Sets `hq[i] = null` then calls `refillHQSlot(i)` in a **forward** loop; in Golden Solo `refillHQSlot`→`goldenRefillHQ` splices+compacts, so subsequent indices shift and the wrong slots get processed. (Moves heroes to the Hero Deck, so symptom differs from B1.) Correct pattern exists in `expansionRevelations.js:3503/3538` (iterates **backward**). Candidate fix: iterate backward or remove by identity. Status: CANDIDATE (code-traced, not reproduced).
+
+#### B5 — `KOAllHeroesInHQ()` under-refill (`cardAbilities.js:16763`)
+When all 5 HQ slots are heroes, the post-loop refill reads the shortened `hq.length` and under-refills. Minor. Status: CANDIDATE (code-traced, not reproduced).
+
+#### B6 — `recruitXMen()` over-credits recruit by the hero's cost (found via Secret Wars reuse, 2026-06-23)
+- **Symptom (code-traced):** recruiting an X-Men hero via `recruitXMen()` nets **+hero.cost Recruit** (the recruit is effectively free *and* refunds its cost) instead of being free.
+- **Why it's real:** `recruitHeroConfirmed` was changed so the caller now spends via `spendRecruitCost`, and `recruitHeroConfirmed` no longer deducts. But `recruitXMen()` still does `totalRecruitPoints += hero.cost` (plus its Final-Showdown cumulative twin) with **no offsetting deduction** — a leftover from the old flow. Net effect: +cost.
+- **Scope — base-game, NOT Secret Wars-specific:** hits any base card routing through `recruitXMen`, including the **base Magneto "Bitter Captor" tactic**. Surfaced because SWV1 Apocalyptic Magneto's Fight reuses `recruitXMen()`; SWV1 inherits the existing base behavior, it does not introduce the bug.
+- **Fix direction (for the base-code pass, NOT applied):** drop the `totalRecruitPoints += hero.cost` and its `cumulativeRecruitPoints` twin in `recruitXMen` (one central fix repairs base + every reuse). Verify against the current `spendRecruitCost` flow before applying.
+- **Status:** CANDIDATE (code-traced via SWV1 build, not reproduced live). **Not patched** — base fix, deferred to the dedicated base-code branch per the discipline above.
+
+#### B7 — Granted "Teleport" (`temporaryTeleport`) leaks on unplayed hand cards — FIXED ON SW BRANCH
+- **Symptom:** a card granted temporary Teleport via the Azazel pattern (`keywords.push("Teleport")` + `temporaryTeleport = true`) that is **not played** keeps Teleport permanently. End-of-turn cleanup for PLAYED cards strips the keyword (`script.js:11616-11622`), but the `playerHand` cleanup (`script.js:11762-11767`) only deletes the `temporaryTeleport` flag, NOT the keyword from the `keywords` array — and eligibility reads the array (`script.js:11288`).
+- **Scope:** pre-existing base bug; affects shipped **Azazel** identically. Surfaced because SWV1 **Inferno Nightcrawler** reuses the Azazel grant pattern verbatim, and Nightcrawler's frozen spec assertion ("end turn → temp Teleport cleaned off") fails under the current engine.
+- **Resolution — fixed on the `secret-wars-vol1` branch (coordinator ruling 2026-06-23), NOT deferred to the base pass.** Distinguishing principle from B6: this base bug breaks a **NEW expansion card's spec**, and the only non-duplicative fix is in shared cleanup code. Fix = add a `"Teleport"` keyword-strip alongside the existing `temporaryTeleport` delete at ~`11762` (must stay gated to `temporaryTeleport` cards so innate-Teleport cards are untouched). One line repairs Nightcrawler AND base Azazel.
+- **Status:** FIXED on SW branch — **verify it has merged to master before any base-code-pass work touches Azazel** (so it isn't redone or reverted).
+
+**Policy note (B6 vs B7):** base bugs a NEW expansion card's spec directly depends on → minimal fix on the expansion branch + catalogued here as fixed-on-branch. Pure-inheritance base bugs with no expansion-spec impact (B6) → catalogued here untouched, await the dedicated base-code branch. **Third pattern (B8/B9):** the defect lives in a BASE card's handling of a general mechanic *class* (villain→hero converters), and the same bug already ships for a base card — catalogue here even though a new expansion mechanic (`gainAsHero`) adds another instance; the SW converter cards themselves are correct, so nothing is fixed on the SW branch.
+
+#### B8 — Mr. Fantastic "Ultimate Nullifier" negating a villain→hero converter makes the villain VANISH (found via SWV1 Manhattan, 2026-06-23)
+- **Symptom:** if Ultimate Nullifier negates a "gain this as a Hero" defeat converter, the villain is neither gained as a Hero nor placed in the Victory Pile — it disappears from the game entirely.
+- **Scope — base/shared:** shipped **Scarlet Witch** (`gainScarletWitchAsHero`) has the IDENTICAL interaction; SWV1's new `gainAsHero` flag is just another instance of the same converter class. Very low frequency (needs FF + the converter expansion in play + the player choosing to nullify a beneficial-to-them effect).
+- **Fix direction (base branch):** Ultimate Nullifier's negation of a villain→hero converter should fall back to the NORMAL defeat outcome (villain → Victory Pile for its VP), not vanish. Cover BOTH `skrulled`/`gainScarletWitchAsHero` AND `gainAsHero` (the latter requires SWV1 merged first).
+- **Open rules sub-question (for the base fix):** when "gain as a Hero" is nullified, does the villain go to the Victory Pile as a normally-defeated villain (coordinator lean — nullify the special reward, keep the ordinary defeat), or is it treated as un-defeated? Confirm via rules-oracle at fix time.
+- **Status:** CANDIDATE (code-traced via SWV1, not reproduced live). **Not patched** — base/shared, deferred to the base-code branch.
+
+#### B9 — Professor X "Mind Control" double-gains a villain→hero converter (found via SWV1 Manhattan, 2026-06-23)
+- **Symptom:** using Professor X "Mind Control" on a villain that has a "gain as a Hero" converter yields TWO Heroes from one villain — the Mind Control gain AND the converter both fire.
+- **Why:** the Mind Control call-site condition gates only on `hasProfessorXMindControl`, not on the villain→hero converter flags, so both paths resolve.
+- **Scope — base/shared:** shipped **Scarlet Witch** has the identical double-gain; SWV1 `gainAsHero` adds another instance. More plausible in real play than B8 (Professor X + Manhattan villains can co-occur in an SWV1 game).
+- **Fix direction (base branch):** add `&& !skrulled && !gainAsHero` (i.e. exclude all villain→hero converters) to the Professor X Mind Control call-site condition. `gainAsHero` coverage requires SWV1 merged first.
+- **Status:** CANDIDATE (code-traced via SWV1, not reproduced live). **Not patched** — base/shared, deferred to the base-code branch.
+
+#### B10 — `recalculateVillainAttack` reads `cityPermBuff[-1]` for off-grid (non-city) villains → NaN (found via SWV1 Fight the Future, 2026-06-25)
+- **Symptom:** a non-city villain (cityIndex −1 / off-grid) passed through `updateVillainAttackValues`/`recalculateVillainAttack` reads `cityPermBuff[-1]` (undefined); under the **"Portals to the Dark Dimension"** scheme it flows into `attackFromScheme` → NaN attack.
+- **Scope — base:** latent for ANY off-grid caller of `recalculateVillainAttack`. SWV1 **Fight the Future** is the FIRST non-city caller (it fights a villain on top of the Villain Deck), so it newly *exposes* the edge — it does not introduce it. SWV1 guards itself LOCALLY (printed-Attack fallback inside the FtF function) — no SW spec broken, no shared-base edit.
+- **Fix direction (base branch):** guard `currentPermBuff → 0 when i < 0` at `script.js:~10459`. One line; hardens all future off-grid callers.
+- **Status:** CANDIDATE (code-traced via SWV1, locally guarded). **Not patched** in shared code — base-branch candidate. Low frequency (one scheme).
+
+#### B11 — Mole Man "Underground Riches" hardcodes `hq2ReserveRecruit` → wrong HQ slot under city-resize (found via SWV1 Banker, 2026-06-25)
+- **Symptom:** `moleManUndergroundRiches()` (`expansionFantasticFour.js:2644`) does `hq2ReserveRecruit += 6`, hardcoding "the HQ space under the Streets" to slot 2 — true only in the default 5-space city. Under a resized city (e.g. Revelations **"Earthquake Drains the Ocean"**, 7 spaces) the slot actually under the Streets shifts, so the +6 reserved Recruit lands on the **wrong HQ slot**.
+- **Scope — base/FF:** shipped **Mole Man "Underground Riches"** owns the hardcode. SWV1 **Banker** reuses the same restricted-recruit pool but resolves the slot the resize-safe way (`getBankHQReserveIndex` computes the HQ slot off live `citySpaceLabels`), so SWV1 does NOT inherit or introduce the bug — it built the correct version alongside. (Mole Man's companion `moleManSecretTunnel` restricted-Attack uses city-space plumbing, not the HQ-slot reserve, so it's unaffected.)
+- **Fix direction (base branch):** replace the hardcoded `hq2ReserveRecruit` with the resize-aware resolver — SWV1's `getBankHQReserveIndex` generalizes to any city space (for Streets, `citySpaceLabels.indexOf("The Streets")` → HQ slot via the same offset). The SWV1 resolver is the proven template; reuse it rather than rebuilding.
+- **Status:** CANDIDATE (code-traced + the Bank analogue in-browser-verified during the SWV1 Banker build; Mole Man's Streets case not separately reproduced). **Not patched** — base/FF, deferred to the base-code branch. Low frequency (needs Mole Man + a city-resize scheme).
+
+#### B12 — HQ refill on empty Hero Deck calls undefined `showHeroDeckEmptyPopup()` → ReferenceError (found via SWV1 Nimrod, 2026-06-25)
+- **Symptom:** when an HQ slot is refilled and the Hero Deck has no replacement card, `script.js:5193` runs `if (!newCard) showHeroDeckEmptyPopup();` — a function **defined nowhere** (grep-verified: the only references are this call + a dead one at `expansionPaintTheTownRed.js:1734`). Throws a ReferenceError, crashing/softlocking the refill.
+- **Scope — base:** hits ANY caller of the HQ-refill path when the Hero Deck is empty — base refills plus SWV1 cards that KO/refill an HQ slot (**M.O.D.O.K.s HQ-KO**, **Infiltrate HQ**) in What If? Solo (worker confirms the empty-deck path is reachable there). Pre-existing base defect; SWV1 exposes it via new HQ-touching cards, does not introduce it.
+- **Resolution — minimal guard applied on the SW branch (B7 pattern), NOT deferred:** the defect crashes NEW SWV1 cards' normal operation and the only non-duplicative fix is in shared HQ-refill code, so a one-line call-site guard (`if (!newCard && typeof showHeroDeckEmptyPopup === 'function') ...`) is applied on-branch — empty-deck → no refill (slot stays empty) is standard behavior, so a guarded no-op is behaviorally correct and hardens all callers. (Supersedes Nimrod Scatter's local try/catch at `8451d92`, kept as belt-and-suspenders.)
+- **Fix direction (base branch):** decide whether `showHeroDeckEmptyPopup` should exist as a real informational popup or stay a guarded no-op; also clean the `expansionPaintTheTownRed.js:1734` dead-ref. The on-branch guard is the interim; the base pass settles intent.
+- **Status:** CONFIRMED undefined-reference (grep-verified). Guarded on SW branch; base resolution deferred. Low frequency (empty Hero Deck + an HQ refill).
+
+#### B16 — `demonGoblinDeck` is never reset between games → stale goblins can lock a fresh game (found via SWV1 Madelyne, 2026-06-25)
+- **Symptom:** `demonGoblinDeck` is declared once (`script.js:925`) and only push/pop'd — there is **no reset at game init**. If a demon-goblin game (the Dark City demon scheme, or a Madelyne game) ends with goblins still in the pile, the **next game in the same page session inherits a non-empty `demonGoblinDeck`**.
+- **Scope — base + SWV1:** pre-existing base bug — also inflates the Dark City demon scheme's villain attack (`script.js:10521`). **SWV1 Madelyne newly surfaces it as a hard fight-lock:** her `unfightableWhileDemonGoblins` gate reads `demonGoblinDeck.length>0`, so a fresh Madelyne game inheriting stale goblins **starts spuriously unfightable** — she can't be defeated → game unwinnable. That breaks Madelyne's core playability.
+- **Resolution — minimal reset on the SW branch (B7 pattern):** because it breaks a NEW SWV1 card's core function and the only non-duplicative fix is in shared init code, a one-line reset (`demonGoblinDeck.length = 0;` near `initializeDemonGoblinDeck()` @ `script.js:5011`) is applied on-branch; the same line also repairs the Dark City attack inflation. Verify by game-test: a Madelyne game started after a goblin-leaving game must be fightable.
+- **Status:** CONFIRMED (code-traced + cold-read-reviewed). On-branch reset directed in the 3d close-out; base scope (Dark City inflation) hardened by the same line. Low frequency (consecutive same-session games).
+
+### CLEARED (investigated, not a bug)
+
+- **Invisible Woman "Four of a Kind" / Focus cards** — investigated as B1's prime suspect; CLEARED. `invisibleWomanFourOfAKind` (`expansionFantasticFour.js:4241`) only reads `cardsPlayedThisTurn` for +2 attack; Focus reveal cards touch hand/discard only, never HQ. The FF/Invisible Woman context in B1 is coincidental — the trigger is the generic Golden Solo recruit path.
+- **Intergalactic Kree Nega-Bomb core logic** — verified faithful to card text (twist shuffled into deck `script.js:5964`, deck built from 6 bystanders `script.js:4491`, reveal → bystander rescue / "Scheme Twist" → KO it + `KOAllHeroesInHQ()` + `drawWound()`). The basic mechanic is not the bug.
+- **"X has been deployed — removed from HQ"** log — normal Golden Solo HQ rotation (`goldenHQRotate`, `script.js:5201`), leftmost HQ card removed from game each round. Not a bug.
+
+---
+
+## 3. Design / UX & rules — deferred (non-code)
+
+These need a *design call* or *rules decision*, not a bug-fix.
+
+### Summary panel hero names truncate on narrow screens
 Accepted for now; revisit in next UI pass.
 
----
+### Kree-Skrull War scheme villain count conflict
+- **Symptom:** The Kree-Skrull War scheme enforces both Kree Starforce and Skrulls as required villain groups in What If? Solo, even though What If? Solo is normally a 1-villain-group mode.
+- **Root cause:** `getEffectiveSetupRequirements` returns the scheme's `specificVillainRequirement` array unchanged in What If? mode. Kree-Skrull War has 2 specific requirements, so both are enforced regardless of game mode.
+- **The open question:** For schemes that explicitly require 2 villain groups (Kree-Skrull War), should What If? Solo honour the scheme's count (2) or always cap at 1? This is a rules interpretation question that needs a deliberate decision before fixing.
+- **Status:** Deferred — needs rules clarification before implementation.
 
-## Kree-Skrull War scheme villain count conflict
+### "Other player" effects in solo mode
+- **Problem:** The current rule is "silent skip" for Golden Solo — but the codebase isn't consistent. Some cards correctly suppress the effect, while others apply it to the active player instead. Specific cases surfaced during inventory passes:
+  - **Shriek (PtTR)** — Card says "each other player gains a Wound." Code applies wound to active player. Should be suppressed per the current rule.
+  - **Death (Dark City)** — Code scope includes played cards + artifacts; card says hand only. (Separate bug, same category of "check all villain effects against card text.")
+- **The bigger question:** Not all "other player" effects translate cleanly to a 1-player game. Some are purely negative (Shriek's wound — skip makes sense), some are mixed (reveal-or-penalty — does the solo player reveal?), and some affect game state in ways that matter even solo. A blanket "suppress all" rule may not be correct for every case.
+- **What's needed:** After all expansion inventories are complete, do a single pass across all expansions to catalogue every "other player" / "each other player" / "each player" card, then decide case-by-case how each should behave in Golden Solo. (Note: Secret Wars adopted a provisional "Q1 split-rule" per its rules-notes; this global pass should reconcile with it.)
+- **Status:** Deferred — being addressed incrementally by `/analyze-expansion` per expansion; a unified pass remains open.
 
-**Symptom:** The Kree-Skrull War scheme enforces both Kree Starforce and Skrulls as required villain groups in What If? Solo, even though What If? Solo is normally a 1-villain-group mode.
-
-**Root cause:** `getEffectiveSetupRequirements` returns the scheme's `specificVillainRequirement` array unchanged in What If? mode. Kree-Skrull War has 2 specific requirements, so both are enforced regardless of game mode.
-
-**The open question:** For schemes that explicitly require 2 villain groups (Kree-Skrull War), should What If? Solo honour the scheme's count (2) or always cap at 1? This is a rules interpretation question that needs a deliberate decision before fixing.
-
-**Status:** Deferred — needs rules clarification before implementation.
-
----
-
-## "Other player" effects in solo mode
-
-**Problem:** The current rule is "silent skip" for Golden Solo — but the codebase isn't consistent. Some cards correctly suppress the effect, while others apply it to the active player instead. The inventory passes have surfaced specific cases:
-
-**Known inconsistencies (found during inventory):**
-- **Shriek (PtTR)** — Card says "each other player gains a Wound." Code applies wound to active player. Should be suppressed per the current rule.
-- **Death (Dark City)** — Code scope includes played cards + artifacts; card says hand only. (Separate bug, but same category of "check all villain effects against card text.")
-
-**The bigger question:** Not all "other player" effects translate cleanly to a 1-player game. Some are purely negative (Shriek's wound — skip makes sense), some are mixed (reveal-or-penalty — does the solo player reveal?), and some affect game state in ways that matter even solo. A blanket "suppress all" rule may not be correct for every case.
-
-**What's needed:** After all expansion inventories are complete, do a single pass across all expansions to catalogue every "other player" / "each other player" / "each player" card, then decide case-by-case how each should behave in Golden Solo.
-
-**Status:** Deferred — waiting until all expansion inventories are finalized so the full list is available. Will be addressed naturally by `/analyze-expansion` as each expansion is processed.
-
----
-
-## Korvac (Revelations) — two documented modelling limitations
-
+### Korvac (Revelations) — two documented modelling limitations
 **Context:** "Korvac Revealed" *counts as* a 19-Attack Villain but is engineered as a `type:"Location"` entry in `cityLocations[]` to reuse the fightable/render/defeat plumbing (`placeKorvac()`, `expansionRevelations.js`). It carries `isSchemeVillain:true`. The Grim Reaper "+1 per Location" attack, Epic Grim Reaper "3+ Locations → Wound", and Swordsman "each Location captures a Bystander" all exclude it (fixed 2026-06-04). Two leaks were deliberately **left as documented limitations** (coordinator decision, 2026-06-04):
-
 1. **Korvac is NOT counted by "for each Villain in the city" effects** (e.g. Sandman's +2 Attack per Villain). Because Korvac lives in `cityLocations[]`, not `city[]`, villain-count effects under-count by 1 while Korvac is revealed. **Why deferred:** player-favourable (the enemy reads *weaker*, never causes a loss), niche combo, and the fix is a cross-expansion change to villain-count code in 4 files (only Sandman can actually co-occur — GotG/PtTR villain counts are scheme-bound and can't share a game with the Korvac scheme).
-
 2. **Placing Korvac into a city whose Location slots are all full would KO the weakest real Location** (the overflow path KOs the lowest-Attack Location; Korvac at Attack 19 is always the highest, so it displaces a real one rather than being displaced). **Why deferred:** requires 5 Locations already in play at the moment Korvac reveals — near-unreachable. (The Earthquake/Tsunami "destroy a space" path that could silently KO Korvac cannot occur — those are a different scheme, and only one scheme is in play per game.)
+- **Status:** Deferred by design — both are niche/near-unreachable and neither can cost the player a game. Revisit only if play surfaces them.
 
-**Status:** Deferred by design — both are niche/near-unreachable and neither can cost the player a game. Revisit only if play surfaces them.
+### Villain/Mastermind overlay UX pass
+- **Problem:** Bystanders and captured heroes currently display as small thumbnails overlaid on the villain/mastermind card. This works functionally but doesn't match how physical cards look on the table.
+- **Desired behavior:** Refactor to use the Location fan-out pattern (full-size cards shifted in position to look stacked, mimicking physical tabletop card placement). The Location system already implements this CSS pattern — extend it to bystander and captured-hero overlays.
+- **Scope:** Cross-cutting — affects the base game bystander-on-villain display, Skrull captures, Klaw captures, and any future captured-card mechanic across all expansions.
+- **Status:** Deferred — standalone UX pass (unblocked since Revelations merged). Klaw currently has no visual indicator for captured heroes (functional only via console messages).
 
----
-
-## Villain/Mastermind overlay UX pass
-
-**Problem:** Bystanders and captured heroes currently display as small thumbnails overlaid on the villain/mastermind card. This works functionally but doesn't match how physical cards look on the table.
-
-**Desired behavior:** Refactor to use the Location fan-out pattern (full-size cards shifted in position to look stacked, mimicking physical tabletop card placement). The Location system already implements this CSS pattern — extend it to bystander and captured-hero overlays.
-
-**Scope:** Cross-cutting — affects the base game bystander-on-villain display, Skrull captures, Klaw captures, and any future captured-card mechanic across all expansions.
-
-**Status:** Deferred — log as a standalone UX pass after Revelations merges. Klaw currently has no visual indicator for captured heroes (functional only via console messages).
+### Always-leads mastermind ↔ expansion keyword collision
+- **Symptom:** When an expansion villain trigger matches Location names by a quoted keyword (e.g. Lethal Legion "+3 Attack while a 'Maze' Location is in the city"), the *always-leading* mastermind's own tactic-Locations can unexpectedly satisfy that keyword too — Grim Reaper's "Maze of Bones" tactic-Location triggered Lethal Legion's bonus. It worked as designed in that pairing, but the interaction is unvetted for other mastermind/expansion combinations.
+- **Root cause:** keyword-name matching across card types has no cross-mastermind awareness; the audit pipeline does not flag when an always-leading mastermind's tactic-Locations can satisfy another card's keyword condition.
+- **Status:** Deferred — low-frequency cross-combination. When adding any keyword-by-Location-name trigger, check whether the always-leading masterminds' tactic-Locations also match the keyword. Surfaced by `/legendary-sweep` 2026-06-20.
 
 ---
 
-## Always-leads mastermind ↔ expansion keyword collision
+## 4. Planned: wider proactive base-game sweep (NOT yet run)
 
-**Symptom:** When an expansion villain trigger matches Location names by a quoted keyword (e.g. Lethal Legion "+3 Attack while a 'Maze' Location is in the city"), the *always-leading* mastermind's own tactic-Locations can unexpectedly satisfy that keyword too — Grim Reaper's "Maze of Bones" tactic-Location triggered Lethal Legion's bonus. It worked as designed in that pairing, but the interaction is unvetted for other mastermind/expansion combinations.
+Agreed approach (user picked "both in parallel", 2026-06-22) for finding base-game bugs beyond the screenshot leads. Run in a **dedicated session** — it's a heavy parallel job with a lot of output to triage.
 
-**Root cause:** keyword-name matching across card types has no cross-mastermind awareness; the audit pipeline does not flag when an always-leading mastermind's tactic-Locations can satisfy another card's keyword condition.
+**Scope:** the whole base game = everything but Revelations — **Core Set, Dark City, Fantastic Four, Guardians of the Galaxy, Paint the Town Red** (finalized inventories exist for all five in `docs/card-inventory/final/`).
 
-**Status:** Deferred — low-frequency cross-combination. When adding any keyword-by-Location-name trigger, check whether the always-leading masterminds' tactic-Locations also match the keyword. Surfaced by `/legendary-sweep` 2026-06-20.
+**Two tracks, parallel:**
+1. **Known-issues track** — drive from the user's screenshots/recollections (B1 repro; B2/B3 once recalled; the 2026-06-25 batch B13–B15).
+2. **Card-text-vs-code audit net** — run the per-card-type auditors (hero/villain/henchmen/mastermind/scheme/misc) against each base expansion using its finalized inventory. Catches the #1 bug bucket (card text not matching code). Bounded + parallelizable.
+
+**Tooling notes:** `/code-review` is diff-based — NOT a whole-codebase scanner; use the card-type auditors + targeted subsystem reviews instead. Behavior bugs (like B1) need a repro / live `/game-test`, not just static review. Expect candidates + false positives to triage, not a clean complete list.
+
+**Discipline:** read-only cataloging into this tracker. **Fixes happen later on a dedicated base-code branch**, NOT on master or an active expansion branch. Confirmed items also feed `docs/priorities.md` base-engine backlog.
+
+---
+
+## 5. Tooling / test-harness issues
+
+Defects in the dev/test tooling (the Playwright `/game-test` harness, etc.), not in the game itself.
+
+### T1 — `/game-test` auto-dismiss doesn't cover choice popups → worker runs hang
+- **Symptom:** Playwright `/game-test` runs intermittently hang on a popup until manually submitted. Sharply reduced — but NOT eliminated — by the auto-dismiss interval added 2026-06 (`commit 3f83c7c`).
+- **Mechanism:** the auto-dismiss (`window.__autoPopup`, game-test SKILL.md) is a 100ms poll that clicks *enabled* confirm/close buttons matching a fixed selector set. It structurally cannot handle: (a) popups that require a **selection** before the confirm enables (card-choice "pick a card to KO/discard" — the confirm stays disabled, so the poll skips it, and it won't pick a card itself — nor should it, since a wrong pick would corrupt the test); (b) **novel popups** whose button/container don't match its selectors; (c) **re-install after a page reload** (it lives on `window`).
+- **Fix directions (hypotheses — confirm against real hang instances first):** a **hard timeout that logs "stuck on popup &lt;text&gt;" and fails the test** (converts a silent hang needing a manual submit into a captured signal); explicit choice-popup handling in tests that need it; re-install-after-navigation.
+- **Capture aid:** when a hang occurs, note the card/effect + popup text (screenshot to `bugs/`) to confirm whether it's the choice-popup case or a selector gap.
+- **Status:** open (mitigated, not eliminated). Fold the fix into the game-test hardening pass; not blocking the active build.
+- *Process note:* previously filed "resolved" on "less frequent" — a solution-confidence miss; don't re-declare fixed without confirming elimination against real instances.

@@ -147,7 +147,7 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `docs/mode-divergence-checklist.md` — authoritative gate for dual-mode testing: the mechanics that behave differently in Golden vs What If? Solo. Consulted in `/analyze-expansion` (flag mechanics) and `/new-expansion` Phase 4c (force dual-mode `/game-test`)
 - `docs/priorities.md` — live task tracker (in-flight / deferred / ongoing / completed); consult on direction
 - `docs/suggestion-box.md` — persistent cross-expansion log of process-improvement ideas (faster/more efficient/better); **log improvement opportunities here whenever they surface** (any session, any phase), mark in place when handled. Not a per-expansion initiative.
-- `docs/known-issues.md` — detailed descriptions of open/deferred issues
+- `docs/known-issues.md` — single tracker for issues **outside the active expansion pipeline** (base-game code bugs, design/UX, rules decisions); raw bug drops land in `bugs/`, coordinator triages them here. Fixes batched on a base-code branch between expansions (PINNED during an active build).
 - `docs/golden-solo-history.md` — Golden Solo implementation history, architectural rules, testing checklist
 - `docs/engine-gotchas.md` — cross-expansion code traps & reusable patterns (twin-function parity, attack/defeat pipelines, Location plumbing, scheme-transform reads, state lifecycle). **Consult before expansion code work and during `/expansion-audit`.** On-demand (not auto-loaded); CLAUDE.md keeps only the highest-frequency rules inline.
 - `docs/expansion-decisions.md` — cross-expansion design & rules-interpretation precedents (the "we chose X, here's why" layer). **Consult during `/analyze-expansion` and before building a new mechanic.**
@@ -261,7 +261,7 @@ During an expansion build the same doc can exist in both the master folder and t
 
 | Doc | Canonical side | Edited by |
 |---|---|---|
-| `docs/base-game-bug-audit.md` | **Master** | Coordinator only — workers report base bugs in their reply; coordinator catalogues on master. Workers never edit the branch copy. |
+| `docs/known-issues.md` (base-game bugs + design/UX + rules) | **Master** | Coordinator only — workers report base bugs in their reply; coordinator catalogues on master. Workers never edit the branch copy. |
 | `docs/expansion-asset-pipeline.md` | **Master** | Coordinator |
 | `docs/card-inventory/final/<exp>.md` | Branch (during build) | Worker |
 | `docs/expansion-specs\|progress\|mechanics/<exp>.md`, reusemaps | Branch | Worker |
@@ -304,7 +304,7 @@ Complete and stable. Mode flag: `gameMode` (`'whatif'` | `'golden'`). Full histo
 
 ## Known Issues / Deferred
 
-Details in `docs/known-issues.md`. Summary:
+Details in `docs/known-issues.md` (§3 Design/UX & rules). Summary:
 - **Hero name truncation** on narrow screens — accepted, revisit in next UI pass
 - **Kree-Skrull War villain count** — rules decision needed (What If? Solo 1-group cap vs. scheme's 2-group requirement)
 - **"Other player" effects** — inconsistent solo handling; full review deferred until all inventories are finalized (will be addressed by `/analyze-expansion`)
