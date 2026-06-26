@@ -7702,12 +7702,14 @@ function updateHighlights() {
 
   // Final gate: can attack if we can pay AND scheme allows AND there is either a tactic to fight or a Final Blow pending
   // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
+  // Madelyne Demon-Goblin gate (isMastermindDemonGoblinLocked) suppresses it while any Demon Goblin remains.
   const canAttackMastermind =
     !mastermindTrulyDefeated &&
     canAttack &&
     weaveCondOk &&
     (hasTacticsRemaining || finalBlowNeeded) &&
-    !isMastermindRecruitLocked();
+    !isMastermindRecruitLocked() &&
+    !isMastermindDemonGoblinLocked();
 
   // Toggle highlight
   const mmEl = document.getElementById("mastermind");
@@ -7961,12 +7963,14 @@ function updateHighlights() {
 
   // Final gate: can attack if we can pay AND scheme allows AND there is either a tactic to fight or a Final Blow pending
   // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
+  // Madelyne Demon-Goblin gate (isMastermindDemonGoblinLocked) suppresses it while any Demon Goblin remains.
   const canAttackMastermind =
     !mastermindTrulyDefeated &&
     canAttack &&
     weaveCondOk &&
     (hasTacticsRemaining || finalBlowNeeded) &&
-    !isMastermindRecruitLocked();
+    !isMastermindRecruitLocked() &&
+    !isMastermindDemonGoblinLocked();
 
   // Toggle highlight
   const mmEl = document.getElementById("mastermind");
@@ -8169,12 +8173,14 @@ function updateHighlightsNegativeZone() {
 
   // Final gate: can pay, scheme ok, and either tactics remain or a Final Blow is pending
   // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
+  // Madelyne Demon-Goblin gate (isMastermindDemonGoblinLocked) suppresses it while any Demon Goblin remains.
   const canAttackMastermindNZ =
     !mastermindDefeatedNZ &&
     canPayAndAttack &&
     weaveOkNZ &&
     (hasTacticsRemainingNZ || finalBlowNeededNZ) &&
-    !isMastermindRecruitLocked();
+    !isMastermindRecruitLocked() &&
+    !isMastermindDemonGoblinLocked();
 
   // Update UI
   const mmElNZ = document.getElementById("mastermind");
@@ -15633,6 +15639,18 @@ function isMastermindRecruitLocked() {
   );
 }
 
+// Madelyne Pryor, Goblin Queen — "You can't fight her while she has any Demon Goblins."
+// The DB flag `unfightableWhileDemonGoblins: true` locks the fight while ANY Demon Goblin remains in
+// the shared demonGoblinDeck (Dark City system; in a Madelyne game that pile is exclusively hers).
+// FLAG-GATED so this only locks Madelyne, never other masterminds. Player clears the lock by fighting
+// the Demon Goblins via the existing #demon-goblin-deck off-grid button (2 Attack each → rescue).
+// Same 4 surfaces as the Nimrod gate: handleMastermindClick + the canAttackMastermind highlight twins
+// + canAttackMastermindNZ.
+function isMastermindDemonGoblinLocked() {
+  const mm = getSelectedMastermind();
+  return !!mm && !!mm.unfightableWhileDemonGoblins && demonGoblinDeck.length > 0;
+}
+
 const handleMastermindClick = () => {
   let mastermind = getSelectedMastermind();
 
@@ -15640,6 +15658,15 @@ const handleMastermindClick = () => {
   if (isMastermindRecruitLocked()) {
     onscreenConsole.log(
       `You can't fight <span class="console-highlights">${mastermind.name}</span> unless you made at least ${mastermind.unfightableUnlessRecruit} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn (you've made ${cumulativeRecruitPoints}).`,
+    );
+    return;
+  }
+
+  // Madelyne Demon-Goblin gate: refuse the fight while any Demon Goblin remains. Player must rescue
+  // them first via the #demon-goblin-deck button (2 Attack each).
+  if (isMastermindDemonGoblinLocked()) {
+    onscreenConsole.log(
+      `You can't fight <span class="console-highlights">${mastermind.name}</span> while she has any Demon Goblins (${demonGoblinDeck.length} remaining). Fight the Demon Goblins first.`,
     );
     return;
   }

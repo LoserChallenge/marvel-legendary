@@ -2442,6 +2442,143 @@ async function nimrodTeleportAndIncarcerate() {
 }
 
 // ============================================================================
+// PHASE 3d — MASTERMIND: Madelyne Pryor, Goblin Queen
+// ============================================================================
+//
+// Frozen specs (build-to contract): docs/expansion-specs/secret-wars-vol1.md →
+//   "MASTERMIND — Madelyne Pryor, Goblin Queen" (passive Demon-Goblin gate + Master Strike + 4 Tactics).
+//   Inventory source of truth: docs/card-inventory/final/secret-wars-vol1.md (lines 739-757).
+//
+// REUSE NOTE — the Demon-Goblin mechanic ALREADY EXISTS as the Dark City `demonGoblinDeck` system
+// (NOT the captureBystanderFromVPToLocation / Korvac / placeLocation path the frozen spec's Shared-
+// Mechanics block + passive entry cite — those are rescue-on-carrier-defeat plumbing and are WRONG for
+// this build; a spec note records the correction so the Phase-4 blind-compare won't false-flag).
+//   - demonGoblinDeck (script.js) — global fightable pile; render/affordability/click all gated ONLY on
+//     demonGoblinDeck.length > 0, so it works standalone in a Madelyne game (no Dark City scheme needed).
+//   - rescueDemonGoblin() / showDemonGoblinAttackButton() (cardAbilitiesDarkCity.js) — the existing
+//     off-grid #demon-goblin-deck fight UI (2 Attack → pop a goblin → Bystander to Victory Pile, runs
+//     defeatBonuses + bystanderBonuses + rescueBystanderAbility, e.g. the Banker recruit rider). NO new
+//     fight UI built here.
+//   - BystanderstToDemonGoblins(count) (cardAbilitiesDarkCity.js) — the bystanderDeck→demonGoblinDeck
+//     mover, generalized from fixed-5 to take a count. madelyneCapture() wraps it as the SINGLE capture
+//     path for ALL Madelyne effects → her captured Bystanders ARE Demon Goblins (one store; no
+//     mastermind.bystanders for her).
+// The can't-fight-Madelyne-while-goblins gate is the DB flag `unfightableWhileDemonGoblins: true`, read
+// by isMastermindDemonGoblinLocked() across the 4 mastermind surfaces in script.js — NOT here.
+
+// Single capture path for every Madelyne effect: move `n` Bystanders into the shared demonGoblinDeck
+// (each → fightable 2-Attack Demon Goblin), capped at the Bystander Stack size. Refreshes the board so
+// the #demon-goblin-deck overlay/count and the Madelyne fight-lock update immediately.
+async function madelyneCapture(n) {
+  if (n <= 0) {
+    onscreenConsole.log("Madelyne captures no Bystanders.");
+    return;
+  }
+  await BystanderstToDemonGoblins(n);
+  updateGameBoard();
+}
+
+// Reveal-or-Wound keyed on TEAM (X-Men), not class. Adapts revealClassOrWound (expansionRevelations.js)
+// — same control flow, but the predicate is c.team === "X-Men". Used by the Corrupted Clone tactic.
+function madelyneRevealXMenOrWound(sourceName) {
+  const cardsYouHave = [
+    ...playerHand,
+    ...playerArtifacts,
+    ...cardsPlayedThisTurn.filter(
+      (c) =>
+        !c.isCopied &&
+        !c.sidekickToDestroy &&
+        !c.markedToDestroy &&
+        !c.markedForDeletion &&
+        !c.isSimulation,
+    ),
+  ];
+  const hasXMen = cardsYouHave.some((c) => c.team === "X-Men");
+  if (!hasXMen) {
+    onscreenConsole.log(
+      `You have no <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="console-card-icons"> X-Men Hero to reveal. Gaining a Wound.`,
+    );
+    return drawWound();
+  }
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Reveal an <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="console-card-icons"> X-Men Hero to avoid gaining a Wound?`,
+      "Reveal X-Men Hero",
+      "Gain Wound",
+    );
+    const t = document.querySelector(".info-or-choice-popup-title");
+    if (t) t.textContent = sourceName;
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      onscreenConsole.log(
+        `You revealed an <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="console-card-icons"> X-Men Hero.`,
+      );
+      resolve();
+    };
+    denyButton.onclick = async () => {
+      closeInfoChoicePopup();
+      await drawWound();
+      resolve();
+    };
+  });
+}
+
+// Master Strike: "Madelyne captures 4 Bystanders. If she already had any Bystanders before that, then
+// each player gains a Wound." Order matters — snapshot her Demon-Goblin count BEFORE the +4, else the
+// Wound clause always fires. Solo: "each player" = the active (only) player (spec Q1). setTimeout(0)
+// defer for the SAME reason as nimrodStrike: we run inside the Master Strike showPopup confirm callback,
+// which synchronously closes the shared .info-or-choice-popup; drawWound() may open its own popup, so
+// hop one macrotask first to let the Master Strike popup close cleanly.
+async function madelynePryorStrike() {
+  await new Promise((r) => setTimeout(r, 0));
+  const hadGoblinsBefore = demonGoblinDeck.length > 0;
+  await madelyneCapture(4);
+  if (hadGoblinsBefore) {
+    onscreenConsole.log(
+      `Madelyne already had Demon Goblins — you gain a Wound.`,
+    );
+    await drawWound();
+  }
+  updateGameBoard();
+}
+
+// Tactic — City of Demon Goblins: "Fight: Madelyne captures five Bystanders." Self-applies (no "each
+// player" clause). The 5 captured Demon Goblins then block fighting Madelyne until rescued (passive gate).
+async function madelynePryorCityOfDemonGoblins() {
+  await madelyneCapture(5);
+}
+
+// Tactic — Corrupted Clone of Jean Grey: "Fight: Each other player reveals an X-Men Hero or gains a
+// Wound." Solo (spec Q1 SELF-APPLY / What If? p.24 "do it yourself"): the ACTIVE player reveals an
+// X-Men Hero or gains a Wound. TEAM-based predicate (X-Men), not class.
+async function madelynePryorCorruptedCloneOfJeanGrey() {
+  await madelyneRevealXMenOrWound("Corrupted Clone of Jean Grey");
+}
+
+// Tactic — Everyone's a Demon on the Inside: "Fight: Madelyne captures a Bystander from each other
+// player's Victory Pile." Solo (spec Q1 NO-OP): names OTHER players' piles specifically — in 1-player
+// solo there is no such source, so announce-and-skip (do NOT self-target — contrast the Master Strike's
+// "each player", which DOES include the active player).
+async function madelynePryorEveryonesADemonOnTheInside() {
+  onscreenConsole.log(
+    `<span class="console-highlights">Everyone's a Demon on the Inside</span>: there are no other players' Victory Piles to capture from — no effect in solo.`,
+  );
+}
+
+// Tactic — Gather the Harvest: "Fight: For each Limbo Villain in the city and/or Escape Pile, Madelyne
+// captures a Bystander." Count Limbo-team villains in the city AND escapedVillainsDeck, capture that
+// many. Self-applies (no "each player"). Limbo villains tagged team:"Limbo" in cardDatabase.js.
+async function madelynePryorGatherTheHarvest() {
+  const inCity = city.filter((c) => c && c.team === "Limbo").length;
+  const inEscape = escapedVillainsDeck.filter((c) => c && c.team === "Limbo").length;
+  const total = inCity + inEscape;
+  onscreenConsole.log(
+    `<span class="console-highlights">Gather the Harvest</span>: ${total} Limbo Villain${total === 1 ? "" : "s"} (${inCity} in the city, ${inEscape} in the Escape Pile) — Madelyne captures ${total} Bystander${total === 1 ? "" : "s"}.`,
+  );
+  await madelyneCapture(total);
+}
+
+// ============================================================================
 // PHASE 3f — HENCHMEN FIGHT EFFECTS
 // ============================================================================
 //

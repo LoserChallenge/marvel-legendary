@@ -16292,7 +16292,11 @@ async function attachPlutoniumToVillain(villainIndex, twistCard) {
   updateGameBoard();
 }
 
-async function BystanderstToDemonGoblins() {
+// Move up to `requested` Bystanders from the Bystander Stack into the shared demonGoblinDeck (each
+// becomes a fightable 2-Attack "Demon Goblin"). Generalized from the fixed-5 Dark City original;
+// the default (5) preserves the original twist caller, and Madelyne Pryor's capture effects pass
+// their own counts (madelyneCapture wraps this). Capped at the Bystander Stack size.
+async function BystanderstToDemonGoblins(requested = 5) {
   if (bystanderDeck.length === 0) {
     onscreenConsole.log(
       'There are no Bystanders available to become "Demon Goblin" Villains.',
@@ -16300,8 +16304,8 @@ async function BystanderstToDemonGoblins() {
     return;
   }
 
-  // Determine how many cards we can take (up to 5)
-  const count = Math.min(5, bystanderDeck.length);
+  // Determine how many cards we can take (up to the requested count)
+  const count = Math.min(requested, bystanderDeck.length);
 
   // Move the cards from bystanderDeck to demonGoblinDeck
   for (let i = 0; i < count; i++) {

@@ -2030,6 +2030,11 @@ const masterminds = [
     attack: 10,
     bonusAttack: 0,
     fightCondition: "None",
+    // "You can't fight her while she has any Demon Goblins." Captured Bystanders become fightable
+    // 2-Attack Demon Goblins in the shared demonGoblinDeck (Dark City system, scheme-independent).
+    // This flag locks the mastermind fight while demonGoblinDeck.length > 0 — gated in script.js
+    // (handleMastermindClick + the mastermind highlight surfaces via isMastermindDemonGoblinLocked()).
+    unfightableWhileDemonGoblins: true,
     victoryPoints: 6,
     masterStrike: "madelynePryorStrike",
     masterStrikeConsoleLog: `Madelyne captures 4 Bystanders. If she already had any Bystanders before that, then each player gains a Wound.`,
