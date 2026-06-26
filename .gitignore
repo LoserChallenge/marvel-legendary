@@ -19,3 +19,6 @@ expansions/
 
 # Playwright MCP scratch output (snapshots, screenshots, console logs from /game-test)
 .playwright-mcp/
+
+# Bug-intake staging — raw screen grabs + notes, local only (triaged records live in docs/known-issues.md)
+bugs/
