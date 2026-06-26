@@ -2392,7 +2392,17 @@ async function nimrodScatterTheMutants() {
     // matters: unshift-then-refill would let refillHQSlot's heroDeck.pop() pull the just-scattered
     // card straight back into the vacated slot when the Hero Deck is otherwise empty (the card we
     // captured in `card` survives the refill, which evicts it from HQ).
-    refillHQSlot(idx);
+    // GUARD: refillHQSlot's What If? branch calls showHeroDeckEmptyPopup() — a LATENT BASE
+    // ReferenceError (the function is never defined; script.js:5254) that throws when the Hero Deck
+    // is empty. Swallow it so the scatter still completes and the card is never lost: the slot is
+    // already vacated inside refillHQSlot before the throw, so we just proceed to bank the card on
+    // the bottom. (Base bug reported to coordinator — affects every What If? HQ refill on an empty
+    // Hero Deck, not just this tactic.) Golden's goldenRefillHQ never calls it, so it can't throw.
+    try {
+      refillHQSlot(idx);
+    } catch (e) {
+      if (hq[idx] === card) hq[idx] = null; // ensure the slot is vacated even if the refill aborted
+    }
     heroDeck.unshift(card); // bottom of the Hero Deck (top = end, drawn via heroDeck.pop())
     onscreenConsole.log(
       `<span class="console-highlights">${card.name}</span> put on the bottom of the Hero Deck.`,
