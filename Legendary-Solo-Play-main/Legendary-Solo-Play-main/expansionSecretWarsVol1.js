@@ -2898,8 +2898,10 @@ async function darkAllianceTwist(villainCard) {
     });
     sm.darkAlliance = true;
     sm.tacticPool = tacticPool;
+    // addSecondaryMastermind already announces the join; add only the Dark-Alliance-specific note
+    // (one Tactic now + the multi-Mastermind win condition) to avoid a duplicate "joins" line.
     onscreenConsole.log(
-      `<span class="console-highlights">${chosen.name}</span> joins the Dark Alliance with one Mastermind Tactic! Defeat every Mastermind to win.`,
+      `The <span class="console-highlights">Dark Alliance</span> is formed — <span class="console-highlights">${chosen.name}</span> starts with one Mastermind Tactic. Defeat every Mastermind to win.`,
     );
     updateGameBoard();
     return;

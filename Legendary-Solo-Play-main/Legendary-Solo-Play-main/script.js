@@ -6317,7 +6317,10 @@ function handleVillainEscapeActions(escapedVillain) {
   };
 
   const handleDiscard = () => {
-    if (escapedVillain.bystander?.length > 0) {
+    // Finding C: a villain that ASCENDS to a Mastermind doesn't carry its Bystander away (ascension
+    // isn't escape — it's kept and rescued on defeat), so the carried-away discard penalty must NOT
+    // fire. Suppress it for ascending villains; the Bystander rides into ascendToMastermind.
+    if (!escapedVillain.ascendsToMastermind && escapedVillain.bystander?.length > 0) {
       return showDiscardCardPopup(escapedVillain);
     }
     return Promise.resolve();
@@ -17187,7 +17190,11 @@ async function defeatSecondaryMastermind(sm) {
     // (Core p.14). Reuse the shared resolver, which also handles the Mr. Fantastic / Untouchable
     // negate prompts. Runs AFTER the VP push (mirrors the main reveal-then-resolve order).
     if (tactic) await resolveTacticEffects(tactic);
-    return;
+    // Defeating the FINAL Tactic defeats the Mastermind in the SAME fight — matches the main MM
+    // (isMastermindDefeated() is true the instant tactics.length === 0; no extra phantom fight) and
+    // rules-notes BATCH 7 Q-D ("defeated when its ACTUAL accrued Tactic count is cleared"). If Tactics
+    // remain, the MM survives → fight it again next time.
+    if (sm.tactics.length > 0) return;
   }
 
   sm.defeated = true;
