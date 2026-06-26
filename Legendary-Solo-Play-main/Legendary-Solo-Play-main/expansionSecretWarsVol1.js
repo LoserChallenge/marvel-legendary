@@ -2182,6 +2182,243 @@ async function wolverineOfFuturePastEscape(villainCard) {
 // --- MASTERMIND EFFECTS ---
 
 // ============================================================================
+// PHASE 3d — MASTERMIND: Nimrod, Super Sentinel
+// ============================================================================
+//
+// Frozen specs (build-to contract): docs/expansion-specs/secret-wars-vol1.md →
+//   "MASTERMIND — Nimrod, Super Sentinel" (passive recruit-gate + Master Strike + 4 Tactics).
+//   Inventory source of truth: docs/card-inventory/final/secret-wars-vol1.md (lines 759-777).
+//
+// The recruit-gate ("can't fight Nimrod unless ≥6 Recruit this turn") is the DB flag
+// `unfightableUnlessRecruit: 6`, gated in script.js (handleMastermindClick + isMastermindRecruitLocked
+// across the mastermind highlight surfaces) — NOT here. This file holds the Master Strike + Tactic
+// fight effects, dispatched by the engine: masterStrike via handleMasterStrikeEffect (window[name]()),
+// tactics via resolveTacticEffects (window[fightEffect]()).
+//
+// SHARED across the Master Strike + all 4 Tactics: the "Choose Recruit or Attack, then act on that
+// icon" pattern. Built once below (chooseRecruitOrAttackIcon + nimrodCardHasIcon + nimrodIconHTML).
+
+// Icon-choice popup ("Choose Recruit or Attack"). Reuses showHeroAbilityMayPopup. Returns "recruit"
+// or "attack".
+function chooseRecruitOrAttackIcon(sourceName) {
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `Choose <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> Recruit or <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> Attack.`,
+      "Recruit",
+      "Attack",
+    );
+    const t = document.querySelector(".info-or-choice-popup-title");
+    if (t) t.textContent = sourceName;
+    confirmButton.onclick = () => {
+      closeInfoChoicePopup();
+      onscreenConsole.log(`Chose ${nimrodIconHTML("recruit")}.`);
+      resolve("recruit");
+    };
+    denyButton.onclick = () => {
+      closeInfoChoicePopup();
+      onscreenConsole.log(`Chose ${nimrodIconHTML("attack")}.`);
+      resolve("attack");
+    };
+  });
+}
+
+// Does this card bear the chosen Recruit/Attack icon? Mirrors the established icon-presence reads
+// (M.O.D.O.K.s recruit check, Ghost Racers attack check): explicit *Icon flag OR a printed value.
+function nimrodCardHasIcon(card, icon) {
+  if (!card) return false;
+  if (icon === "recruit") return card.recruitIcon === true || (card.recruit || 0) > 0;
+  return card.attackIcon === true || (card.attack || 0) > 0;
+}
+
+function nimrodIconHTML(icon) {
+  return icon === "recruit"
+    ? `<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">`
+    : `<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">`;
+}
+
+// Master Strike: "Each player who does not reveal a [TECH] Hero must choose Recruit or Attack, then
+// discard all their cards with that icon." Solo: "each player" = the active (only) player (spec Q1 —
+// self-resolves the reveal-or-penalty). Reveal a Tech Hero to avoid; otherwise choose an icon and
+// discard ALL hand cards with it. Reveal-or-penalty control flow mirrors revealClassOrWound
+// (expansionRevelations.js:2329). Dispatched (and awaited) by handleMasterStrikeEffect.
+async function nimrodStrike() {
+  const cardsYouHave = [
+    ...playerHand,
+    ...playerArtifacts,
+    ...cardsPlayedThisTurn.filter(
+      (c) =>
+        !c.isCopied &&
+        !c.sidekickToDestroy &&
+        !c.markedToDestroy &&
+        !c.markedForDeletion &&
+        !c.isSimulation,
+    ),
+  ];
+  const hasTechHero = cardsYouHave.some((c) => c.classes && c.classes.includes("Tech"));
+  if (hasTechHero) {
+    const reveal = await new Promise((resolve) => {
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `Reveal a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero to avoid discarding, or choose an icon and discard all your cards with it?`,
+        "Reveal Tech Hero",
+        "Choose & Discard",
+      );
+      const t = document.querySelector(".info-or-choice-popup-title");
+      if (t) t.textContent = "Nimrod, Super Sentinel";
+      confirmButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(true);
+      };
+      denyButton.onclick = () => {
+        closeInfoChoicePopup();
+        resolve(false);
+      };
+    });
+    if (reveal) {
+      onscreenConsole.log(
+        `You revealed a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero — no cards discarded.`,
+      );
+      return;
+    }
+  }
+  const icon = await chooseRecruitOrAttackIcon("Nimrod, Super Sentinel");
+  const toDiscard = playerHand.filter((c) => nimrodCardHasIcon(c, icon));
+  if (toDiscard.length === 0) {
+    onscreenConsole.log(`You have no cards with that icon to discard.`);
+    return;
+  }
+  // Remove from hand first, then route through the discard-invulnerability path (Cyclops "Unending
+  // Energy" etc. can resist the discard and return to hand) — engine-gotchas KO/discard rule.
+  for (const c of toDiscard) {
+    const i = playerHand.indexOf(c);
+    if (i !== -1) playerHand.splice(i, 1);
+  }
+  const { returned } = await checkDiscardForInvulnerability(toDiscard);
+  if (returned && returned.length) playerHand.push(...returned);
+  onscreenConsole.log(
+    `Discarded all your cards with a ${nimrodIconHTML(icon)} icon.`,
+  );
+  updateGameBoard();
+}
+
+// Tactic — Adapt and Destroy: "Choose Recruit or Attack. Each other player reveals their hand and
+// discards a card with that icon." Solo (spec Q1 / What If? p.24 "do it yourself"): the ACTIVE player
+// discards ONE chosen card with the chosen icon (single discard — contrast the Master Strike's "all").
+async function nimrodAdaptAndDestroy() {
+  const icon = await chooseRecruitOrAttackIcon("Adapt and Destroy");
+  const matching = playerHand.filter((c) => nimrodCardHasIcon(c, icon));
+  if (matching.length === 0) {
+    onscreenConsole.log(`You have no card with that icon in hand — nothing discarded.`);
+    return;
+  }
+  let chosen = matching[0];
+  if (matching.length > 1) {
+    chosen = await showCardSelectionPopup({
+      title: "Adapt and Destroy",
+      instructions: `Discard one card with a ${nimrodIconHTML(icon)} icon.`,
+      confirmText: "DISCARD",
+      items: matching,
+    });
+    if (!chosen) chosen = matching[0]; // mandatory discard — fall back if the picker is dismissed
+  }
+  const i = playerHand.indexOf(chosen);
+  if (i !== -1) playerHand.splice(i, 1);
+  const { returned } = await checkDiscardForInvulnerability(chosen);
+  if (returned && returned.length) playerHand.push(...returned);
+  updateGameBoard();
+}
+
+// Tactic — Detect Mutation: "Choose Recruit or Attack. Then, reveal the top card of your deck. If
+// that card has that icon, draw it and repeat this process." Self-only. Chain continues while each
+// revealed top card carries the chosen icon; a non-matching card is LEFT on top (undrawn).
+async function nimrodDetectMutation() {
+  const icon = await chooseRecruitOrAttackIcon("Detect Mutation");
+  let drawn = 0;
+  // Defensive cap only — drawn cards go to HAND (not back to discard), so the deck+discard pool
+  // strictly shrinks and the loop always terminates on its own.
+  const cap = playerDeck.length + playerDiscardPile.length + 1;
+  for (let guard = 0; guard <= cap; guard++) {
+    if (playerDeck.length === 0 && playerDiscardPile.length > 0) {
+      playerDeck = shuffle(playerDiscardPile);
+      playerDiscardPile = [];
+      onscreenConsole.log(`Reshuffled your discard pile into your deck.`);
+    }
+    if (playerDeck.length === 0) break; // deck + discard both empty
+    const top = playerDeck[playerDeck.length - 1]; // top of deck = end of array (drawCard pops it)
+    if (nimrodCardHasIcon(top, icon)) {
+      drawCard();
+      drawn++;
+    } else {
+      onscreenConsole.log(
+        `Revealed <span class="console-highlights">${top.name}</span> — no ${nimrodIconHTML(icon)} icon. Detect Mutation stops.`,
+      );
+      break;
+    }
+  }
+  if (drawn > 0) {
+    onscreenConsole.log(
+      `Detect Mutation: drew ${drawn} card${drawn === 1 ? "" : "s"}.`,
+    );
+  }
+}
+
+// Tactic — Scatter the Mutants: "Choose Recruit or Attack. Put all Heroes from the HQ with that icon
+// on the bottom of the Hero Deck." Self-only. Vacated HQ slots refill per the current mode
+// (refillHQSlot: Golden rotation / What If? fill-in-place).
+async function nimrodScatterTheMutants() {
+  const icon = await chooseRecruitOrAttackIcon("Scatter the Mutants");
+  // Collect matching HQ Heroes by IDENTITY first — Golden goldenRefillHQ splices+compacts, shifting
+  // indices, so re-locate each card right before moving it (engine-gotchas: don't loop forward over
+  // HQ slots while refilling).
+  const matching = hq.filter(
+    (c) => c && c.type === "Hero" && nimrodCardHasIcon(c, icon),
+  );
+  if (matching.length === 0) {
+    onscreenConsole.log(`No HQ Hero has that icon — nothing scattered.`);
+    return;
+  }
+  for (const card of matching) {
+    const idx = hq.indexOf(card);
+    if (idx === -1) continue;
+    heroDeck.unshift(card); // bottom of the Hero Deck (top = end, drawn via heroDeck.pop())
+    refillHQSlot(idx);
+    onscreenConsole.log(
+      `<span class="console-highlights">${card.name}</span> put on the bottom of the Hero Deck.`,
+    );
+  }
+  updateGameBoard();
+}
+
+// Tactic — Teleport and Incarcerate: "Choose Recruit or Attack. Then, reveal the top card of [the]
+// Hero Deck. If that card has that icon, gain that card, and Teleport it." Self-only. Teleport (insert
+// p.1) = set aside → returns at end of this turn as an extra card in your next hand (NOT "top of
+// deck", per rules-notes 6a). Reuse the engine Teleport queue primitive (cardsToBeDrawnNextTurn +
+// nextTurnsDraw) directly — teleport() is hand-scoped and this card comes from the Hero Deck.
+async function nimrodTeleportAndIncarcerate() {
+  const icon = await chooseRecruitOrAttackIcon("Teleport and Incarcerate");
+  if (heroDeck.length === 0) {
+    onscreenConsole.log(`The Hero Deck is empty — nothing to reveal.`);
+    return;
+  }
+  const top = heroDeck[heroDeck.length - 1]; // top of the Hero Deck (HQ refills via heroDeck.pop())
+  onscreenConsole.log(
+    `Revealed the top Hero: <span class="console-highlights">${top.name}</span>.`,
+  );
+  if (nimrodCardHasIcon(top, icon)) {
+    heroDeck.pop(); // gain it (remove from the Hero Deck)
+    cardsToBeDrawnNextTurn.push(top);
+    nextTurnsDraw++;
+    onscreenConsole.log(
+      `It has a ${nimrodIconHTML(icon)} icon — you gain <span class="console-highlights">${top.name}</span> and Teleport it (added to your next hand).`,
+    );
+  } else {
+    onscreenConsole.log(
+      `No ${nimrodIconHTML(icon)} icon — <span class="console-highlights">${top.name}</span> stays on top of the Hero Deck.`,
+    );
+  }
+  updateGameBoard();
+}
+
+// ============================================================================
 // PHASE 3f — HENCHMEN FIGHT EFFECTS
 // ============================================================================
 //

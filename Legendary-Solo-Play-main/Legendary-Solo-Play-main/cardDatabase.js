@@ -2087,6 +2087,11 @@ const masterminds = [
     attack: 6,
     bonusAttack: 0,
     fightCondition: "None",
+    // "You can't fight Nimrod unless you made at least 6 Recruit this turn." This UNLOCKS the fight
+    // (read against cumulativeRecruitPoints, total generated this turn); Nimrod still costs Attack to
+    // defeat. Distinct from usesRecruitToFight (which swaps the fight currency to Recruit). Gated in
+    // handleMastermindClick + the mastermind highlight surfaces via isMastermindRecruitLocked().
+    unfightableUnlessRecruit: 6,
     victoryPoints: 6,
     masterStrike: "nimrodStrike",
     masterStrikeConsoleLog: `Each player who does not reveal a [TECH] Hero must choose Recruit or Attack, then discard all their cards with that icon.`,

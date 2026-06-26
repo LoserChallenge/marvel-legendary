@@ -7697,11 +7697,13 @@ function updateHighlights() {
     bystandersInVP.length >= schemeTwistCount;
 
   // Final gate: can attack if we can pay AND scheme allows AND there is either a tactic to fight or a Final Blow pending
+  // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
   const canAttackMastermind =
     !mastermindTrulyDefeated &&
     canAttack &&
     weaveCondOk &&
-    (hasTacticsRemaining || finalBlowNeeded);
+    (hasTacticsRemaining || finalBlowNeeded) &&
+    !isMastermindRecruitLocked();
 
   // Toggle highlight
   const mmEl = document.getElementById("mastermind");
@@ -7954,11 +7956,13 @@ function updateHighlights() {
     bystandersInVP.length >= schemeTwistCount;
 
   // Final gate: can attack if we can pay AND scheme allows AND there is either a tactic to fight or a Final Blow pending
+  // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
   const canAttackMastermind =
     !mastermindTrulyDefeated &&
     canAttack &&
     weaveCondOk &&
-    (hasTacticsRemaining || finalBlowNeeded);
+    (hasTacticsRemaining || finalBlowNeeded) &&
+    !isMastermindRecruitLocked();
 
   // Toggle highlight
   const mmEl = document.getElementById("mastermind");
@@ -8160,11 +8164,13 @@ function updateHighlightsNegativeZone() {
   const mastermindDefeatedNZ = isMastermindDefeated(mastermind);
 
   // Final gate: can pay, scheme ok, and either tactics remain or a Final Blow is pending
+  // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
   const canAttackMastermindNZ =
     !mastermindDefeatedNZ &&
     canPayAndAttack &&
     weaveOkNZ &&
-    (hasTacticsRemainingNZ || finalBlowNeededNZ);
+    (hasTacticsRemainingNZ || finalBlowNeededNZ) &&
+    !isMastermindRecruitLocked();
 
   // Update UI
   const mmElNZ = document.getElementById("mastermind");
@@ -15608,8 +15614,32 @@ function onMastermindTacticsChanged(mastermind) {
 
 // New functions for Mastermind attack mechanics
 
+// Nimrod, Super Sentinel — "You can't fight Nimrod unless you made at least N Recruit this turn."
+// The DB flag `unfightableUnlessRecruit: N` UNLOCKS the fight; Nimrod still costs Attack to defeat
+// (NOT usesRecruitToFight, which swaps the fight currency). Read against cumulativeRecruitPoints
+// (total GENERATED this turn) so spending Recruit after reaching N does not re-lock. Keys off the
+// MAIN selected mastermind — the only mastermind these surfaces (handleMastermindClick + the
+// #mastermind highlight twins) gate; secondary masterminds use their own click path.
+function isMastermindRecruitLocked() {
+  const mm = getSelectedMastermind();
+  return (
+    !!mm &&
+    !!mm.unfightableUnlessRecruit &&
+    cumulativeRecruitPoints < mm.unfightableUnlessRecruit
+  );
+}
+
 const handleMastermindClick = () => {
   let mastermind = getSelectedMastermind();
+
+  // Nimrod recruit-gate: refuse the fight (no attack button) until the recruit threshold is met.
+  if (isMastermindRecruitLocked()) {
+    onscreenConsole.log(
+      `You can't fight <span class="console-highlights">${mastermind.name}</span> unless you made at least ${mastermind.unfightableUnlessRecruit} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn (you've made ${cumulativeRecruitPoints}).`,
+    );
+    return;
+  }
+
   let mastermindAttack = recalculateMastermindAttack(mastermind);
   let playerAttackPoints = 0;
 
