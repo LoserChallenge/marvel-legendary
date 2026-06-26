@@ -11,8 +11,10 @@
 // Unlike recruitSidekick() (script.js), this does NOT touch sidekickRecruited or recruit points,
 // so it ignores the 1-Sidekick-per-turn recruit cap and costs nothing.
 // destination: "discard" (default) | "hand" | "deckTop".
-// Consumers (Phase 3b/3c/3e): Magik Rally, King of Wakanda (×3 deckTop on Illuminati), Maximus
-// Enslave, Namor Lead, Ultimate Spidey Marvel Team-Up, Corrupt-the-Next-Gen.
+// Consumers (Phase 3b/3c): Magik Rally, King of Wakanda (×3 deckTop on Illuminati), Maximus
+// Enslave, Namor Lead, Ultimate Spidey Marvel Team-Up. (Corrupt the Next Generation does NOT use
+// this — its defeated Sidekick-Villains convert via gainCorruptedSidekick, which gains the defeated
+// CARD itself to the deck top rather than pulling a fresh Sidekick from the Stack.)
 async function gainSidekick(destination = "discard") {
   if (sidekickDeck.length === 0) {
     onscreenConsole.log("No Sidekicks remain in the Sidekick Stack."); // graceful no-op
@@ -3066,5 +3068,110 @@ async function resolvePlagueWoundOnRecruit(hqIndex) {
     hqWound[slot] = null;
     onscreenConsole.log(`You gained the Wound into your discard pile.`);
   }
+  updateGameBoard();
+}
+
+// ============================================================================
+// Corrupt the Next Generation of Heroes scheme (Secret Wars Vol.1)
+// ----------------------------------------------------------------------------
+// Setup (generateVillainDeck, script.js): 10 Sidekicks pulled from the Sidekick Stack, stamped as
+//   in-deck Villains (corruptSidekick) via the shared stampCardsAsInDeckVillains helper.
+// Special: Sidekick-Villains in the Villain Deck AND city have Attack = 2 + Twists-stacked-next-to-
+//   scheme (attackFromScheme, both updateVillainAttackValues twins). Defeat → gainCorruptedSidekick
+//   converts the card back to a Sidekick on the TOP of your deck (skrulled:true skips the VP push).
+// Twists 1-7: active player (solo "each player") returns a Sidekick from discard to the Stack if
+//   present, then 2 Sidekicks from the Stack enter the city as Sidekick-Villains.
+// Twist 8: all Sidekick-Villains in the city escape.
+// Evil Wins: 4 Sidekicks escape (endGameConditions "corrupt4SidekicksEscape" + updateEvilWinsTracker
+//   "Corrupt the Next Generation of Heroes" twin "N/4"). Rulings: rules-notes BATCH 8 ③.
+
+async function corruptTheNextGenerationOfHeroesTwist() {
+  const twist = schemeTwistCount; // 1-based; incremented before this dispatch
+
+  if (twist <= 7) {
+    // 1) "Each player returns a Sidekick from their discard pile to the Sidekick Stack." Solo = the
+    //    active player returns one if present, else skip (rules-notes BATCH 8 ③a, INFERRED).
+    const idx = playerDiscardPile.findIndex(
+      (c) => c && c.secondaryType === "Sidekick",
+    );
+    if (idx !== -1) {
+      const returned = playerDiscardPile.splice(idx, 1)[0];
+      sidekickDeck.push(returned);
+      onscreenConsole.log(
+        `You return a <span class="console-highlights">Sidekick</span> from your discard pile to the Sidekick Stack.`,
+      );
+    } else {
+      onscreenConsole.log(
+        `No <span class="console-highlights">Sidekick</span> in your discard pile to return.`,
+      );
+    }
+
+    // 2) "Then, two Sidekicks from the Sidekick Stack enter the city." Each is stamped as a
+    //    Sidekick-Villain and enters from the right (enterCityFromRight cascades / overflow-escapes
+    //    like any city entry). Graceful stop if the Stack empties.
+    for (let n = 0; n < 2; n++) {
+      if (sidekickDeck.length === 0) {
+        onscreenConsole.log(
+          `The Sidekick Stack is empty — no Sidekick enters the city.`,
+        );
+        break;
+      }
+      const sk = sidekickDeck.pop();
+      const [stamped] = stampCardsAsInDeckVillains([sk], {
+        corruptSidekick: true,
+        fightEffect: "gainCorruptedSidekick",
+        overlayText: `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SIDEKICK</span>`,
+      });
+      await enterCityFromRight(stamped);
+    }
+    updateGameBoard();
+    return;
+  }
+
+  // Twist 8: "All Sidekicks in the city escape." Direct push + count (mirrors the
+  // escapedVillainsDeck.push / escapedVillainsCount++ in handleVillainEscape) but WITHOUT
+  // handleVillainEscapeActions — the card states a plain escape, no KO-an-HQ-Hero / discard penalty.
+  if (twist === 8) {
+    let escaped = 0;
+    for (let i = 0; i < city.length; i++) {
+      const c = city[i];
+      if (c && c.corruptSidekick) {
+        city[i] = null;
+        escapedVillainsDeck.push(c);
+        escapedVillainsCount++;
+        escaped++;
+        onscreenConsole.log(
+          `<span class="console-highlights">${c.name}</span> escapes the city.`,
+        );
+      }
+    }
+    onscreenConsole.log(
+      escaped > 0
+        ? `${escaped} corrupted ${escaped === 1 ? "Sidekick" : "Sidekicks"} escaped the city.`
+        : `No Sidekicks in the city to escape.`,
+    );
+    updateGameBoard();
+  }
+}
+
+// Defeat converter (fightEffect on the fight COPY): flip a defeated Sidekick-Villain back to a
+// Sidekick and gain it to the TOP of your deck (NOT the Victory Pile — skrulled:true already made
+// the post-defeat handlers skip the VP push). Mirrors gainScarletWitchAsHero, but the card stays a
+// Sidekick and goes to the deck top (gainSidekick "deckTop" semantics: playerDeck.push + revealed).
+function gainCorruptedSidekick(villainCopy) {
+  if (!villainCopy) return;
+  villainCopy.type = villainCopy.originalType || "Hero";
+  villainCopy.attack = villainCopy.originalAttack || 0;
+  villainCopy.skrulled = false;
+  villainCopy.corruptSidekick = false;
+  villainCopy.fightEffect = ""; // gained Sidekick carries no villain fight effect (mirrors unskrull)
+  villainCopy.attackFromScheme = 0;
+  villainCopy.overlayText = "";
+  villainCopy.overlayTextAttack = "";
+  villainCopy.revealed = true; // visible on top of the deck (matches gainSidekick "deckTop")
+  playerDeck.push(villainCopy); // playerDeck draws from the end → push = top of deck
+  onscreenConsole.log(
+    `You defeated a corrupted <span class="console-highlights">Sidekick</span> and gained it to the top of your deck.`,
+  );
   updateGameBoard();
 }

@@ -4301,6 +4301,26 @@ function restructureGoldenHeroDeck() {
   );
 }
 
+// SHARED (Secret Wars Vol.1): stamp `sourceCards` as in-deck Villain copies for a scheme that seeds
+// non-villain cards into the Villain Deck — Corrupt the Next Generation (Sidekicks) and Master of
+// Tyrants (Mastermind Tactics, Phase 3e chunk 2d). Generalises the two inline seeds above (Secret
+// Invasion / Skrull and House of M): type:"Villain" + base attack 0 (the live Attack is supplied by
+// attackFromScheme in the updateVillainAttackValues twins) + skrulled:true (so the four post-defeat
+// handlers SKIP the Victory-Pile push — the card converts via its fightEffect instead of scoring) +
+// originalAttack/originalType captured for the converter, plus a per-scheme `stamp` (its identifying
+// flag, fightEffect, and any overlay). Caller pushes/places the returned copies.
+function stampCardsAsInDeckVillains(sourceCards, stamp = {}) {
+  return sourceCards.map((card) => ({
+    ...card,
+    type: "Villain",
+    attack: 0,
+    originalAttack: card.attack,
+    originalType: card.type,
+    skrulled: true,
+    ...stamp,
+  }));
+}
+
 function generateVillainDeck(
   selectedVillains,
   selectedHenchmen,
@@ -4819,6 +4839,22 @@ if (scheme.name === "Unite the Shards") {
         }
       });
     }
+  }
+
+  if (scheme.name === "Corrupt the Next Generation of Heroes") {
+    // Setup: "Add 10 Sidekicks to the Villain Deck." Pull 10 from the Sidekick Stack (sidekickDeck)
+    // and stamp them as in-deck Villains via the shared helper. corruptSidekick drives the dynamic
+    // Attack (2 + Twists, attackFromScheme twins) and the escape/Evil-Wins counters; fightEffect
+    // gainCorruptedSidekick converts a defeated one back to a Sidekick on the TOP of your deck.
+    // The remaining Sidekick Stack stays available for normal recruiting and the Twist "2 enter the
+    // city". Rulings: rules-notes BATCH 8 ③.
+    const sidekicksToSeed = sidekickDeck.splice(0, 10);
+    const stamped = stampCardsAsInDeckVillains(sidekicksToSeed, {
+      corruptSidekick: true,
+      fightEffect: "gainCorruptedSidekick",
+      overlayText: `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SIDEKICK</span>`,
+    });
+    deck.push(...stamped);
   }
 
   for (let i = 0; i < 5; i++) {
@@ -9650,6 +9686,19 @@ if (selectedSchemeEndGame) {
           }
           break;
 
+        case "corrupt4SidekicksEscape":
+          // Corrupt the Next Generation (Secret Wars Vol.1): Evil Wins when 4 Sidekicks escape.
+          // Escaped Sidekick-Villains carry the corruptSidekick flag into escapedVillainsDeck.
+          if (
+            escapedVillainsDeck.filter((card) => card.corruptSidekick).length >= 4
+          ) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Four corrupted Sidekicks have escaped to spread ${mastermind.name}'s influence through the next generation of heroes. All hope is lost.`;
+            showDefeatPopup();
+          }
+          break;
+
         case "8Twists":
           if (twistCount >= 8) {
             finalTwist = true;
@@ -10575,6 +10624,17 @@ function updateVillainAttackValues(villain, i) {
       villain.cost + (scheme.endGame === "noMoreMutantsEvilWins" ? 4 : 3);
   }
 
+  // Corrupt the Next Generation: every seeded/entered Sidekick-Villain has Attack = 2 + the number
+  // of Twists stacked next to this Scheme (= koPile Scheme-Twist count). Dynamic — re-derived live so
+  // it rises as Twists accrue. Keep identical in both attack-value twins (duplicate-fn hazard).
+  if (
+    scheme.name === "Corrupt the Next Generation of Heroes" &&
+    villain.corruptSidekick === true
+  ) {
+    villain.attackFromScheme =
+      2 + koPile.filter((c) => c.type === "Scheme Twist").length;
+  }
+
   if (
     scheme.name === `Steal the Weaponized Plutonium` &&
     villain.plutoniumCaptured &&
@@ -10855,6 +10915,17 @@ function updateHQVillainAttackValues(villain) {
       villain.cost + (scheme.endGame === "noMoreMutantsEvilWins" ? 4 : 3);
   }
 
+  // Corrupt the Next Generation: every seeded/entered Sidekick-Villain has Attack = 2 + the number
+  // of Twists stacked next to this Scheme (= koPile Scheme-Twist count). Dynamic — re-derived live so
+  // it rises as Twists accrue. Keep identical in both attack-value twins (duplicate-fn hazard).
+  if (
+    scheme.name === "Corrupt the Next Generation of Heroes" &&
+    villain.corruptSidekick === true
+  ) {
+    villain.attackFromScheme =
+      2 + koPile.filter((c) => c.type === "Scheme Twist").length;
+  }
+
   if (
     scheme.name === `Steal the Weaponized Plutonium` &&
     villain.plutoniumCaptured &&
@@ -11119,6 +11190,10 @@ function updateEvilWinsTracker() {
 
     case "Pan-Dimensional Plague":
       evilWinsText.innerHTML = `${woundDeck.length} ${woundDeck.length === 1 ? "Wound" : "Wounds"} left`;
+      break;
+
+    case "Corrupt the Next Generation of Heroes":
+      evilWinsText.innerHTML = `${escapedVillainsDeck.filter((card) => card.corruptSidekick).length}/4 Sidekicks Escaped`;
       break;
 
     case "Replace Earth's Leaders with Killbots":
@@ -13195,6 +13270,12 @@ function createVillainCopy(villainCard) {
     keywords: villainCard.keywords,
     image: villainCard.image,
     originalAttack: villainCard.originalAttack,
+    // Corrupt the Next Generation (Secret Wars Vol.1): a defeated Sidekick-Villain is converted back
+    // to a Sidekick on the fight COPY (gainCorruptedSidekick) and gained to the deck top, so the copy
+    // must carry the Sidekick identity — secondaryType ("Sidekick", drives the Twist "return a
+    // Sidekick from discard" lookup and sidekick play) and originalType (restored as the card's type).
+    secondaryType: villainCard.secondaryType,
+    originalType: villainCard.originalType,
     bystander: [...(villainCard.bystander || [])],
     fightEffect: villainCard.fightEffect,
     shattered: villainCard.shattered,
