@@ -17187,6 +17187,17 @@ function captureBystanderFromStackToMastermind(targetMM) {
     return;
   }
   const bystander = bystanderDeck.pop();
+  // Q7 (rules-notes/secret-wars-vol1.md): a Bystander captured by Madelyne becomes a "Demon Goblin"
+  // Villain regardless of which effect triggered the capture (her card overrides generic handling).
+  // If THIS Mastermind is Madelyne (unfightableWhileDemonGoblins), route the capture into the shared
+  // demonGoblinDeck instead of her generic .bystanders store.
+  if (targetMM.unfightableWhileDemonGoblins === true) {
+    demonGoblinDeck.push(bystander);
+    onscreenConsole.log(
+      `<span class="console-highlights">${bystander.name}</span> captured by <span class="console-highlights">${targetMM.name}</span> — it becomes a "Demon Goblin" Villain.`,
+    );
+    return;
+  }
   targetMM.bystanders.push(bystander);
   onscreenConsole.log(
     `<span class="console-highlights">${bystander.name}</span> captured by <span class="console-highlights">${targetMM.name}</span>.`,

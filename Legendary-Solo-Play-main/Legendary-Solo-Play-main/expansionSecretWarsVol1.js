@@ -1874,6 +1874,16 @@ async function infernoColossusAmbush(villainCard) {
     onscreenConsole.log("There are no Bystanders left to be captured.");
     return;
   }
+  // Q7 (rules-notes/secret-wars-vol1.md): a Bystander captured by Madelyne becomes a "Demon Goblin"
+  // Villain regardless of WHICH effect triggered the capture (her card overrides generic handling;
+  // Core p.16). Madelyne Always Leads Limbo, so she is the default Mastermind here. Route through the
+  // canonical madelyneCapture() conversion path (Bystander Stack -> shared demonGoblinDeck) instead of
+  // attaching to the generic mastermind.bystanders store. Marker: the unfightableWhileDemonGoblins flag.
+  const mastermind = getSelectedMastermind();
+  if (mastermind && mastermind.unfightableWhileDemonGoblins === true) {
+    await madelyneCapture(1);
+    return;
+  }
   const card = bystanderDeck.pop();
   await attachBystanderToMastermindFromVillainDeck(card);
 }
@@ -1919,16 +1929,29 @@ async function infernoCyclopsEscape(villainCard) {
     return;
   }
   const mastermind = getSelectedMastermind();
-  if (!mastermind.bystanders) mastermind.bystanders = [];
+  // Q7 (rules-notes/secret-wars-vol1.md): Bystanders captured by Madelyne become "Demon Goblin" Villains
+  // regardless of the triggering effect (her card overrides generic handling; Core p.16). When the
+  // Mastermind is Madelyne (unfightableWhileDemonGoblins), redirect the carried Bystanders — already
+  // undone from escapedVillainsDeck below — into the shared demonGoblinDeck instead of the generic
+  // mastermind.bystanders store. The carry-away discard penalty already fired in the default
+  // handleVillainEscape path (Core p.15); conversion neither adds nor removes a discard — independent.
+  const toGoblins = !!mastermind && mastermind.unfightableWhileDemonGoblins === true;
+  if (!toGoblins && mastermind && !mastermind.bystanders) mastermind.bystanders = [];
   carried.forEach((b) => {
     const i = escapedVillainsDeck.indexOf(b); // undo the default "escaped with the villain" push
     if (i !== -1) escapedVillainsDeck.splice(i, 1);
-    mastermind.bystanders.push(b);
+    if (toGoblins) {
+      demonGoblinDeck.push(b); // captured by Madelyne -> fightable 2-Attack Demon Goblin
+    } else {
+      mastermind.bystanders.push(b);
+    }
   });
-  villainCard.bystander = []; // transferred to the Mastermind
+  villainCard.bystander = []; // transferred off the villain
   updateMastermindOverlay();
   onscreenConsole.log(
-    `The Mastermind captures ${carried.length} Bystander${carried.length !== 1 ? "s" : ""} that <span class="console-highlights">Inferno Cyclops</span> was carrying.`,
+    toGoblins
+      ? `Madelyne captures ${carried.length} Bystander${carried.length !== 1 ? "s" : ""} that <span class="console-highlights">Inferno Cyclops</span> was carrying — ${carried.length === 1 ? 'it becomes a "Demon Goblin" Villain' : 'they become "Demon Goblin" Villains'}.`
+      : `The Mastermind captures ${carried.length} Bystander${carried.length !== 1 ? "s" : ""} that <span class="console-highlights">Inferno Cyclops</span> was carrying.`,
   );
   updateGameBoard();
 }
