@@ -1,7 +1,7 @@
 # Secret Wars Volume 1 — Implementation Progress
 
 Started: 2026-06-22
-Status: Planning (initial setup — phase order proposed, awaiting coordinator confirmation)
+Status: Phases 0–4 COMPLETE (2026-06-27). All effects built + audited; Phase-4 fix pass done. Remaining before merge: `sandbox-review` (separate session) + Paul playtest (both modes), then coordinator merges.
 Branch: `secret-wars-vol1` (worktree)
 
 ## Scope (locked — staged assets only)
@@ -148,8 +148,41 @@ Validated via Apocalyptic Magneto ascension (state-injection; randomize-all star
 - ✅ **Gained-hero image (REVIEWED, no action) — keeping the villain art is CORRECT.** These are same-card dual-side (villain side = hero side, one physical card), mirroring `gainScarletWitchAsHero` which also retains the image. Phase 2 smoke confirmed all Manhattan art loads. The `/undefined` image 404s during game-test were a test-harness artifact of direct city-array injection triggering golden city-shift (duplicated "Phalanx"), not a code defect.
 - ✅ **Thor/Wasp superpower self-exclusion (REVIEWED, correct).** `isConditionMet("playedCards", "Range"/"Covert")` excludes the played card itself (`slice(0,-1)`), so [RANGED]+3 / [COVERT]+2 require ANOTHER Range/Covert symbol this turn — standard Legendary superpower semantics, identical to base `ThorBonusAttack`. Intended.
 
-## Phase 4: Validation — ⬜ Not started
+## Phase 4: Validation — ✅ COMPLETE (2026-06-27)
 <!-- /expansion-audit + MANDATORY dual-mode gate (multi-mastermind touches rows 4/6/8) + guided test -->
+
+Pre-merge audit + fix pass complete. Audit catalog: `docs/audit-results/secret-wars-vol1-2026-06-26.md`.
+Worker gates per fix-group: reuse-first survey → expansion-validator + `/code-review` (high) → dual-mode `/game-test` (where mode-sensitive) → commit. Remaining human gates before merge: `sandbox-review` (separate session) + Paul playtest (both modes). **DO NOT MERGE handled by coordinator.**
+
+### Dispositions
+
+**FIXED (committed on `secret-wars-vol1`):**
+- **M1** — Inferno Colossus/Cyclops captured Bystanders route to Madelyne's Demon-Goblin store (`madelyneCapture`/`demonGoblinDeck`) under the default Madelyne+Limbo lead, not the generic `mastermind.bystanders`. Commit `d891691`. Rules: Q7 / rules-notes BATCH 9.
+- **M3** — Build-an-Army Annihilation-Henchman fight honors Negative Zone (Recruit-pays-Attack) in both affordability twins + the spend path. Commit `4dac8e5`.
+- **M2 — converter cancel-vanish CLASS FULLY CLOSED** (4 converter-reachable Mr. Fantastic / Untouchable negate paths; cancelling a converter's Fight effect now scores it to the Victory Pile at printed VP instead of vanishing). Rules: Q8 / rules-notes BATCH 10. Paths:
+  - `collectDefeatOperations` city + HQ defeat — commit `61d32e0`.
+  - Dr. Strange "Fight the Future" deck-top fight — commit `76d1cda`.
+  - Dark City `freeTelepathicVillainDefeat` (Professor X) + `punisherHailOfBulletsDefeat` deck-top defeats — commit `6fecbcb`.
+  - Definitive survey of ALL 9 `promptNegateFightEffectWithMrFantastic` sites confirms no 5th converter-reachable site (Location fights 12980/13166, Mastermind Tactic 16689, and the Burrow branches 13875/14637 are NOT converter-reachable — Burrow is Giganto/Subterranea only; no card carries Burrow + a converter flag).
+- **M4 + escaped-state reset** — `updateVillainAttackValues` Portals branch gated on `i >= 0` (off-grid card no longer yields NaN attack/fight-cost); `escapedVillainsDeck`/`escapedVillainsCount` reset in `initGame` (2nd game same session no longer inherits escaped state → Corrupt/Tyrants end-game checks read clean). Commit `df94e0d`.
+
+**CONFIRMED — no fix needed (verified):**
+- **M5** — Black Bolt "Silence is Golden" re-grants printed Attack/Recruit. Bounded: full DB enumeration found no targetable no-rules-text card with a variable payout (all 9 multiplier cards excluded by ability/keyword/bonus; the 2 `noRulesText` cards + S.H.I.E.L.D. basics are fixed; no non-numeric attack/recruit). Exposure is latent only (predicate doesn't guard `multiplier`); no in-scope trigger. Leave as built.
+- **H1** — Pan-Dimensional Plague `hqWound[]` slot-keying. Ratified (rules-notes BATCH 8 ②: slot-keyed, re-seed each Twist; hero-bonding rejected — it lets Wounds escape the HQ + breaks Wound-Stack accounting). `/game-test` (Golden) of the mid-turn-refill case proved the display token (`hq-N-wound`) and the recruit gate are BOTH slot-keyed and AGREE at every step — no display-vs-charge defect (the audit's concern is refuted). The wound transfers to whoever slides into the slot = the ratified "plague sits on the HQ slot" model. Leave as built.
+- **L4** — Namor/Thanos `freeDefeatMastermind`. Dual-mode `/game-test` correct: one Tactic removed per free defeat; graceful no-op at zero. Golden keeps `mastermindDefeated=false` at 0 tactics (Final Showdown still required); What If? marks it defeated (the What If? win) — correct mode divergence. Async-timing nuance (the win flag settles on the next win-check rather than synchronously within the call that pops the last tactic, because `revealMastermindTactic` resolves un-awaited) has NO real-play impact — the per-action `updateGameBoard`/`checkMastermindState` catches tactics===0.
+
+**CLOSED — working as designed:**
+- **H2 / B18** — Golden hero count. GS default = 5; a scheme overrides only if its card states a count, and none of the 6 SWV1 scheme cards do → GS uses 5, What If? uses 3. No defect. (Randomize + validation both read `getEffectiveHeroCount`, so games start cleanly in both modes.)
+
+**DEFERRED → base-code branch (not this expansion branch):**
+- `skrulled` / `gainScarletWitchAsHero` (House of M) converter cancel-vanish — a separate rules question, and those terminal cards have NO printed VP (lower impact than the SWV1 converters fixed here). Findings E/F (Mr. Fantastic-negate / Professor X double-gain on gain-as-Hero) belong to this base cluster.
+- **Central-refactor candidate** — hoisting the converter-flag clear into `promptNegateFightEffectWithMrFantastic` would dedupe the now-4 per-site mirrors, but it's not a clean drop-in: 5 negate sites call it with NO card arg, and the M2 site passes `(villainCopy, villainCard)` clearing the original — a central fix needs a guarded, param-aware impl. Low drift risk at 4 well-commented mirrors; revisit if a 5th converter-cancel site appears.
+
+**DEFERRED — LOW (SWV1):**
+- Untouchable's reactive cancel is NOT wired into the Fight the Future deck-top path (only Mr. Fantastic's negate is) — pre-existing, narrow; Untouchable's text covers "Villain or Mastermind" fights and the FtF deck-top fight predates it.
+- LOWs **L1** (Wound counts as no-rules-text), **L2** (Kitty Pryde Tech count lacks `type==="Hero"` guard), **L5** (Inferno multi-mastermind "the Mastermind" picker), **L7** (Corrupt Twist-8 no carry-away discard), **L8** (Corrupt overflow escape `skrulled→Hero` type flip), **L9** (Demon-Goblin lock not parameterized for secondaries) + keyword latents (gainAsHero+Burrow, secondary master-strike silent-skip, `updateEvilWinsTracker` reads setup-DOM scheme) — no in-scope trigger for any.
+
+**RATIFIED (recorded so the blind-compare logs them as intended):** **L3** (Fight the Future at-resolution fight window), **L6** (Inferno Cyclops single carry-away discard).
 
 ---
 
