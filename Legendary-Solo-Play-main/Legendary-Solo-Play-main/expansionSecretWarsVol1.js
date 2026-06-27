@@ -3298,8 +3298,12 @@ async function fightAnnihilationHenchman() {
     onscreenConsole.log("No Annihilation Henchmen are next to the Mastermind.");
     return false;
   }
-  const available =
-    totalAttackPoints + (recruitUsedToAttack === true ? totalRecruitPoints : 0);
+  // Affordability honors Negative Zone (Recruit pays Attack costs) + recruit-as-attack — mirror the
+  // Fight the Future hero fight (~line 947-949), minus its Bribe term (a plain Henchman has no Bribe).
+  // TWIN: keep identical to showAnnihilationHenchmanFightPrompt's affordability line.
+  const available = negativeZoneAttackAndRecruit
+    ? totalRecruitPoints
+    : totalAttackPoints + (recruitUsedToAttack === true ? totalRecruitPoints : 0);
   if (available < COST) {
     onscreenConsole.log(
       `You need 3 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight an <span class="console-highlights">Annihilation Henchman</span>.`,
@@ -3307,8 +3311,13 @@ async function fightAnnihilationHenchman() {
     return false;
   }
 
-  // Spend 3 Attack (Demon Goblin / Hydra Traitor pattern).
-  if (recruitUsedToAttack === true) {
+  // Spend the cost — mirror the Fight the Future hero fight's spend (~line 987-1004), minus its Bribe
+  // term. Under Negative Zone the cost is paid entirely in Recruit (precedence over recruit-as-attack,
+  // exactly as Fight the Future gates it). Spending Attack/Recruit here does NOT touch the cumulative
+  // (Final Showdown) totals — this is a cost, not a grant.
+  if (negativeZoneAttackAndRecruit) {
+    totalRecruitPoints -= COST;
+  } else if (recruitUsedToAttack === true) {
     const result = await showCounterPopup(
       { name: "Annihilation Henchman", image: makeAnnihilationHenchman().image },
       COST,
@@ -3323,8 +3332,11 @@ async function fightAnnihilationHenchman() {
   // Twist's Step 1 will KO it back out to the supply.
   annihilationHenchmenNextToMM--;
   victoryPile.push(makeAnnihilationHenchman());
+  // Cost-source wording: under Negative Zone the 3 was paid in Recruit, not Attack (the recruit-as-attack
+  // split case is shown to the player via showCounterPopup above, so keep the generic "Attack" there).
+  const costLabel = negativeZoneAttackAndRecruit ? "3 Recruit" : "3 Attack";
   onscreenConsole.log(
-    `You defeated an <span class="console-highlights">Annihilation Henchman</span> (3 Attack) — worth 1 VP. (${annihilationHenchmenNextToMM} left next to the Mastermind.)`,
+    `You defeated an <span class="console-highlights">Annihilation Henchman</span> (${costLabel}) — worth 1 VP. (${annihilationHenchmenNextToMM} left next to the Mastermind.)`,
   );
 
   if (typeof playSFX === "function") playSFX("attack");
@@ -3338,8 +3350,11 @@ function showAnnihilationHenchmanFightPrompt() {
   const activeScheme = getActiveScheme();
   if (!activeScheme || activeScheme.name !== "Build an Army of Annihilation") return;
   if (annihilationHenchmenNextToMM <= 0) return;
-  const available =
-    totalAttackPoints + (recruitUsedToAttack === true ? totalRecruitPoints : 0);
+  // TWIN of fightAnnihilationHenchman's affordability — honors Negative Zone + recruit-as-attack
+  // (mirror of Fight the Future ~line 947-949, minus Bribe). Keep the two lines identical.
+  const available = negativeZoneAttackAndRecruit
+    ? totalRecruitPoints
+    : totalAttackPoints + (recruitUsedToAttack === true ? totalRecruitPoints : 0);
   if (available < 3) {
     onscreenConsole.log(
       `You need 3 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to fight an <span class="console-highlights">Annihilation Henchman</span>.`,
