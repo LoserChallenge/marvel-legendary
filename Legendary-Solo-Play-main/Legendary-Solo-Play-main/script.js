@@ -13464,6 +13464,20 @@ async function collectDefeatOperations(villainCopy, villainCard) {
             }
             if (!negate) {
               await fightEffectFunction(villainCopy);
+            } else if (villainCard.gainAsHero || villainCard.corruptSidekick) {
+              // Q8 (rules-notes/secret-wars-vol1.md): cancelling a Secret Wars Vol.1 CONVERTER's Fight
+              // effect — "Fight: Gain this as a Hero" (Manhattan/Thor Corps, flag gainAsHero) or the
+              // Corrupt the Next Generation Sidekick-Villain's gain-to-deck (flag corruptSidekick) — via
+              // Mr. Fantastic OR Untouchable cancels ONLY the Fight effect; the DEFEAT still stands
+              // (Core p.13: defeat -> Victory Pile is a step SEPARATE from the Fight effect). Without the
+              // gain firing, the route-away flags (gainAsHero/skrulled) would make the standard
+              // post-defeat VP-push (handlePostDefeat / handleHQPostDefeat) skip the card and it would
+              // vanish (no gain, no VP). Clear them so the card lands in the Victory Pile at its printed
+              // VP, like any normally-defeated Villain. Gated on the SWV1-specific markers, NOT the shared
+              // `skrulled` flag — other skrulled mechanics (Skrull Shapeshifters unskrull, House of M
+              // gainScarletWitchAsHero) are out of Q8 scope and keep their existing cancel behavior.
+              villainCard.gainAsHero = false;
+              villainCard.skrulled = false;
             }
             updateGameBoard(); // Force UI update
             resolve();
