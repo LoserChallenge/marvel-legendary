@@ -5091,6 +5091,14 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   mastermind.bystanders = [];
   secondaryMasterminds = []; // clear any secondary Masterminds (ascended Magneto / Dark Alliance) from a prior game
   hqWound = [null, null, null, null, null]; // clear Pan-Dimensional Plague HQ-slot Wounds from a prior game
+  // Clear the escaped-villains state per game. These globals were previously only initialised at module
+  // load (declarations), never in initGame — so a second game in the same page session (no reload)
+  // inherited the prior game's escaped cards. Newly load-bearing for Secret Wars Vol.1, whose
+  // flag-filtered end-game checks read escapedVillainsDeck directly (Corrupt = 4 escaped Sidekicks,
+  // Master of Tyrants = 5 escaped Tyrants); stale carry-over would spuriously inflate those counters.
+  // (Base-engine bug, fixed here as cheap insurance; reported separately. B7/B12/B16 cross-game-leak pattern.)
+  escapedVillainsDeck = [];
+  escapedVillainsCount = 0;
   // Reset the shared escalating "twists stacked next to the Mastermind" counter per game. It was
   // previously only initialised at module load, so a second game in the same session inherited the
   // prior game's value — a latent cross-game leak affecting Capture Baby Hope / FF / GotG schemes.
@@ -10671,8 +10679,14 @@ function updateVillainAttackValues(villain, i) {
 
   if (
     scheme.name === "Portals to the Dark Dimension" &&
+    i >= 0 &&
     currentPermBuff !== 0
   ) {
+    // Off-grid guard: i < 0 means this card is not in city[] (e.g. a deck-top card recalculated by
+    // recalculateVillainAttack via Dr. Strange "Fight the Future"). cityPermBuff[-1] is undefined, and
+    // `undefined !== 0` would assign attackFromScheme = undefined → NaN effective Attack/fight-cost.
+    // An off-grid card has no city-position perm-buff anyway, so skip the branch and leave the
+    // initialised 0 (line above) → always a finite numeric attack. (M4 / E-9.)
     villain.attackFromScheme = currentPermBuff;
   }
 
