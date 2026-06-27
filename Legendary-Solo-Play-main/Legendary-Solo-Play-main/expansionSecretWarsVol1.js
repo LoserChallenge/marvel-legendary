@@ -3362,14 +3362,9 @@ function pickThreeDistinctTyrantMasterminds() {
   const pool = masterminds.filter(
     (m) => m.darkAllianceEligible === true && m.name !== main.name,
   );
-  // Fisher-Yates-ish shuffle by repeated random splice, then take 3.
-  const chosen = [];
-  const working = [...pool];
-  while (chosen.length < 3 && working.length > 0) {
-    const idx = Math.floor(Math.random() * working.length);
-    chosen.push(working.splice(idx, 1)[0]);
-  }
-  return chosen;
+  // The 5-MM eligible pool minus the main always yields ≥4, so 3 distinct is safe; slice handles a
+  // smaller pool defensively. Reuses the canonical shuffle() helper (script.js).
+  return shuffle([...pool]).slice(0, 3);
 }
 
 // Build the 12 Tyrant Villains (3 Masterminds × 4 Tactics). Each Tactic is stamped type:"Villain" with
@@ -3384,11 +3379,10 @@ function buildMasterOfTyrantsTyrants() {
     // + originalAttack/originalType, then applies this stamp. We override attack to the Mastermind's
     // printed Attack, clear skrulled (so VP scores), strip the ability, and tag isTyrant + darkPower:0.
     const stamped = stampCardsAsInDeckVillains(mm.tactics, {
-      attack: mm.attack, // printed Attack = source Mastermind's Attack
+      attack: mm.attack, // printed Attack = source Mastermind's Attack (tactics carry no attack field)
+      originalAttack: mm.attack, // self-consistent base for any future attack-restore path (helper would set undefined)
       skrulled: false, // defeat → Victory Pile normally (scores the Tactic's printed VP)
-      fightEffect: "", // "no abilities" — the Tactic's fight effect is stripped
-      conditionalAbility: "None",
-      unconditionalAbility: "None",
+      fightEffect: "", // "no abilities" — the Tactic's fight effect is stripped (villains resolve via fightEffect only)
       isTyrant: true,
       darkPower: 0, // count of Dark Power Twists under this Tyrant (each = +2 Attack)
       tyrantSource: mm.name, // provenance (display/debug only)
@@ -3440,6 +3434,17 @@ async function masterOfTyrantsTwist() {
   for (let i = 0; i < city.length; i++) {
     const c = city[i];
     if (c && c.isTyrant === true) {
+      // Any Bystanders captured on this Tyrant escape WITH it — mirror handleVillainEscape
+      // (script.js ~6310) so the manual escape path doesn't silently orphan them when the slot is
+      // nulled. (Tyrants have no fightEffect/ascension, so only the plain bystander case applies.)
+      if (Array.isArray(c.bystander) && c.bystander.length > 0) {
+        c.bystander.forEach((bystander) => {
+          escapedVillainsDeck.push(bystander);
+          onscreenConsole.log(
+            `Bystander escaped with <span class="console-highlights">${c.name}</span>.`,
+          );
+        });
+      }
       city[i] = null;
       escapedVillainsDeck.push(c);
       escapedVillainsCount++;
