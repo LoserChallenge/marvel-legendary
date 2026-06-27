@@ -162,7 +162,7 @@ Worker gates per fix-group: reuse-first survey → expansion-validator + `/code-
 - **M2 — converter cancel-vanish CLASS FULLY CLOSED** (4 converter-reachable Mr. Fantastic / Untouchable negate paths; cancelling a converter's Fight effect now scores it to the Victory Pile at printed VP instead of vanishing). Rules: Q8 / rules-notes BATCH 10. Paths:
   - `collectDefeatOperations` city + HQ defeat — commit `61d32e0`.
   - Dr. Strange "Fight the Future" deck-top fight — commit `76d1cda`.
-  - Dark City `freeTelepathicVillainDefeat` (Professor X) + `punisherHailOfBulletsDefeat` deck-top defeats — commit `6fecbcb`.
+  - Dark City `freeTelepathicVillainDefeat` (Ghost Rider "Infernal Chains" free-defeat chooser — a nested helper inside `ghostRiderInfernalChains()`, reachable when Infernal Chains targets a villain marked with Professor X's Telepathic Probe; NOT the live Professor-X-probe-click path) + `punisherHailOfBulletsDefeat` deck-top defeats — commit `6fecbcb`.
   - Definitive survey of ALL 9 `promptNegateFightEffectWithMrFantastic` sites confirms no 5th converter-reachable site (Location fights 12980/13166, Mastermind Tactic 16689, and the Burrow branches 13875/14637 are NOT converter-reachable — Burrow is Giganto/Subterranea only; no card carries Burrow + a converter flag).
 - **M4 + escaped-state reset** — `updateVillainAttackValues` Portals branch gated on `i >= 0` (off-grid card no longer yields NaN attack/fight-cost); `escapedVillainsDeck`/`escapedVillainsCount` reset in `initGame` (2nd game same session no longer inherits escaped state → Corrupt/Tyrants end-game checks read clean). Commit `df94e0d`.
 
@@ -180,6 +180,7 @@ Worker gates per fix-group: reuse-first survey → expansion-validator + `/code-
 
 **DEFERRED — LOW (SWV1):**
 - Untouchable's reactive cancel is NOT wired into the Fight the Future deck-top path (only Mr. Fantastic's negate is) — pre-existing, narrow; Untouchable's text covers "Villain or Mastermind" fights and the FtF deck-top fight predates it.
+- The live Professor X Telepathic Probe fight (`initiateTelepathicVillainFight`, cardAbilitiesDarkCity.js ~7028, invoked from script.js ~18431) has NO Mr. Fantastic / Untouchable cancel wiring at all — so a converter's Fight effect can't be cancelled there. No vanish bug (no cancel = no skipped VP push); pre-existing; outside the Q8 converter-vanish scope. Same family as the Untouchable/FtF deck-top gap above.
 - LOWs **L1** (Wound counts as no-rules-text), **L2** (Kitty Pryde Tech count lacks `type==="Hero"` guard), **L5** (Inferno multi-mastermind "the Mastermind" picker), **L7** (Corrupt Twist-8 no carry-away discard), **L8** (Corrupt overflow escape `skrulled→Hero` type flip), **L9** (Demon-Goblin lock not parameterized for secondaries) + keyword latents (gainAsHero+Burrow, secondary master-strike silent-skip, `updateEvilWinsTracker` reads setup-DOM scheme) — no in-scope trigger for any.
 
 **RATIFIED (recorded so the blind-compare logs them as intended):** **L3** (Fight the Future at-resolution fight window), **L6** (Inferno Cyclops single carry-away discard).
