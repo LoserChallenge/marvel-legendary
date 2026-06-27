@@ -104,6 +104,16 @@ Driving the harness:
   }, 100);
   ```
   `clearInterval(window.__autoPopup); window.__autoPopup = null;` when done. This auto-CONFIRMS yes/no + "proceed" popups (and incidentally drains the start-popup queue above). CAVEAT: for card-SELECTION popups (pick WHICH card to KO/discard/gain), drive the specific selection yourself BEFORE the confirm fires — auto-confirm alone picks nothing or the default. Use `getComputedStyle(popup).display`, not `offsetParent`, for visibility (broken-image layout collapse makes geometry unreliable — see structural-selector note above).
+- **Wrap awaited popup-abilities in an IN-PAGE timeout so a stuck SELECTION popup fails FAST + CLEAN instead of hanging the whole session.** `__autoPopup` correctly won't click a *disabled* confirm, so a card-SELECTION popup whose selection wasn't driven stalls the `await ability()` indefinitely; Playwright's own evaluate-timeout then fires at the *connection* level and can tear down the page/server (the "env died mid-session" symptom — the #1 game-test reliability complaint). Prevent that with a `Promise.race` that rejects WITHIN the evaluate, so the page + server stay alive to retry:
+  ```js
+  await Promise.race([
+    ability(card),
+    new Promise((_, rej) => setTimeout(
+      () => rej(new Error('POPUP-TIMEOUT — a choice/selection popup needs its selection driven before confirm; auto-confirm alone cannot resolve it')),
+      8000)) // tune up for legitimately long multi-popup chains
+  ]);
+  ```
+  This converts an indefinite hang into a fast, labelled failure that leaves the env up. It does NOT auto-resolve the selection (auto-picking a default would silently corrupt the test result — worse than failing); for selection popups still drive the specific pick yourself per the caveat above. The timeout is the SAFETY NET for a missed or unexpected selection popup.
 - **Live UI-refresh tests must go through the real play path** (`selectedCards=[idx]` → `confirmActions()`, or `endTurn()`) — abilities rely on the single trailing `updateGameBoard()`; an isolated ability call leaves the DOM stale and falsely reads as a refresh bug.
 - **The Playwright page can close mid-session with the server still up** — re-navigate + re-`resize(1920×1080)` to recover.
 
