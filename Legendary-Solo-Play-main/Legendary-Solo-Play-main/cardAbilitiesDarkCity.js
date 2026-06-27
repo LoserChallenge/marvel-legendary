@@ -2473,7 +2473,17 @@ function ghostRiderInfernalChains() {
       // Only execute the fight effect if not negated
       if (!negate) {
         await fightEffectFunction(villainCard);
-      } else {
+      } else if (villainCard.gainAsHero || villainCard.corruptSidekick) {
+        // Q8 converter cancel-vanish (rules-notes/secret-wars-vol1.md) — mirror of the M2 /
+        // drStrangeFightTheFuture fix. Cancelling a Secret Wars Vol.1 CONVERTER's Fight effect
+        // ("Gain this as a Hero" gainAsHero, or the Corrupt Sidekick-Villain's gain-to-deck
+        // corruptSidekick→skrulled) leaves the DEFEAT intact (Core p.13). Without firing the gain,
+        // the route-away flags would make defeatNonPlacedVillain's VP gate (`!skrulled && !gainAsHero`)
+        // skip the push and the card would VANISH (corruptSidekick loses its real printed VP). Clear
+        // the SWV1 markers so the EXISTING VP push fires. Gated on gainAsHero||corruptSidekick, NOT
+        // bare skrulled — other skrulled mechanics keep their cancel behavior.
+        villainCard.gainAsHero = false;
+        villainCard.skrulled = false;
       }
     } else {
       console.error(
@@ -3211,7 +3221,17 @@ async function punisherHailOfBulletsDefeat() {
       // Only execute the fight effect if not negated
       if (!negate) {
         await fightEffectFunction(topCardVillainDeck);
-      } else {
+      } else if (topCardVillainDeck.gainAsHero || topCardVillainDeck.corruptSidekick) {
+        // Q8 converter cancel-vanish (rules-notes/secret-wars-vol1.md) — mirror of the M2 /
+        // drStrangeFightTheFuture fix. Cancelling a Secret Wars Vol.1 CONVERTER's Fight effect
+        // ("Gain this as a Hero" gainAsHero, or the Corrupt Sidekick-Villain's gain-to-deck
+        // corruptSidekick→skrulled) leaves the DEFEAT intact (Core p.13). Without firing the gain,
+        // the route-away flags would make defeatNonPlacedVillain's VP gate (`!skrulled && !gainAsHero`)
+        // skip the push and the card would VANISH (corruptSidekick loses its real printed VP). Clear
+        // the SWV1 markers so the EXISTING VP push fires. Gated on gainAsHero||corruptSidekick, NOT
+        // bare skrulled — other skrulled mechanics keep their cancel behavior.
+        topCardVillainDeck.gainAsHero = false;
+        topCardVillainDeck.skrulled = false;
       }
     } else {
       console.error(
