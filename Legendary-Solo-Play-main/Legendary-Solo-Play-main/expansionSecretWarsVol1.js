@@ -1020,6 +1020,18 @@ async function drStrangeFightTheFuture() {
         }
         if (!negate) {
           await fightEffectFunction(topCard);
+        } else if (topCard.gainAsHero || topCard.corruptSidekick) {
+          // Q8 (rules-notes/secret-wars-vol1.md) — converter cancel on the deck-top path. Mirror of the
+          // M2 fix in collectDefeatOperations: cancelling a converter's Fight effect ("Gain this as a
+          // Hero" — Manhattan/Thor Corps gainAsHero; or the Corrupt Sidekick-Villain's gain-to-deck,
+          // corruptSidekick→skrulled) leaves the DEFEAT intact (Core p.13: defeat→Victory Pile is a step
+          // separate from the Fight effect). Without firing the gain, the route-away flags would make
+          // defeatNonPlacedVillain's VP gate (script.js: `!skrulled && !gainAsHero`) skip the push and the
+          // card would VANISH (no gain, no VP — corruptSidekick loses real printed VP). Clear the SWV1
+          // markers so the EXISTING VP push fires. Gated on gainAsHero||corruptSidekick, NOT bare
+          // `skrulled`, so other skrulled mechanics keep their cancel behavior.
+          topCard.gainAsHero = false;
+          topCard.skrulled = false;
         }
       } else {
         console.error(`Fight effect function ${topCard.fightEffect} not found`);
