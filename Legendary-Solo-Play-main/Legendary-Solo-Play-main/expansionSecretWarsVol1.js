@@ -3136,6 +3136,17 @@ async function corruptTheNextGenerationOfHeroesTwist() {
     for (let i = 0; i < city.length; i++) {
       const c = city[i];
       if (c && c.corruptSidekick) {
+        // Any Bystanders captured on this Sidekick-Villain escape WITH it — mirror handleVillainEscape
+        // (script.js ~6310) so the manual escape path doesn't silently orphan them when the slot is
+        // nulled. (Corrupt Sidekick-Villains have no ascension, so only the plain bystander case applies.)
+        if (Array.isArray(c.bystander) && c.bystander.length > 0) {
+          c.bystander.forEach((bystander) => {
+            escapedVillainsDeck.push(bystander);
+            onscreenConsole.log(
+              `Bystander escaped with <span class="console-highlights">${c.name}</span>.`,
+            );
+          });
+        }
         city[i] = null;
         escapedVillainsDeck.push(c);
         escapedVillainsCount++;
