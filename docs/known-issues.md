@@ -174,6 +174,12 @@ When all 5 HQ slots are heroes, the post-loop refill reads the shortened `hq.len
 - **Fix direction (base branch):** close at the shared chokepoint — but on the normal path cost is spent BEFORE `recruitHeroConfirmed`, so a naive guard there strands points; needs per-ability pre-gates (4 sites) or a spend-order rework. Sibling of the B8 converter-cancel deferral (same "fix the class on the base branch, not mid-expansion" call).
 - **Status:** very-low-frequency solo self-exploit (Loner + spend-the-+2 + a specific free-recruit card same turn; bounded +2; no state corruption). Normal-recruit instance FIXED on the SW branch (`682dd8b`); free-recruit instances CANDIDATE, deferred to the base-code branch.
 
+#### B20 — "Build an Army of Annihilation" loss-mechanic uses snapshot count instead of additive accumulation → Twist-4 loss unreachable (found via SWV1 game-test, 2026-06-29)
+- **Symptom:** The scheme's evil-wins condition counts twists-next-to-mastermind as a **snapshot** (`count == twistStackSize`), capping at 9 by Twist 4. The correct mechanic is **additive accumulation** (1+2+3+4 = 10 next-to-MM by Twist 4), so the 10-villain loss threshold is unreachable under the current code. Game-test confirmed divergence at Twist 3.
+- **Scope — SWV1 scheme:** Build an Army of Annihilation evil-wins logic. The `annihilationTwistStack` accumulator exists (the scheme is DECOUPLED from the shared `stackedTwistNextToMastermind` per B17), but the evil-wins condition reads the per-twist snapshot rather than summing the accumulator.
+- **Fix direction (base/SWV1 branch):** change the evil-wins condition to compare the running `annihilationTwistStack` sum against the loss threshold (10), not the per-twist villain count against `twistStackSize`. Confirm via game-test: simulate 4 twists, assert evil-wins fires after Twist 4 at cumulative 10.
+- **Status:** CANDIDATE (game-test confirmed wrong behavior at Twist 3; fix direction clear, not yet applied). Not patched — deferred to the dedicated base-code branch.
+
 ### CLEARED (investigated, not a bug)
 
 - **Invisible Woman "Four of a Kind" / Focus cards** — investigated as B1's prime suspect; CLEARED. `invisibleWomanFourOfAKind` (`expansionFantasticFour.js:4241`) only reads `cardsPlayedThisTurn` for +2 attack; Focus reveal cards touch hand/discard only, never HQ. The FF/Invisible Woman context in B1 is coincidental — the trigger is the generic Golden Solo recruit path.

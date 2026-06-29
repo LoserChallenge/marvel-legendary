@@ -6,6 +6,7 @@ Detailed reference for staging, naming, inventory, and import processes. Referen
 
 ## Overview
 - **Staging area**: `expansions/[name]/` at project root — raw images + PDFs per expansion; outside game root so never served by GitHub Pages
+  - **Worktree builds — staging is gitignored, so it exists only in the main folder, not in the worktree.** Before a worktree worker runs Phase 1 image import, the coordinator (which owns the main folder) must copy the `expansions/[name]/` staging folder into the worktree path. Safe because it's gitignored. The worker must NOT cross-folder-copy from the main tree itself.
 - **Production**: `Visual Assets/` inside the game root — heroes go in `Visual Assets/Heroes/[Expansion Display Name]/`, everything else in flat type folders
 - **Import mapping** (staging subfolder → production folder):
   - `Heroes/` → `Visual Assets/Heroes/[Expansion Display Name]/`

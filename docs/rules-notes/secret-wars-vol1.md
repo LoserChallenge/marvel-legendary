@@ -200,6 +200,7 @@ These map to the FROZEN spec's "OPEN QUESTIONS" Q2–Q7 (different numbering fro
 - **"players' Victory Piles" in solo:** = the single (active) player's Victory Pile. No "each other player" issue here ("players'" possessive includes you).
 - SOURCE: card text (inventory `secret-wars-vol1.md`); escalation logic is self-contained in the Twist wording.
 - CONFIDENCE: **SETTLED** for the mechanical escalation/recycle (card text is explicit). The M.O.D.O.K. substitution is a separate, already-settled design call (not re-opened here).
+- **M.O.D.O.K. substitution rationale (the settled call):** "Annihilation Wave Henchmen" is a **printing error** — the named group was cut before the game's release and exists in NO Legendary product. No official errata. Community consensus (BGG): substitute any henchman group; M.O.D.O.K.s is this app's default stand-in. SOURCE: community consensus (no rulebook/errata entry). CONFIDENCE: **design decision** (no official ruling).
 
 # BATCH 6 — Ghost Racers KO-zone: "one of your Heroes" (2026-06-25, Rules Oracle; relayed by coordinator)
 
