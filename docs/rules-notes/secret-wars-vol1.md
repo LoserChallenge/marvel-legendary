@@ -84,6 +84,10 @@ Inventory verbatim (`secret-wars-vol1.md` lines 844–849):
 - **"Twist 7: Evil Wins"** is the scheme's lose condition: when the 7th Scheme Twist is played, the Mastermind completes the Scheme and **all players lose immediately** (the Secret Wars insert/What If? p.15 "Evil Wins" rule: don't finish the turn). Note: 8 Twists are in the deck but **Twist 7 ends the game** — the 8th is effectively never reached. This is a race: defeat both Masterminds before the 7th Twist surfaces.
 - CONFIDENCE: **SETTLED** (card text verbatim). One caveat flagged for human spot-check: the card text does not itself restate "normal strength" — that the added Mastermind uses its own printed strength is the default rule (a Mastermind added to the game uses its own card), INFERRED from absence of any reduction clause. Worth a Pass-3 eyeball on the physical card if available.
 
+### Q4a — Defeating the 2nd Mastermind's lone Tactic DEFEATS it
+
+Q4a — Defeating the Dark Alliance 2nd Mastermind's lone Tactic DEFEATS it. A Mastermind is defeated when its CURRENT Tactic stack is exhausted (Core Set p.14). The 2nd MM enters at Twist 1 with one Tactic; beating that single Tactic defeats it and removes it from play, so Twists 2-4's 'if the second Mastermind is still in play' check correctly adds nothing. Observed early-defeat behavior is CORRECT, not a bug. Same in Golden + What If?. CONFIDENCE: SETTLED (Core p.14 + scheme card text).
+
 ---
 
 ## Q5 — Master of Tyrants scheme (confirm interpretation)
