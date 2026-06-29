@@ -2473,7 +2473,17 @@ function ghostRiderInfernalChains() {
       // Only execute the fight effect if not negated
       if (!negate) {
         await fightEffectFunction(villainCard);
-      } else {
+      } else if (villainCard.gainAsHero || villainCard.corruptSidekick) {
+        // Q8 converter cancel-vanish (rules-notes/secret-wars-vol1.md) — mirror of the M2 /
+        // drStrangeFightTheFuture fix. Cancelling a Secret Wars Vol.1 CONVERTER's Fight effect
+        // ("Gain this as a Hero" gainAsHero, or the Corrupt Sidekick-Villain's gain-to-deck
+        // corruptSidekick→skrulled) leaves the DEFEAT intact (Core p.13). Without firing the gain,
+        // the route-away flags would make defeatNonPlacedVillain's VP gate (`!skrulled && !gainAsHero`)
+        // skip the push and the card would VANISH (corruptSidekick loses its real printed VP). Clear
+        // the SWV1 markers so the EXISTING VP push fires. Gated on gainAsHero||corruptSidekick, NOT
+        // bare skrulled — other skrulled mechanics keep their cancel behavior.
+        villainCard.gainAsHero = false;
+        villainCard.skrulled = false;
       }
     } else {
       console.error(
@@ -3211,7 +3221,17 @@ async function punisherHailOfBulletsDefeat() {
       // Only execute the fight effect if not negated
       if (!negate) {
         await fightEffectFunction(topCardVillainDeck);
-      } else {
+      } else if (topCardVillainDeck.gainAsHero || topCardVillainDeck.corruptSidekick) {
+        // Q8 converter cancel-vanish (rules-notes/secret-wars-vol1.md) — mirror of the M2 /
+        // drStrangeFightTheFuture fix. Cancelling a Secret Wars Vol.1 CONVERTER's Fight effect
+        // ("Gain this as a Hero" gainAsHero, or the Corrupt Sidekick-Villain's gain-to-deck
+        // corruptSidekick→skrulled) leaves the DEFEAT intact (Core p.13). Without firing the gain,
+        // the route-away flags would make defeatNonPlacedVillain's VP gate (`!skrulled && !gainAsHero`)
+        // skip the push and the card would VANISH (corruptSidekick loses its real printed VP). Clear
+        // the SWV1 markers so the EXISTING VP push fires. Gated on gainAsHero||corruptSidekick, NOT
+        // bare skrulled — other skrulled mechanics keep their cancel behavior.
+        topCardVillainDeck.gainAsHero = false;
+        topCardVillainDeck.skrulled = false;
       }
     } else {
       console.error(
@@ -16292,7 +16312,11 @@ async function attachPlutoniumToVillain(villainIndex, twistCard) {
   updateGameBoard();
 }
 
-async function BystanderstToDemonGoblins() {
+// Move up to `requested` Bystanders from the Bystander Stack into the shared demonGoblinDeck (each
+// becomes a fightable 2-Attack "Demon Goblin"). Generalized from the fixed-5 Dark City original;
+// the default (5) preserves the original twist caller, and Madelyne Pryor's capture effects pass
+// their own counts (madelyneCapture wraps this). Capped at the Bystander Stack size.
+async function BystanderstToDemonGoblins(requested = 5) {
   if (bystanderDeck.length === 0) {
     onscreenConsole.log(
       'There are no Bystanders available to become "Demon Goblin" Villains.',
@@ -16300,8 +16324,8 @@ async function BystanderstToDemonGoblins() {
     return;
   }
 
-  // Determine how many cards we can take (up to 5)
-  const count = Math.min(5, bystanderDeck.length);
+  // Determine how many cards we can take (up to the requested count)
+  const count = Math.min(requested, bystanderDeck.length);
 
   // Move the cards from bystanderDeck to demonGoblinDeck
   for (let i = 0; i < count; i++) {

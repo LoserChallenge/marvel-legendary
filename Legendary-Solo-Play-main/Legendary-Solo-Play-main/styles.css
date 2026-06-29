@@ -4727,6 +4727,41 @@ button:disabled:hover {
   cursor: pointer;
 }
 
+/* Build an Army of Annihilation (Secret Wars Vol.1) — Annihilation Henchman count badge sitting on
+   the Mastermind cell, mirroring #demon-goblin-deck. Offset to the TOP-LEFT corner so it does not
+   overlap the stacked-Tactics badge (top area) or the Mastermind attack button. Clickable: pay 3
+   Attack to fight one Henchman. */
+#annihilation-army-deck {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22%;
+  height: 22%;
+  display: flex;
+  background-image: url("Visual Assets/Henchmen/SecretWarsVol1_MODOKS.webp");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 2;
+  cursor: pointer;
+}
+
+#annihilation-army-count {
+  margin-top: auto;
+  position: relative;
+  z-index: 2;
+  margin-left: auto;
+  margin-right: auto;
+  color: #ffffff;
+  font-family: var(--heading-font);
+  font-size: var(--heading-size);
+  text-transform: var(--text-transform);
+  letter-spacing: var(--letter-spacing);
+  margin-bottom: auto;
+  filter: drop-shadow(0vh 0vh 1.1vh red);
+  cursor: pointer;
+}
+
 .city-cell .XCutioner-overlay {
   position: absolute;
   top: 0;
@@ -4802,6 +4837,20 @@ button:disabled:hover {
   z-index: 1;
   filter: drop-shadow(0 0 1vh #f28b0f);
   transition: all 0.3s ease;
+}
+
+/* Pan-Dimensional Plague (Secret Wars Vol.1): a Wound token sitting next to an HQ slot. Pinned to
+   the top-left corner so it doesn't collide with the centred explosion icon; non-interactive. */
+.hq-wound-token {
+  height: 38%;
+  width: auto;
+  position: absolute;
+  top: 2%;
+  left: 2%;
+  z-index: 2;
+  border-radius: 4%;
+  filter: drop-shadow(0 0 0.6vh #c0392b);
+  pointer-events: none;
 }
 
 #hq-1-explosion-count,

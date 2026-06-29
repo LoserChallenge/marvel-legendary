@@ -45,6 +45,14 @@ async function defeatBonuses() {
     updateGameBoard();
   }
 
+  // Secret Wars Vol.1 "Enslave the Will" (Maximus [TECH]): gain a Sidekick per VILLAIN defeat this
+  // turn (cost-free, cap-free). VILLAIN-ONLY (skip the mastermind defeat), mirroring Military-Industrial
+  // Complex. Lives here so it catches every villain defeat — city, HQ, and free-defeats (Mental
+  // Domination) — via all defeatBonuses() call sites. gainSidekick() is async, hence the await.
+  if (maximusEnslaveActive && !isMastermindDefeat && typeof gainSidekick === 'function') {
+    await gainSidekick("discard");
+  }
+
   // War Machine "Overwhelming Firepower" (Revelations): draw 1 + rescue 1 Bystander per villain
   // OR mastermind defeat this turn. Fires on every defeat (both paths) — no mastermind gate.
   if (overwhelmingFirepowerBonus > 0) {

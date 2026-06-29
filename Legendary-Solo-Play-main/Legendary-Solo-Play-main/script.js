@@ -697,7 +697,7 @@ async function resizeCityForScheme(activeSpaceIndices) {
         await new Promise((resolve) => {
           showPopup("Villain Escape", occupant, resolve);
         });
-        await handleVillainEscape(occupant); // pushes to escapedVillainsDeck + increments count once
+        await handleVillainEscape(occupant); // pushes to escapedVillainsDeck + increments count once (skipped for villains that ascend to a Mastermind)
         addHRToTopWithInnerHTML();
       }
       // KO any Location sitting in the destroyed space.
@@ -832,6 +832,14 @@ let totalBystanders = 30;
 let extraCardsDrawnThisTurn = 0;
 let nextTurnsDraw = 6;
 let cardsToBeDrawnNextTurn = [];
+// Secret Wars Vol.1 — Sentinel Territories "alters/changes the future" deferred next-turn effects.
+// Solo: "next player's turn" = the active player's own next turn. Each is consumed + cleared by its
+// turn-start consumer (Colossus → drawVillainCard; Kate Pryde recruit + Rachel attack-delta promote →
+// endTurn tail). A deferred flag with no consumer is a dead effect — keep set/consume sites paired.
+let sentinelSkipVillainNextTurn = 0;     // Colossus of Future Past: skip N villain-card draws next turn (stacks)
+let sentinelRecruitNextTurn = 0;          // Kate Pryde of Future Past: +N Recruit at the start of next turn
+let sentinelVillainAttackDelta = 0;       // Rachel Summers: ±N to ALL villains + Mastermind, active THIS turn
+let sentinelVillainAttackDeltaNextTurn = 0; // Rachel Summers Fight: pending delta promoted to active next turn
 let rescueExtraBystanders = 0;
 let extraThreeRecruitAvailable = 0;
 // War Machine (Revelations) arm-a-turn defeat triggers — paid out in defeatBonuses() on each
@@ -872,6 +880,36 @@ let sewerRooftopDefeats = 0;
 let thingCrimeStopperRescue = false;
 let spiderWomanArachnoRecruit = false;
 let throgRecruit = false;
+// Secret Wars Vol.1 — Phase 3b Heroes per-turn state.
+// Loner (Old Man Logan): +2 Attack provisionally granted on play if no Hero recruited yet; clawed back
+// (both totals) by recruitHeroConfirmed if a Hero is later recruited. lonerAttackApplied = currently
+// applied amount (supports multiple Loners). heroRecruitedThisTurn flips true on any HQ Hero recruit
+// (Sidekicks go through recruitSidekick, so they don't count). Reset in endTurn + initGame.
+let heroRecruitedThisTurn = false;
+let lonerAttackApplied = 0;
+// Enslave the Will (Maximus [TECH]): once armed, every Villain defeat this turn grants a Sidekick
+// (paid in defeatBonuses, mirroring militaryComplexRecruit — catches city/HQ/free-defeats). Reset each turn.
+let maximusEnslaveActive = false;
+// Stalk the Urban Jungle (Black Panther): once armed, every Villain defeated on the Rooftops/Streets
+// this turn offers an optional KO from hand/discard (paid in handlePostDefeat's location-bonus section).
+let blackPantherStalkActive = false;
+// Inhuman Mastery [CABAL] superpower reads this: # of Henchmen the player defeated this turn by ANY
+// means (incremented in the 3 villain post-defeat handlers, so free-defeats count too). Reset each turn.
+let henchmenDefeatedThisTurn = 0;
+// Infiltrate HQ (Apocalyptic Kitty Pryde): the replacement Hero costs 1 less this turn. The discount
+// lives on the card object (card.infiltrateHQCostReduction); these are the cards tagged this turn, so
+// endTurn can clear the flag wherever the card has moved. Reset each turn.
+let infiltrateHQDiscountedCards = [];
+// Secret Wars Vol.1 — Lady Thor "Once per turn, if you made >=6 Recruit this turn" deferred rewards.
+// Per SPEC-Q5 each of the 3 titles fires at most once per turn, independently. *Pending = played
+// before reaching 6 Recruit (paid out in updateGameBoard once 6 is crossed); *Used = already granted
+// this turn (once-per-turn guard). Both reset in endTurn. Consumed in updateGameBoard.
+let ladyThorMysteriousOriginPending = false;
+let ladyThorMysteriousOriginUsed = false;
+let ladyThorChosenByAsgardPending = false;
+let ladyThorChosenByAsgardUsed = false;
+let ladyThorLivingThunderstormPending = false;
+let ladyThorLivingThunderstormUsed = false;
 let bystandersRescuedThisTurn = 0;
 let galactusForceOfEternityDraw = false;
 let galactusDestroyedCityDelay = false;
@@ -891,11 +929,34 @@ let hqExplosion2 = 0;
 let hqExplosion3 = 0;
 let hqExplosion4 = 0;
 let hqExplosion5 = 0;
+// Pan-Dimensional Plague (Secret Wars Vol.1): one entry per HQ slot (0-4, parallel to the `hq` array).
+// Holds the Wound object sitting next to that slot's Hero, or null. Re-seeded each twist (KO old → place
+// one from the Wound Stack next to each occupied slot); resolved at the recruit instant. Reset at game start.
+let hqWound = [null, null, null, null, null];
 let stackedTwistNextToMastermind = 0;
+// Build an Army of Annihilation (Secret Wars Vol.1). Dedicated scheme-owned state — NOT the villain
+// deck and NOT the shared demonGoblinDeck — so the 10-Henchman "Annihilation" army never collides
+// with a real M.O.D.O.K.s villain group or Madelyne's Demon Goblins. `annihilationSupply` = the
+// scheme's off-board KO/reserve pool (M.O.D.O.K. stand-ins not yet placed; seeded to 10 at setup).
+// `annihilationHenchmenNextToMM` = the LIVE count of fightable Henchmen next to the Mastermind (the
+// loss meter: Evil Wins at 10). `annihilationTwistStack` = the escalating "Twists stacked next to the
+// Scheme" count (each twist adds this many MORE Henchmen from the supply, ADDITIVE). A DEDICATED
+// counter, not the shared `stackedTwistNextToMastermind`: that one is read by an unconditional badge
+// render (#stacked-mastermind-cards) that would otherwise show a stray card-back count during this
+// scheme — every other next-to-X mechanic (hydraOfficersNextToScheme, demonGoblinDeck) is dedicated too.
+let annihilationSupply = 0;
+let annihilationHenchmenNextToMM = 0;
+let annihilationTwistStack = 0;
 let popupMinimized = false;
 let deadpoolRare = false;
 let gameIsOver = false;
 let mastermindDefeated = false;
+// Secret Wars Vol.1 — Multiple-Masterminds keystone. The MAIN mastermind keeps the existing
+// single-mastermind flow (DOM radio + getSelectedMastermind + the 4-defeats/Final-Showdown win).
+// Additional masterminds (ascended villains like Apocalyptic Magneto, or scheme-added ones like
+// Dark Alliance) live here as an array of must-kill gates. `mastermindDefeated` (above) means the
+// WHOLE mastermind battle is won = main defeated AND every secondary defeated.
+let secondaryMasterminds = [];
 let alwaysLeadsText = "";
 let moonKnightGoldenAnkhOfKhonshuBystanders = false;
 let moonKnightLunarCommunionKO = 0;
@@ -4253,6 +4314,26 @@ function restructureGoldenHeroDeck() {
   );
 }
 
+// SHARED (Secret Wars Vol.1): stamp `sourceCards` as in-deck Villain copies for a scheme that seeds
+// non-villain cards into the Villain Deck — Corrupt the Next Generation (Sidekicks) and Master of
+// Tyrants (Mastermind Tactics, Phase 3e chunk 2d). Generalises the two inline seeds above (Secret
+// Invasion / Skrull and House of M): type:"Villain" + base attack 0 (the live Attack is supplied by
+// attackFromScheme in the updateVillainAttackValues twins) + skrulled:true (so the four post-defeat
+// handlers SKIP the Victory-Pile push — the card converts via its fightEffect instead of scoring) +
+// originalAttack/originalType captured for the converter, plus a per-scheme `stamp` (its identifying
+// flag, fightEffect, and any overlay). Caller pushes/places the returned copies.
+function stampCardsAsInDeckVillains(sourceCards, stamp = {}) {
+  return sourceCards.map((card) => ({
+    ...card,
+    type: "Villain",
+    attack: 0,
+    originalAttack: card.attack,
+    originalType: card.type,
+    skrulled: true,
+    ...stamp,
+  }));
+}
+
 function generateVillainDeck(
   selectedVillains,
   selectedHenchmen,
@@ -4773,6 +4854,31 @@ if (scheme.name === "Unite the Shards") {
     }
   }
 
+  if (scheme.name === "Corrupt the Next Generation of Heroes") {
+    // Setup: "Add 10 Sidekicks to the Villain Deck." Pull 10 from the Sidekick Stack (sidekickDeck)
+    // and stamp them as in-deck Villains via the shared helper. corruptSidekick drives the dynamic
+    // Attack (2 + Twists, attackFromScheme twins) and the escape/Evil-Wins counters; fightEffect
+    // gainCorruptedSidekick converts a defeated one back to a Sidekick on the TOP of your deck.
+    // The remaining Sidekick Stack stays available for normal recruiting and the Twist "2 enter the
+    // city". Rulings: rules-notes BATCH 8 ③.
+    const sidekicksToSeed = sidekickDeck.splice(0, 10);
+    const stamped = stampCardsAsInDeckVillains(sidekicksToSeed, {
+      corruptSidekick: true,
+      fightEffect: "gainCorruptedSidekick",
+      overlayText: `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SIDEKICK</span>`,
+    });
+    deck.push(...stamped);
+  }
+
+  if (scheme.name === "Master of Tyrants") {
+    // Setup: "Choose 3 other Masterminds, and shuffle their 12 Tactics into the Villain Deck. Those
+    // Tactics are 'Tyrant Villains' with their printed Attack and no abilities." buildMasterOfTyrants
+    // Tyrants (expansionSecretWarsVol1.js) picks 3 distinct eligible Masterminds (excl. the main) and
+    // stamps their 12 Tactics as Tyrant Villains (printed Attack = source MM Attack, VP = the Tactic's
+    // own printed VP, no abilities, isTyrant). Rulings: rules-notes BATCH 8 ⑤.
+    deck.push(...buildMasterOfTyrantsTyrants());
+  }
+
   for (let i = 0; i < 5; i++) {
     deck.push({
       name: "Master Strike",
@@ -4913,6 +5019,33 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   isFirstTurn = true;
   finalBlowDelivered = false;
 
+  // Secret Wars Vol.1 — clear Sentinel Territories deferred next-turn flags per game. They are
+  // normally consumed by their turn-start consumers, but a game ending mid-turn with one pending
+  // would otherwise leak into a new game started without a page reload (cross-game state bleed).
+  sentinelSkipVillainNextTurn = 0;
+  sentinelRecruitNextTurn = 0;
+  sentinelVillainAttackDelta = 0;
+  sentinelVillainAttackDeltaNextTurn = 0;
+
+  // Secret Wars Vol.1 — Phase 3b per-turn flags, cleared per game so a game ending mid-turn with one
+  // set doesn't leak into a new game started without a page reload (same rationale as the sentinels).
+  heroRecruitedThisTurn = false;
+  lonerAttackApplied = 0;
+  maximusEnslaveActive = false;
+  blackPantherStalkActive = false;
+  henchmenDefeatedThisTurn = 0;
+  infiltrateHQDiscountedCards = [];
+
+  // B16 — clear the shared Dark City demonGoblinDeck per game (declared once at module load, only
+  // push/pop'd, never reset elsewhere). A demon-goblin game (Dark City "Transform Citizens Into
+  // Demons" OR a Madelyne Pryor game) ending with goblins still in the pile would otherwise leak
+  // them into the next game started without a page reload — newly surfaced by Madelyne, whose
+  // unfightableWhileDemonGoblins gate would then start a fresh game SPURIOUSLY fight-locked (and
+  // inflate the Dark City scheme's villain attack @ the demonGoblinDeck.length reads). The once-only
+  // initializeDemonGoblinDeck() guard gates only the DOM listener attach, NOT the array — clear it
+  // here (the per-game init path) so it fires on every new game.
+  demonGoblinDeck.length = 0;
+
   // City size per scheme. Schemes may declare a `citySpaces` array (e.g. Earthquake's
   // 7-space "Low Tide" layout); otherwise use the default 5. Set this explicitly every
   // game so a prior 7-space game resets back to 5 — citySize/citySpaces are persistent
@@ -4956,6 +5089,26 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
 
   const mastermind = getSelectedMastermind();
   mastermind.bystanders = [];
+  secondaryMasterminds = []; // clear any secondary Masterminds (ascended Magneto / Dark Alliance) from a prior game
+  hqWound = [null, null, null, null, null]; // clear Pan-Dimensional Plague HQ-slot Wounds from a prior game
+  // Clear the escaped-villains state per game. These globals were previously only initialised at module
+  // load (declarations), never in initGame — so a second game in the same page session (no reload)
+  // inherited the prior game's escaped cards. Newly load-bearing for Secret Wars Vol.1, whose
+  // flag-filtered end-game checks read escapedVillainsDeck directly (Corrupt = 4 escaped Sidekicks,
+  // Master of Tyrants = 5 escaped Tyrants); stale carry-over would spuriously inflate those counters.
+  // (Base-engine bug, fixed here as cheap insurance; reported separately. B7/B12/B16 cross-game-leak pattern.)
+  escapedVillainsDeck = [];
+  escapedVillainsCount = 0;
+  // Reset the shared escalating "twists stacked next to the Mastermind" counter per game. It was
+  // previously only initialised at module load, so a second game in the same session inherited the
+  // prior game's value — a latent cross-game leak affecting Capture Baby Hope / FF / GotG schemes.
+  // (Base-engine bug, fixed here as cheap one-line insurance; reported separately. Build an Army uses
+  // its OWN counter below, so this reset is not load-bearing for it.)
+  stackedTwistNextToMastermind = 0;
+  // Build an Army of Annihilation (Secret Wars Vol.1): reset + seed the scheme-owned 10-Henchman army.
+  annihilationHenchmenNextToMM = 0;
+  annihilationTwistStack = 0;
+  annihilationSupply = scheme.name === "Build an Army of Annihilation" ? 10 : 0;
   const mastermindDeck = generateMastermindDeck(mastermind);
 
   const mastermindCell = document.getElementById("mastermind");
@@ -5190,7 +5343,11 @@ function refillHQSlot(index) {
   }
   const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
   hq[index] = newCard;
-  if (!newCard) showHeroDeckEmptyPopup();
+  // B12 guard: showHeroDeckEmptyPopup is never defined anywhere (a latent ReferenceError that
+  // crashed every What If? HQ refill on an empty Hero Deck — M.O.D.O.K.s/Ghost Racers HQ-KO,
+  // Infiltrate HQ, Nimrod Scatter, base refills). The slot is already correctly left empty above
+  // (no card to draw); only the missing notification call crashed. typeof-guard it.
+  if (!newCard && typeof showHeroDeckEmptyPopup === "function") showHeroDeckEmptyPopup();
   return newCard;
 }
 
@@ -5258,6 +5415,10 @@ async function drawVillainCard() {
       }
     }
 
+    // Secret Wars Vol.1 — Colossus of Future Past: "Don't play a Villain card at the beginning of
+    // next turn." Reduce this round's villain draws by the pending skip count (stacks if fought twice).
+    villainDrawCount = applySentinelVillainDrawSkip(villainDrawCount);
+
     // Step 4: Draw villain cards
     for (let i = 0; i < villainDrawCount; i++) {
       await processVillainCard();
@@ -5274,13 +5435,35 @@ async function drawVillainCard() {
       }
     }
 
-    const drawCount = isFirstTurn ? 3 : 1;
+    let drawCount = isFirstTurn ? 3 : 1;
     isFirstTurn = false;
+
+    // Secret Wars Vol.1 — Colossus of Future Past: skip N villain cards next turn (see Golden branch).
+    drawCount = applySentinelVillainDrawSkip(drawCount);
 
     for (let i = 0; i < drawCount; i++) {
       await processVillainCard();
     }
   }
+}
+
+// Secret Wars Vol.1 — Colossus of Future Past consumer. Returns the reduced villain-draw count and
+// consumes (clears) the pending skip. Clamped at 0 (never negative). Mode-agnostic — called from both
+// the Golden Solo (2/round) and What If? Solo (1/turn) branches of drawVillainCard(). Solo "next
+// player's turn" = the active player's own next turn (rules-notes SPEC-Q2).
+function applySentinelVillainDrawSkip(count) {
+  if (sentinelSkipVillainNextTurn > 0) {
+    const reduced = Math.max(0, count - sentinelSkipVillainNextTurn);
+    const skipped = count - reduced;
+    if (skipped > 0) {
+      onscreenConsole.log(
+        `<span class="console-highlights">Colossus of Future Past</span> changed the future — ${skipped} fewer Villain card${skipped !== 1 ? "s" : ""} ${skipped !== 1 ? "are" : "is"} played this turn.`,
+      );
+    }
+    sentinelSkipVillainNextTurn = 0; // consume
+    return reduced;
+  }
+  return count;
 }
 
 // ---------------------------------
@@ -5836,8 +6019,27 @@ function handleMasterStrike(masterStrikeCard) {
       return;
     }
 
-    // Then always handle the Master Strike effect
-    await handleMasterStrikeEffect(masterStrikeCard);
+    // Multiple Masterminds: fire the MAIN mastermind's Master Strike (only if it isn't yet
+    // defeated), then each undefeated secondary mastermind's Master Strike in turn. In solo the
+    // active player resolves them sequentially ("pick order" is moot with one of each in scope).
+    const mainMM = getSelectedMastermind();
+    if (!isMastermindDefeated(mainMM)) {
+      await handleMasterStrikeEffect(masterStrikeCard);
+    } else {
+      // Main already defeated but a secondary keeps the battle going — the strike card is still
+      // KO'd here; a defeated main fires nothing.
+      playSFX("master-strike");
+      koPile.push(masterStrikeCard);
+      onscreenConsole.log(
+        `<span class="console-highlights">Master Strike!</span> <span class="console-highlights">${mainMM.name}</span> is already defeated — no effect from them.`,
+      );
+    }
+
+    for (const sm of secondaryMasterminds) {
+      if (!sm.defeated && sm.masterStrike) {
+        await fireSecondaryMasterStrike(sm);
+      }
+    }
 
     const incomingDetectors = playerArtifacts.filter((card) => card.name === "Rocket Raccoon - Incoming Detector");
 for (let i = 0; i < incomingDetectors.length; i++) {
@@ -6106,8 +6308,18 @@ function handleVillainEscape(escapedVillain) {
 
 
   if (escapedVillain) {
-    // If the villain has bystanders attached, move them as well
-    if (escapedVillain.bystander && escapedVillain.bystander.length > 0) {
+    // Finding C (ruling 2026-06-23; rules-notes BATCH 7 Q-C — inference, no printed rule): an ascending
+    // Mastermind KEEPS its captured Bystanders — ascension isn't escape, so nothing it holds escapes
+    // with it; they are rescued on its defeat. For an ascending villain we therefore SKIP the
+    // bystander -> escapedVillainsDeck push; the Bystanders ride on escapedVillain.bystander and are
+    // transferred onto the new secondary Mastermind by ascendToMastermind (which then rescues them via
+    // defeatSecondaryMastermind). Plutonium/XCutioner pushes below stay interim-safe — no in-scope
+    // ascending villain captures those.
+    if (
+      !escapedVillain.ascendsToMastermind &&
+      escapedVillain.bystander &&
+      escapedVillain.bystander.length > 0
+    ) {
       escapedVillain.bystander.forEach((bystander) => {
         escapedVillainsDeck.push(bystander);
         onscreenConsole.log(
@@ -6152,13 +6364,20 @@ function handleVillainEscape(escapedVillain) {
   escapedVillain.ambushEffect = "organizedCrimeAmbush";
 }
 
-    // Move the villain itself to the Escaped Villains deck
-    escapedVillainsDeck.push(escapedVillain);
-    escapedVillainsCount++; // Increment the count of escaped villains
+    // Reasoned interpretation (Secret Wars Vol.1, Apocalyptic Magneto): a villain that ascends to a
+    // Mastermind on Escape does NOT count as an escaped villain. It transforms into a board-present
+    // threat (a new must-defeat Mastermind via its escapeEffect), it doesn't get away — so it must
+    // not feed escapedVillainsCount, which drives real escape-loss conditions. Skip the deck push +
+    // count for ascending villains; the escapeEffect (ascension) still runs in handleVillainEscapeActions.
+    if (!escapedVillain.ascendsToMastermind) {
+      // Move the villain itself to the Escaped Villains deck
+      escapedVillainsDeck.push(escapedVillain);
+      escapedVillainsCount++; // Increment the count of escaped villains
 
-    onscreenConsole.log(
-      `<span class="console-highlights">${escapedVillain.name}</span> has escaped.`,
-    );
+      onscreenConsole.log(
+        `<span class="console-highlights">${escapedVillain.name}</span> has escaped.`,
+      );
+    }
 
     // Call the function to handle KO action and discard action, and return its promise
     return handleVillainEscapeActions(escapedVillain).then(() => {
@@ -6179,7 +6398,10 @@ function handleVillainEscapeActions(escapedVillain) {
   };
 
   const handleDiscard = () => {
-    if (escapedVillain.bystander?.length > 0) {
+    // Finding C: a villain that ASCENDS to a Mastermind doesn't carry its Bystander away (ascension
+    // isn't escape — it's kept and rescued on defeat), so the carried-away discard penalty must NOT
+    // fire. Suppress it for ascending villains; the Bystander rides into ascendToMastermind.
+    if (!escapedVillain.ascendsToMastermind && escapedVillain.bystander?.length > 0) {
       return showDiscardCardPopup(escapedVillain);
     }
     return Promise.resolve();
@@ -7576,11 +7798,15 @@ function updateHighlights() {
     bystandersInVP.length >= schemeTwistCount;
 
   // Final gate: can attack if we can pay AND scheme allows AND there is either a tactic to fight or a Final Blow pending
+  // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
+  // Madelyne Demon-Goblin gate (isMastermindDemonGoblinLocked) suppresses it while any Demon Goblin remains.
   const canAttackMastermind =
     !mastermindTrulyDefeated &&
     canAttack &&
     weaveCondOk &&
-    (hasTacticsRemaining || finalBlowNeeded);
+    (hasTacticsRemaining || finalBlowNeeded) &&
+    !isMastermindRecruitLocked() &&
+    !isMastermindDemonGoblinLocked();
 
   // Toggle highlight
   const mmEl = document.getElementById("mastermind");
@@ -7833,11 +8059,15 @@ function updateHighlights() {
     bystandersInVP.length >= schemeTwistCount;
 
   // Final gate: can attack if we can pay AND scheme allows AND there is either a tactic to fight or a Final Blow pending
+  // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
+  // Madelyne Demon-Goblin gate (isMastermindDemonGoblinLocked) suppresses it while any Demon Goblin remains.
   const canAttackMastermind =
     !mastermindTrulyDefeated &&
     canAttack &&
     weaveCondOk &&
-    (hasTacticsRemaining || finalBlowNeeded);
+    (hasTacticsRemaining || finalBlowNeeded) &&
+    !isMastermindRecruitLocked() &&
+    !isMastermindDemonGoblinLocked();
 
   // Toggle highlight
   const mmEl = document.getElementById("mastermind");
@@ -8039,11 +8269,15 @@ function updateHighlightsNegativeZone() {
   const mastermindDefeatedNZ = isMastermindDefeated(mastermind);
 
   // Final gate: can pay, scheme ok, and either tactics remain or a Final Blow is pending
+  // Nimrod recruit-gate (isMastermindRecruitLocked) also suppresses the highlight until ≥N Recruit generated.
+  // Madelyne Demon-Goblin gate (isMastermindDemonGoblinLocked) suppresses it while any Demon Goblin remains.
   const canAttackMastermindNZ =
     !mastermindDefeatedNZ &&
     canPayAndAttack &&
     weaveOkNZ &&
-    (hasTacticsRemainingNZ || finalBlowNeededNZ);
+    (hasTacticsRemainingNZ || finalBlowNeededNZ) &&
+    !isMastermindRecruitLocked() &&
+    !isMastermindDemonGoblinLocked();
 
   // Update UI
   const mmElNZ = document.getElementById("mastermind");
@@ -8171,6 +8405,35 @@ totalAttackPoints += 2;
 cumulativeAttackPoints += 2;
 throgRecruit = false;
 }
+
+  // Secret Wars Vol.1 — Lady Thor deferred >=6-Recruit rewards (paid once 6 Recruit is crossed).
+  // Flags cleared BEFORE granting so drawCard()'s re-entrant updateGameBoard can't double-fire.
+  if (ladyThorChosenByAsgardPending && cumulativeRecruitPoints >= 6) {
+    ladyThorChosenByAsgardPending = false;
+    ladyThorChosenByAsgardUsed = true;
+    onscreenConsole.log(
+      `You have made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn — <span class="console-highlights">Chosen by Asgard</span>: +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 2;
+    cumulativeAttackPoints += 2;
+  }
+  if (ladyThorLivingThunderstormPending && cumulativeRecruitPoints >= 6) {
+    ladyThorLivingThunderstormPending = false;
+    ladyThorLivingThunderstormUsed = true;
+    onscreenConsole.log(
+      `You have made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn — <span class="console-highlights">Living Thunderstorm</span>: +6<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+    totalAttackPoints += 6;
+    cumulativeAttackPoints += 6;
+  }
+  if (ladyThorMysteriousOriginPending && cumulativeRecruitPoints >= 6) {
+    ladyThorMysteriousOriginPending = false;
+    ladyThorMysteriousOriginUsed = true;
+    onscreenConsole.log(
+      `You have made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn — <span class="console-highlights">Mysterious Origin</span>: draw a card.`,
+    );
+    drawCard();
+  }
 
   if (playerArtifacts.some(card => card.artifactAbilityUsed !== true)) {
   document.getElementById('artifact-deck-image').style.animation = "pulseGlowArtifact 2s infinite ease-in-out";
@@ -8423,6 +8686,14 @@ if (stackedTwistNextToMastermind > 0) {
     }
   }
 
+  // Pan-Dimensional Plague: show the Wound token next to any HQ slot currently holding a Wound.
+  // hqWound is only ever populated under this scheme, so a truthy entry alone drives the display.
+  for (let i = 1; i <= 5; i++) {
+    const woundToken = document.getElementById(`hq-${i}-wound`);
+    if (!woundToken) continue;
+    woundToken.style.display = hqWound[i - 1] ? "block" : "none";
+  }
+
   updateDeckCounts();
   toggleArtifactsDeck();
   updateReserveAttackAndRecruit();
@@ -8586,6 +8857,30 @@ if (stackedTwistNextToMastermind > 0) {
       }
     } else {
       console.warn("demon-goblin-deck element not found");
+    }
+
+    // Build an Army of Annihilation (Secret Wars Vol.1) — Annihilation Henchmen next to the Mastermind.
+    // Count-badge mirroring #demon-goblin-deck / #hydra-officer-deck. Clicking the badge fights one
+    // (pay 3 Attack → defeat → Victory Pile). Shown whenever any are next to the Mastermind.
+    const annihilationArmyImage = document.getElementById("annihilation-army-deck");
+    const annihilationArmyCount = document.getElementById("annihilation-army-count");
+    if (annihilationArmyImage && annihilationArmyCount) {
+      if (annihilationHenchmenNextToMM > 0) {
+        annihilationArmyImage.style.display = "flex";
+        annihilationArmyCount.textContent = `${annihilationHenchmenNextToMM}`;
+        if (!annihilationArmyImage.dataset.clickBound) {
+          annihilationArmyImage.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (typeof showAnnihilationHenchmanFightPrompt === "function") {
+              showAnnihilationHenchmanFightPrompt();
+            }
+          });
+          annihilationArmyImage.dataset.clickBound = "true";
+        }
+      } else {
+        annihilationArmyImage.style.display = "none";
+        annihilationArmyCount.textContent = ``;
+      }
     }
 
     // HYDRA — S.H.I.E.L.D. Officers stacked next to the Scheme (PT-3). Reuses the scheme-cell
@@ -8957,6 +9252,7 @@ if (stackedTwistNextToMastermind > 0) {
       }
 
       updateMastermindOverlay();
+      updateSecondaryMastermindSlot(); // Multiple Masterminds: render the 2nd mastermind board slot
 
       const mastermind = getSelectedMastermind();
       const mastermindContainer = document.getElementById("mastermind");
@@ -9289,6 +9585,11 @@ if (stackedTwistNextToMastermind > 0) {
     newCityCell.classList.add("city-cell");
   }
 
+  // Render the secondary-Mastermind slot UNCONDITIONALLY (not only inside the per-city-cell loop
+  // above, which is skipped when the city is empty). A 2nd Mastermind can appear while the city has
+  // no cards (e.g. Dark Alliance's Twist 1 on an empty board), and must still show/refresh its slot.
+  updateSecondaryMastermindSlot();
+
   updateEvilWinsTracker();
 
   if (lastTurn && !lastTurnMessageShown) {
@@ -9378,6 +9679,15 @@ if (selectedSchemeEndGame) {
           }
           break;
 
+        case "darkAllianceTwist7":
+          if (twistCount >= 7) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `The Dark Alliance is sealed. ${mastermind.name} and a second Mastermind now rule unopposed. All hope is lost.`;
+            showDefeatPopup();
+          }
+          break;
+
         case "5Killbots":
           if (escapedKillbotsCount >= 5) {
             finalTwist = true;
@@ -9410,6 +9720,70 @@ if (selectedSchemeEndGame) {
             finalTwist = true;
             document.getElementById("defeat-context").innerHTML =
               `The Wound stack has run out. Too many have fallen to the Legacy Virus, and mutantkind faces extinction. ${mastermind.name} has won.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "plagueWoundStackOut":
+          // Pan-Dimensional Plague (Secret Wars Vol.1): Evil Wins when the Wound Stack runs out.
+          // Plain-prose defeat text (no HTML markup) → textContent (XSS-safe, renders identically).
+          if (woundDeck.length === 0) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `The Wound Stack has run out. The pan-dimensional plague has spread unchecked and the Heroes have no strength left to give. ${mastermind.name} has won.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "crush8MasterStrikes":
+          // Crush Them With My Bare Hands (Secret Wars Vol.1): Evil Wins when 8 Master Strikes have
+          // taken effect — counting BOTH the scheme's twist-driven strikes and natural villain-deck
+          // Master Strike cards (all land in koPile as type "Master Strike"). One event = 1 toward 8
+          // even under multiple Masterminds (rules-notes BATCH 8 ① / SPEC-Q3).
+          if (
+            koPile.filter((card) => card.type === "Master Strike").length >= 8
+          ) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Eight Master Strikes have landed. ${mastermind.name} has crushed the Heroes with their bare hands. All hope is lost.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "corrupt4SidekicksEscape":
+          // Corrupt the Next Generation (Secret Wars Vol.1): Evil Wins when 4 Sidekicks escape.
+          // Escaped Sidekick-Villains carry the corruptSidekick flag into escapedVillainsDeck.
+          if (
+            escapedVillainsDeck.filter((card) => card.corruptSidekick).length >= 4
+          ) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Four corrupted Sidekicks have escaped to spread ${mastermind.name}'s influence through the next generation of heroes. All hope is lost.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "annihilation10Henchmen":
+          // Build an Army of Annihilation (Secret Wars Vol.1): Evil Wins when 10 Annihilation
+          // Henchmen are simultaneously next to the Mastermind. This is a LIVE board count
+          // (annihilationHenchmenNextToMM), NOT the twist-stack size — defeating Henchmen lowers it,
+          // each twist adds more (additive). Rules-notes BATCH 8 ④.
+          if (annihilationHenchmenNextToMM >= 10) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Ten Annihilation Henchmen now stand beside ${mastermind.name}. The Annihilation Wave is unstoppable and Earth's defenders are overrun. All hope is lost.`;
+            showDefeatPopup();
+          }
+          break;
+
+        case "tyrants5Escape":
+          // Master of Tyrants (Secret Wars Vol.1): Evil Wins when 5 Tyrant Villains escape (Twist 8
+          // escape-all OR normal city overflow — any escape counts; isTyrant rides into the escape
+          // pile). Rules-notes BATCH 8 ⑤.
+          if (escapedVillainsDeck.filter((card) => card.isTyrant).length >= 5) {
+            finalTwist = true;
+            document.getElementById("defeat-context").textContent =
+              `Five Tyrant Villains have escaped to serve ${mastermind.name}. With an army of tyrants at their command, the conquest of Earth is assured. All hope is lost.`;
             showDefeatPopup();
           }
           break;
@@ -10305,8 +10679,14 @@ function updateVillainAttackValues(villain, i) {
 
   if (
     scheme.name === "Portals to the Dark Dimension" &&
+    i >= 0 &&
     currentPermBuff !== 0
   ) {
+    // Off-grid guard: i < 0 means this card is not in city[] (e.g. a deck-top card recalculated by
+    // recalculateVillainAttack via Dr. Strange "Fight the Future"). cityPermBuff[-1] is undefined, and
+    // `undefined !== 0` would assign attackFromScheme = undefined → NaN effective Attack/fight-cost.
+    // An off-grid card has no city-position perm-buff anyway, so skip the branch and leave the
+    // initialised 0 (line above) → always a finite numeric attack. (M4 / E-9.)
     villain.attackFromScheme = currentPermBuff;
   }
 
@@ -10339,6 +10719,17 @@ function updateVillainAttackValues(villain, i) {
       villain.cost + (scheme.endGame === "noMoreMutantsEvilWins" ? 4 : 3);
   }
 
+  // Corrupt the Next Generation: every seeded/entered Sidekick-Villain has Attack = 2 + the number
+  // of Twists stacked next to this Scheme (= koPile Scheme-Twist count). Dynamic — re-derived live so
+  // it rises as Twists accrue. Keep identical in both attack-value twins (duplicate-fn hazard).
+  if (
+    scheme.name === "Corrupt the Next Generation of Heroes" &&
+    villain.corruptSidekick === true
+  ) {
+    villain.attackFromScheme =
+      2 + koPile.filter((c) => c.type === "Scheme Twist").length;
+  }
+
   if (
     scheme.name === `Steal the Weaponized Plutonium` &&
     villain.plutoniumCaptured &&
@@ -10367,6 +10758,14 @@ function updateVillainAttackValues(villain, i) {
     villain.team === "Sinister Six"
   ) {
     villain.attackFromScheme = 3;
+  }
+
+  // Master of Tyrants (Secret Wars Vol.1): a Tyrant Villain's base Attack (villain.attack = its source
+  // Mastermind's printed Attack) is boosted +2 per Dark Power Twist stacked under it (cumulative). Keep
+  // identical in updateHQVillainAttackValues (duplicate-fn hazard) — Tyrants are city-only, so the HQ
+  // twin branch is defensive parity. Rulings: rules-notes BATCH 8 ⑤.
+  if (scheme.name === "Master of Tyrants" && villain.isTyrant === true) {
+    villain.attackFromScheme = (villain.darkPower || 0) * 2;
   }
 
   //Attack from Villain Effects - (Skrulls handled within function)
@@ -10491,6 +10890,11 @@ if (villain.shards && villain.shards > 0 && !villain.noShardBonus) {
 } else {
   villain.attackFromShards = 0;
 }
+
+  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack to ALL villains. Added to the
+  // attackFromScheme bucket (after all scheme assignments) so BOTH the attack-number overlay and the
+  // recalculate cost-sum read it consistently. += (not =) preserves any scheme-set value.
+  villain.attackFromScheme += sentinelVillainAttackDelta;
 }
 
 function recalculateHQVillainAttack(villainCard) {
@@ -10614,6 +11018,17 @@ function updateHQVillainAttackValues(villain) {
       villain.cost + (scheme.endGame === "noMoreMutantsEvilWins" ? 4 : 3);
   }
 
+  // Corrupt the Next Generation: every seeded/entered Sidekick-Villain has Attack = 2 + the number
+  // of Twists stacked next to this Scheme (= koPile Scheme-Twist count). Dynamic — re-derived live so
+  // it rises as Twists accrue. Keep identical in both attack-value twins (duplicate-fn hazard).
+  if (
+    scheme.name === "Corrupt the Next Generation of Heroes" &&
+    villain.corruptSidekick === true
+  ) {
+    villain.attackFromScheme =
+      2 + koPile.filter((c) => c.type === "Scheme Twist").length;
+  }
+
   if (
     scheme.name === `Steal the Weaponized Plutonium` &&
     villain.plutoniumCaptured &&
@@ -10642,6 +11057,13 @@ function updateHQVillainAttackValues(villain) {
     villain.team === "Sinister Six"
   ) {
     villain.attackFromScheme = 3;
+  }
+
+  // Master of Tyrants (Secret Wars Vol.1): Dark Power +2/stack on a Tyrant — twin of the city branch
+  // in updateVillainAttackValues. Tyrants are city-only so this never fires in practice, but kept for
+  // duplicate-fn parity. Rulings: rules-notes BATCH 8 ⑤.
+  if (scheme.name === "Master of Tyrants" && villain.isTyrant === true) {
+    villain.attackFromScheme = (villain.darkPower || 0) * 2;
   }
 
   //Attack from Villain Effects - (Skrulls handled within function)
@@ -10751,6 +11173,10 @@ if (villain.shards && villain.shards > 0 && !villain.noShardBonus) {
 } else {
   villain.attackFromShards = 0;
 }
+
+  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack to ALL villains (HQ twin of
+  // updateVillainAttackValues — keep in sync). attackFromScheme bucket feeds overlay + cost-sum.
+  villain.attackFromScheme += sentinelVillainAttackDelta;
 }
 
 document.getElementById("play-all-button").addEventListener("click", () => {
@@ -10862,6 +11288,32 @@ function updateEvilWinsTracker() {
 
     case "Portals to the Dark Dimension":
       evilWinsText.innerHTML = `${twistCount}/7 Portals Opened`;
+      break;
+
+    case "Dark Alliance":
+      evilWinsText.innerHTML = `${twistCount}/7 Twists`;
+      break;
+
+    case "Crush Them With My Bare Hands":
+      evilWinsText.innerHTML = `${koPile.filter((card) => card.type === "Master Strike").length}/8 Master Strikes`;
+      break;
+
+    case "Pan-Dimensional Plague":
+      evilWinsText.innerHTML = `${woundDeck.length} ${woundDeck.length === 1 ? "Wound" : "Wounds"} left`;
+      break;
+
+    case "Corrupt the Next Generation of Heroes":
+      evilWinsText.innerHTML = `${escapedVillainsDeck.filter((card) => card.corruptSidekick).length}/4 Sidekicks Escaped`;
+      break;
+
+    case "Build an Army of Annihilation":
+      // Plain-text counter (no markup) → textContent (XSS-safe, renders identically to the innerHTML siblings).
+      evilWinsText.textContent = `${annihilationHenchmenNextToMM}/10 Henchmen Next to Mastermind`;
+      break;
+
+    case "Master of Tyrants":
+      // Plain-text counter (no markup) → textContent (XSS-safe). Counts escaped Tyrant Villains.
+      evilWinsText.textContent = `${escapedVillainsDeck.filter((card) => card.isTyrant).length}/5 Tyrant Villains Escaped`;
       break;
 
     case "Replace Earth's Leaders with Killbots":
@@ -11686,6 +12138,26 @@ if (card.temporaryTeleport === true) {
   thingCrimeStopperRescue = false;
   spiderWomanArachnoRecruit = false;
   throgRecruit = false;
+  // Secret Wars Vol.1 — Phase 3b per-turn flags. Loner (do NOT pre-claw lonerAttackApplied here — the
+  // points already reset to 0 above; just clear the trackers), Enslave/Stalk listeners, henchman tally.
+  heroRecruitedThisTurn = false;
+  lonerAttackApplied = 0;
+  maximusEnslaveActive = false;
+  blackPantherStalkActive = false;
+  henchmenDefeatedThisTurn = 0;
+  // Infiltrate HQ — strip the per-card cost discount wherever the tagged card has moved (HQ / deck /
+  // discard), then clear the tracker for the new turn.
+  infiltrateHQDiscountedCards.forEach((c) => {
+    if (c) delete c.infiltrateHQCostReduction;
+  });
+  infiltrateHQDiscountedCards = [];
+  // Secret Wars Vol.1 — Lady Thor once-per-turn / deferred >=6-Recruit reward flags.
+  ladyThorMysteriousOriginPending = false;
+  ladyThorMysteriousOriginUsed = false;
+  ladyThorChosenByAsgardPending = false;
+  ladyThorChosenByAsgardUsed = false;
+  ladyThorLivingThunderstormPending = false;
+  ladyThorLivingThunderstormUsed = false;
   bystandersRescuedThisTurn = 0;
   mastermindCosmicThreatResolved = false;
   galactusDestroyedCityDelay = false;
@@ -11722,6 +12194,15 @@ if (card.temporaryTeleport === true) {
     if (card.temporaryTeleport === true) {
       delete card.temporaryTeleport;
       card.keyword3 = "None";
+      // Strip the temporary "Teleport" keyword granted THIS turn (Azazel / Inferno Nightcrawler
+      // pattern) so a granted-but-unplayed hand card doesn't keep Teleport permanently — play-time
+      // eligibility reads card.keywords (script.js:11288). Mirrors the cardsPlayedThisTurn cleanup
+      // (~script.js:11620). Gated to temporaryTeleport cards only, so innate-Teleport cards are
+      // untouched (grant logic never sets temporaryTeleport on a card that already has Teleport).
+      // SWV1 Finding D / base-game-bug-audit B7.
+      if (card.keywords && Array.isArray(card.keywords)) {
+        card.keywords = card.keywords.filter((keyword) => keyword !== "Teleport");
+      }
     }
   });
 
@@ -11806,6 +12287,23 @@ if (card.temporaryTeleport === true) {
   playerHand.forEach((c) => cardsInHandThisTurn.add(c));
 
   sortPlayerCards();
+
+  // Secret Wars Vol.1 — Sentinel Territories deferred next-turn consumers (turn-start payout).
+  // Kate Pryde of Future Past: pay out the scheduled +N Recruit now (start of this new turn).
+  // Twin rule: update BOTH the current-turn total AND the Final-Showdown cumulative total.
+  if (sentinelRecruitNextTurn > 0) {
+    totalRecruitPoints += sentinelRecruitNextTurn;
+    cumulativeRecruitPoints += sentinelRecruitNextTurn;
+    onscreenConsole.log(
+      `<span class="console-highlights">Kate Pryde of Future Past</span> altered the future — you start this turn with +${sentinelRecruitNextTurn}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
+    );
+    sentinelRecruitNextTurn = 0; // consume
+  }
+  // Rachel Summers of Future Past: the active delta from the turn just ending expires; promote any
+  // pending Fight (-N next turn) delta into the active slot for the turn now beginning. A Rachel Escape
+  // resolving during the villain draw below (+N this turn) then stacks on top of this promoted value.
+  sentinelVillainAttackDelta = sentinelVillainAttackDeltaNextTurn;
+  sentinelVillainAttackDeltaNextTurn = 0;
 
   healingPossible = true;
   updateGameBoard();
@@ -12892,6 +13390,12 @@ function createVillainCopy(villainCard) {
     keywords: villainCard.keywords,
     image: villainCard.image,
     originalAttack: villainCard.originalAttack,
+    // Corrupt the Next Generation (Secret Wars Vol.1): a defeated Sidekick-Villain is converted back
+    // to a Sidekick on the fight COPY (gainCorruptedSidekick) and gained to the deck top, so the copy
+    // must carry the Sidekick identity — secondaryType ("Sidekick", drives the Twist "return a
+    // Sidekick from discard" lookup and sidekick play) and originalType (restored as the card's type).
+    secondaryType: villainCard.secondaryType,
+    originalType: villainCard.originalType,
     bystander: [...(villainCard.bystander || [])],
     fightEffect: villainCard.fightEffect,
     shattered: villainCard.shattered,
@@ -12909,7 +13413,17 @@ function createVillainCopy(villainCard) {
     // fight-effect can show "Dr. Calvin Zabo" vs "Mister Hyde". Captured from the last render
     // (correct — position can't change between render and the defeat click). NOT mutated onto
     // card.name (that is the findIndex identity key and would corrupt lookups).
-    usesRecruitToFight: villainCard.usesRecruitToFight
+    usesRecruitToFight: villainCard.usesRecruitToFight,
+    // Secret Wars Vol.1 — Multiple Masterminds: ascension config (e.g. Apocalyptic Magneto) must
+    // survive the fight copy so the Escape handler can read it when the villain leaves the city.
+    ascendsToMastermind: villainCard.ascendsToMastermind,
+    // Secret Wars Vol.1 — Villains/Henchmen gained as Heroes (Manhattan Earth-1610, Thor Corps):
+    // the gain-as-Hero converter runs on the fight COPY, so the flag must survive the copy.
+    gainAsHero: villainCard.gainAsHero,
+    // Secret Wars Vol.1 — Master of Tyrants: a Tyrant Villain's identity flag and its Dark Power token
+    // count (+2 Attack each) must survive the fight copy so attack-value reads on the copy stay correct.
+    isTyrant: villainCard.isTyrant,
+    darkPower: villainCard.darkPower
   };
 }
 
@@ -12955,8 +13469,29 @@ async function collectDefeatOperations(villainCopy, villainCard) {
             if (typeof promptNegateFightEffectWithMrFantastic === "function") {
               negate = await promptNegateFightEffectWithMrFantastic(villainCopy, villainCard);
             }
+            // Untouchable (Secret Wars Vol.1): reactive from-hand cancel of a Villain Fight effect,
+            // offered only if not already negated by Mr. Fantastic. No-op (no prompt) unless the player
+            // holds Untouchable in hand. Cancels the Fight effect only — the Villain is still defeated
+            // and pushed to the Victory Pile by the caller (same as the Mr. Fantastic negate).
+            if (!negate && typeof offerUntouchableCancel === "function") {
+              negate = await offerUntouchableCancel(villainCopy.name);
+            }
             if (!negate) {
               await fightEffectFunction(villainCopy);
+            } else if (villainCard.gainAsHero || villainCard.corruptSidekick) {
+              // Q8 (rules-notes/secret-wars-vol1.md): cancelling a Secret Wars Vol.1 CONVERTER's Fight
+              // effect — "Fight: Gain this as a Hero" (Manhattan/Thor Corps, flag gainAsHero) or the
+              // Corrupt the Next Generation Sidekick-Villain's gain-to-deck (flag corruptSidekick) — via
+              // Mr. Fantastic OR Untouchable cancels ONLY the Fight effect; the DEFEAT still stands
+              // (Core p.13: defeat -> Victory Pile is a step SEPARATE from the Fight effect). Without the
+              // gain firing, the route-away flags (gainAsHero/skrulled) would make the standard
+              // post-defeat VP-push (handlePostDefeat / handleHQPostDefeat) skip the card and it would
+              // vanish (no gain, no VP). Clear them so the card lands in the Victory Pile at its printed
+              // VP, like any normally-defeated Villain. Gated on the SWV1-specific markers, NOT the shared
+              // `skrulled` flag — other skrulled mechanics (Skrull Shapeshifters unskrull, House of M
+              // gainScarletWitchAsHero) are out of Q8 scope and keep their existing cancel behavior.
+              villainCard.gainAsHero = false;
+              villainCard.skrulled = false;
             }
             updateGameBoard(); // Force UI update
             resolve();
@@ -13357,7 +13892,9 @@ async function handlePostDefeat(
       }
     } else {
       try {
-        if (!villainCard.skrulled && villainCard.team !== "Infinity Gems") {
+        // Secret Wars Vol.1: gainAsHero villains (Manhattan Earth-1610, Thor Corps) skip the
+        // Victory-Pile push — their fightEffect converter routes them to the discard pile as a Hero.
+        if (!villainCard.skrulled && !villainCard.gainAsHero && villainCard.team !== "Infinity Gems") {
           victoryPile.push(villainCard);
           onscreenConsole.log(
             `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
@@ -13452,6 +13989,22 @@ async function handlePostDefeat(
           await moonKnightGoldenAnkhOfKhonshuBystanderCalculation(villainCard);
         } else {
           console.error("moonKnightGoldenAnkhOfKhonshuBystanderCalculation function not found!");
+        }
+      }
+
+      // Secret Wars Vol.1 "Stalk the Urban Jungle" (Black Panther): once armed this turn, each Villain
+      // defeated on the Rooftops or Streets lets the player optionally KO a card from hand or discard.
+      // Spaces resolved by LABEL (resize-safe), unlike the legacy hardcoded indices above.
+      if (blackPantherStalkActive && typeof koOneFromHandOrDiscard === 'function') {
+        const rooftopsIdx = citySpaceLabels.indexOf("The Rooftops");
+        const streetsIdx = citySpaceLabels.indexOf("The Streets");
+        if (cityIndex === rooftopsIdx || cityIndex === streetsIdx) {
+          onscreenConsole.log(
+            `You defeated <span class="console-highlights">${villainCard.name}</span> on the ${cityIndex === rooftopsIdx ? "Rooftops" : "Streets"} — <span class="console-highlights">Stalk the Urban Jungle</span> lets you KO a card.`,
+          );
+          await koOneFromHandOrDiscard(
+            "Stalk the Urban Jungle: you may KO a card from your hand or discard pile.",
+          );
         }
       }
     } catch (error) {
@@ -13566,6 +14119,10 @@ async function handlePostDefeat(
         console.error("Error clearing bystander array:", error);
       }
     }
+
+    // Secret Wars Vol.1 — Inhuman Mastery [CABAL] tally: count Henchmen defeated this turn by ANY means
+    // (city / HQ / free-defeat all funnel through these handlers).
+    if (villainCard && villainCard.subtype === "Henchman") henchmenDefeatedThisTurn++;
 
     // 20. Final cleanup
     try {
@@ -13764,7 +14321,8 @@ async function handleHQPostDefeat(
     }
 
     // 8. Non-burrowing villain defeat
-    if (!villainCard.skrulled) {
+    // Secret Wars Vol.1: gainAsHero villains skip the Victory-Pile push (gained as Heroes).
+    if (!villainCard.skrulled && !villainCard.gainAsHero) {
       try {
         victoryPile.push(villainCard);
         onscreenConsole.log(
@@ -13932,6 +14490,9 @@ async function handleHQPostDefeat(
       }
     }
 
+    // Secret Wars Vol.1 — Inhuman Mastery [CABAL] tally: count Henchmen defeated this turn by ANY means.
+    if (villainCard && villainCard.subtype === "Henchman") henchmenDefeatedThisTurn++;
+
     // 21. Final cleanup
     try {
       if (typeof defeatBonuses === 'function') {
@@ -14093,7 +14654,8 @@ async function defeatNonPlacedVillain(villainCard) {
       }
     } else {
       try {
-        if (!villainCard.skrulled && villainCard.team !== "Infinity Gems") {
+        // Secret Wars Vol.1: gainAsHero villains skip the Victory-Pile push (gained as Heroes).
+        if (!villainCard.skrulled && !villainCard.gainAsHero && villainCard.team !== "Infinity Gems") {
           victoryPile.push(villainCard);
           onscreenConsole.log(
             `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
@@ -14224,6 +14786,9 @@ async function defeatNonPlacedVillain(villainCard) {
         console.error("Error processing nullified Infinity Gem:", error);
       }
     }
+
+      // Secret Wars Vol.1 — Inhuman Mastery [CABAL] tally: count Henchmen defeated this turn by ANY means.
+    if (villainCard && villainCard.subtype === "Henchman") henchmenDefeatedThisTurn++;
 
       // 13. Final cleanup
     try {
@@ -15315,6 +15880,9 @@ if (mastermind.name === "Thanos") {
   let mastermindAttack =
     mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards + mastermind.attackFromOwnEffects - mastermind.attackFromGems - mastermind.attackFromRings;
 
+  // Secret Wars Vol.1 — Rachel Summers of Future Past: global ±Attack also hits the Mastermind.
+  mastermindAttack += sentinelVillainAttackDelta;
+
   // Ensure mastermindAttack doesn't drop below 0
   if (mastermindAttack < 0) {
     mastermindAttack = 0;
@@ -15356,8 +15924,56 @@ function onMastermindTacticsChanged(mastermind) {
 
 // New functions for Mastermind attack mechanics
 
+// Nimrod, Super Sentinel — "You can't fight Nimrod unless you made at least N Recruit this turn."
+// The DB flag `unfightableUnlessRecruit: N` UNLOCKS the fight; Nimrod still costs Attack to defeat
+// (NOT usesRecruitToFight, which swaps the fight currency). Read against cumulativeRecruitPoints
+// (total GENERATED this turn) so spending Recruit after reaching N does not re-lock. Keys off the
+// MAIN selected mastermind — the only mastermind these surfaces (handleMastermindClick + the
+// #mastermind highlight twins) gate; secondary masterminds use their own click path.
+// Defaults to the MAIN selected Mastermind, but accepts any Mastermind-like object (e.g. a secondary
+// Mastermind in secondaryMasterminds[]) so the recruit-gate also covers a Dark Alliance random 2nd MM
+// if the eligible pool is ever widened to include Nimrod. Reads cumulativeRecruitPoints (total
+// GENERATED this turn) so spending Recruit after reaching N does not re-lock.
+function isMastermindRecruitLocked(mm = getSelectedMastermind()) {
+  return (
+    !!mm &&
+    !!mm.unfightableUnlessRecruit &&
+    cumulativeRecruitPoints < mm.unfightableUnlessRecruit
+  );
+}
+
+// Madelyne Pryor, Goblin Queen — "You can't fight her while she has any Demon Goblins."
+// The DB flag `unfightableWhileDemonGoblins: true` locks the fight while ANY Demon Goblin remains in
+// the shared demonGoblinDeck (Dark City system; in a Madelyne game that pile is exclusively hers).
+// FLAG-GATED so this only locks Madelyne, never other masterminds. Player clears the lock by fighting
+// the Demon Goblins via the existing #demon-goblin-deck off-grid button (2 Attack each → rescue).
+// Same 4 surfaces as the Nimrod gate: handleMastermindClick + the canAttackMastermind highlight twins
+// + canAttackMastermindNZ.
+function isMastermindDemonGoblinLocked() {
+  const mm = getSelectedMastermind();
+  return !!mm && !!mm.unfightableWhileDemonGoblins && demonGoblinDeck.length > 0;
+}
+
 const handleMastermindClick = () => {
   let mastermind = getSelectedMastermind();
+
+  // Nimrod recruit-gate: refuse the fight (no attack button) until the recruit threshold is met.
+  if (isMastermindRecruitLocked()) {
+    onscreenConsole.log(
+      `You can't fight <span class="console-highlights">${mastermind.name}</span> unless you made at least ${mastermind.unfightableUnlessRecruit} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn (you've made ${cumulativeRecruitPoints}).`,
+    );
+    return;
+  }
+
+  // Madelyne Demon-Goblin gate: refuse the fight while any Demon Goblin remains. Player must rescue
+  // them first via the #demon-goblin-deck button (2 Attack each).
+  if (isMastermindDemonGoblinLocked()) {
+    onscreenConsole.log(
+      `You can't fight <span class="console-highlights">${mastermind.name}</span> while she has any Demon Goblins (${demonGoblinDeck.length} remaining). Fight the Demon Goblins first.`,
+    );
+    return;
+  }
+
   let mastermindAttack = recalculateMastermindAttack(mastermind);
   let playerAttackPoints = 0;
 
@@ -15560,6 +16176,15 @@ document
   .getElementById("mastermind")
   .addEventListener("click", handleMastermindClick);
 
+// Multiple Masterminds: the 2nd mastermind slot routes clicks to the active secondary mastermind.
+const secondaryMastermindSlot = document.getElementById("mastermind-2");
+if (secondaryMastermindSlot) {
+  secondaryMastermindSlot.addEventListener("click", () => {
+    const sm = secondaryMasterminds.find((m) => !m.defeated);
+    if (sm) handleSecondaryMastermindClick(sm);
+  });
+}
+
 function showMastermindAttackButton() {
   let mastermind = getSelectedMastermind();
   const mastermindAttackButton = document.getElementById(
@@ -15756,7 +16381,13 @@ async function confirmMastermindAttack() {
       victoryPile.push(finalBlowCard);
       updateGameBoard();
 
-      if (gameMode === GOLDEN_SOLO) {
+      if (hasActiveSecondaryMastermind()) {
+        // Multiple Masterminds: the main mastermind is beaten but another mastermind is still in
+        // play — the battle isn't won until every mastermind is defeated. Don't declare victory yet.
+        onscreenConsole.log(
+          `You defeated <span class="console-highlights">${mastermind.name}</span>, but another Mastermind still stands — defeat them too to win!`,
+        );
+      } else if (gameMode === GOLDEN_SOLO) {
         onscreenConsole.log(
           `<span class="console-highlights">ULTIMATE VICTORY!</span> You won the Final Showdown against <span class="console-highlights">${mastermind.name}</span>!`,
         );
@@ -15765,7 +16396,7 @@ async function confirmMastermindAttack() {
           `You delivered the Final Blow to <span class="console-highlights">${mastermind.name}</span>!`,
         );
       }
-      checkWinCondition(); // will succeed now that tactics=0 and finalBlowDelivered=true
+      checkWinCondition(); // succeeds only once tactics=0, finalBlowDelivered=true, AND all secondaries defeated
     }
 
     // Collect all possible operations
@@ -16048,11 +16679,22 @@ async function resolveTacticEffects(tacticCard) {
     const fightEffectFunction = window[tacticCard.fightEffect]; // Access the function by name from the global scope
 
     let negate = false;
-    if (
-  typeof promptNegateFightEffectWithMrFantastic === "function" && 
-  (!tacticCard.name || tacticCard.name !== "Mysterio Mastermind Tactic")
-) {
-      negate = await promptNegateFightEffectWithMrFantastic();
+    // Entry is gated ONLY on the Mysterio exclusion, NOT on Fantastic Four being loaded — the Mr.
+    // Fantastic prompt is itself `typeof`-guarded inside, so Untouchable (Secret Wars Vol.1) is offered
+    // for Mastermind tactics whether or not Fantastic Four is present. This matches the FF-independent
+    // villain-defeat hook in collectDefeatOperations; the previous nested form skipped Untouchable
+    // entirely when FF was absent (asymmetry).
+    if (!tacticCard.name || tacticCard.name !== "Mysterio Mastermind Tactic") {
+      if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+        negate = await promptNegateFightEffectWithMrFantastic();
+      }
+      // Untouchable (Secret Wars Vol.1): reactive from-hand cancel of a Mastermind tactic Fight effect,
+      // offered only if not already negated by Mr. Fantastic. Inherits the Mysterio exclusion (this whole
+      // block is skipped for the Mysterio Mastermind Tactic). No-op unless the player holds Untouchable in
+      // hand. The tactic is still defeated/scored (VP push below + at revealMastermindTactic).
+      if (!negate && typeof offerUntouchableCancel === "function") {
+        negate = await offerUntouchableCancel(tacticCard.name || "Mastermind Tactic");
+      }
       // M1 (PT-8 negate edge): a transform-tactic's VP push was suppressed at revealMastermindTactic
       // because its fightEffect normally places the scoring Location. If the fight effect is negated
       // (Mr. Fantastic — Ultimate Nullifier cancels the ability, not the card's VP), no Location is
@@ -16538,9 +17180,406 @@ document.getElementById("finish-turn-button").addEventListener("click", () => {
 function checkWinCondition() {
   const mastermind = getSelectedMastermind();
 
-  if (isMastermindDefeated(mastermind)) {
+  // Multiple Masterminds: the game's mastermind battle is only won when the MAIN mastermind is
+  // defeated AND every additional (secondary) mastermind is defeated. While any secondary survives,
+  // a defeated main does NOT end the game — `mastermindDefeated` stays false so Master Strikes and
+  // defeat checks keep running. Re-called whenever a secondary is defeated, so the win fires then.
+  if (isMastermindDefeated(mastermind) && allSecondaryMastermindsDefeated()) {
     showFinishTurnPopup();
-    mastermindDefeated = true; // your existing flag
+    mastermindDefeated = true; // your existing flag — now means the FULL battle is won
+  }
+}
+
+// Multiple Masterminds keystone helpers ------------------------------------------------------
+function allSecondaryMastermindsDefeated() {
+  return secondaryMasterminds.every((sm) => sm.defeated);
+}
+
+function hasActiveSecondaryMastermind() {
+  return secondaryMasterminds.some((sm) => !sm.defeated);
+}
+
+// Dark Alliance (Secret Wars Vol.1) T5-6: a Mastermind captures ONE Bystander from the Bystander STACK
+// (Core p.10/p.15 — the Stack is the supply, NOT the villain-deck bystander flow). Targets ANY
+// Mastermind-like object: the MAIN selected Mastermind (mastermind.bystanders) OR a secondary
+// Mastermind in secondaryMasterminds[] (sm.bystanders). Empty stack → no-op (Core p.16). The captured
+// Bystander is rescued to the Victory Pile when that Mastermind is defeated (main MM via
+// collectMastermindRescueOperations; secondary MM via defeatSecondaryMastermind's reuse of the same).
+function captureBystanderFromStackToMastermind(targetMM) {
+  if (!targetMM) return;
+  if (!Array.isArray(targetMM.bystanders)) targetMM.bystanders = [];
+  if (bystanderDeck.length === 0) {
+    onscreenConsole.log(
+      `The Bystander Stack is empty — <span class="console-highlights">${targetMM.name}</span> captures no Bystander.`,
+    );
+    return;
+  }
+  const bystander = bystanderDeck.pop();
+  // Q7 (rules-notes/secret-wars-vol1.md): a Bystander captured by Madelyne becomes a "Demon Goblin"
+  // Villain regardless of which effect triggered the capture (her card overrides generic handling).
+  // If THIS Mastermind is Madelyne (unfightableWhileDemonGoblins), route the capture into the shared
+  // demonGoblinDeck instead of her generic .bystanders store.
+  if (targetMM.unfightableWhileDemonGoblins === true) {
+    demonGoblinDeck.push(bystander);
+    onscreenConsole.log(
+      `<span class="console-highlights">${bystander.name}</span> captured by <span class="console-highlights">${targetMM.name}</span> — it becomes a "Demon Goblin" Villain.`,
+    );
+    return;
+  }
+  targetMM.bystanders.push(bystander);
+  onscreenConsole.log(
+    `<span class="console-highlights">${bystander.name}</span> captured by <span class="console-highlights">${targetMM.name}</span>.`,
+  );
+}
+
+// Points available to defeat a secondary mastermind, mirroring the main fight's basic rules
+// (Negative Zone swaps Recruit for Attack; recruitUsedToAttack lets Recruit top up Attack).
+// NOTE: the secondary fight intentionally skips the main fight's forcefield/Bribe/counter machinery
+// — no in-scope secondary mastermind (Apocalyptic Magneto, Dark Alliance) carries those.
+function secondaryAvailablePoints() {
+  if (negativeZoneAttackAndRecruit) return totalRecruitPoints;
+  let pts = totalAttackPoints;
+  if (recruitUsedToAttack) pts += totalRecruitPoints;
+  return pts;
+}
+
+function spendForSecondaryDefeat(required) {
+  // Floor-clamp every subtraction at 0 so a point pool can never go negative even if `required`
+  // somehow exceeds what secondaryAvailablePoints() reported (defensive — callers gate on >= first).
+  if (negativeZoneAttackAndRecruit) {
+    totalRecruitPoints = Math.max(0, totalRecruitPoints - required);
+    return;
+  }
+  let remaining = required;
+  const fromAttack = Math.min(totalAttackPoints, remaining);
+  totalAttackPoints = Math.max(0, totalAttackPoints - fromAttack);
+  remaining -= fromAttack;
+  if (remaining > 0 && recruitUsedToAttack) {
+    totalRecruitPoints = Math.max(0, totalRecruitPoints - remaining);
+  }
+}
+
+// Register an ASCENDED mastermind (e.g. Apocalyptic Magneto on Escape): no Tactics, defeated by a
+// single fight at `defeatAttack` (its printed villain Attack), then reverts to a normal VP villain.
+function ascendToMastermind(sourceCard, opts = {}) {
+  const {
+    masterStrikeFn = null,
+    masterStrikeConsoleLog = "",
+    defeatAttack = (sourceCard && (sourceCard.originalAttack || sourceCard.attack)) || 0,
+    vp = 6,
+    name = sourceCard ? sourceCard.name : "Ascended Mastermind",
+    image = sourceCard ? sourceCard.image : "",
+  } = opts;
+
+  const sm = {
+    name,
+    image,
+    attack: defeatAttack, // no Tactics → this is the one-fight defeat cost
+    victoryPoints: vp,
+    tactics: [],
+    bystanders: [], // Finding C: an ascending villain's captured Bystanders transfer here (kept, not escaped)
+    ascended: true,
+    sourceCard,
+    masterStrike: masterStrikeFn, // function name (string) OR direct fn
+    masterStrikeConsoleLog,
+    defeated: false,
+  };
+  // Finding C: an ascending villain's captured Bystanders transfer onto the new Mastermind (kept, not
+  // escaped) and are rescued to the Victory Pile when it is defeated. Villains store captured Bystanders
+  // on `.bystander` (singular); Masterminds use `.bystanders` (plural). handleVillainEscape leaves them
+  // on the villain (skips its escapedVillainsDeck push) precisely so they can ride into ascension here.
+  if (sourceCard && Array.isArray(sourceCard.bystander) && sourceCard.bystander.length > 0) {
+    sm.bystanders.push(...sourceCard.bystander);
+    onscreenConsole.log(
+      `<span class="console-highlights">${name}</span> keeps ${sourceCard.bystander.length} captured Bystander${sourceCard.bystander.length !== 1 ? "s" : ""} — rescued when defeated.`,
+    );
+    sourceCard.bystander = [];
+  }
+
+  secondaryMasterminds.push(sm);
+  onscreenConsole.log(
+    `<span class="console-highlights">${name}</span> has ascended to become a Mastermind! Defeat every Mastermind to win.`,
+  );
+  updateGameBoard();
+  return sm;
+}
+
+// Register a FULL secondary mastermind (e.g. Dark Alliance's added Mastermind) — real strength,
+// accrues Tactics over Twists (Phase 3e wires the scheme specifics). Defeated like a normal
+// mastermind: one fight clears one Tactic; fully defeated once no Tactics remain.
+function addSecondaryMastermind(config = {}) {
+  const sm = {
+    name: config.name,
+    image: config.image,
+    attack: config.attack || 0,
+    victoryPoints: config.victoryPoints || 0,
+    tactics: config.tactics || [],
+    bystanders: [], // captured Bystanders ride here (Dark Alliance T5-6); rescued on this MM's defeat
+    ascended: false,
+    sourceCard: null,
+    masterStrike: config.masterStrike || null,
+    masterStrikeConsoleLog: config.masterStrikeConsoleLog || "",
+    // Carries the recruit-gate flag (Nimrod) so the secondary-fight path can gate on it too if the
+    // Dark Alliance pool is widened to include a recruit-locked Mastermind. Null for the Core pool.
+    unfightableUnlessRecruit: config.unfightableUnlessRecruit || null,
+    defeated: false,
+  };
+  secondaryMasterminds.push(sm);
+  onscreenConsole.log(
+    `<span class="console-highlights">${sm.name}</span> joins the battle as an additional Mastermind!`,
+  );
+  updateGameBoard();
+  return sm;
+}
+
+async function fireSecondaryMasterStrike(sm) {
+  const fn =
+    typeof sm.masterStrike === "function" ? sm.masterStrike : window[sm.masterStrike];
+  onscreenConsole.log(
+    `<span class="console-highlights">Master Strike!</span> ${sm.masterStrikeConsoleLog || `<span class="console-highlights">${sm.name}</span> strikes!`}`,
+  );
+  playSFX("master-strike");
+  await showSecondaryMasterStrikePopup(sm);
+  if (typeof fn === "function") {
+    try {
+      await fn();
+    } catch (error) {
+      console.error(`Secondary Master Strike error (${sm.name}): ${error}`);
+    }
+  }
+  addHRToTopWithInnerHTML();
+}
+
+// Self-contained announcement popup for a secondary mastermind's Master Strike (showPopup's
+// "Master Strike" branch reads the MAIN mastermind's text, so it can't be reused here). Modeled
+// on showTacticPopup. The strike's actual effect runs after this popup is dismissed; the
+// highlighted effect text is logged to the on-screen console by fireSecondaryMasterStrike.
+function showSecondaryMasterStrikePopup(sm) {
+  return new Promise((resolve) => {
+    const popup = document.querySelector(".info-or-choice-popup");
+    const popupTitle = document.querySelector(".info-or-choice-popup-title");
+    const popupContext = document.querySelector(".info-or-choice-popup-instructions");
+    const popupImage = document.querySelector(".info-or-choice-popup-preview");
+    const confirmBtn = document.getElementById("info-or-choice-popup-confirm");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const closeButton = document.querySelector(".info-or-choice-popup-closebutton");
+    const otherChoice = document.getElementById("info-or-choice-popup-otherchoice");
+    const nothanks = document.getElementById("info-or-choice-popup-nothanks");
+
+    popupTitle.innerText = "Master Strike";
+    popupImage.style.display = "block";
+    popupImage.style.backgroundImage = `url("${sm.image}")`;
+    popupContext.textContent = `${sm.name} unleashes a Master Strike!`;
+    confirmBtn.innerText = getRandomConfirmText();
+    if (otherChoice) otherChoice.style.display = "none";
+    if (nothanks) nothanks.style.display = "none";
+
+    popup.style.display = "block";
+    modalOverlay.style.display = "block";
+
+    const onConfirm = () => {
+      closeInfoChoicePopup();
+      resolve();
+    };
+    confirmBtn.onclick = onConfirm;
+    closeButton.onclick = onConfirm;
+  });
+}
+
+async function handleSecondaryMastermindClick(sm) {
+  if (!sm || sm.defeated) return;
+  // Recruit-gate (Nimrod-style): if this secondary MM is recruit-locked, block the fight until enough
+  // Recruit was generated this turn. Inert for the Core Dark Alliance pool (none carry the flag).
+  if (isMastermindRecruitLocked(sm)) {
+    onscreenConsole.log(
+      `You can't fight <span class="console-highlights">${sm.name}</span> unless you make at least ${sm.unfightableUnlessRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn.`,
+    );
+    return;
+  }
+  const required = sm.attack;
+  const available = secondaryAvailablePoints();
+  const icon = negativeZoneAttackAndRecruit
+    ? `<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">`
+    : `<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">`;
+
+  if (available < required) {
+    onscreenConsole.log(
+      `You need ${required}${icon} to defeat <span class="console-highlights">${sm.name}</span>. You have ${available}.`,
+    );
+    return;
+  }
+
+  const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+    `Spend ${required}${icon} to defeat <span class="console-highlights">${sm.name}</span>?`,
+    "Defeat",
+    "Not yet",
+  );
+  document.querySelector(".info-or-choice-popup-title").textContent = sm.name;
+  const previewArea = document.querySelector(".info-or-choice-popup-preview");
+  if (previewArea && sm.image) {
+    previewArea.style.backgroundImage = `url('${sm.image}')`;
+    previewArea.style.backgroundSize = "contain";
+    previewArea.style.backgroundRepeat = "no-repeat";
+    previewArea.style.backgroundPosition = "center";
+    previewArea.style.display = "block";
+  }
+
+  confirmButton.onclick = async () => {
+    closeInfoChoicePopup();
+    await confirmSecondaryMastermindAttack(sm);
+  };
+  denyButton.onclick = () => {
+    closeInfoChoicePopup();
+  };
+}
+
+async function confirmSecondaryMastermindAttack(sm) {
+  if (!sm || sm.defeated) return;
+  if (isMastermindRecruitLocked(sm)) {
+    onscreenConsole.log(
+      `You can't fight <span class="console-highlights">${sm.name}</span> yet — not enough Recruit generated this turn.`,
+    );
+    return;
+  }
+  const required = sm.attack;
+  if (secondaryAvailablePoints() < required) {
+    onscreenConsole.log(
+      `Not enough points to defeat <span class="console-highlights">${sm.name}</span>.`,
+    );
+    return;
+  }
+  playSFX("attack");
+  spendForSecondaryDefeat(required);
+  updateReserveAttackAndRecruit();
+  onscreenConsole.log(
+    `You spent ${required} to attack <span class="console-highlights">${sm.name}</span>!`,
+  );
+  await defeatSecondaryMastermind(sm);
+  updateGameBoard();
+}
+
+async function defeatSecondaryMastermind(sm) {
+  // Full secondary masterminds (Dark Alliance) clear one Tactic per fight; only fully defeated once
+  // no Tactics remain. Ascended masterminds (Apocalyptic Magneto) have no Tactics → one fight.
+  if (sm.tactics && sm.tactics.length > 0) {
+    const tactic = sm.tactics.pop();
+    if (tactic && !tactic.transformsToLocation) victoryPile.push(tactic);
+    onscreenConsole.log(
+      `You cleared one of <span class="console-highlights">${sm.name}</span><span class="bold-spans">'s</span> Tactics — ${sm.tactics.length} remaining.`,
+    );
+    updateGameBoard();
+    // GAP-K: a cleared Tactic resolves its Fight effect exactly like a main-Mastermind Tactic
+    // (Core p.14). Reuse the shared resolver, which also handles the Mr. Fantastic / Untouchable
+    // negate prompts. Runs AFTER the VP push (mirrors the main reveal-then-resolve order).
+    if (tactic) await resolveTacticEffects(tactic);
+    // Defeating the FINAL Tactic defeats the Mastermind in the SAME fight — matches the main MM
+    // (isMastermindDefeated() is true the instant tactics.length === 0; no extra phantom fight) and
+    // rules-notes BATCH 7 Q-D ("defeated when its ACTUAL accrued Tactic count is cleared"). If Tactics
+    // remain, the MM survives → fight it again next time.
+    if (sm.tactics.length > 0) return;
+  }
+
+  sm.defeated = true;
+
+  // Rescue any Bystanders this Mastermind captured (Dark Alliance T5-6 / Finding C). Reuse the main
+  // MM rescue operations (Victory Pile + bystanderBonuses + on-rescue abilities), then clear them.
+  if (Array.isArray(sm.bystanders) && sm.bystanders.length > 0) {
+    const rescueOps = await collectMastermindRescueOperations(sm);
+    for (const op of rescueOps) {
+      await op.execute();
+    }
+    sm.bystanders = [];
+  }
+
+  if (sm.ascended && sm.sourceCard) {
+    // The ascended Mastermind reverts to a normal Villain card in the Victory Pile (printed VP).
+    const villain = createVillainCopy(sm.sourceCard);
+    villain.type = "Villain";
+    villain.attack = sm.sourceCard.originalAttack || sm.sourceCard.attack || sm.attack;
+    villain.victoryPoints = sm.victoryPoints;
+    villain.fightEffect = "";
+    villain.ascendsToMastermind = false;
+    victoryPile.push(villain);
+    onscreenConsole.log(
+      `You defeated <span class="console-highlights">${sm.name}</span>! They join your Victory Pile as a ${sm.victoryPoints}-VP Villain.`,
+    );
+  } else {
+    victoryPile.push({
+      name: sm.name,
+      type: "Mastermind",
+      victoryPoints: sm.victoryPoints,
+      image: sm.image,
+    });
+    onscreenConsole.log(
+      `You defeated <span class="console-highlights">${sm.name}</span>!`,
+    );
+  }
+
+  updateGameBoard();
+  checkWinCondition();
+}
+
+// Render the second mastermind board slot (#mastermind-2). In scope there is at most one active
+// secondary mastermind at a time; the slot hides when none is active (so the board layout is
+// unaffected in normal games). Shows the card image, its defeat value, and any Tactic count.
+function updateSecondaryMastermindSlot() {
+  const slot = document.getElementById("mastermind-2");
+  if (!slot) return;
+  const placeholder = document.getElementById("mastermind-2-image-placeholder");
+  const sm = secondaryMasterminds.find((m) => !m.defeated);
+
+  if (!sm) {
+    slot.style.display = "none";
+    if (placeholder) placeholder.replaceChildren();
+    slot.classList.remove("attackable");
+    return;
+  }
+
+  slot.style.display = "flex";
+  if (placeholder) {
+    placeholder.replaceChildren();
+    const img = document.createElement("img");
+    img.src = sm.image;
+    img.alt = sm.name;
+    img.classList.add("card-image");
+    const attackOverlay = document.createElement("div");
+    attackOverlay.className = "mastermind-attack-overlay";
+    attackOverlay.textContent = sm.attack;
+    placeholder.appendChild(img);
+    placeholder.appendChild(attackOverlay);
+
+    // Captured-Bystander badge (Dark Alliance T5-6). Mirrors the main MM's bystander overlay: a count
+    // plus the first captured Bystander's image. Rescued to the Victory Pile when this MM is defeated.
+    if (Array.isArray(sm.bystanders) && sm.bystanders.length > 0) {
+      const bystanderOverlay = document.createElement("div");
+      bystanderOverlay.className = "bystander-overlay";
+      const countSpan = document.createElement("span");
+      countSpan.className = "bystanderOverlayNumber";
+      countSpan.textContent = sm.bystanders.length;
+      const bystImg = document.createElement("img");
+      bystImg.src = sm.bystanders[0].image;
+      bystImg.alt = "Captured Bystander";
+      bystImg.className = "villain-bystander";
+      bystanderOverlay.appendChild(countSpan);
+      bystanderOverlay.appendChild(bystImg);
+      placeholder.appendChild(bystanderOverlay);
+    }
+  }
+
+  const tacticLabel = document.getElementById("mastermind-2-tactic-count");
+  if (tacticLabel) {
+    if (sm.tactics && sm.tactics.length > 0) {
+      tacticLabel.textContent = `Tactics: ${sm.tactics.length}`;
+      tacticLabel.style.display = "block";
+    } else {
+      tacticLabel.style.display = "none";
+    }
+  }
+
+  if (secondaryAvailablePoints() >= sm.attack) {
+    slot.classList.add("attackable");
+  } else {
+    slot.classList.remove("attackable");
   }
 }
 
@@ -18007,7 +19046,10 @@ function showHeroRecruitButton(hqIndex, hero) {
   }
 
   const reservedRecruit = getHQReserved(hqIndex);
-  const cost = hero.cost;
+  // Secret Wars Vol.1 "Infiltrate HQ" (Apocalyptic Kitty Pryde): the replacement Hero costs 1 less this
+  // turn. The discount lives on the card object so it follows the card across HQ rotation/refill; both
+  // the affordability gate and the charge below read this single `cost`. Floored at 0.
+  const cost = Math.max(0, hero.cost - (hero.infiltrateHQCostReduction || 0));
   const verb =
     scheme.name === "Save Humanity" && hero.type === "Bystander"
       ? "rescue"
@@ -18017,6 +19059,27 @@ function showHeroRecruitButton(hqIndex, hero) {
     logRecruitCostMessage(
       cost,
       `${verb} <span class="console-highlights">${hero.name}</span>`,
+    );
+    return;
+  }
+
+  // Secret Wars Vol.1 — Loner (Old Man Logan): "If you don't recruit any Heroes this turn, +2 Attack."
+  // The +2 is granted provisionally and clawed back by recruitHeroConfirmed when a Hero is recruited.
+  // But once that +2 has been (partially) SPENT on Attack, the floor-at-0 clawback can no longer reclaim
+  // it — recruiting a Hero then would let the player keep BOTH the spent bonus and the recruit. Block the
+  // Hero recruit in exactly that unreclaimable case (bonus applied AND no longer fully present in the
+  // current Attack total). When it is still fully present (total >= applied), allow the recruit —
+  // recruitHeroConfirmed claws it back cleanly (this also covers "gained more Attack later": the clawback
+  // stays correct whenever total >= applied). lonerAttackApplied is the ACCUMULATED value (multiple Loners
+  // stack). Type-guarded to Hero only: Bystander rescues (Save Humanity) route through this same function
+  // and must NOT be blocked — mirrors recruitHeroConfirmed's clawback type guard.
+  if (
+    hero.type === "Hero" &&
+    lonerAttackApplied > 0 &&
+    totalAttackPoints < lonerAttackApplied
+  ) {
+    onscreenConsole.log(
+      `You've already spent <span class="console-highlights">Loner</span><span class="bold-spans">'s</span> +${lonerAttackApplied}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> bonus this turn — recruiting a Hero would forfeit it, but it can no longer be reclaimed. You can't recruit a Hero this turn.`,
     );
     return;
   }
@@ -18037,7 +19100,7 @@ function showHeroRecruitButton(hqIndex, hero) {
     0,
   );
 
-  button.onclick = (e) => {
+  button.onclick = async (e) => {
     e.stopPropagation();
     isRecruiting = true;
 
@@ -18056,6 +19119,14 @@ function showHeroRecruitButton(hqIndex, hero) {
       );
       isRecruiting = false;
       return false;
+    }
+
+    // Pan-Dimensional Plague (Secret Wars Vol.1): if a Wound sits next to this HQ slot, resolve it
+    // at the recruit instant — BEFORE recruitHeroConfirmed refills the slot — so no Wound lingers on
+    // an emptied slot. The hero's own cost is already paid above, so the optional pay-1 is checked
+    // against the recruit left over. (rules-notes BATCH 8 ②.)
+    if (getActiveScheme()?.name === "Pan-Dimensional Plague" && hqWound[hqIndex - 1]) {
+      await resolvePlagueWoundOnRecruit(hqIndex);
     }
 
     recruitHeroConfirmed(hero, hqIndex - 1); // assuming this handles replacing the HQ slot etc.
@@ -18320,6 +19391,25 @@ function calculateBezierPoint(t, p0, p1, p2, p3) {
 
 async function recruitHeroConfirmed(hero, hqIndex) {
   playSFX("recruit");
+
+  // Secret Wars Vol.1 — Loner (Old Man Logan): "If you don't recruit any Heroes this turn, +2 Attack."
+  // Recruiting a Hero invalidates that, so flag it and claw back any provisional +2 already applied.
+  // Gate on type === "Hero": Sidekick recruits use recruitSidekick() (not this), and the Save Humanity
+  // scheme routes Bystander rescues through THIS function — a Bystander is not a Hero, so it must not
+  // count or claw back. Floor at 0: if the provisional +2 was already spent the points are gone, so
+  // don't drive the totals negative (a negative cumulative would corrupt the Final Showdown math).
+  if (hero && hero.type === "Hero") {
+    heroRecruitedThisTurn = true;
+    if (lonerAttackApplied > 0) {
+      totalAttackPoints = Math.max(0, totalAttackPoints - lonerAttackApplied);
+      cumulativeAttackPoints = Math.max(0, cumulativeAttackPoints - lonerAttackApplied);
+      onscreenConsole.log(
+        `You recruited a Hero — <span class="console-highlights">Loner</span><span class="bold-spans">'s</span> +${lonerAttackApplied}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> is removed.`,
+      );
+      lonerAttackApplied = 0;
+      updateGameBoard();
+    }
+  }
 
   // Try multiple ways to find the card element
   let cardElement;

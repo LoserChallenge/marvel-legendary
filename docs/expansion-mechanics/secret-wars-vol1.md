@@ -6,9 +6,9 @@ Sources: `expansions/secret-wars-vol1/Legendary_Rules_Secret_Wars_v1.pdf`, `rule
 
 ## Scope (this build)
 
-**IN:** 14 heroes; 4 villain groups (Domain of Apocalypse, Limbo, Manhattan Earth-1610, Sentinel Territories); 2 masterminds (Madelyne Pryor, Nimrod); **6 of 8 schemes** (2 deferred — see below); 2 henchmen groups (M.O.D.O.K.s, Thor Corps); Banker bystander; Sidekicks (reuse existing stack).
+**IN:** 14 heroes; 4 villain groups (Domain of Apocalypse, Limbo, Manhattan Earth-1610, Sentinel Territories); 2 masterminds (Madelyne Pryor, Nimrod); **6 of 8 schemes** (2 deferred — see below); **3 henchmen groups (M.O.D.O.K.s, Thor Corps, Ghost Racers — Fight effect only, ratified in-scope 2026-06-25)**; Banker bystander; Sidekicks (reuse existing stack).
 
-**DEFERRED (out of scope, per user 2026-06-22):** Wasteland group, The Deadlands (zombie) group, all 30 Ambitions + the Ambition Row / "A Player is the Mastermind" mode, and the two masterminds tied to the deferred groups (Wasteland Hulk, Zombie Green Goblin). Consequently the **Bribe** and **Rise of the Living Dead** keywords have zero in-scope cards and are not implemented this build. **Two schemes deferred** (cost-disproportionate, decided 2026-06-22): **Smash Two Dimensions Together** (needs a genuinely-new parallel/second city dimension) and **Fragmented Realities** (per-player dimensions collapse to nothing at 1 player).
+**DEFERRED (out of scope, per user 2026-06-22):** Wasteland group, The Deadlands (zombie) group, all 30 Ambitions + the Ambition Row / "A Player is the Mastermind" mode, and the two masterminds tied to the deferred groups (Wasteland Hulk, Zombie Green Goblin). The **Bribe** keyword has zero in-scope cards (not implemented). The **Ghost Racers henchman Fight effect IS built** (Phase 3f, commit `40081cb`); only its Deadlands Ambush **"Rise of the Living Dead"** stays deferred (no other in-scope cards). **Two schemes deferred** (cost-disproportionate, decided 2026-06-22): **Smash Two Dimensions Together** (needs a genuinely-new parallel/second city dimension) and **Fragmented Realities** (per-player dimensions collapse to nothing at 1 player).
 
 ---
 
@@ -110,7 +110,7 @@ Sources: `expansions/secret-wars-vol1/Legendary_Rules_Secret_Wars_v1.pdf`, `rule
 
 ---
 
-## Schemes (8)
+## Schemes (6 shipped, 2 deferred)
 
 > Standard per-card twist/effect work belongs to `/new-expansion` Phase 2.5 specs. Captured here: the structurally-notable schemes and their solo/mode-divergence implications.
 

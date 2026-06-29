@@ -22,3 +22,6 @@ expansions/
 
 # Bug-intake staging — raw screen grabs + notes, local only (triaged records live in docs/known-issues.md)
 bugs/
+
+# Playwright verification screenshots — disposable, re-runnable binary artifacts
+docs/playwright-runs/

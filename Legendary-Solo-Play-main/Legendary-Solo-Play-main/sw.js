@@ -1,4 +1,4 @@
-const CACHE_NAME = 'legendary-v5'; // bump this version number with every push to force iPad to re-cache
+const CACHE_NAME = 'legendary-v6'; // bump this version number with every push to force iPad to re-cache
 
 const FILES_TO_CACHE = [
   '/marvel-legendary/',
@@ -640,6 +640,7 @@ const FILES_TO_CACHE = [
   '/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/expansionGuardiansOfTheGalaxy.js',
   '/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/expansionPaintTheTownRed.js',
   '/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/expansionRevelations.js',
+  '/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/expansionSecretWarsVol1.js',
   '/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/icon-192.png',
   '/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/icon-512.png',
   '/marvel-legendary/Legendary-Solo-Play-main/Legendary-Solo-Play-main/index.html',

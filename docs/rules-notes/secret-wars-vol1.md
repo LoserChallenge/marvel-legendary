@@ -3,10 +3,11 @@
 Cache for Rules Oracle findings on Secret Wars Vol. 1 (solo-framed). Authoritative-source quotes with page cites. Solo rulesets win where they speak; base rule labeled INFERRED where solo is silent.
 
 Sources used:
-- Secret Wars rules insert: `expansions/secret-wars-vol1/Legendary_Rules_Secret_Wars_v1.pdf` (2-page insert; image-text, sections quoted below)
+- Secret Wars rules insert: `expansions/secret-wars-vol1/Legendary_Rules_Secret_Wars_v1.pdf` (also `rules/Legendary_Rules_Secret_Wars_v1.pdf`) (2-page insert; image-text, sections quoted below)
 - Finalized inventory (card content): `docs/card-inventory/final/secret-wars-vol1.md`
 - Golden Solo ruleset: `rules/marvel-legendary-the-golden-solo-ruleset.pdf` (1 page)
 - What If? rulebook: `rules/WhatIf_Rulebook.pdf` (28 pages; pages cited by printed page number)
+- Core Set rulebook: `rules/Legendary_Rules-Core_Set.pdf`
 
 ---
 
@@ -83,6 +84,10 @@ Inventory verbatim (`secret-wars-vol1.md` lines 844–849):
 - **"Twist 7: Evil Wins"** is the scheme's lose condition: when the 7th Scheme Twist is played, the Mastermind completes the Scheme and **all players lose immediately** (the Secret Wars insert/What If? p.15 "Evil Wins" rule: don't finish the turn). Note: 8 Twists are in the deck but **Twist 7 ends the game** — the 8th is effectively never reached. This is a race: defeat both Masterminds before the 7th Twist surfaces.
 - CONFIDENCE: **SETTLED** (card text verbatim). One caveat flagged for human spot-check: the card text does not itself restate "normal strength" — that the added Mastermind uses its own printed strength is the default rule (a Mastermind added to the game uses its own card), INFERRED from absence of any reduction clause. Worth a Pass-3 eyeball on the physical card if available.
 
+### Q4a — Defeating the 2nd Mastermind's lone Tactic DEFEATS it
+
+Q4a — Defeating the Dark Alliance 2nd Mastermind's lone Tactic DEFEATS it. A Mastermind is defeated when its CURRENT Tactic stack is exhausted (Core Set p.14). The 2nd MM enters at Twist 1 with one Tactic; beating that single Tactic defeats it and removes it from play, so Twists 2-4's 'if the second Mastermind is still in play' check correctly adds nothing. Observed early-defeat behavior is CORRECT, not a bug. Same in Golden + What If?. CONFIDENCE: SETTLED (Core p.14 + scheme card text).
+
 ---
 
 ## Q5 — Master of Tyrants scheme (confirm interpretation)
@@ -143,3 +148,142 @@ Smallest faithful way to honor the two in-scope cards:
 - **Dark Alliance:** add a random real second Mastermind, give it 1 Tactic on Twist 1 and +1 Tactic on each of Twists 2–4 (if still in play, cap 4), both Masterminds capture a Bystander on Twists 5–6, and Twist 7 = Evil Wins (instant loss). The second Mastermind uses its own normal strength; win requires defeating both.
 
 ONE thing to double-check (flagged): the inventory's **Teleport** gloss ("put on top of your deck") contradicts the authoritative insert ("set aside; add to your new hand at end of turn as an extra card") — implement the insert wording, not the inventory's. Also worth a physical-card Pass-3 confirm that Dark Alliance's second Mastermind is full-strength (no printed reduction; inferred from absence).
+
+---
+
+# BATCH 2 — Spec OPEN-QUESTIONS adjudication (2026-06-22, Rules Oracle)
+These map to the FROZEN spec's "OPEN QUESTIONS" Q2–Q7 (different numbering from the Batch-1 Q's above). Solo-framed; both modes noted where they diverge.
+
+## SPEC-Q2 — Colossus of Future Past: "Don't play a Villain card at the beginning of next turn." → SKIP ONE villain card
+- **Card (inventory/spec):** Sentinel Territories — Colossus of Future Past, Fight: "*Colossus changes the future:* Don't play a Villain card at the beginning of next turn." Attack 5 / VP 3.
+- **Ruling: skip exactly ONE villain card next turn** (implementer's rec HOLDS). "A Villain card" = a single card. The Core turn structure's villain phase is "Step 1) Play the top card of the Villain Deck" — "play a Villain card" is the rulebook's own name for revealing/resolving ONE villain-deck card, NOT the whole phase. The card says "a Villain card" (singular), so it removes one such reveal.
+- **Solo translation of the draw count:**
+  - **Golden Solo:** draws 2 villain cards/round (Golden Solo ruleset p.1, "Villain Deck Gameplay": "draw TWO cards instead of one"). Colossus → next round draw **1** instead of 2.
+  - **What If? Solo:** the solo villain phase plays **1** villain card/turn (What If? p.24 solo setup uses the normal single villain-deck draw; the 2 extra Henchmen are a first-turn setup add, not the per-turn count). Colossus → next turn the single villain card is **skipped** (0 played that turn). Mechanically identical primitive ("decrement next turn's villain plays by 1"), different baseline.
+- **Note:** It's the same as the existing "bystander discard to prevent ONE new villain card" lever (Golden Solo ruleset p.1, "Bystander Discard": "prevent ONE new villain card from being drawn"). Reuse that decrement primitive. Stacks cumulatively if two Colossus copies are fought (−2).
+- SOURCE: Core Set p.6/8 (villain phase = "play the top card of the Villain Deck", singular); Golden Solo ruleset p.1; What If? p.24.
+- CONFIDENCE: **SETTLED** (singular wording + rulebook's own "play a villain card" = one reveal).
+
+## SPEC-Q3 — Crush Them With My Bare Hands: Master-Strike counting under multiple masterminds → ONE event per trigger
+- **Card (inventory/spec):** "Evil Wins: When 8 Master Strikes have taken effect." Each of its 5 Twists "becomes a Master Strike that takes effect immediately."
+- **Ruling: count ONE per Master-Strike TRIGGER, not one per mastermind** (implementer's rec HOLDS). The keystone rule (What If? p.19 / insert p.1) says on each Master Strike, *each* Mastermind fires *its* Master Strike *ability* — that's about resolving each mastermind's ABILITY, not multiplying the count of "Master Strikes." A Master Strike (the event — a Twist becoming one, or a natural Master Strike card surfacing) is a single occurrence; the multi-mastermind rule just makes that one occurrence resolve N abilities. "8 Master Strikes have taken effect" counts Master-Strike events.
+- **Caveat (worth a Pass-3/physical-card eyeball):** the rulebooks do NOT explicitly define whether the scheme counter is "events" or "ability resolutions." This is an INFERENCE from the natural-language distinction (a Master Strike is the trigger; "each Mastermind does its Master Strike ABILITY" is the resolution). The 1-event reading is the standard community/RAW reading and avoids the scheme self-accelerating purely from a 2nd mastermind. But it is not nailed by a verbatim rulebook line.
+- **Also confirmed:** 5 Twists alone can't reach 8 — natural Master Strike cards from the villain deck also increment the counter. (Counter must capture both sources.)
+- SOURCE: What If? p.19 (multiple-mastermind Master Strike resolution); insert p.1.
+- CONFIDENCE: **INFERRED** (1-event is the faithful/standard reading; rulebooks don't spell out the counter's unit. Recommend building it as 1-per-event and flagging to Paul that this is an interpretation, not a quoted rule.)
+
+## SPEC-Q4 — Black Bolt "Destructive Whisper": reveal source → FROM HAND
+- **Card (inventory/spec):** "You get +1 Attack if you reveal four cards with no rules text."
+- **Ruling: reveal from your HAND** (implementer's rec HOLDS). Legendary's "reveal N [trait] cards" abilities reveal from the player's HAND by default (the hand is the only place "reveal" a held card makes sense). Contrast the sibling card Hypersonic Scream, which explicitly scopes to "you played this turn" — Destructive Whisper deliberately OMITS that qualifier, so it is not a played-this-turn count; it's a reveal-from-hand check. Reveal 4 no-rules-text cards from hand → +1 Attack; can't reveal four → no bonus.
+- **Caveat:** there is no Secret Wars insert or Core rulebook line that defines a generic "reveal" keyword source — this rests on Legendary convention + the deliberate contrast with Hypersonic Scream's wording, NOT a quoted rule. The "no rules text" predicate itself is a build-time scope decision (which whole-game cards get the flag), separate from this source question.
+- SOURCE: card text contrast (inventory `secret-wars-vol1.md`); Legendary reveal-from-hand convention. No verbatim rulebook definition of "reveal" source exists in Core/insert.
+- CONFIDENCE: **INFERRED** (from-hand is the strongly-supported convention + the Hypersonic-Scream contrast; not a quoted rulebook line — flag as interpretation).
+
+## SPEC-Q5 — Lady Thor "Once per turn" scope → ONCE TOTAL PER TURN per card title
+- **Cards (inventory/spec):** Mysterious Origin / Chosen by Asgard / Living Thunderstorm — each "Once per turn, if you made at least 6 Recruit this turn, [draw / +2 Attack / +6 Attack]."
+- **Ruling: "Once per turn" = the effect fires at most once that turn** (implementer's rec HOLDS in substance). The phrase gates THE EFFECT to one resolution per turn. Practically: a second copy of the SAME title played the same turn grants nothing additional from that title's once-per-turn effect.
+- **Important nuance for the build:** "Once per turn" in Legendary is per-EFFECT/per-card-title, but it does NOT pool across DIFFERENT titles. The three Lady Thor cards are three DISTINCT once-per-turn effects — playing Mysterious Origin AND Chosen by Asgard AND Living Thunderstorm the same turn (≥6 Recruit) fires ALL THREE (draw + 2 Attack + 6 Attack), each once. So implement the guard per-card-title (one flag per title), not one global Lady-Thor flag.
+- **Caveat:** Marvel Legendary has no single rulebook glossary entry quoting "Once per turn." This is the consistent published-card convention (each "Once per turn" effect = once per turn for that effect). Treat as SETTLED-by-convention; the per-title (not pooled-across-titles) detail is the load-bearing implementation point.
+- SOURCE: card text (inventory `secret-wars-vol1.md`); standard Legendary keyword convention.
+- CONFIDENCE: **SETTLED** (convention is unambiguous and uniform across the game; per-title guard is the correct build).
+
+## SPEC-Q6 — Superior to Others: equal-cost tie → DRAW NOTHING
+- **Card (inventory/spec):** "[RANGED]: Look at the top two cards of your deck. If one of them has a higher cost than the other, draw it. Put the rest back in any order."
+- **Ruling: on an equal-highest-cost tie, draw NOTHING — both cards go back on top in any order** (implementer's rec HOLDS). The draw is conditional: "IF one of them has a higher cost than the other, draw it." On a tie, neither card "has a higher cost than the other," so the condition is false → no card is drawn → "put the rest back" (here: both) on top. Dead-draw outcome confirmed.
+- SOURCE: card text (inventory `secret-wars-vol1.md`) — the conditional "if ... higher ... than the other" is self-resolving on a tie.
+- CONFIDENCE: **SETTLED** (pure card-text logic; no rule needed).
+
+## SPEC-Q7 — Build an Army of Annihilation Twist: escalation / VP-recycle → CONFIRMED
+- **Card (inventory/spec):** "Setup: 9 Twists. Put 10 extra [Annihilation] Henchmen in [the] KO pile. Twist: KO all Annihilation Henchmen from the players' Victory Piles. Stack this Twist next to the Scheme. Then, for each Twist in that stack, put an Annihilation Henchman from the KO pile next to the Mastermind. Players can fight those Henchmen. Evil Wins: When there are 10 Annihilation Henchmen next to the Mastermind." (M.O.D.O.K. stand-in already settled — not re-litigated.)
+- **Ruling: escalation + VP-recycle reading is CORRECT.** Each Twist: (1) any Annihilation Henchmen sitting in the player's Victory Pile are KO'd back out (recycle VP→KO pool); (2) the Twist is stacked next to the Scheme; (3) "for each Twist in that stack" → place that-many Annihilation Henchmen (from the KO pool) next to the Mastermind. So the count placed escalates with the Twist-stack size: Twist 1 places 1, Twist 2 places 2, etc. Because step (1) clears any you've defeated-into-VP back to the pool first, the number standing next to the Mastermind is re-derived each Twist (bounded by available pool / by 10). Evil Wins when 10 stand next to the Mastermind simultaneously.
+- **Subtlety the build must honor (RAW):** "for each Twist in that stack, put an Annihilation Henchman" places one PER TWIST IN THE STACK each time — combined with step (1) emptying your VP-captured ones back to the pool, the next-to-Mastermind count is effectively `min(twistStackSize, poolAvailable)` re-evaluated each Twist. Defeating them buys a one-turn reprieve but they come back (and grow) next Twist. This is a pure escalation race.
+- **"players' Victory Piles" in solo:** = the single (active) player's Victory Pile. No "each other player" issue here ("players'" possessive includes you).
+- SOURCE: card text (inventory `secret-wars-vol1.md`); escalation logic is self-contained in the Twist wording.
+- CONFIDENCE: **SETTLED** for the mechanical escalation/recycle (card text is explicit). The M.O.D.O.K. substitution is a separate, already-settled design call (not re-opened here).
+
+# BATCH 6 — Ghost Racers KO-zone: "one of your Heroes" (2026-06-25, Rules Oracle; relayed by coordinator)
+
+## Ghost Racers Fight — "KO one of your Heroes with an Attack icon" → CONTROLLED HEROES (hand + played + artifacts); discard/deck/VP EXCLUDED
+- **Card (inventory):** "Fight: Reveal a [COVERT] Hero or KO one of your Heroes with an Attack icon." (Ghost Racers henchman, ×10, Attack 3 / VP 1.)
+- **Question:** What zones does "one of your Heroes" cover for the KO? (Hand only? + played this turn? + discard? + deck?)
+- **Ruling: "your Heroes" = the Heroes you currently control = your HAND + the cards you have PLAYED this turn (+ Artifacts in play). Your DECK, DISCARD PILE, and Victory Pile are EXCLUDED.** This is rulebook-STATED, not inferred: Core p.16 ("Your Heroes" / play area) defines the Heroes you have as the cards in your hand plus the cards you've played this turn; Core p.15 ("KO") operates on cards you can KO from those zones. Cards in your deck or discard pile are not "your Heroes" for a generic "one of your Heroes" instruction — an effect that wants the discard pile names it explicitly (as the sibling M.O.D.O.K.s does: "KO a Hero from your discard pile or the HQ"). That explicit-naming contrast is a CORROBORATOR, not the primary authority (the primary authority is the Core "your Heroes" zone definition).
+- **Attack-icon filter:** the "with an Attack icon" clause NARROWS the eligible pool within those zones; it does NOT widen the zones. If no controlled Hero carries an Attack icon, that branch cannot be chosen — the player takes the Covert-reveal branch, or if neither is payable, does as much as possible (here: nothing). Matches the standard "do as much as you can" handling.
+- **Solo note:** single-player — no "each other player" dimension; "your Heroes" = the active (only) player's controlled Heroes.
+- SOURCE: Core rulebook p.15 ("KO"), p.16 ("Your Heroes" / play area); corroborated by the M.O.D.O.K.s explicit-discard contrast (inventory `secret-wars-vol1.md`).
+- CONFIDENCE: **SETTLED** (rulebook-stated zone definition, not convention/inference). Implemented in SWV1 Phase 3f (`ghostRacersFight` → `koControlledHeroByIdentity` over Artifacts+Hand+Played with `attackIcon===true`, excluding discard), commit `40081cb`.
+
+# BATCH 7 — Dark Alliance scheme (multiple-Masterminds consumer) (2026-06-26, Rules Oracle; rulings relayed by coordinator/Paul)
+
+Scheme "Dark Alliance" (SWV1): "Setup: 8 Twists. / T1: Add a random second Mastermind with one Tactic. / T2-4: if the 2nd MM is still in play, it gains another Tactic. / T5-6: Each Mastermind captures a Bystander. / T7: Evil Wins!" Implemented Phase 3e.
+
+## Q-A — Random 2nd-Mastermind eligible pool → **Core/base-Set Masterminds only (this build)**
+- **Ruling (DESIGN DECISION, not a rules constraint — Paul, 2026-06-26):** the rulebook imposes NO constraint on which Mastermind is added; "a random Mastermind" means any. This build deliberately ships the eligible pool as **Core Set Masterminds only** (low-hanging fruit), with an **extensible opt-in marker** (`darkAllianceEligible: true` per Mastermind) so widening the pool later is a one-flag change, not a picker rewrite.
+- **Technical filters:** exclude the currently-selected MAIN Mastermind; use the base (non-Epic) side.
+- **Final included pool (5):** Dr. Doom, Loki, Red Skull, Magneto, Mephisto.
+- **Drops:** ZERO. `alwaysLeads` (themed villain/henchman group) is NOT a drop criterion — EVERY Mastermind in the game carries an `alwaysLeads` group, so treating it as "an unmeetable setup condition" would empty the pool. A 2nd MM added mid-game brings only its Tactics + Master Strike (no group); all 5 Core Masterminds' strikes/tactics are self-contained (verified: no group-presence dependency in their effect fns). The themed group simply isn't added — cosmetically absent, functionally irrelevant. *(Diverges from the literal "drop alwaysLeads" example in the brief; reported to coordinator.)*
+- **Known cosmetic nuance (non-blocking):** Mephisto's "wound → top of deck" quirk (`defaultWoundDraw`) keys on the MAIN Mastermind only, so as a 2nd MM that quirk does not apply. Magneto's `recruitXMen` base over-credit (Finding A / base-bug B6) ships consistent with base.
+- SOURCE: design decision (rules-silent); pool membership = Core Set fact. CONFIDENCE: **SETTLED** (scope choice).
+
+## Q-B — T5-6 "Each Mastermind captures a Bystander" → from the **Bystander STACK**, literal "each" includes the MAIN MM
+- **Ruling (SETTLED):** the captured Bystander comes from the **Bystander Stack** (the supply), NOT the villain-deck bystander flow. "Each Mastermind" is LITERAL and includes the **main Mastermind** → with the 2nd MM still in play, Twists 5 and 6 EACH capture 2 Bystanders (main + 2nd). No Golden/What-If divergence. Guard the empty-stack case: if the Bystander Stack is empty, that capture is a no-op.
+- SOURCE: Core rulebook p.10 (Mastermind captures a Bystander), p.14 (Bystander rescued on Tactic/Mastermind defeat), p.15 (the Bystander Stack is the supply). CONFIDENCE: **SETTLED**.
+
+## Q-C — Ascended Mastermind keeps captured Bystanders → **INFERENCE (no printed rule)**
+- **Ruling (SETTLED, SILENT):** the rulebook says nothing about an ascended/added Mastermind retaining Bystanders it captured as a villain. The existing "it KEEPS them (ascension isn't escape; rescued on its defeat)" ruling stands as a sound inference. Closest adjacent printed text: Core p.9 ("Bystanders move with the villain card"). Recorded as **inference, not printed rule** (Finding C).
+- SOURCE: inference; adjacent Core p.9. CONFIDENCE: **SETTLED (as inference).**
+
+## Q-D — 2nd-MM Tactic Fight effects resolve; VP lives on Tactics, not the MM card
+- **Ruling (SETTLED):** (1) when you KO/clear a 2nd Mastermind's Tactic by fighting it, that Tactic's **Fight effect RESOLVES** exactly like any Mastermind Tactic → engine must wire `resolveTacticEffects` into the secondary-MM defeat path (GAP-K). (2) Victory Points live on the **Tactic cards, NOT the Mastermind card** → a fully-defeated full 2nd MM's terminal card is worth **0 VP** (its accrued Tactics already carried the VP into the Victory Pile). (3) The 2nd MM is defeated when its ACTUAL accrued Tactic count (1-4, however many it gained over T1-4) is cleared — do NOT hardcode 4.
+- SOURCE: Core rulebook p.14 (Tactic Fight effect + Tactic VP), p.21 (Mastermind-card VP is Final-Showdown-only). CONFIDENCE: **SETTLED**.
+
+# BATCH 8 — Phase 3e chunk 2: the 5 remaining in-scope Schemes (2026-06-26; rulings relayed by coordinator/Paul)
+Source = Secret Wars insert p.1 + Core p.8–10/13/15 + the scheme card text; solo-framed. Two cut schemes (Fragmented Realities, Smash Two Dimensions Together) stay OUT of scope.
+
+## ① CRUSH THEM WITH MY BARE HANDS
+- One Master Strike EVENT = 1 toward the 8, even with multiple Masterminds (insert: one event, each MM fires its ability → still ONE event for counting). Natural villain-deck Master Strikes ALSO count toward 8 alongside the 5 twist-strikes. Solo "+1 Villain Group" is the `extraVillainGroups` mechanism (Golden base 2→3; What If? bakes the +1 into `requiredVillains`).
+- CONFIDENCE: **SETTLED** (1-event-per-trigger is the BATCH-2 SPEC-Q3 reading; recorded there as the faithful/standard reading).
+
+## ② PAN-DIMENSIONAL PLAGUE
+- Wound stays with the HQ **SLOT** (not the Hero), re-seeded each twist. Recruiting a Wound-flagged Hero resolves the wound AT the recruit instant (gain it, or pay 1 Recruit → return to the Wound Stack). TWO destinations: twist "KO all wounds next to HQ" → **KO pile**; recruit pay-1 → **Wound Stack**. Loss counts ONLY Wound-Stack depletion (KO'd wounds do NOT return to the stack).
+- **SLOT-keyed, NOT hero-bonded — DO NOT "correct" back (Coordinator + Paul ruling, 2026-06-26).** The wound belongs to the HQ space, not the Hero card sitting in it. WHY this matters and must not be reverted: in Golden Solo the HQ rotates every round (1 added right, 1 removed left). If the wound were bonded to the Hero, a wounded Hero rotating OFF the HQ would carry the wound OUT of the HQ into undefined places (player deck/discard/KO). The scheme's loss is metered SOLELY by Wound-Stack depletion with no refill except the pay-1 recruit option — so a wound leaking out of the HQ corrupts that accounting (the stack count no longer reflects the real board). Slot-keyed keeps every wound IN the HQ where the scheme manages it (re-seed each twist; KO-all-next-to-HQ each twist). A future session or the Phase-4 audit might "intuitively" re-bond wounds to heroes — that REINTRODUCES the leak bug. Verified via `/game-test` rotation case 2026-06-26 (chunk 2a close-out): wound stays in HQ through rotation, count integrity holds.
+- CONFIDENCE: **SETTLED**; slot-keyed attachment is **INFERRED** but the faithful low-bookkeeping reading (rationale above).
+
+## ③ CORRUPT THE NEXT GENERATION OF HEROES
+- (a) Solo "each player returns a Sidekick from discard" → you return one if present, else skip [INFERRED]. (b) Dynamic Attack (2 + Twists stacked next to this Scheme) applies to Sidekick-Villains in BOTH the Villain Deck and the city [SETTLED]. Defeat a Sidekick → gain it to the TOP of your deck (not VP).
+- CONFIDENCE: a INFERRED, b SETTLED.
+
+## ④ BUILD AN ARMY OF ANNIHILATION
+- Loss = SIMULTANEOUS count of Annihilation Henchmen next to the Mastermind (re-derived each twist = stack size), NOT cumulative; defeated henchmen → your VP pile (normal), lowering the count.
+- ⚠️ FLAG: inventory says 9 Twists but the loss needs 10 next to the MM — coordinator verifying the twist count before chunk 2c. **DO NOT build ④ until cleared.**
+
+## ⑤ MASTER OF TYRANTS — ✅ BUILT (chunk 2d, commits `045fe35` + `775de4f`)
+- "Choose 3 other MMs" = RANDOM, 3 DISTINCT, excluding the main, from the Core pool (the 5 `darkAllianceEligible` MMs: Dr. Doom, Loki, Red Skull, Magneto, Mephisto). Reuses the Dark Alliance eligible pool. **SETTLED** (coordinator, 2026-06-26).
+- **Tyrant "printed Attack" = the SOURCE MASTERMIND's Attack** — Mastermind Tactic cards print the Mastermind's Attack; the tactic DB objects carry no `attack` field of their own. **SETTLED** (engine fact).
+- **Tyrant defeat VP = the Tactic's PRINTED VP = each tactic's own `victoryPoints`** (the "card uses its printed values unless overridden" principle; the scheme overrides only Attack + abilities, never VP). **HOUSE INTERPRETATION** — rulebook silent, designer Devin Low's BGG answer addressed only Attack/abilities (research: `~/.claude/research/2026-06-26-legendary-master-of-tyrants-tyrant-villain-vp.md`). **NOT a flat 6:** the eligible Core MMs' tactics are **VP 5** in `cardDatabase.js` (verified live: Dr. Doom/Red Skull/Magneto/Loki tactics all 5), so Tyrants from them score 5, not 6. The "(6)" in the original ruling was the common-case generalization; "printed VP" is the operative rule and a flat-6 would misprice these. Record so Phase-4 blind-compare uses per-tactic printed VP. (Coordinator + research, 2026-06-26.)
+- **Dark Power STACKS** (+2 Attack each, cumulative on the same Tyrant) — per-villain `darkPower` count folded into `attackFromScheme` in both attack twins. **SETTLED.**
+- **Dark Power targeting (build decision, GAMEPLAY-FEEL — flag for Paul):** the turn player resolving Twists 1-7 CHOOSES which city Tyrant gets the Dark Power (card says "a Tyrant Villain" with no random/auto qualifier → player resolves their own twist). Auto-place if exactly one city Tyrant; no-op if none in the city. `[INFERRED]` from the card wording + solo twist-resolution convention; no explicit rule. A player could place defensively (on a Tyrant they're about to defeat) to blunt the scheme — if that reads as too weak, the alternative is auto-place on the highest-Attack Tyrant. Surfaced for Paul.
+- **Twist 8** = all city Tyrants escape (+ any captured Bystanders ride with them — `775de4f` fix); **Evil Wins at 5 Tyrant Villains escaped** (ANY escape — Twist 8 OR normal city overflow; `isTyrant` filter on `escapedVillainsDeck`).
+
+# BATCH 9 — Madelyne captured-Bystander routing (2026-06-26; Rules Oracle on master, relayed by coordinator)
+
+## Q7 — Every Bystander Madelyne captures becomes a "Demon Goblin" Villain, regardless of which effect triggered the capture
+- **Ruling (SETTLED):** Madelyne Pryor's card text — "Bystanders captured by Madelyne are 'Demon Goblin' Villains with 2 Attack… You can't fight her while she has any Demon Goblins" (inventory final/secret-wars-vol1.md line 741) — is **unrestricted as to the source of the capture**. Core Set p.16 ("special abilities on cards can override the rules of the game") makes her card govern the generic captured-Bystander handling. So ANY effect that makes "the Mastermind" capture a Bystander while Madelyne is that Mastermind must route the Bystander into the shared `demonGoblinDeck` (a fightable 2-Attack Demon Goblin that locks her fight), NOT the generic `mastermind.bystanders` store.
+- **Affected effects (Madelyne Always Leads Limbo → default pairing):**
+  - **Inferno Colossus** ambush — "The Mastermind captures a Bystander" (inv. 647).
+  - **Inferno Cyclops** escape — "The Mastermind captures all the Bystanders this Villain had" (inv. 652-653).
+  - **Dark Alliance** Twist 5-6 — "each Mastermind captures a Bystander from the Stack" (when Madelyne is the main Mastermind in a Dark Alliance game).
+  - Her own Master Strike + Tactics already convert (route through `madelyneCapture()` → `BystanderstToDemonGoblins`).
+- **No mode divergence:** identical in Golden and What If? — the capture routes to the NPC Mastermind; there is no "each other player" translation to apply.
+- **Conversion ≠ discard penalty (keep separate):** Inferno Cyclops escape — players still discard for the Bystander carried away (Core p.15). The default `handleVillainEscape` path already fires that discard before the escape effect runs; converting the carried Bystander to a Demon Goblin neither adds nor removes a discard.
+- SOURCE: inventory final/secret-wars-vol1.md (741, 647, 652-653); Core p.16 (card overrides rules), p.15 (carry-away discard). The Secret Wars Vol.1 insert has no Demon Goblin / Inferno section — those mechanics live on the card faces. CONFIDENCE: **SETTLED**.
+- **Implementation marker:** detect "this Mastermind is Madelyne" via the DB flag `unfightableWhileDemonGoblins === true` (her canonical demon-goblin marker, same flag `isMastermindDemonGoblinLocked()` reads). Fix sites: `infernoColossusAmbush` / `infernoCyclopsEscape` (expansionSecretWarsVol1.js) + `captureBystanderFromStackToMastermind` (script.js).
+
+# BATCH 10 — Untouchable (and any Fight-effect cancel) vs converter cards (2026-06-26; Rules Oracle on master, relayed by coordinator)
+
+## Q8 — Cancelling a converter's Fight effect leaves the DEFEAT intact → card goes to the Victory Pile at its printed VP
+- **Ruling (INFERRED-high):** Apocalyptic Kitty Pryde — Untouchable's text (inventory final/secret-wars-vol1.md line 309): "When any player defeats a Villain or Mastermind with a 'Fight' effect, you may discard this card to cancel that fight effect. If you do, draw three cards." It fires **on defeat** — the defeat is already locked in; only the **Fight effect** is cancelled. Defeat → Victory Pile is a step **SEPARATE** from the Fight effect (Core p.13).
+- **Consequence for CONVERTER cards** (whose Fight effect is "Gain this as a Hero" — Manhattan Earth-1610 villains, Thor Corps henchmen; or the corrupt Sidekick-Villain's gain-to-deck): when the Fight effect is cancelled, the card is **NOT gained** as Hero/Sidekick, **NOT KO'd**, **NOT vanished** — it still goes to your **Victory Pile at its printed VP** (Manhattan/Thor Corps = 0 VP per inv. 1049/1050; corrupt Sidekick = its own printed VP, inv. 834). You still **draw 3** (Untouchable's rider).
+- **Canceller-agnostic:** the same logic applies to **Mr. Fantastic's Ultimate Nullifier** (`promptNegateFightEffectWithMrFantastic`) — it likewise cancels only the Fight effect, so a converter it cancels also stays in the Victory Pile. The fix is placed at the shared resolution point so BOTH cancellers behave correctly.
+- **No mode divergence:** Golden = What If? (the defeat/Victory-Pile step is identical in both).
+- SOURCE: Core p.13 (defeat → Victory Pile is separate from the Fight effect); SW v1 insert p.1 (gain-as-Hero is a Fight effect); inventory line 309 (Untouchable text), 1049/1050 (Manhattan/Thor Corps VP), 834 (corrupt Sidekick). CONFIDENCE: **INFERRED-high**.
+- **Implementation:** the cancel path previously short-circuited — `gainAsHero`/`skrulled` stayed true, so the standard post-defeat VP-push (the `!gainAsHero && !skrulled` gate in `handlePostDefeat` / `handleHQPostDefeat` / `defeatNonPlacedVillain`) was skipped and the card vanished. Fix (audit M2): in the shared fight-effect hook in `collectDefeatOperations` (script.js), when the effect is negated AND the card is a converter, clear `gainAsHero`/`skrulled` so the EXISTING disposition VP-push fires (no parallel scoring path).
