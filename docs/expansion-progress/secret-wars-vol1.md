@@ -178,6 +178,7 @@ Worker gates per fix-group: reuse-first survey → expansion-validator + `/code-
 **DEFERRED → base-code branch (not this expansion branch):**
 - `skrulled` / `gainScarletWitchAsHero` (House of M) converter cancel-vanish — a separate rules question, and those terminal cards have NO printed VP (lower impact than the SWV1 converters fixed here). Findings E/F (Mr. Fantastic-negate / Professor X double-gain on gain-as-Hero) belong to this base cluster.
 - **Central-refactor candidate** — hoisting the converter-flag clear into `promptNegateFightEffectWithMrFantastic` would dedupe the now-4 per-site mirrors, but it's not a clean drop-in: 5 negate sites call it with NO card arg, and the M2 site passes `(villainCopy, villainCard)` clearing the original — a central fix needs a guarded, param-aware impl. Low drift risk at 4 well-commented mirrors; revisit if a 5th converter-cancel site appears.
+- Old Man Logan Loner +2 retained via 4 free-recruit ability paths (recruitHeroConfirmed direct-call bypasses the showHeroRecruitButton guard); floor-at-0 clawback limitation; base-code branch.
 
 **DEFERRED — LOW (SWV1):**
 - Untouchable's reactive cancel is NOT wired into the Fight the Future deck-top path (only Mr. Fantastic's negate is) — pre-existing, narrow; Untouchable's text covers "Villain or Mastermind" fights and the FtF deck-top fight predates it.
