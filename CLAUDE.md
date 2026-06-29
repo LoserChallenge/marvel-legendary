@@ -12,7 +12,7 @@
 
 ## Project Goal
 
-Enhance the existing Legendary Solo Play web app. Golden Solo Mode is complete. Active work: UI/setup screen improvements, then full expansion content additions.
+Enhance the existing Legendary Solo Play web app. Golden Solo Mode is complete. Active mission: bring expansions into the game one at a time (inventory → `/analyze-expansion` → `/new-expansion`).
 
 ## Project Location
 
@@ -52,7 +52,7 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 
 ## Backups
 
-- **Original-game baseline** — frozen reference copy of the original game (base + all already-integrated expansions, pre-Revelations). Emergency reference only: never modify, never merge expansions into it. Names are evergreen by design (no version/date/expansion strings; provenance lives in the tag annotation).
+- **Original-game baseline** — frozen reference copy of the original game (base + all already-integrated expansions). Emergency reference only: never modify, never merge expansions into it. Names are evergreen by design (no version/date/expansion strings; provenance lives in the tag annotation).
   - **Git tag:** `original-game-baseline` (annotated; pushed to origin).
   - **Folder copy:** `D:\Games\Digital\Marvel Legendary\_original-game-backup\`.
 
@@ -69,11 +69,8 @@ Open `Legendary-Solo-Play-main\Legendary-Solo-Play-main\index.html` directly in 
 
 ## onscreenConsole vs console Gotcha
 
-- **`onscreenConsole.log()`** is the game's **in-game message panel** that players see during play. Use it for every game event — card plays, villain moves, ability activations, Locations entering the city, anything the player needs to know about.
-- **`console.log()`** is the **browser's developer tools** console (F12). It's invisible to players and should only appear in dev-only instrumentation that gets removed before a feature ships. Treat any `console.log` in game logic as a red flag.
-- **Rule:** when writing game logic, reach for `onscreenConsole.log()` first. If you find yourself typing `console.log()` for something a player would want to see, stop — it's a bug.
+- Every player-facing game event (card plays, villain moves, ability activations, Locations entering the city) → `onscreenConsole.log()`. `console.log()` is dev-only (F12), invisible to players, and a red flag in game logic — the debug-log guard hook warns on it; remove before shipping.
 - **Highlight syntax:** wrap card/hero/villain names in `<span class="console-highlights">${name}</span>` to render them in the game's highlight colour. Canonical pattern: villain/Location announcements (grep `console-highlights` in `script.js`).
-- **Caught by:** 2026-04-12 Revelations playtest. `placeLocation()` used `console.log`, so Locations entered the city with zero on-screen announcement. Fixed 2026-04-13 (Fix 1D).
 
 ## Async Gotchas
 
@@ -155,11 +152,11 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 
 ## Planned Work
 
-**Active mission:** bring expansions into the game one at a time (inventory → `/analyze-expansion` → `/new-expansion`). Revelations complete + merged (2026-06-20); next expansion not yet selected.
+**Active mission:** bring expansions into the game one at a time (inventory → `/analyze-expansion` → `/new-expansion`). Current expansion status and what's next: `docs/expansion-pipeline-status.md` + `docs/priorities.md`.
 
 **Live task list — in-flight / deferred / ongoing:** `docs/priorities.md`. **Pipeline status table:** `docs/expansion-pipeline-status.md`. Consult both for what's next; this section stays durable-context only.
 
-## Visual Reference Setup ✅ Complete
+## Visual Reference Setup
 
 For inventory sessions: read `docs/card-inventory/icons/icon-reference.md` at session start. Full details in `docs/expansion-asset-pipeline.md`.
 
@@ -179,7 +176,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - **Setup:** Hero count follows `scheme.requiredHeroes` (no longer hardcoded to 5); villain deck = 2-player rules (2 bystanders default, 10 henchmen shuffled in); hero deck restructured (10-card starting stack on top, Rares shuffled into main deck)
 - **Each round:** Draw 6; HQ rotates (1 added right, 1 removed left — skip round 1); optional bystander spend to reduce villain draws; draw **2** villain cards; play 6 cards
 - **HQ refill:** New card always goes rightmost, others slide left — rotation, not fill-in-place
-- **"Other player" effects:** Currently silent skip — under review (see Known Issues)
+- **"Other player" effects:** Location "each other player" triggers → self-apply (do it yourself); non-Location ones classified per-card — provisional (self-apply reveal-or-suffer vs. no-op VP-pulls). Rulings → `docs/expansion-decisions.md`
 - **Win:** 4 Mastermind defeats; **Ultimate Victory:** Final Showdown — combined recruit+attack ≥ Mastermind strength+4
 
 ## Automations Set Up
@@ -215,7 +212,7 @@ Staging structure, file naming conventions, staging process steps, card inventor
 - `rules-oracle` — authoritative rules/mechanics lookup from the `rules/` rulebooks + inventory; solo-framed, quotes source + page, caches findings to `docs/rules-notes/`. Use for ambiguous mechanics/keyword/interaction/solo-handling questions (rules 6 + 8). Advisor only — never edits code.
 
 **MCP Servers:**
-- **Playwright MCP** — Microsoft `@playwright/mcp@latest`, local-scope (this project only). Drives a real Chromium browser: click, fill, screenshot, read DOM, evaluate JS in the page. **Use for:** bug verification where a specific game state reproduces the issue — inject state via `browser_evaluate` (skip setup, pre-stack decks, jump to a UI state), then verify via DOM / onscreenConsole / screenshot. Bug-backlog triage, regression checks, deterministic reproductions. **Don't use for:** subjective UX feel, randomness-dependent multi-turn flows, anything needing real play instincts. **Setup quirks:** `file://` is blocked — launch via a local Python HTTP server pointed at the game's directory; default viewport is narrow (~400px = mobile layout), set 1920×1080 at session start; `sw.js` 404 console error on local-serve is expected noise (path-prefix mismatch with GitHub Pages), not a bug. Full install history + deeper gotchas: `D:\Claude Code\cc-helper\docs\cc-guide.md` → Playwright MCP entry.
+- **Playwright MCP** — drives a real Chromium (click, fill, screenshot, read DOM, evaluate JS). **Use for:** state-injection bug repro (`browser_evaluate` to skip setup / pre-stack decks / jump to a UI state, then verify via DOM / onscreenConsole / screenshot), bug-backlog triage, regression, deterministic reproductions. **Don't use for:** subjective UX feel, randomness-dependent multi-turn flows, anything needing real play instincts. Setup quirks (`file://` blocked → local HTTP server, 1920×1080 viewport, `sw.js` 404 noise) + install history → `D:\Claude Code\cc-helper\docs\cc-guide.md` (Playwright MCP entry).
 - **GitHub MCP** — check deployment status, issues, Actions logs without leaving chat.
 
 **References:**
@@ -279,25 +276,17 @@ Coordinator habits:
 
 ## Scheme Hero Requirements Infrastructure
 
-Both game modes use `scheme.requiredHeroes` for hero count (Golden Solo no longer hardcodes 5). Schemes can optionally declare a `heroRequirements` field:
-
-```js
-heroRequirements: {
-    teamComposition: [{ team: "X-Men", count: 4 }, { team: "non:X-Men", count: 2 }],
-    requiredHero: ["Spider-Man"]
-}
-```
+Both game modes use `scheme.requiredHeroes` for hero count (Golden Solo no longer hardcodes 5). Schemes can optionally declare a `heroRequirements` field (`teamComposition` + `requiredHero`) — shape & example in the spec (`docs/superpowers/specs/2026-04-05-scheme-hero-requirements-design.md`).
 
 - **Banner** (`#hero-requirements-banner`): shows/hides based on selected scheme's `heroRequirements`
 - **Validation**: `showConfirmChoicesPopup()` checks team composition + required heroes; blocks game start if unmet
 - **Randomize**: `pickHeroesForRequirements()` helper fills required heroes → team constraints → random remainder
 - **Villain/henchmen requirements** already handled separately via `specificVillainRequirement` / `specificHenchmenRequirement`
-- Spec: `docs/superpowers/specs/2026-04-05-scheme-hero-requirements-design.md`
-- **Status**: Merged to master (2026-04-06). No current schemes use `heroRequirements` yet — infrastructure ready for expansion schemes
+- No scheme uses `heroRequirements` yet — extend it, don't assume it's wired to live data
 
 **Villain-side scheme overrides:** `getEffectiveSetupRequirements()` in `script.js` is the single source of truth for setup validation. It combines scheme fields (`requiredVillains`, `specificVillainRequirement`, `extraVillainGroups`) with game-mode rules (Golden Solo base = 2 villain groups) and mastermind `alwaysLeads`. Setup display, start-game validator, and checkbox auto-lock all read from it — no caller bypasses it. New scheme-specific villain overrides should extend this function, not the call sites.
 
-- **`extraVillainGroups: N`** (added 2026-04-15 for Revelations Earthquake/Tsunami) — Golden Solo adds N extra villain groups on top of the base 2. What If? Solo ignores this field (uses `requiredVillains` directly). Applied in `getEffectiveSetupRequirements()` Golden Solo branch only.
+- **`extraVillainGroups: N`** (Revelations Earthquake/Tsunami) — Golden Solo adds N extra villain groups on top of the base 2. What If? Solo ignores this field (uses `requiredVillains` directly). Applied in `getEffectiveSetupRequirements()` Golden Solo branch only.
 
 ## Golden Solo Implementation
 
