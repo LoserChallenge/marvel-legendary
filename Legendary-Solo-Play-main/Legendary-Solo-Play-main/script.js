@@ -19063,6 +19063,27 @@ function showHeroRecruitButton(hqIndex, hero) {
     return;
   }
 
+  // Secret Wars Vol.1 — Loner (Old Man Logan): "If you don't recruit any Heroes this turn, +2 Attack."
+  // The +2 is granted provisionally and clawed back by recruitHeroConfirmed when a Hero is recruited.
+  // But once that +2 has been (partially) SPENT on Attack, the floor-at-0 clawback can no longer reclaim
+  // it — recruiting a Hero then would let the player keep BOTH the spent bonus and the recruit. Block the
+  // Hero recruit in exactly that unreclaimable case (bonus applied AND no longer fully present in the
+  // current Attack total). When it is still fully present (total >= applied), allow the recruit —
+  // recruitHeroConfirmed claws it back cleanly (this also covers "gained more Attack later": the clawback
+  // stays correct whenever total >= applied). lonerAttackApplied is the ACCUMULATED value (multiple Loners
+  // stack). Type-guarded to Hero only: Bystander rescues (Save Humanity) route through this same function
+  // and must NOT be blocked — mirrors recruitHeroConfirmed's clawback type guard.
+  if (
+    hero.type === "Hero" &&
+    lonerAttackApplied > 0 &&
+    totalAttackPoints < lonerAttackApplied
+  ) {
+    onscreenConsole.log(
+      `You've already spent <span class="console-highlights">Loner</span><span class="bold-spans">'s</span> +${lonerAttackApplied}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> bonus this turn — recruiting a Hero would forfeit it, but it can no longer be reclaimed. You can't recruit a Hero this turn.`,
+    );
+    return;
+  }
+
   container.style.display = "block";
   button.style.display = "block";
 
