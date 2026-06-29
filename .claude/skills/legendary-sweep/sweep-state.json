@@ -1,5 +1,5 @@
 {
-  "last_sweep": "2026-06-22",
+  "last_sweep": "2026-06-29",
   "swept_sessions": [
     "31a4bd89-f376-4689-9a0f-082398bd114e",
     "bc9ccbd4-752d-4c3c-9fee-5c528f4f92fa",
@@ -44,7 +44,35 @@
     "dd5ec1cc-047d-471d-ae6a-e2b1813d88c0",
     "e35c0811-450e-4438-a486-47c292853ead",
     "f18b409d-be5a-4c57-b3d7-4fa998dcaedd",
-    "fc1da54f-baef-4d67-9ceb-f84b74e8e60a"
+    "fc1da54f-baef-4d67-9ceb-f84b74e8e60a",
+    "83520f48-3cca-4e9f-abfc-a9e89185fda0",
+    "fb215f6b-b521-483d-b06a-46640cca6aae",
+    "2da10147-c11c-41b5-a40e-b1b3ce0b5dc3",
+    "5821f299-9025-49ad-b254-015c6b378a2a",
+    "69d9c27b-5aeb-4ac2-840f-cbcd960d49f7",
+    "98c2a2c3-fcc1-4485-adba-168e818b74a8",
+    "50eb9cf1-e706-42db-a4bd-8aca28a226fe",
+    "e49d8061-5acf-44b0-9803-dc925d161ebb",
+    "18aabf44-165d-485c-8d94-d9782f6079fd",
+    "2da0b308-3951-4b98-aaaf-43adec54cba0",
+    "30c6b593-fd35-46c4-92ea-0beaf31b76a6",
+    "3d7f8270-4c12-4a85-9547-4e39a642a5a7",
+    "7e30733f-5fc1-4b81-ac61-5042419b81a2",
+    "8be5f311-6d4e-4f3e-857d-a366f8527d65",
+    "c6fe1f96-4d56-42ed-8236-0c10800ff574",
+    "1533df92-d7aa-4468-bb62-33366cb0aa08",
+    "265a7455-f20f-4243-b3e2-144bad4dbaea",
+    "43f76b4b-a90a-4154-b12f-dbe4cbb03f76",
+    "63405cf5-8c8b-4505-8860-afb7134db13a",
+    "da5a553d-f455-4a86-8a05-27871b12039f",
+    "e98033d6-53ec-4d5a-b052-1e9a825fedd1",
+    "23f03537-4844-4464-a013-99d3f713b0a2",
+    "4d9dd48d-eb33-4caf-ae95-e33c64cdd130",
+    "7585f55d-f995-4450-8195-9409cc4dbc22",
+    "7df347c5-bc95-4ece-881a-d2107a7a77cb",
+    "bc03558e-71a6-4944-9e34-b99af460d35f",
+    "83eb3fe5-b1ac-403a-b859-ff8e589a0a4d",
+    "1fa07a6c-acd7-4f4c-a163-4a19038f01d9"
   ],
-  "_note": "2026-06-20 FULL BACKFILL run swept all 37 prior Revelations-build transcripts (15 main + 22 revelations worktree). Pass A captured ~40 de-duped domain items into docs/sweep-inbox.md; Pass B drain pending Paul approval. Ledger now covers the entire Revelations build; future runs are incremental from here."
+  "_note": "2026-06-29 Pass A (second run, same day) swept 1 additional transcript: the SWV1 post-merge-review session (1fa07a6c). Extraction yielded 1 candidate (requiredHeroes:3 sentinel collision in getEffectiveHeroCount) that was ALREADY fully covered -- the mechanic by existing inbox line (2026-06-27 #gotcha) and the ruling by known-issues B18 CLOSED -- so ZERO net-new inbox lines appended (de-dup). Prior same-day run swept 27 SWV1 build transcripts and captured ~80 de-duped items into docs/sweep-inbox.md; that Pass B promote/prune is still pending Paul's interactive approval. Ledger covers Revelations + SWV1 builds + the post-merge review; future runs incremental."
 }
