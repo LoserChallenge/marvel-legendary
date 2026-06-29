@@ -299,5 +299,5 @@ Complete and stable. Mode flag: `gameMode` (`'whatif'` | `'golden'`). Full histo
 Details in `docs/known-issues.md` (§3 Design/UX & rules). Summary:
 - **Hero name truncation** on narrow screens — accepted, revisit in next UI pass
 - **Kree-Skrull War villain count** — rules decision needed (What If? Solo 1-group cap vs. scheme's 2-group requirement)
-- **"Other player" effects** — inconsistent solo handling; full review deferred until all inventories are finalized (will be addressed by `/analyze-expansion`)
-- **Villain/Mastermind overlay UX pass** — bystanders and captured heroes currently shrink to small thumbnails on the villain/mastermind card. Refactor to match the Location fan-out pattern (full-size cards shifted in position to mimic physical tabletop stacking). Cross-cutting — touches base game, every expansion. Unblocked (Revelations merged 2026-06-20); not yet scheduled.
+- **"Other player" effects** — interim per-card handling in place (Location → self-apply; non-Location → provisional NO-OP/SELF-APPLY, see `docs/expansion-decisions.md`); unified cross-expansion pass now unblocked (all inventories finalized), still open
+- **Villain/Mastermind overlay UX pass** — bystanders and captured heroes currently shrink to small thumbnails on the villain/mastermind card. Refactor to match the Location fan-out pattern (full-size cards shifted in position to mimic physical tabletop stacking). Cross-cutting — touches base game, every expansion. Unblocked; not yet scheduled.
