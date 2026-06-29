@@ -186,6 +186,7 @@ One hero at a time, all 4 cards per hero. For each card:
 - Follow Golden Solo rules: `processVillainCard()` not `drawVillainCard()`, conditional `goldenRefillHQ()` for HQ manipulation, silent skip for "other player" effects
 - Follow the attack-granting pattern: update both `totalAttackPoints` and `cumulativeAttackPoints`, call `updateGameBoard()`
 - **Run the card's executable assertion via `/game-test`** — required for every non-trivial card, mandatory for any `confidence: LOW` card no matter how simple it looks
+- **Heroes get a mandatory runtime backstop regardless of this scoping** — even a hero ability skipped here as trivial is runtime-tested by the Phase-4d Hero-Ability Behavioral Sweep before merge (dual-mode where 4d requires it)
 
 **Checkpoint per hero — report the assertion results FIRST, then the gameplay summary:**
 > "[Hero Name] — 4 cards implemented. **Assertions (from frozen spec): [Card → PASS/FAIL via /game-test; 'trivial, no assertion' where applicable].** Here's what each does:
@@ -270,7 +271,31 @@ node --check expansion[Name].js
 1. **Run the mechanic checklist (authoritative gate).** Walk this expansion's new/modified mechanics against `docs/mode-divergence-checklist.md`. **Every mechanic that touches a row → a dual-mode `/game-test`** (run its Phase 2.5 assertion in both `gameMode === 'golden'` and `gameMode === 'whatif'`).
 2. **Grep the expansion file (cheap first-pass signal, NOT proof):** `gameMode|isGolden|\bmode\b|'golden'|'whatif'`. Hits → exercise both modes for those branches. Zero hits → no *direct* branching in this file, low risk — but NOT a guarantee (divergence can live in a shared `script.js` helper the file calls). The checklist is the real gate; the grep is just a signal.
 
-### 4d: Guided Test Game
+### 4d: Hero-Ability Behavioral Sweep — runtime-test every hero ability (hard done-criterion)
+
+**Override the Phase-3b triviality carve-out for heroes: every new hero ability gets a
+runtime behavioral `/game-test` — no hero card ships on static audit alone, none waved
+through as "looks vanilla."** Static text-vs-code audit cannot observe runtime behavior
+(SWV1: Magik "Dimensional Portal" wired +1 Attack per Sidekick but granted +0; Old Man
+Logan "Loner" residual — both passed `/expansion-audit`, surfaced only in playtest). This
+catches what 4c's checklist-scoping misses: a plain Attack grant touches no divergence row,
+so 4c never tests it.
+
+For each new hero card ability:
+1. Inject a state that exercises the ability (N Sidekicks for a per-Sidekick bonus, a
+   KO-eligible target, a known draw pile).
+2. Assert the observable effect — Attack/Recruit delta, KO count, cards drawn — matches the
+   frozen Phase 2.5 spec. Where the card grants Attack/Recruit, also assert the Final Showdown
+   cumulative (a flat card can update the turn total but miss `cumulative*` — a known gotcha).
+3. **Dual-mode** (`gameMode === 'golden'` AND `'whatif'`; a pass in one mode is not a pass)
+   when the ability is **conditional, computed, per-X, or touches a
+   `docs/mode-divergence-checklist.md` row.** A flat unconditional Attack/Recruit with no
+   rider — which cannot diverge by mode — may record a single-mode PASS.
+
+Done-criterion: every new hero ability has a recorded runtime PASS (dual-mode where step 3
+requires it) before Status → Complete. A FAIL or a missing run blocks the merge gate.
+
+### 4e: Guided Test Game
 
 Suggest a test setup that exercises the expansion's key mechanics:
 > "For testing, I'd suggest: [Mastermind] with [Scheme], heroes: [list that includes new + existing heroes]. This setup will exercise [keyword], [mechanic], and [interaction]. Ready to try it?"
@@ -283,6 +308,7 @@ Walk the user through what to look for during the test game. For any mechanic th
 
 Before merging the expansion branch:
 - [ ] All Phase 4 issues resolved and retested
+- [ ] **Hero-ability behavioral sweep (4d):** every new hero ability has a runtime `/game-test` PASS — dual-mode for any conditional/computed/per-X or mode-divergent ability; no hero ability merges on static audit alone
 - [ ] `/expansion-audit` run clean (0 unresolved HIGH findings, or all deferrals documented)
 - [ ] `sw.js` `CACHE_NAME` bumped (e.g. `legendary-v4` → `legendary-v5`)
 - [ ] New expansion JS file added to `FILES_TO_CACHE` in `sw.js`

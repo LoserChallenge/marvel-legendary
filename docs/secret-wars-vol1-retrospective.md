@@ -70,11 +70,11 @@ Every reused base path is a chance to hit a latent base bug (B6/B8/B9/B11/B12/B1
 
 | What we learned | Owning track | Status |
 |---|---|---|
-| Static audit can't catch behavioral effect bugs (Magik/OML) | `/improve-skill` on `/new-expansion`: dual-mode `/game-test` behavioral gate as Phase-4 done-criteria | **New — single highest-leverage add** |
+| Static audit can't catch behavioral effect bugs (Magik/OML) | `/improve-skill` on `/new-expansion`: dual-mode `/game-test` behavioral gate as Phase-4 done-criteria | **Implemented 2026-06-29** — Phase-4d gate added (runtime test every hero ability; dual-mode when conditional/per-X/mode-divergent). Efficacy still a hypothesis: validate by counting behavioral bugs caught at the gate vs. leaked to playtest on the next build |
 | Two-session split reduced bugs (independent perspective) | Keep `cc-coordinate` as default for engine-touching expansions; optimize its *token* cost without cutting independence | Sustain (token analysis = step 3) |
 | Audit-as-built-in-gate held (consistent with Revelations hypothesis #1, not a controlled proof) | Already wired into `/new-expansion` Phase 3/4 | Sustain — result consistent with the hypothesis; confounded by the split, so not isolated |
 | Reuse hits latent base bugs | Consolidate base-code-branch backlog, clear inter-expansion | Step 6 |
 | Mechanics-doc master↔branch drift | Add to shared-doc canonical-homes table in CLAUDE.md | Step 5 (folder-discipline note) |
-| `/sandbox-review` doesn't fit multi-file code-diff review | `/improve-skill`: document the code-diff-review pattern or split the skill | Step 5 |
+| `/sandbox-review` doesn't fit multi-file code-diff review | `/improve-skill`: document the code-diff-review pattern or split the skill | **Implemented 2026-06-29** — added a "Scope — single-document artifacts only" section + description clarifier steering multi-file code-diff review to cold-read subagents per focus area (chose the scope-note option over splitting the skill) |
 | Rules-first + reuse-scout prevented churn | Rules 8 + 9 sustained | Sustain — confirmed working |
 | Mode divergence ~0 bugs (again) | Light reminder only | Demote — consistent across two builds |
