@@ -160,12 +160,17 @@ function ultimateWaspBonusAttack(card) {
 // "for each OTHER card you played this turn" count. Excludes the playing card by object identity
 // (the engine pushes it to cardsPlayedThisTurn before firing its ability) and strips copy/simulation
 // residue so it can't inflate counts.
-function otherRealCardsPlayedThisTurn(self) {
+// `includeSidekickResidue` (default false): a normally-played Sidekick is stamped
+// sidekickToDestroy=true at play time by returnToSidekickDeck() (cardAbilitiesSidekicks.js), so by
+// default it is treated as residue and excluded. Magik "Dimensional Portal" must COUNT played
+// Sidekicks, so it opts in — keeping all other residue guards single-sourced here (no hand-copied
+// drift if the guard list ever grows).
+function otherRealCardsPlayedThisTurn(self, { includeSidekickResidue = false } = {}) {
   return cardsPlayedThisTurn.filter(
     (c) =>
       c !== self &&
       !c.isCopied &&
-      !c.sidekickToDestroy &&
+      (includeSidekickResidue || !c.sidekickToDestroy) &&
       !c.markedToDestroy &&
       !c.markedForDeletion &&
       !c.isSimulation,
@@ -1247,9 +1252,15 @@ function oldManLoganNoMoreHeroes() {
 
 // Magik — Dimensional Portal (Uncommon). "Teleport. For each Sidekick you played this turn, +1 Attack."
 function magikDimensionalPortal(card) {
-  const sidekickCount = otherRealCardsPlayedThisTurn(card).filter(
-    (c) => c.secondaryType === "Sidekick",
-  ).length;
+  // Count Sidekicks played this turn. A normally-played Sidekick is stamped sidekickToDestroy=true at
+  // play time by returnToSidekickDeck() (cardAbilitiesSidekicks.js), which the shared helper treats as
+  // residue and excludes by default — but Magik must count exactly those. Opt in via
+  // includeSidekickResidue so all OTHER residue guards stay single-sourced in the helper. Each played
+  // Sidekick leaves exactly one copy in cardsPlayedThisTurn (the clone lives in sidekickDeck), so this
+  // cannot double-count.
+  const sidekickCount = otherRealCardsPlayedThisTurn(card, {
+    includeSidekickResidue: true,
+  }).filter((c) => c.secondaryType === "Sidekick").length;
   onscreenConsole.log(
     `Sidekicks played this turn: ${sidekickCount}. +${sidekickCount}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
   );
