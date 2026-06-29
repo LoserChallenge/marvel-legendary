@@ -12,6 +12,29 @@ Base-bug discovery started 2026-06-22. Original screenshot source: Paul's iPad c
 
 ---
 
+## Next base-code-branch batch — consolidated roll-up (assembled 2026-06-29, post-SWV1)
+
+One starting checklist for the next inter-expansion base-code fix pass. Full diagnosis + fix-direction live in each item's §2/§3 entry below — this is just the index so the scattered deferred items are in one place. **PINNED items unpin once no expansion build is active.**
+
+**SWV1-surfaced base bugs (deferred to this branch — the new additions):**
+- **B6** — `recruitXMen()` over-credits Recruit by the hero's cost (free *and* refunds). CANDIDATE. → §2.
+- **B8 (residual half)** — `skrulled` / `gainScarletWitchAsHero` villain→hero converters vanish on cancel. The `gainAsHero`/`corruptSidekick` half was FIXED on the SW branch (audit M2); these two instances remain. CANDIDATE. → §2.
+- **B9** — Professor X "Mind Control" double-gains a villain→hero converter (needs `&& !skrulled && !gainAsHero` guard). CANDIDATE. → §2.
+- **B11** — Mole Man "Underground Riches" hardcodes `hq2ReserveRecruit` → wrong slot under city-resize (SWV1 Banker built the resize-safe version; base didn't inherit). CANDIDATE. → §2.
+- **B19 (residual)** — Old Man Logan "Loner" +2 retained across the **4 free-recruit ability-path** instances (floor-clawback exploit). The normal HQ-recruit path was FIXED on the SW branch (`682dd8b`); these 4 remain. CANDIDATE. → §2.
+- **B10 / audit-M4** — `cityPermBuff[-1]` NaN base edge; guarded *locally* in SWV1 Fight the Future, but the deeper one-line base fix is a base-branch candidate. → §2.
+- **Pan-Dimensional Plague central async fix** — the recruit-instant Wound choice fires only via `showHeroRecruitButton`; ability-driven free-recruit-from-HQ paths skip the optional choice. SHIPPED as-is (fix-effort gate); the central async fix is logged to this backlog. Same free-recruit-ability theme as B19. → progress doc `secret-wars-vol1.md`.
+
+**Pre-existing, also in this batch:**
+- **B1** — Golden Solo recruit-flow race duplicates a unique card (HQ + discard). CONFIRMED, root cause diagnosed, **highest priority**. → §2.
+- **B4 / B5** — HQ index-shift / under-refill latent bugs (code-traced). CANDIDATE. → §2.
+- **B13 / B14 / B15** — Detonate-the-Helicarrier destroyed-HQ-space render + recruit-block + refill-position bugs (user-reported, need repro). CANDIDATE. → §2.
+- **B2 / B3** — Angel / Super-Skrull popups, symptom not yet recalled (need Paul's repro before they're actionable). CANDIDATE. → §2.
+
+**Already fixed on the SW branch (NOT in this batch — listed so they aren't re-opened):** B12, B16, B17, the converter-reachable half of B8, the normal-recruit instance of B19. B18 CLOSED (Paul's ruling: Golden hero count 5 = working as designed).
+
+---
+
 ## 1. Incoming / untriaged
 
 _(Raw `bugs/` drops awaiting triage land here first. Currently empty — the 2026-06-25 batch is triaged into §2 as B13–B15.)_

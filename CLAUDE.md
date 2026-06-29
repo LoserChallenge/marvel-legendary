@@ -264,11 +264,14 @@ During an expansion build the same doc can exist in both the master folder and t
 | `docs/known-issues.md` (base-game bugs + design/UX + rules) | **Master** | Coordinator only — workers report base bugs in their reply; coordinator catalogues on master. Workers never edit the branch copy. |
 | `docs/expansion-asset-pipeline.md` | **Master** | Coordinator |
 | `docs/card-inventory/final/<exp>.md` | Branch (during build) | Worker |
-| `docs/expansion-specs\|progress\|mechanics/<exp>.md`, reusemaps | Branch | Worker |
+| `docs/expansion-specs\|progress/<exp>.md`, reusemaps | Branch | Worker |
+| `docs/expansion-mechanics/<exp>.md` | **Master until the branch is cut, then Branch** (see note) | `/analyze-expansion` on master → Worker on branch |
 | `docs/rules-notes/<exp>.md` | Branch | Worker — coordinator relays the rules-oracle finding (rule 10) |
 | `CLAUDE.md` | Worktree live; master canonical for "Session Roles" | per rule 5 |
 
 Branch-canonical docs flow to master at merge. Master-canonical docs: the branch copy is intentionally stale — never edit it on the branch, so the merge stays conflict-free and master's content wins.
+
+**Mechanics-doc canonical-side flips — the one shared doc that changes sides.** Unlike the spec/progress docs (born on the branch), the mechanics doc is *born on master* during `/analyze-expansion`, before the worktree exists. Once the branch is cut, the branch copy becomes canonical and **master must not edit `docs/expansion-mechanics/<exp>.md` again** — finish all analyze-phase edits (scheme scope, resolved Open Questions) *before* cutting the branch, or relay any late master finding to the worker to apply on the branch. *(Why: SWV1 — `/analyze-expansion` finalized scheme-scope on master after the branch carried a stale copy; the only real merge conflict needed hand-synthesis of master's 6-schemes/resolved-Open-Questions against the branch's later content.)*
 
 Coordinator habits:
 - Verify a shared doc by reading the **branch** version (`git show <branch>:<path>`); the master working copy can lag the branch.
