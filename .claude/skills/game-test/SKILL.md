@@ -46,7 +46,7 @@ Layer these based on what's being checked:
 
 - **DOM reads** — `browser_snapshot` for structural checks; targeted `browser_evaluate` returning a value for specific element states.
 - **onscreenConsole** — read `#onscreen-console` contents for in-game event messages (what players see during play).
-- **Browser console errors** — `browser_console_logs` for `console.error` / `console.warn`. Ignore the known `sw.js` 404 in local-serve mode (path-prefix mismatch with GitHub Pages, not a real bug). Flag anything else.
+- **Browser console errors** — `browser_console_logs` for `console.error` / `console.warn`. Don't eyeball this: use the codified **console-check gate** (Harness gotchas → *Console-check gate (A3)*), which whitelists the benign `sw.js` 404 and fails on anything else, producing the A2 contract's `consoleCheck` result.
 - **Screenshots** — at start, after each major state change, and at the verification checkpoint. Save under `docs/playwright-runs/<YYYY-MM-DD>/` (create folder if missing).
 
 ## Default reporting cadence
@@ -192,6 +192,28 @@ Driving the harness:
   **RE-INSTALL AFTER ANY NAVIGATION.** A page reload / re-navigate wipes `window.__gtHarness` and the installer (verified). After every `browser_navigate` or page-close recovery, re-inject this source and call `installGameTestHarness()` again — it clears any prior interval first, so it never stacks.
   **Fail-closed preserved.** An undeclared selection popup (empty queue) or an unmatched target is NOT guessed — the driver leaves it, and the `Promise.race` `POPUP-TIMEOUT` fires (env stays alive). Never enqueue a default just to make a run pass.
   **Coverage.** Queue-driven selection popups: `card-choice`, `card-choice-city-hq`, `order-choice` (all verified as genuine selection popups whose confirm is disabled until a pick). Left auto-confirmed as YES/NO: `info-or-choice`, `draw-choice` ("Would you like to draw X?" — one predetermined card, no candidate list), `final-blow` (acknowledgement, `onclick=closeFinalBlowPopup`). To add a new selection popup, append a registry entry (`popup`/`confirm`/`cards`/`nameOf`) — its confirm auto-joins the carve-out.
+- **Console-check gate (A3) — codified pass/fail, not "eyeball the console".** After each ability action, read the browser console via `browser_console_messages` (level `warning` = warn **and** error), then classify with the pure function below. It whitelists the benign `sw.js` 404 — emitted every local-serve run as a PAIR (a generic worker-script fetch 404 that does NOT name sw.js, plus the registration wrapper that does; **one substring entry covers both**, which is the trap to get right) — and fails on anything else. The returned `{ pass, unexpected }` IS the A2 contract's `consoleCheck` slot; per the contract, `consoleCheck.pass === false` → the TestCase FAILs. Verified live 2026-07-03: real sw.js-only console → **PASS** (no false-fail); an injected `console.error` → **FAIL** with the offending line captured, sw.js still suppressed.
+  ```js
+  // Named, extensible whitelist of benign console messages. Adding a future benign entry is one object.
+  const CONSOLE_WHITELIST = [
+    { name: 'sw.js Service Worker registration 404 (local-serve only)',
+      // SW path is GH-Pages-absolute, so registration always 404s locally and no SW runs. BOTH the generic
+      // worker-script fetch 404 ("...fetching the script. @ :0") and the wrapper naming sw.js contain this
+      // phrase, so one substring matches the whole pair. Safe here because no other script fetch 404s in
+      // this static game (a real game-JS load failure surfaces as a different error / a broken game). If
+      // dynamic script loading is ever added, tighten this to require the sw.js / ServiceWorker context.
+      match: 'A bad HTTP response code (404) was received when fetching the script' },
+  ];
+  // Pure classifier. `messages` = the text of each ERROR+WARNING console entry (from
+  // browser_console_messages / page.on('console')). Returns the A2 consoleCheck slot: { pass, unexpected }.
+  function classifyConsole(messages, whitelist = CONSOLE_WHITELIST) {
+    const unexpected = (messages || [])
+      .map(m => String(m).trim()).filter(Boolean)
+      .filter(text => !whitelist.some(w => text.includes(w.match)));
+    return { pass: unexpected.length === 0, unexpected };
+  }
+  ```
+  **How a test consumes it.** After the action: read `browser_console_messages` (level `warning`), extract each entry's text into an array, call `classifyConsole(texts)`, and set `TestResult.consoleCheck` to the result. Level-filtering to ERROR+WARNING is the *source's* job (info/debug are not gate signals); whitelist-filtering is the classifier's. Only the sw.js 404 is whitelisted today. This gate reads the *browser* console (where the load-time sw.js 404 lives) — an in-page `console.error` hook installed post-load can't see it, so use `browser_console_messages`, not an in-page override.
 - **Live UI-refresh tests must go through the real play path** (`selectedCards=[idx]` → `confirmActions()`, or `endTurn()`) — abilities rely on the single trailing `updateGameBoard()`; an isolated ability call leaves the DOM stale and falsely reads as a refresh bug.
 - **The Playwright page can close mid-session with the server still up** — re-navigate + re-`resize(1920×1080)` to recover.
 

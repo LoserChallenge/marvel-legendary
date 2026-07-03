@@ -34,12 +34,12 @@ The harness is written for a **human operator applying judgment** ("always check
 - **What it needs:** a fixed assertion API (setup fn → action → expected observable → boolean verdict + captured actual) the loop calls, so pass/fail is deterministic and logged, not narrated. **This is the single true BLOCKER for the auto-gate half.**
 - **Source:** `.claude/skills/new-expansion/SKILL.md` line 133; `docs/expansion-specs/secret-wars-vol1.md` (assertion fields); `docs/playwright-runs/` (result format).
 
-### A3 — sw.js 404 whitelist + console-error check are advisory, not codified · **SHOULD-FIX**
-- **What:** the skill says "ignore the known `sw.js` 404 in local-serve mode… Flag anything else" and "always check dev-tools console after every invocation." Both are human judgment calls, not automatic gates.
-- **Why it complicates:** silent upstream failures (a `try/catch → console.error` with no on-screen signal) produce a test that *looks* like it passed while the function actually threw. For autonomy this must be a mandatory post-assertion: fail the gate on any unexpected `console.error`/`console.warn`, whitelisting only the `sw.js` 404.
-- **Current state:** advisory prose in two places; no automatic console-error gate.
-- **What it needs:** codified whitelist (the sw.js 404 path pattern) + auto-fail-on-unexpected-console-error step.
-- **Source:** `.claude/skills/game-test/SKILL.md` lines 49, 89.
+### A3 — console-error check · **CODIFIED 2026-07-03** (`harness-hardening` branch)
+- **What:** the advisory ("ignore the sw.js 404, flag anything else") is now a codified gate — a named `CONSOLE_WHITELIST` + a pure `classifyConsole(messages)` → `{ pass, unexpected }` (the A2 contract's `consoleCheck` slot). Source of messages: `browser_console_messages` (level `warning` = warn+error) after each ability action; whitelist-filter → any non-whitelisted error/warn fails the check.
+- **The trap handled:** the sw.js 404 is emitted as a PAIR every local-serve run — a generic worker-script fetch 404 that does NOT name sw.js, plus the registration wrapper that does. Both share the exact phrase "A bad HTTP response code (404) was received when fetching the script", so one substring entry covers both without false-failing on the sw.js-less line.
+- **Verified live:** real sw.js-only console → PASS (no false-fail); an injected `console.error` → FAIL with the offending line captured, sw.js still suppressed.
+- **Note:** the gate reads the *browser* console (where the load-time sw.js 404 lives); an in-page `console.error` hook installed post-load can't see it. Extending the whitelist = one object.
+- **Source:** `.claude/skills/game-test/SKILL.md` (*Console-check gate (A3)*); `docs/known-issues.md` §5 T1.
 
 ### A4 — Popup auto-dismiss / selection-driving · **RESOLVED 2026-07-03** (`harness-hardening` branch)
 - **What:** all three parts landed. (a) 100ms auto-dismiss interval + in-page `Promise.race` hard-timeout (env survives, fast labelled failure). (b) **selection-driving** — `installGameTestHarness()` drives the intended `.popup-card` (by name/index/id) then confirms via the real play path; card-choice popups are queue-driven, never blind-confirmed (a blind confirm on a multi-select picker resolves the pick as "nothing"). (c) **re-install-after-navigation** — idempotent installer, re-called after any reload (which wipes it).
