@@ -246,44 +246,51 @@ Driving the harness:
   **RE-INSTALL AFTER ANY NAVIGATION.** A page reload / re-navigate wipes `window.__gtHarness` and the installer (verified). After every `browser_navigate` or page-close recovery, re-inject this source and call `installGameTestHarness()` again — it clears any prior interval first, so it never stacks.
   **Fail-closed preserved.** An undeclared selection popup (empty queue) or an unmatched target is NOT guessed — the driver leaves it, and the `Promise.race` `POPUP-TIMEOUT` fires (env stays alive). Never enqueue a default just to make a run pass.
   **Coverage.** Queue-driven selection popups: `card-choice`, `card-choice-city-hq`, `order-choice` (all verified as genuine selection popups whose confirm is disabled until a pick — **all three now driven LIVE**: `card-choice`/`order-choice` earlier, and `card-choice-city-hq` live-driven 2026-07-03 via a real `DeadpoolAssignBystanderToVillain()` play — a NON-default 3rd candidate picked by name resolved the bystander onto the intended city villain, not the first). Left auto-confirmed as YES/NO: `info-or-choice`, `draw-choice` ("Would you like to draw X?" — one predetermined card, no candidate list), `final-blow` (acknowledgement, `onclick=closeFinalBlowPopup`). To add a new selection popup, append a registry entry (`popup`/`confirm`/`cards`/`nameOf`) — its confirm auto-joins the carve-out.
-- **Console-check gate (A3) — codified pass/fail, not "eyeball the console".** After each ability action, read the browser console via `browser_console_messages` (level `warning` = warn **and** error), then classify with the pure function below. It whitelists the benign `sw.js` 404 — emitted every local-serve run as a PAIR (a generic worker-script fetch 404 that does NOT name sw.js, plus the registration wrapper that does; **one substring entry covers both**, which is the trap to get right) — and fails on anything else. The returned `{ pass, unexpected }` IS the A2 contract's `consoleCheck` slot; per the contract, `consoleCheck.pass === false` → the TestCase FAILs. Verified live 2026-07-03: real sw.js-only console → **PASS** (no false-fail); an injected `console.error` → **FAIL** with the offending line captured, sw.js still suppressed.
+- **Console-check gate (A3) — codified pass/fail, not "eyeball the console".** After each ability action, read the browser console via `browser_console_messages` (level `warning` = warn **and** error), then classify with the pure function below. It whitelists the benign `sw.js` 404 — emitted every local-serve run as a PAIR (a generic worker-script fetch 404 that does NOT name sw.js, plus the registration wrapper that does; **two ANCHORED entries, one per line-shape** (H3) — anchored, NOT a loose substring, so a real error merely *containing* the 404 phrase mid-message isn't suppressed) — and fails on anything else. The returned `{ pass, unexpected }` IS the A2 contract's `consoleCheck` slot; per the contract, `consoleCheck.pass === false` → the TestCase FAILs. Verified live 2026-07-03: real sw.js-only console → **PASS** (no false-fail); an injected `console.error` → **FAIL** with the offending line captured, sw.js still suppressed.
   ```js
   // Named, extensible whitelist of benign console messages. Adding a future benign entry is one object.
   const CONSOLE_WHITELIST = [
-    { name: 'sw.js Service Worker registration 404 (local-serve only)',
-      // SW path is GH-Pages-absolute, so registration always 404s locally and no SW runs. BOTH the generic
-      // worker-script fetch 404 ("...fetching the script. @ :0") and the wrapper naming sw.js contain this
-      // phrase, so one substring matches the whole pair. Safe here because no other script fetch 404s in
-      // this static game (a real game-JS load failure surfaces as a different error / a broken game). If
-      // dynamic script loading is ever added, tighten this to require the sw.js / ServiceWorker context.
-      match: 'A bad HTTP response code (404) was received when fetching the script' },
+    // ANCHORED matches (H3), not loose substrings. The benign sw.js 404 is a PAIR of DISTINCT entries
+    // (verified live 2026-07-03), each pinned to its OWN structure — so a real error that merely CONTAINS
+    // the 404 phrase mid-message (e.g. an app-prefixed "MyGame failed: A bad HTTP response code (404)…")
+    // can NOT be suppressed. SW path is GH-Pages-absolute, so registration always 404s locally and no SW
+    // runs. If dynamic script loading is ever added, keep these anchored (they already require sw.js /
+    // ServiceWorker context on the wrapper and message-start on the generic line).
+    { name: 'sw.js worker-script fetch 404 — generic line (local-serve only)',
+      // The bare worker-fetch line; the phrase is at message START ("A bad HTTP…fetching the script. @ :0").
+      re: /^A bad HTTP response code \(404\) was received when fetching the script\b/ },
+    { name: 'sw.js ServiceWorker registration 404 wrapper (local-serve only)',
+      // The registration-failure wrapper: must BE the SW-registration failure AND name sw.js AND carry the phrase.
+      re: /^Failed to register a ServiceWorker\b[\s\S]*\bsw\.js\b[\s\S]*A bad HTTP response code \(404\) was received when fetching the script/ },
   ];
   // Pure classifier. `messages` = the text of each ERROR+WARNING console entry (from
   // browser_console_messages / page.on('console')). Returns the A2 consoleCheck slot: { pass, unexpected }.
   function classifyConsole(messages, whitelist = CONSOLE_WHITELIST) {
     const unexpected = (messages || [])
       .map(m => String(m).trim()).filter(Boolean)
-      .filter(text => !whitelist.some(w => text.includes(w.match)));
+      .filter(text => !whitelist.some(w => w.re.test(text)));
     return { pass: unexpected.length === 0, unexpected };
   }
   ```
   **How a test consumes it.** After the action: read `browser_console_messages` (level `warning`), extract each entry's text into an array, call `classifyConsole(texts)`, and set `TestResult.consoleCheck` to the result. Level-filtering to ERROR+WARNING is the *source's* job (info/debug are not gate signals); whitelist-filtering is the classifier's. Only the sw.js 404 is whitelisted today. This gate reads the *browser* console (where the load-time sw.js 404 lives) — an in-page `console.error` hook installed post-load can't see it, so use `browser_console_messages`, not an in-page override.
 - **Executor CORE (A2 contract runner) — `installGameTestExecutor()` → `window.gtRunTestCase(tc, opts)` + `window.gtRenderResults(results)`.** Runs ONE `TestCase` (A2 spec §2c) through the contract and emits a structured `TestResult` (§4a) with the actual value captured *even on pass*. It **self-applies the A4 `Promise.race` timeout around the action** — this closes T1 gap #2: a hung/undriven action is timed out and BLOCKED *by the executor*, not dependent on the caller wrapping it. Depends on `window.gtInject` (A5, for `setup`) and — when the action opens real popups — `window.installGameTestHarness` (A4, for popup driving; the executor calls it if present).
   - **Interface.** `await gtRunTestCase(tc, opts)`. `tc` = the A2 TestCase (`setup`/`snapshots`/`action`/`assertions` are in-page strings). `opts.buildFresh` **must be `true`** (the A1 precondition slot; anything else → whole run BLOCKED, fail-closed until A1 is built). `opts.timeoutMs` tunes the self-applied action timeout (default 8000). `opts.consoleMessages`, if given, overrides the default in-page console capture with the authoritative `browser_console_messages` array. Returns the `TestResult`; `gtRenderResults([...])` renders the familiar `Item | What | <mode>` table (FAIL cells carry `expected N, actual M`).
-  - **Verdict = A2 §4b resolution order, first match wins:** `buildFresh` false → **BLOCKED** → `setup`/`action`/probe threw → **ERROR** → `timedOut` → **BLOCKED** → any `route:"human"` assertion → **BLOCKED** → any assertion or `consoleCheck` fail → **FAIL** → else **PASS**. Only all-green reaches PASS. **Console source note:** the executor captures `console.error`/`warn` + `error`/`unhandledrejection` events *during the run* (action-time errors — what per-action gating needs); the load-time sw.js 404 is pre-run and separately whitelisted. Pass `opts.consoleMessages` for the `browser_console_messages` path when the authoritative browser-level read is wanted.
+  - **Verdict = A2 §4b resolution order, first match wins:** `buildFresh` false → **BLOCKED** → `setup`/`action`/probe threw → **ERROR** → `timedOut` → **BLOCKED** → any `route:"human"` assertion → **BLOCKED** → any assertion or `consoleCheck` fail → **FAIL** → **no machine assertion ran+passed → BLOCKED** (H1: PASS requires ≥1 non-human assertion that actually ran and passed — empty/missing `assertions`, or only human-route ones, is a vacuous PASS and is fail-closed to BLOCKED, never PASS) → else **PASS**. Only all-green *with a real machine assertion* reaches PASS. **Console source note:** the executor captures `console.error`/`warn` + `error`/`unhandledrejection` events *during the run* (action-time errors — what per-action gating needs); the load-time sw.js 404 is pre-run and separately whitelisted. Pass `opts.consoleMessages` for the `browser_console_messages` path when the authoritative browser-level read is wanted.
   - **Verified live 2026-07-03** (`harness-hardening`, three synthetic TestCases): **PASS** (all-green, `actual` captured 5/5/true, console clean); **FAIL** (delta `expected 5, actual 3` captured → FAIL); **BLOCKED** (never-resolving action → executor's own 1500ms timeout fired, `timedOut:true` → BLOCKED — gap #2 proof). Ladder also spot-checked: `buildFresh:false`→BLOCKED, setup-throw→ERROR (outranks the would-be timeout; an unvetted `setup` injection surfaces as ERROR, never a silent mask), human-route→BLOCKED despite a passing machine assertion.
   - **This IS the Phase-4d gate.** A hero ability's Phase-4d runtime check is a `TestCase` run through `gtRunTestCase`; its computed verdict is the done-signal — **PASS** (in each required mode) passes the gate; **FAIL/ERROR/BLOCKED** blocks the merge (BLOCKED = "a human must resolve this one"). This replaces the hand-eyeball ✅/❌ flow. **Dual-mode:** run the same `TestCase` twice, injecting `gtInject.set('gameMode','golden')` then `'whatif'` in `setup`; the gate needs PASS in both for any conditional/computed/per-X/mode-divergent ability. See `new-expansion` SKILL.md Phase 4d.
   - **Verified end-to-end on a REAL hero ability 2026-07-03** (whatif): Thor – Surge of Power (`ThorHighRecruitReward`, conditional +3 Attack when `cumulativeRecruitPoints ≥ 8`) — condition set via `gtInject`, card played through the real `confirmActions()` path — → PASS with `+3` Attack, `+3` cumulative Attack (Final-Showdown gotcha), `+2` printed Recruit all actual-captured, console clean.
   ```js
   window.installGameTestExecutor = function () {
-    const CONSOLE_WHITELIST = [
-      { name: 'sw.js Service Worker registration 404 (local-serve only)',
-        match: 'A bad HTTP response code (404) was received when fetching the script' },
+    const CONSOLE_WHITELIST = [   // ANCHORED (H3): pinned to each real sw.js-404 entry's structure, not loose substrings
+      { name: 'sw.js worker-script fetch 404 — generic line (local-serve only)',
+        re: /^A bad HTTP response code \(404\) was received when fetching the script\b/ },
+      { name: 'sw.js ServiceWorker registration 404 wrapper (local-serve only)',
+        re: /^Failed to register a ServiceWorker\b[\s\S]*\bsw\.js\b[\s\S]*A bad HTTP response code \(404\) was received when fetching the script/ },
     ];
     function classifyConsole(messages, whitelist) {
       whitelist = whitelist || CONSOLE_WHITELIST;
       const unexpected = (messages || []).map(m => String(m).trim()).filter(Boolean)
-        .filter(text => !whitelist.some(w => text.includes(w.match)));
+        .filter(text => !whitelist.some(w => w.re.test(text)));
       return { pass: unexpected.length === 0, unexpected: unexpected };
     }
     function deepEq(a, b) {
@@ -307,6 +314,8 @@ Driving the harness:
         default: throw new Error('gtExecutor: unknown comparator "' + cmp + '"');
       }
     }
+    // H2: comparators that compare a VALUE (vs present/absent, which legitimately resolve undefined).
+    const VALUE_CMPS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'includes', 'excludes'];
     async function gtRunTestCase(tc, opts) {
       opts = opts || {};
       const result = { id: tc.id, card: tc.card, mode: tc.mode, verdict: null, buildFresh: opts.buildFresh === true, timedOut: false, assertions: [], consoleCheck: null };
@@ -341,9 +350,16 @@ Driving the harness:
             try {
               const actual = eval(a.probe);
               const expected = resolveExpected(a);
+              const isPresence = (a.cmp === 'present' || a.cmp === 'absent');
               row.actual = actual;
-              row.expected = (a.cmp === 'present' || a.cmp === 'absent') ? undefined : expected;
-              row.pass = compare(a.cmp, actual, expected);
+              row.expected = isPresence ? undefined : expected;
+              // H2: a value comparator with a nullish probe result OR a missing `expected` is a NON-PASS
+              // — never undefined===undefined→pass. present/absent are untouched (they resolve undefined legitimately).
+              if (VALUE_CMPS.indexOf(a.cmp) !== -1 && (actual === undefined || actual === null || a.expected === undefined)) {
+                row.pass = false;
+              } else {
+                row.pass = compare(a.cmp, actual, expected);
+              }
             } catch (e) { probeThrew = true; row.error = String(e && e.message || e); errorStep = errorStep || ('probe "' + a.label + '": ' + row.error); }
             result.assertions.push(row);
           }
@@ -354,11 +370,13 @@ Driving the harness:
       }
       result.consoleCheck = classifyConsole(opts.consoleMessages != null ? opts.consoleMessages : captured);
       const anyAssertFail = result.assertions.some(r => r.route !== 'human' && r.pass === false && !r.error);
+      const machinePassCount = result.assertions.filter(r => r.route !== 'human' && r.pass === true && !r.error).length; // H1
       if (!result.buildFresh) result.verdict = 'BLOCKED';                                              // 1
       else if (setupThrew || actionThrew || probeThrew) { result.verdict = 'ERROR'; result.error = errorStep; } // 2
       else if (result.timedOut) result.verdict = 'BLOCKED';                                            // 3
       else if (humanRoute) result.verdict = 'BLOCKED';                                                 // 4
       else if (anyAssertFail || result.consoleCheck.pass === false) result.verdict = 'FAIL';           // 5
+      else if (machinePassCount === 0) { result.verdict = 'BLOCKED'; result.noMachineAssertion = true; } // 5.5 (H1): PASS requires ≥1 machine assertion that ran+passed; empty/only-human/all-errored → not a real PASS
       else result.verdict = 'PASS';                                                                    // 6
       return result;
     }
@@ -374,7 +392,7 @@ Driving the harness:
           return 'FAIL';
         }
         if (r.verdict === 'ERROR') return 'ERROR (' + (r.error || '') + ')';
-        if (r.verdict === 'BLOCKED') return 'BLOCKED' + (r.timedOut ? ' (timeout)' : (r.assertions.some(a => a.route === 'human') ? ' (human-route)' : (!r.buildFresh ? ' (stale build)' : '')));
+        if (r.verdict === 'BLOCKED') return 'BLOCKED' + (r.timedOut ? ' (timeout)' : (r.assertions.some(a => a.route === 'human') ? ' (human-route)' : (!r.buildFresh ? ' (stale build)' : (r.noMachineAssertion ? ' (no machine assertion)' : ''))));
         return 'PASS';
       };
       const byId = {};
