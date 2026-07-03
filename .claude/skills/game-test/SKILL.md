@@ -114,51 +114,72 @@ Driving the harness:
   ]);
   ```
   This converts an indefinite hang into a fast, labelled failure that leaves the env up. It does NOT auto-resolve the selection (auto-picking a default would silently corrupt the test result — worse than failing); for selection popups still drive the specific pick yourself per the caveat above. The timeout is the SAFETY NET for a missed or unexpected selection popup.
-- **Selection-driving harness (A4 complete) — `installGameTestHarness()` supersedes the bare `__autoPopup` snippet.** The bare interval above only auto-confirms yes/no popups; it cannot drive a card-SELECTION popup (pick WHICH card), and it dies on page reload. This consolidated installer adds both: a **declared selection queue** that actively picks the intended `.popup-card` then confirms via the real play path, and **idempotent re-install** so it survives navigation. Verified live 2026-07-03 (whatif) against the real `KO1To4FromDiscard` picker: single-pick-by-name, re-entrant 2nd-use of the shared popup, empty-queue → `POPUP-TIMEOUT` (env alive), and post-reload re-install all pass.
+- **Selection-driving harness (A4) — `installGameTestHarness()` supersedes the bare `__autoPopup` snippet.** The bare interval above only auto-confirms yes/no popups; it cannot drive a SELECTION popup (pick WHICH card/action), and it dies on page reload. This consolidated installer adds both: a **declared selection queue** that actively picks the intended candidate then confirms via the real play path, and **idempotent re-install** so it survives navigation. It drives every real SELECTION popup via a registry (`card-choice`, `card-choice-city-hq`, `order-choice`); YES/NO popups (`info-or-choice`, `draw-choice` = "draw this card?", `final-blow` = acknowledge) stay auto-confirmed. Verified live 2026-07-03 (whatif): `card-choice` named-pick + re-entrant 2nd-use + post-reload re-install (`KO1To4FromDiscard`); `order-choice` named-pick of a non-default item (`showOperationSelectionPopup`); empty-queue → `POPUP-TIMEOUT` (env alive) on both; no card-choice regression.
   ```js
   window.installGameTestHarness = function () {
     if (window.__gtHarness && window.__gtHarness.interval) clearInterval(window.__gtHarness.interval); // idempotent: never stack intervals
     window.__gtHarness = window.__gtHarness || {};
     const H = window.__gtHarness;
-    H.selections = H.selections || []; // FIFO of intended actions for card-choice popups (see below)
+    H.selections = H.selections || []; // FIFO of intended actions for the active selection popup (see below)
     H.log = H.log || [];               // audit trail of what the driver did
-    // Visible = element AND all ancestors are not display:none. The game hides some popups via a
-    // CONTAINER (e.g. #intro-popup stays display:block inside a display:none container), so checking
-    // the element's own display alone false-positives and starves real popups. Structural, not geometry (A8).
+    // Visible = element AND all ancestors are not display:none. The game hides #intro-popup via a
+    // display:none CONTAINER while the element itself stays block, so checking the element's own
+    // display alone false-positives and starves real popups. Structural, not geometry (A8).
     const vis = el => { if (!el) return false; let n = el; while (n) { if (getComputedStyle(n).display === 'none') return false; n = n.parentElement; } return true; };
     const logOnce = m => { if (H.log[H.log.length - 1] !== m) H.log.push(m); };
+    // A modal is genuinely up only when #modal-overlay is shown (it's display:none when idle). This is
+    // the gate that tells a genuinely-pending selection popup (e.g. a setup Scheme-Twist city-hq choice
+    // left block/awaiting input) apart from a truly-idle board.
+    const modalUp = () => { const mo = document.getElementById('modal-overlay'); return mo && getComputedStyle(mo).display !== 'none'; };
+    // Frontmost = the popup contains the topmost element at its own centre. When two popups overlap (a
+    // pending one + a newly-opened one, both z-index 999), this drives the one physically on top first.
+    // Overlay/modal stacking, NOT card-art geometry (A8's caution is about broken-image layout collapse).
+    const frontmost = el => { const r = el.getBoundingClientRect(); if (!r.width || !r.height) return false; return el.contains(document.elementFromPoint(Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2))); };
+    // Registry of SELECTION popups (pick WHICH). Each is queue-driven, NEVER blind-confirmed: confirm on
+    // all of them is gated behind a selection (disabled at 0), so an undriven popup already stalls -> timeout;
+    // the value of queue-driving is (a) picking the INTENDED candidate not a default, and (b) controlling
+    // confirm TIMING so a blind auto-confirm can't fire it between/after picks. `cards` = clickable candidate
+    // selector; `nameOf` = how to read a candidate's name for {by:'name'}. Order = priority when >1 is active.
+    const SELECTION_POPUPS = [
+      { name: 'card-choice',         popup: '.card-choice-popup',         confirm: 'card-choice-popup-confirm',        cards: '.popup-card',                                 nameOf: el => (el.querySelector('.popup-card-image') || {}).alt }, // alt === card.name
+      { name: 'card-choice-city-hq', popup: '.card-choice-city-hq-popup', confirm: 'card-choice-city-hq-popup-confirm', cards: '.city-hq-chosen-card-image:not(.greyed-out)', nameOf: el => el.alt },                                        // eligible HQ/city cards only
+      { name: 'order-choice',        popup: '.order-choice-popup',        confirm: 'order-choice-popup-confirm',        cards: 'button.order-choice-button',                  nameOf: el => el.textContent.trim() },
+    ];
+    const carveOut = new Set(SELECTION_POPUPS.map(p => p.confirm)); // these confirms are queue-driven, never blind-confirmed
+    const isActive = el => vis(el) && modalUp() && frontmost(el);
     H.interval = setInterval(() => {
-      // (1) card-CHOICE popups are QUEUE-DRIVEN (never blind-confirmed): multi-select pickers keep
-      //     confirm enabled at 0 selections, so a blind auto-confirm would resolve the pick as "nothing".
-      const choice = document.querySelector('.card-choice-popup');
-      if (vis(choice)) {
+      // (1) SELECTION popups: queue-driven. Find the genuinely-active one; drive the current action against it.
+      let sp = null;
+      for (const s of SELECTION_POPUPS) { if (isActive(document.querySelector(s.popup))) { sp = s; break; } }
+      if (sp) {
         if (H.selections.length) {
           const a = H.selections[0];
-          const confirmBtn = document.getElementById('card-choice-popup-confirm');
-          const cards = [...choice.querySelectorAll('.popup-card')];
+          const popupEl = document.querySelector(sp.popup);
+          const confirmBtn = document.getElementById(sp.confirm);
+          const cards = [...popupEl.querySelectorAll(sp.cards)];
           let done = false;
-          if (a.by === 'confirm') { if (confirmBtn && !confirmBtn.disabled) { confirmBtn.click(); done = true; logOnce('confirm'); } }
+          if (a.by === 'confirm') { if (confirmBtn && !confirmBtn.disabled) { confirmBtn.click(); done = true; logOnce('confirm@' + sp.name); } }
           else if (a.by === 'button') { const btn = document.getElementById(a.value); if (btn && vis(btn) && !btn.disabled) { btn.click(); done = true; logOnce('button:' + a.value); } }
           else {
             let el = null;
             if (a.by === 'index') el = cards[a.value] || null;
-            else if (a.by === 'name') el = cards.find(c => (c.querySelector('.popup-card-image') || {}).alt === a.value) || null; // alt === card.name
+            else if (a.by === 'name') el = cards.find(c => sp.nameOf(c) === a.value) || null;
             else if (a.by === 'id') el = cards.find(c => c.getAttribute('data-card-id') === a.value) || null;
             else if (a.by === 'first') el = cards[0] || null;
-            if (el) { el.click(); done = true; logOnce('select ' + a.by + ':' + a.value); } // fires the game's selection listener → enables confirm
-            else logOnce('NO-MATCH ' + a.by + ':' + a.value);
+            if (el) { el.click(); done = true; logOnce('select ' + a.by + ':' + a.value + '@' + sp.name); } // fires the game's selection listener → enables confirm
+            else logOnce('NO-MATCH ' + a.by + ':' + a.value + '@' + sp.name);
           }
           if (done) H.selections.shift();
         }
-        return; // queue empty on a visible card-choice = undeclared popup → leave it → POPUP-TIMEOUT fires (fail-closed, no guess)
+        return; // queue empty on an active selection popup = undeclared → leave it → POPUP-TIMEOUT (fail-closed, no guess)
       }
-      // (2) yes/no / proceed / intro popups: auto-confirm ENABLED buttons. #card-choice-popup-confirm is
-      //     carved out (queue-driven above). Draining the start-popup queue falls out of this for free.
+      // (2) yes/no / proceed / intro popups: auto-confirm ENABLED buttons. Selection confirms are carved
+      //     out (queue-driven above). Draining the start-popup queue falls out of this for free.
       const intro = document.querySelector('#intro-popup');
       const introClose = document.querySelector('#intro-popup-close-button');
       if (vis(intro) && introClose) { introClose.click(); logOnce('intro-close'); return; }
       document.querySelectorAll('#info-or-choice-popup-confirm, [id$="-popup-confirm"], .info-or-choice-popup-closebutton').forEach(b => {
-        if (b.id === 'card-choice-popup-confirm') return; // A4 carve-out
+        if (carveOut.has(b.id)) return; // selection popups are queue-driven (section 1)
         const p = b.closest('.info-or-choice-popup, .card-choice-popup, .popup');
         if (vis(p) && !b.disabled) { b.click(); logOnce('auto-confirm ' + (b.id || b.className)); }
       });
@@ -167,10 +188,10 @@ Driving the harness:
   };
   window.installGameTestHarness();
   ```
-  **How a test drives a selection.** Declare the intended actions on `window.__gtHarness.selections` (a FIFO) BEFORE invoking the ability, then invoke it inside the `Promise.race` timeout above. Each action is `{ by, value }`: `by: 'name'` (matches `.popup-card-image` alt = card name), `'index'`, `'id'` (`data-card-id`), `'first'`, `'button'` (click a named popup button, e.g. `card-choice-popup-nothanks` to decline), or `'confirm'` (click the enabled confirm). Selections are consumed one action per 100ms tick, so a **re-entrant** picker (popup reused N times) and a **multi-select** popup are both handled by queuing more actions — e.g. `[{by:'name',value:'BETA'},{by:'confirm'}]` for one pick, or `[{by:'name',value:'A'},{by:'confirm'},{by:'name',value:'B'},{by:'confirm'}]` across two uses. `H.log` records what fired. **Teardown between tests:** `clearInterval(window.__gtHarness.interval); window.__gtHarness.selections = [];`
+  **How a test drives a selection.** Declare the intended actions on `window.__gtHarness.selections` (a FIFO) BEFORE invoking the ability, then invoke it inside the `Promise.race` timeout above. Each action is `{ by, value }`: `by: 'name'` (matches the active popup's `nameOf` — card name for card-choice/city-hq, button text for order-choice), `'index'`, `'id'` (`data-card-id`), `'first'`, `'button'` (click a named popup button, e.g. `*-popup-nothanks` to decline), or `'confirm'`. Actions are consumed one per 100ms tick, so a **re-entrant** picker (popup reused N times) and a **multi-select** popup are both handled by queuing more actions — e.g. `[{by:'name',value:'BETA'},{by:'confirm'}]` for one pick, or `[{by:'name',value:'A'},{by:'confirm'},{by:'name',value:'B'},{by:'confirm'}]` across two uses. Queue selections in the order popups actually appear — the driver targets the frontmost active popup, so a genuinely-pending popup (e.g. a setup Scheme-Twist city-hq choice) must be resolved before the next. `H.log` records what fired. **Teardown between tests:** `clearInterval(window.__gtHarness.interval); window.__gtHarness.selections = [];`
   **RE-INSTALL AFTER ANY NAVIGATION.** A page reload / re-navigate wipes `window.__gtHarness` and the installer (verified). After every `browser_navigate` or page-close recovery, re-inject this source and call `installGameTestHarness()` again — it clears any prior interval first, so it never stacks.
   **Fail-closed preserved.** An undeclared selection popup (empty queue) or an unmatched target is NOT guessed — the driver leaves it, and the `Promise.race` `POPUP-TIMEOUT` fires (env stays alive). Never enqueue a default just to make a run pass.
-  **Scope note (follow-up, NOT covered by A4).** The carve-out is `#card-choice-popup-confirm` only. Sibling SELECTION popups whose confirm ends in `-popup-confirm` (`order-choice-popup-confirm`, `draw-choice-popup-confirm`, `card-choice-city-hq-popup-confirm`) are still blind-auto-confirmed by section (2) — same premature-confirm risk class. If a test needs a specific selection in one of those, extend the queue-driven branch to that popup; until then treat their auto-confirm as unverified.
+  **Coverage.** Queue-driven selection popups: `card-choice`, `card-choice-city-hq`, `order-choice` (all verified as genuine selection popups whose confirm is disabled until a pick). Left auto-confirmed as YES/NO: `info-or-choice`, `draw-choice` ("Would you like to draw X?" — one predetermined card, no candidate list), `final-blow` (acknowledgement, `onclick=closeFinalBlowPopup`). To add a new selection popup, append a registry entry (`popup`/`confirm`/`cards`/`nameOf`) — its confirm auto-joins the carve-out.
 - **Live UI-refresh tests must go through the real play path** (`selectedCards=[idx]` → `confirmActions()`, or `endTurn()`) — abilities rely on the single trailing `updateGameBoard()`; an isolated ability call leaves the DOM stale and falsely reads as a refresh bug.
 - **The Playwright page can close mid-session with the server still up** — re-navigate + re-`resize(1920×1080)` to recover.
 
