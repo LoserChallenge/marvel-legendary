@@ -268,6 +268,127 @@ Driving the harness:
   }
   ```
   **How a test consumes it.** After the action: read `browser_console_messages` (level `warning`), extract each entry's text into an array, call `classifyConsole(texts)`, and set `TestResult.consoleCheck` to the result. Level-filtering to ERROR+WARNING is the *source's* job (info/debug are not gate signals); whitelist-filtering is the classifier's. Only the sw.js 404 is whitelisted today. This gate reads the *browser* console (where the load-time sw.js 404 lives) — an in-page `console.error` hook installed post-load can't see it, so use `browser_console_messages`, not an in-page override.
+- **Executor CORE (A2 contract runner) — `installGameTestExecutor()` → `window.gtRunTestCase(tc, opts)` + `window.gtRenderResults(results)`.** Runs ONE `TestCase` (A2 spec §2c) through the contract and emits a structured `TestResult` (§4a) with the actual value captured *even on pass*. It **self-applies the A4 `Promise.race` timeout around the action** — this closes T1 gap #2: a hung/undriven action is timed out and BLOCKED *by the executor*, not dependent on the caller wrapping it. Depends on `window.gtInject` (A5, for `setup`) and — when the action opens real popups — `window.installGameTestHarness` (A4, for popup driving; the executor calls it if present).
+  - **Interface.** `await gtRunTestCase(tc, opts)`. `tc` = the A2 TestCase (`setup`/`snapshots`/`action`/`assertions` are in-page strings). `opts.buildFresh` **must be `true`** (the A1 precondition slot; anything else → whole run BLOCKED, fail-closed until A1 is built). `opts.timeoutMs` tunes the self-applied action timeout (default 8000). `opts.consoleMessages`, if given, overrides the default in-page console capture with the authoritative `browser_console_messages` array. Returns the `TestResult`; `gtRenderResults([...])` renders the familiar `Item | What | <mode>` table (FAIL cells carry `expected N, actual M`).
+  - **Verdict = A2 §4b resolution order, first match wins:** `buildFresh` false → **BLOCKED** → `setup`/`action`/probe threw → **ERROR** → `timedOut` → **BLOCKED** → any `route:"human"` assertion → **BLOCKED** → any assertion or `consoleCheck` fail → **FAIL** → else **PASS**. Only all-green reaches PASS. **Console source note:** the executor captures `console.error`/`warn` + `error`/`unhandledrejection` events *during the run* (action-time errors — what per-action gating needs); the load-time sw.js 404 is pre-run and separately whitelisted. Pass `opts.consoleMessages` for the `browser_console_messages` path when the authoritative browser-level read is wanted.
+  - **Verified live 2026-07-03** (`harness-hardening`, three synthetic TestCases): **PASS** (all-green, `actual` captured 5/5/true, console clean); **FAIL** (delta `expected 5, actual 3` captured → FAIL); **BLOCKED** (never-resolving action → executor's own 1500ms timeout fired, `timedOut:true` → BLOCKED — gap #2 proof). Ladder also spot-checked: `buildFresh:false`→BLOCKED, setup-throw→ERROR (outranks the would-be timeout; an unvetted `setup` injection surfaces as ERROR, never a silent mask), human-route→BLOCKED despite a passing machine assertion.
+  - **Scope (core only).** NOT yet wired into the dual-mode `/game-test` flow or the Phase-4d per-ability gate, and does NOT re-drive `card-choice-city-hq` — those are the next unit.
+  ```js
+  window.installGameTestExecutor = function () {
+    const CONSOLE_WHITELIST = [
+      { name: 'sw.js Service Worker registration 404 (local-serve only)',
+        match: 'A bad HTTP response code (404) was received when fetching the script' },
+    ];
+    function classifyConsole(messages, whitelist) {
+      whitelist = whitelist || CONSOLE_WHITELIST;
+      const unexpected = (messages || []).map(m => String(m).trim()).filter(Boolean)
+        .filter(text => !whitelist.some(w => text.includes(w.match)));
+      return { pass: unexpected.length === 0, unexpected: unexpected };
+    }
+    function deepEq(a, b) {
+      if (a === b) return true;
+      if (typeof a !== typeof b) return false;
+      if (a && b && typeof a === 'object') { try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; } }
+      return false;
+    }
+    function compare(cmp, actual, expected) {
+      switch (cmp) {
+        case 'eq':       return deepEq(actual, expected);
+        case 'neq':      return !deepEq(actual, expected);
+        case 'gt':       return Number(actual) >  Number(expected);
+        case 'gte':      return Number(actual) >= Number(expected);
+        case 'lt':       return Number(actual) <  Number(expected);
+        case 'lte':      return Number(actual) <= Number(expected);
+        case 'includes': return actual != null && typeof actual.includes === 'function' && actual.includes(expected);
+        case 'excludes': return actual != null && typeof actual.includes === 'function' && !actual.includes(expected);
+        case 'present':  return !!actual;               // truthy (0 count / '' / null → absent)
+        case 'absent':   return !actual;
+        default: throw new Error('gtExecutor: unknown comparator "' + cmp + '"');
+      }
+    }
+    async function gtRunTestCase(tc, opts) {
+      opts = opts || {};
+      const result = { id: tc.id, card: tc.card, mode: tc.mode, verdict: null, buildFresh: opts.buildFresh === true, timedOut: false, assertions: [], consoleCheck: null };
+      const captured = [];
+      const origErr = console.error, origWarn = console.warn;
+      const onErr = e => captured.push(String((e && (e.message || e.error)) || e));
+      const onRej = e => captured.push('unhandledrejection: ' + String(e && e.reason));
+      console.error = function () { captured.push(Array.prototype.map.call(arguments, String).join(' ')); return origErr.apply(console, arguments); };
+      console.warn  = function () { captured.push(Array.prototype.map.call(arguments, String).join(' ')); return origWarn.apply(console, arguments); };
+      window.addEventListener('error', onErr);
+      window.addEventListener('unhandledrejection', onRej);
+      let setupThrew = false, actionThrew = false, probeThrew = false, humanRoute = false, errorStep = null;
+      const snap = {};
+      const resolveExpected = a => (typeof a.expected === 'string' && Object.prototype.hasOwnProperty.call(snap, a.expected)) ? snap[a.expected] : a.expected;
+      try {
+        if (typeof window.installGameTestHarness === 'function') window.installGameTestHarness();
+        if (tc.setup) { try { eval(tc.setup); } catch (e) { setupThrew = true; errorStep = 'setup: ' + String(e && e.message || e); } }
+        if (!setupThrew && Array.isArray(tc.snapshots)) {
+          for (const s of tc.snapshots) { try { snap[s.name] = eval(s.probe); } catch (e) { probeThrew = true; errorStep = errorStep || ('snapshot "' + s.name + '": ' + String(e && e.message || e)); } }
+        }
+        if (!setupThrew && !probeThrew && tc.action) {
+          const TIMEOUT_MS = opts.timeoutMs || 8000;
+          const actionPromise = Promise.resolve().then(() => eval(tc.action));          // may return a promise
+          const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej({ __gtTimeout: true, message: 'POPUP-TIMEOUT — action did not resolve within ' + TIMEOUT_MS + 'ms' }), TIMEOUT_MS));
+          try { await Promise.race([actionPromise, timeoutPromise]); }               // SELF-APPLIED timeout (gap #2)
+          catch (e) { if (e && e.__gtTimeout) { result.timedOut = true; } else { actionThrew = true; errorStep = errorStep || ('action: ' + String(e && e.message || e)); } }
+        }
+        if (!setupThrew && !actionThrew && !probeThrew && !result.timedOut && Array.isArray(tc.assertions)) {
+          for (const a of tc.assertions) {
+            const row = { label: a.label, cmp: a.cmp, expected: (a.expected !== undefined ? a.expected : null), actual: null, pass: false };
+            if (a.route === 'human') { humanRoute = true; row.route = 'human'; row.pass = false; result.assertions.push(row); continue; }
+            try {
+              const actual = eval(a.probe);
+              const expected = resolveExpected(a);
+              row.actual = actual;
+              row.expected = (a.cmp === 'present' || a.cmp === 'absent') ? undefined : expected;
+              row.pass = compare(a.cmp, actual, expected);
+            } catch (e) { probeThrew = true; row.error = String(e && e.message || e); errorStep = errorStep || ('probe "' + a.label + '": ' + row.error); }
+            result.assertions.push(row);
+          }
+        }
+      } finally {
+        console.error = origErr; console.warn = origWarn;
+        window.removeEventListener('error', onErr); window.removeEventListener('unhandledrejection', onRej);
+      }
+      result.consoleCheck = classifyConsole(opts.consoleMessages != null ? opts.consoleMessages : captured);
+      const anyAssertFail = result.assertions.some(r => r.route !== 'human' && r.pass === false && !r.error);
+      if (!result.buildFresh) result.verdict = 'BLOCKED';                                              // 1
+      else if (setupThrew || actionThrew || probeThrew) { result.verdict = 'ERROR'; result.error = errorStep; } // 2
+      else if (result.timedOut) result.verdict = 'BLOCKED';                                            // 3
+      else if (humanRoute) result.verdict = 'BLOCKED';                                                 // 4
+      else if (anyAssertFail || result.consoleCheck.pass === false) result.verdict = 'FAIL';           // 5
+      else result.verdict = 'PASS';                                                                    // 6
+      return result;
+    }
+    function gtRenderResults(results) {
+      results = Array.isArray(results) ? results : [results];
+      const modes = results.map(r => r.mode).filter((m, i, a) => m && a.indexOf(m) === i);
+      const cols = modes.length ? modes : ['result'];
+      const cell = r => {
+        if (r.verdict === 'FAIL') {
+          const f = r.assertions.find(a => a.route !== 'human' && a.pass === false && !a.error);
+          if (f) return 'FAIL (' + f.label + ': expected ' + JSON.stringify(f.expected) + ', actual ' + JSON.stringify(f.actual) + ')';
+          if (r.consoleCheck && !r.consoleCheck.pass) return 'FAIL (console: ' + JSON.stringify(r.consoleCheck.unexpected) + ')';
+          return 'FAIL';
+        }
+        if (r.verdict === 'ERROR') return 'ERROR (' + (r.error || '') + ')';
+        if (r.verdict === 'BLOCKED') return 'BLOCKED' + (r.timedOut ? ' (timeout)' : (r.assertions.some(a => a.route === 'human') ? ' (human-route)' : (!r.buildFresh ? ' (stale build)' : '')));
+        return 'PASS';
+      };
+      const byId = {};
+      for (const r of results) { (byId[r.id] = byId[r.id] || {}).card = r.card; (byId[r.id][r.mode || 'result']) = cell(r); }
+      const lines = ['| Item | What | ' + cols.join(' | ') + ' |', '|---|---|' + cols.map(() => '---').join('|') + '|'];
+      for (const id of Object.keys(byId)) { const row = byId[id]; lines.push('| ' + id + ' | ' + (row.card || '') + ' | ' + cols.map(c => row[c] || '—').join(' | ') + ' |'); }
+      return lines.join('\n');
+    }
+    window.gtRunTestCase = gtRunTestCase;
+    window.gtRenderResults = gtRenderResults;
+    return 'installed';
+  };
+  window.installGameTestExecutor();
+  ```
+  **RE-INSTALL AFTER ANY NAVIGATION** (same as the A4/A5 installers — a reload wipes `window.gt*`).
 - **Live UI-refresh tests must go through the real play path** (`selectedCards=[idx]` → `confirmActions()`, or `endTurn()`) — abilities rely on the single trailing `updateGameBoard()`; an isolated ability call leaves the DOM stale and falsely reads as a refresh bug.
 - **The Playwright page can close mid-session with the server still up** — re-navigate + re-`resize(1920×1080)` to recover.
 
