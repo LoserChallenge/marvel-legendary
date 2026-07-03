@@ -281,19 +281,30 @@ Logan "Loner" residual — both passed `/expansion-audit`, surfaced only in play
 catches what 4c's checklist-scoping misses: a plain Attack grant touches no divergence row,
 so 4c never tests it.
 
-For each new hero card ability:
-1. Inject a state that exercises the ability (N Sidekicks for a per-Sidekick bonus, a
-   KO-eligible target, a known draw pile).
-2. Assert the observable effect — Attack/Recruit delta, KO count, cards drawn — matches the
+**Mechanism — run it through the executor, not by eye.** Each hero ability's runtime check is
+an A2 `TestCase` (the frozen Phase-2.5 executable assertion in structured form) run through
+`window.gtRunTestCase` (game-test SKILL.md *Executor CORE*). Its **computed verdict is the gate**:
+PASS (in each required mode) passes; **FAIL / ERROR / BLOCKED blocks the merge** (BLOCKED = a human
+must resolve that one — a selection popup the harness can't drive, or an RNG/subjective assertion).
+`setup` goes through the vetted `gtInject` path; `action` drives the real play path
+(`selectedCards=[idx]` → `confirmActions()`); the executor self-applies the popup timeout. This
+replaces the hand-typed ✅/❌ — the actual value is captured even on pass, so a wrong pass (SWV1
+Magik +0) reads as `actual: 0` → FAIL, not a glance-and-tick.
+
+For each new hero card ability author its TestCase so that:
+1. `setup` injects a state that exercises the ability (N Sidekicks for a per-Sidekick bonus, a
+   KO-eligible target, a known draw pile) — via `gtInject.set(...)`.
+2. `assertions` check the observable effect — Attack/Recruit delta, KO count, cards drawn — against the
    frozen Phase 2.5 spec. Where the card grants Attack/Recruit, also assert the Final Showdown
    cumulative (a flat card can update the turn total but miss `cumulative*` — a known gotcha).
-3. **Dual-mode** (`gameMode === 'golden'` AND `'whatif'`; a pass in one mode is not a pass)
-   when the ability is **conditional, computed, per-X, or touches a
-   `docs/mode-divergence-checklist.md` row.** A flat unconditional Attack/Recruit with no
-   rider — which cannot diverge by mode — may record a single-mode PASS.
+3. **Dual-mode** (`mode:'both'` → run twice, injecting `gtInject.set('gameMode','golden')` then
+   `'whatif'` in `setup`; a pass in one mode is not a pass) when the ability is **conditional,
+   computed, per-X, or touches a `docs/mode-divergence-checklist.md` row.** A flat unconditional
+   Attack/Recruit with no rider — which cannot diverge by mode — may record a single-mode PASS.
 
-Done-criterion: every new hero ability has a recorded runtime PASS (dual-mode where step 3
-requires it) before Status → Complete. A FAIL or a missing run blocks the merge gate.
+Done-criterion: every new hero ability has a computed **PASS** verdict from `gtRunTestCase` (dual-mode
+where step 3 requires it), recorded in the results JSON, before Status → Complete. A FAIL/ERROR/BLOCKED
+or a missing run blocks the merge gate.
 
 ### 4e: Guided Test Game
 
@@ -308,7 +319,7 @@ Walk the user through what to look for during the test game. For any mechanic th
 
 Before merging the expansion branch:
 - [ ] All Phase 4 issues resolved and retested
-- [ ] **Hero-ability behavioral sweep (4d):** every new hero ability has a runtime `/game-test` PASS — dual-mode for any conditional/computed/per-X or mode-divergent ability; no hero ability merges on static audit alone
+- [ ] **Hero-ability behavioral sweep (4d):** every new hero ability has a computed **PASS** verdict from `gtRunTestCase` (game-test SKILL.md *Executor CORE*) — dual-mode for any conditional/computed/per-X or mode-divergent ability; FAIL/ERROR/BLOCKED or a missing run blocks; no hero ability merges on static audit alone
 - [ ] `/expansion-audit` run clean (0 unresolved HIGH findings, or all deferrals documented)
 - [ ] `sw.js` `CACHE_NAME` bumped (e.g. `legendary-v4` → `legendary-v5`)
 - [ ] New expansion JS file added to `FILES_TO_CACHE` in `sw.js`
