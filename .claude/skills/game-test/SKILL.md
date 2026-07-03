@@ -84,9 +84,63 @@ Stale-serve / caching (the #1 false-confidence source):
 - **Serve-path trap (worktree work):** root the HTTP server at the WORKTREE's game directory using a path relative to the worktree root — NEVER an absolute path. An absolute path can resolve to the MAIN folder (`master`) and silently serve stale code without the branch's changes, so you verify against the wrong code. Confirm the served build has your changes before trusting any result.
 
 Eval / state-injection correctness:
-- **State-injection binding trap:** `citySize`, `cityReserveAttack`, `totalAttackPoints`, `cumulativeAttackPoints` are top-level `let` (NOT window-aliased); only `mastermindReserveAttack` is `var` on `window`. Inject via bare assignments (`citySize = 7`) to hit the lexical bindings — `window.citySize = 7` won't take.
-- **Implicit-global trap:** when testing functions that read globals, **wipe `window.<globalName>` before each invocation** to force the cold-start path: `window.<name> = undefined; delete window.<name>;`. Do NOT write `globalName = value` — in non-strict scripts that creates an implicit global and masks missing-initialization bugs (a `transformScheme()` diagnostic passed this way while the real game still crashed).
-- **Always check dev-tools console after every invocation:** a function failing silently upstream (try/catch with `console.error`) produces no on-screen-console signal but leaves a clear trace in F12 → Console. When a test passes but the real game still fails, the test is wrong before the production code is.
+- **The two traps (why the vetted helper below exists):** (1) `citySize`, `cityReserveAttack`, `totalAttackPoints`, `cumulativeAttackPoints`, `totalRecruitPoints`, `cumulativeRecruitPoints`, `gameMode` are top-level `let` (NOT window-aliased) — `window.citySize = 7` silently no-ops; only `mastermindReserveAttack` is `var` on `window`. (2) A bare `name = value` for a name with **no** global binding (e.g. `selectedScheme` — only `const` locals + `getSelectedScheme()` exist, no global) creates an **implicit global that MASKS a missing-initialization bug** — a `transformScheme()` diagnostic "passed" this way while the real game crashed. Both verified live 2026-07-03.
+- **Vetted state-injection helper (A5) — `window.gtInject` (use this, NOT free-form `browser_evaluate` assignments).** The A2 assertion contract's `setup` slot MUST go through this path; ad-hoc `window.x=` / bare-assignment injection in the auto-loop is contract-invalid. It exposes exactly two writes, both fail-closed:
+  - `gtInject.set(name, value)` — assigns to the **real** binding via a vetted per-name get/set registry (lexical `let`s use STRICT set arrows; `var`s use `window[name]`). Throws LOUD — never creating a masking implicit global — if `name` is not vetted, if the binding's declaration is gone (strict `ReferenceError`), if a lexical write leaks onto `window`, or if read-back ≠ value. Returns `{name, kind, ok, actual}`.
+  - `gtInject.coldStart(name)` — forces the real init path by wiping any leftover **window** property (esp. a masking implicit global from an earlier bad injection): `window[name]=undefined; delete window[name];`. Permissive by name (only deletes, never creates); reports `{cleared}` (a non-configurable `var`-global reports `cleared:false`).
+  - **Adding a binding:** confirm its `let`/`var` declaration in `script.js`, then add a literal `get`/`set` pair to `INJECTABLE_BINDINGS` with its `kind`. Never inject an unvetted name — the throw is the guard against re-creating the transformScheme mask.
+  - **Verified live 2026-07-03** (whatif, setup screen): `set('citySize',777)` changed the lexical binding with no window leak (a bare `window.citySize=999` left it at 5); `set('selectedScheme',…)` THREW and created **no** masking global (contrast: bare assign made one); `coldStart` cleared a planted mask; `set('mastermindReserveAttack',13)` set the `var`; strict-mode nonexistent-assign throws `ReferenceError` (the stale-registry backstop) and never masks.
+  ```js
+  window.installGameTestInjector = function () {
+    const NAME_RE = /^[A-Za-z_$][\w$]*$/;
+    // Vetted registry. kind:'lexical' = top-level `let` in script.js (NOT a window property; window.<name>=
+    // no-ops). get/set arrows reference the name literally so they resolve to the real global lexical binding;
+    // set arrows are STRICT so assigning a removed/renamed binding throws (fail loud) instead of masking.
+    // kind:'window' = `var` at global scope (a real window property).
+    const INJECTABLE_BINDINGS = {
+      citySize:                { kind: 'lexical', get: () => citySize,                set: v => { 'use strict'; citySize = v; } },
+      cityReserveAttack:       { kind: 'lexical', get: () => cityReserveAttack,       set: v => { 'use strict'; cityReserveAttack = v; } },
+      totalAttackPoints:       { kind: 'lexical', get: () => totalAttackPoints,       set: v => { 'use strict'; totalAttackPoints = v; } },
+      cumulativeAttackPoints:  { kind: 'lexical', get: () => cumulativeAttackPoints,  set: v => { 'use strict'; cumulativeAttackPoints = v; } },
+      totalRecruitPoints:      { kind: 'lexical', get: () => totalRecruitPoints,      set: v => { 'use strict'; totalRecruitPoints = v; } },
+      cumulativeRecruitPoints: { kind: 'lexical', get: () => cumulativeRecruitPoints, set: v => { 'use strict'; cumulativeRecruitPoints = v; } },
+      gameMode:                { kind: 'lexical', get: () => gameMode,                set: v => { 'use strict'; gameMode = v; } },
+      mastermindReserveAttack: { kind: 'window',  get: () => window.mastermindReserveAttack, set: v => { window.mastermindReserveAttack = v; } },
+    };
+    const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+    function set(name, value) {
+      const b = INJECTABLE_BINDINGS[name];
+      if (!b) throw new Error('gtInject.set: "' + name + '" is not a vetted injectable binding. A bare `' + name +
+        ' = value` would create a MASKING implicit global (the transformScheme trap). Confirm its declaration in ' +
+        'script.js and add a literal get/set pair to INJECTABLE_BINDINGS with its kind first.');
+      const hadWindowProp = has(window, name);
+      try { b.set(value); }
+      catch (e) { throw new Error('gtInject.set: "' + name + '" could not be assigned (strict ' + e.name +
+        '); the `' + (b.kind === 'lexical' ? 'let ' : 'var ') + name + '` declaration may be gone. NOT creating an implicit global.'); }
+      if (b.kind === 'lexical' && !hadWindowProp && has(window, name)) throw new Error('gtInject.set: "' + name +
+        '" leaked onto window — the assignment did NOT reach the lexical binding (masking implicit global).');
+      const actual = b.get();
+      if (actual !== value) throw new Error('gtInject.set: "' + name + '" read back ' + JSON.stringify(actual) +
+        ', expected ' + JSON.stringify(value) + ' — write did not take.');
+      return { name: name, kind: b.kind, ok: true, actual: actual };
+    }
+    function coldStart(name) {
+      if (!NAME_RE.test(name)) throw new Error('gtInject.coldStart: invalid name "' + name + '".');
+      const had = has(window, name);
+      window[name] = undefined;
+      const deleted = delete window[name];
+      const stillThere = has(window, name);
+      if (had && !deleted && stillThere) return { name: name, cleared: false, hadWindowProp: true,
+        reason: 'non-configurable var/global — cannot force uninitialized' };
+      return { name: name, cleared: true, hadWindowProp: had };
+    }
+    window.gtInject = { set: set, coldStart: coldStart, bindings: INJECTABLE_BINDINGS };
+    return 'installed';
+  };
+  window.installGameTestInjector();
+  ```
+  **Usage.** After navigation, inject this source and call `installGameTestInjector()` (re-call after any reload — a page reload wipes it, same as the A4 harness). Then a TestCase's `setup` does e.g. `gtInject.set('gameMode','golden'); gtInject.set('totalAttackPoints',0);`, and a cold-start test does `gtInject.coldStart('<name>')` before the action. Never fall back to bare `browser_evaluate` assignment for state — that is the trap this replaces.
+- **Always check dev-tools console after every invocation:** a function failing silently upstream (try/catch with `console.error`) produces no on-screen-console signal but leaves a clear trace in F12 → Console. When a test passes but the real game still fails, the test is wrong before the production code is. (Codified as the A3 console-check gate below.)
 
 Driving the harness:
 - **Game start needs a TRUSTED `pointerdown` on `#begin-game`** — the handler listens for `pointerdown`, not `click`. Use a real Playwright click (`page.locator('#begin-game').click()`); a scripted `element.click()` fires only a click event and silently no-ops.
