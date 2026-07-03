@@ -114,6 +114,63 @@ Driving the harness:
   ]);
   ```
   This converts an indefinite hang into a fast, labelled failure that leaves the env up. It does NOT auto-resolve the selection (auto-picking a default would silently corrupt the test result — worse than failing); for selection popups still drive the specific pick yourself per the caveat above. The timeout is the SAFETY NET for a missed or unexpected selection popup.
+- **Selection-driving harness (A4 complete) — `installGameTestHarness()` supersedes the bare `__autoPopup` snippet.** The bare interval above only auto-confirms yes/no popups; it cannot drive a card-SELECTION popup (pick WHICH card), and it dies on page reload. This consolidated installer adds both: a **declared selection queue** that actively picks the intended `.popup-card` then confirms via the real play path, and **idempotent re-install** so it survives navigation. Verified live 2026-07-03 (whatif) against the real `KO1To4FromDiscard` picker: single-pick-by-name, re-entrant 2nd-use of the shared popup, empty-queue → `POPUP-TIMEOUT` (env alive), and post-reload re-install all pass.
+  ```js
+  window.installGameTestHarness = function () {
+    if (window.__gtHarness && window.__gtHarness.interval) clearInterval(window.__gtHarness.interval); // idempotent: never stack intervals
+    window.__gtHarness = window.__gtHarness || {};
+    const H = window.__gtHarness;
+    H.selections = H.selections || []; // FIFO of intended actions for card-choice popups (see below)
+    H.log = H.log || [];               // audit trail of what the driver did
+    // Visible = element AND all ancestors are not display:none. The game hides some popups via a
+    // CONTAINER (e.g. #intro-popup stays display:block inside a display:none container), so checking
+    // the element's own display alone false-positives and starves real popups. Structural, not geometry (A8).
+    const vis = el => { if (!el) return false; let n = el; while (n) { if (getComputedStyle(n).display === 'none') return false; n = n.parentElement; } return true; };
+    const logOnce = m => { if (H.log[H.log.length - 1] !== m) H.log.push(m); };
+    H.interval = setInterval(() => {
+      // (1) card-CHOICE popups are QUEUE-DRIVEN (never blind-confirmed): multi-select pickers keep
+      //     confirm enabled at 0 selections, so a blind auto-confirm would resolve the pick as "nothing".
+      const choice = document.querySelector('.card-choice-popup');
+      if (vis(choice)) {
+        if (H.selections.length) {
+          const a = H.selections[0];
+          const confirmBtn = document.getElementById('card-choice-popup-confirm');
+          const cards = [...choice.querySelectorAll('.popup-card')];
+          let done = false;
+          if (a.by === 'confirm') { if (confirmBtn && !confirmBtn.disabled) { confirmBtn.click(); done = true; logOnce('confirm'); } }
+          else if (a.by === 'button') { const btn = document.getElementById(a.value); if (btn && vis(btn) && !btn.disabled) { btn.click(); done = true; logOnce('button:' + a.value); } }
+          else {
+            let el = null;
+            if (a.by === 'index') el = cards[a.value] || null;
+            else if (a.by === 'name') el = cards.find(c => (c.querySelector('.popup-card-image') || {}).alt === a.value) || null; // alt === card.name
+            else if (a.by === 'id') el = cards.find(c => c.getAttribute('data-card-id') === a.value) || null;
+            else if (a.by === 'first') el = cards[0] || null;
+            if (el) { el.click(); done = true; logOnce('select ' + a.by + ':' + a.value); } // fires the game's selection listener → enables confirm
+            else logOnce('NO-MATCH ' + a.by + ':' + a.value);
+          }
+          if (done) H.selections.shift();
+        }
+        return; // queue empty on a visible card-choice = undeclared popup → leave it → POPUP-TIMEOUT fires (fail-closed, no guess)
+      }
+      // (2) yes/no / proceed / intro popups: auto-confirm ENABLED buttons. #card-choice-popup-confirm is
+      //     carved out (queue-driven above). Draining the start-popup queue falls out of this for free.
+      const intro = document.querySelector('#intro-popup');
+      const introClose = document.querySelector('#intro-popup-close-button');
+      if (vis(intro) && introClose) { introClose.click(); logOnce('intro-close'); return; }
+      document.querySelectorAll('#info-or-choice-popup-confirm, [id$="-popup-confirm"], .info-or-choice-popup-closebutton').forEach(b => {
+        if (b.id === 'card-choice-popup-confirm') return; // A4 carve-out
+        const p = b.closest('.info-or-choice-popup, .card-choice-popup, .popup');
+        if (vis(p) && !b.disabled) { b.click(); logOnce('auto-confirm ' + (b.id || b.className)); }
+      });
+    }, 100);
+    return 'installed';
+  };
+  window.installGameTestHarness();
+  ```
+  **How a test drives a selection.** Declare the intended actions on `window.__gtHarness.selections` (a FIFO) BEFORE invoking the ability, then invoke it inside the `Promise.race` timeout above. Each action is `{ by, value }`: `by: 'name'` (matches `.popup-card-image` alt = card name), `'index'`, `'id'` (`data-card-id`), `'first'`, `'button'` (click a named popup button, e.g. `card-choice-popup-nothanks` to decline), or `'confirm'` (click the enabled confirm). Selections are consumed one action per 100ms tick, so a **re-entrant** picker (popup reused N times) and a **multi-select** popup are both handled by queuing more actions — e.g. `[{by:'name',value:'BETA'},{by:'confirm'}]` for one pick, or `[{by:'name',value:'A'},{by:'confirm'},{by:'name',value:'B'},{by:'confirm'}]` across two uses. `H.log` records what fired. **Teardown between tests:** `clearInterval(window.__gtHarness.interval); window.__gtHarness.selections = [];`
+  **RE-INSTALL AFTER ANY NAVIGATION.** A page reload / re-navigate wipes `window.__gtHarness` and the installer (verified). After every `browser_navigate` or page-close recovery, re-inject this source and call `installGameTestHarness()` again — it clears any prior interval first, so it never stacks.
+  **Fail-closed preserved.** An undeclared selection popup (empty queue) or an unmatched target is NOT guessed — the driver leaves it, and the `Promise.race` `POPUP-TIMEOUT` fires (env stays alive). Never enqueue a default just to make a run pass.
+  **Scope note (follow-up, NOT covered by A4).** The carve-out is `#card-choice-popup-confirm` only. Sibling SELECTION popups whose confirm ends in `-popup-confirm` (`order-choice-popup-confirm`, `draw-choice-popup-confirm`, `card-choice-city-hq-popup-confirm`) are still blind-auto-confirmed by section (2) — same premature-confirm risk class. If a test needs a specific selection in one of those, extend the queue-driven branch to that popup; until then treat their auto-confirm as unverified.
 - **Live UI-refresh tests must go through the real play path** (`selectedCards=[idx]` → `confirmActions()`, or `endTurn()`) — abilities rely on the single trailing `updateGameBoard()`; an isolated ability call leaves the DOM stale and falsely reads as a refresh bug.
 - **The Playwright page can close mid-session with the server still up** — re-navigate + re-`resize(1920×1080)` to recover.
 
