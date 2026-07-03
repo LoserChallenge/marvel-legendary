@@ -2,6 +2,8 @@
 
 Last updated: 2026-06-29 — **ALL 16 EXPANSIONS FINALIZED through Pass 3** (2026-06-22). **Secret Wars Vol. 1 built + merged to master 2026-06-28** (Revelations + SWV1 are the two shipped expansions). The drafts/ folder is empty; every inventory is in `docs/card-inventory/final/`. World War Hulk, Weapon X, New Mutants, S.H.I.E.L.D., and Messiah Complex all completed Pass 3 on 2026-06-22 (reference-first; physical-card checks resolved every flag). A few non-inventory items are deferred to build / `/analyze-expansion` per their final docs (e.g. SHIELD Taskmaster printed-vs-errata choice; Messiah Clan Yashida asterisk meaning + clone rarity mapping). Inventory protocol is reference-first; see card-reading-rules.md. **Next phase: `/analyze-expansion` → `/new-expansion` for the next selected expansion.**
 
+- **Reuse-checked build-difficulty ranking** (for picking the next expansion to build): `docs/expansion-reuse-difficulty-ranking.md` — scout-verified difficulty order (easiest: Heroes of Asgard). The base engine already implements Shards, S.H.I.E.L.D. Officers, the Artifact zone, and Cosmic Threat, so most expansions are far cheaper to build than the raw survey implied.
+
 ## Pipeline Tracks
 
 **Track A — New expansions (not yet in game):**
