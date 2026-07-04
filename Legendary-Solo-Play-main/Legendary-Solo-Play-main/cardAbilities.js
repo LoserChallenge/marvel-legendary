@@ -11109,12 +11109,11 @@ function doomHeroRecruit() {
 
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
-
-        if (!negativeZoneAttackAndRecruit) {
-          totalRecruitPoints += hero.cost;
-        } else {
-          totalAttackPoints += hero.cost;
-        }
+        // B6: no refund here. recruitHeroConfirmed no longer deducts the recruit cost (the caller
+        // pays via spendRecruitCost), so a "recruit for free" effect is ALREADY free. The old
+        // "+= hero.cost" was a refund for that removed deduction and is now a pure over-credit —
+        // it handed the player Recruit (or Attack, in the Negative Zone) equal to the hero's cost
+        // on top of the free recruit. Removed for both doomHeroRecruit and recruitXMen.
 
         onscreenConsole.log(
           `You have recruited <span class="console-highlights">${hero.name}</span> for free.`,
@@ -12903,12 +12902,11 @@ function recruitXMen() {
 
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
-
-        if (!negativeZoneAttackAndRecruit) {
-          totalRecruitPoints += hero.cost;
-        } else {
-          totalAttackPoints += hero.cost;
-        }
+        // B6: no refund here. recruitHeroConfirmed no longer deducts the recruit cost (the caller
+        // pays via spendRecruitCost), so a "recruit for free" effect is ALREADY free. The old
+        // "+= hero.cost" was a refund for that removed deduction and is now a pure over-credit —
+        // it handed the player Recruit (or Attack, in the Negative Zone) equal to the hero's cost
+        // on top of the free recruit. Removed for both doomHeroRecruit and recruitXMen.
 
         onscreenConsole.log(
           `You have recruited <span class="console-highlights">${hero.name}</span> for free.`,
