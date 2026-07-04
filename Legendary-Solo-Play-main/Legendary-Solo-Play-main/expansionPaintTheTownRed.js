@@ -4455,6 +4455,15 @@ function spiderWomanArachnoPheromones() {
 
       const hero = hq[selectedHQIndex];
 
+      // B19 — Loner: block this free recruit if Loner's provisional +2 has been spent and can no longer
+      // be reclaimed (mirrors the normal-path gate; see isLonerRecruitBlocked in script.js). Gate BEFORE
+      // setting spiderWomanArachnoRecruit so the flag isn't left dirty on a blocked recruit.
+      if (isLonerRecruitBlocked(hero)) {
+        closeHQCityCardChoicePopup();
+        resolve(false);
+        return;
+      }
+
       closeHQCityCardChoicePopup();
 
       spiderWomanArachnoRecruit = true;

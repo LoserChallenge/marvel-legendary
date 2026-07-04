@@ -11116,6 +11116,14 @@ function doomHeroRecruit() {
       setTimeout(() => {
         const hero = hq[selectedHQIndex];
 
+        // B19 — Loner: block this free recruit if Loner's provisional +2 has been spent and can no
+        // longer be reclaimed (mirrors the normal-path gate; see isLonerRecruitBlocked in script.js).
+        if (isLonerRecruitBlocked(hero)) {
+          closeHQCityCardChoicePopup();
+          resolve(false);
+          return;
+        }
+
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
         // B6: no refund here. recruitHeroConfirmed no longer deducts the recruit cost (the caller
@@ -12908,6 +12916,14 @@ function recruitXMen() {
 
       setTimeout(() => {
         const hero = hq[selectedHQIndex];
+
+        // B19 — Loner: block this free recruit if Loner's provisional +2 has been spent and can no
+        // longer be reclaimed (mirrors the normal-path gate; see isLonerRecruitBlocked in script.js).
+        if (isLonerRecruitBlocked(hero)) {
+          closeHQCityCardChoicePopup();
+          resolve(false);
+          return;
+        }
 
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
@@ -15800,6 +15816,13 @@ function freeHeroGain() {
       setTimeout(() => {
         const hero = hq[selectedHQIndex];
         closeHQCityCardChoicePopup();
+
+        // B19 — Loner: block this free gain if Loner's provisional +2 has been spent and can no longer
+        // be reclaimed (mirrors the normal-path gate; see isLonerRecruitBlocked in script.js).
+        if (isLonerRecruitBlocked(hero)) {
+          resolve();
+          return;
+        }
 
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
