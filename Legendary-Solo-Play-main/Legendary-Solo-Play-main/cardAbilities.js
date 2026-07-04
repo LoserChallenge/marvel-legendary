@@ -6788,8 +6788,9 @@ function NickFuryRecruitShieldOfficerByKO() {
       return;
     }
 
-    // Check if there are any SHIELD Officers left to recruit
-    if (shieldOfficers.length === 0) {
+    // Check if there are any SHIELD Officers left to recruit (B21: read the live `shieldDeck`, not
+    // the master template `shieldOfficers` — this gate precedes moveShieldOfficerToHand's live pop).
+    if (shieldDeck.length === 0) {
       onscreenConsole.log(
         `No <span class="console-highlights">S.H.I.E.L.D. Officers</span> left to gain.`,
       );
@@ -7093,8 +7094,9 @@ function NickFuryRecruitShieldOfficerByKO() {
 }
 
 function moveShieldOfficerToHand() {
-  if (shieldOfficers.length > 0) {
-    const shieldOfficer = shieldOfficers.pop();
+  // B21: pop the live `shieldDeck`, not the master template `shieldOfficers` (see drawSHIELDOfficer).
+  if (shieldDeck.length > 0) {
+    const shieldOfficer = shieldDeck.pop();
     playerHand.push(shieldOfficer);
     extraCardsDrawnThisTurn++;
   } else {
@@ -15871,8 +15873,12 @@ function chooseToGainSHIELDOfficer() {
 }
 
 function drawSHIELDOfficer() {
-  if (shieldOfficers.length > 0) {
-    const shieldOfficer = shieldOfficers.pop();
+  // B21: pop the live per-game stack `shieldDeck` (reset from the template each game at
+  // script.js:5071), NOT the master template `shieldOfficers` (cardDatabase.js) — draining the
+  // template disagrees with recruit-driven gains and permanently shortens the pool for later
+  // same-session games.
+  if (shieldDeck.length > 0) {
+    const shieldOfficer = shieldDeck.pop();
     playerDiscardPile.push(shieldOfficer);
     updateGameBoard();
   } else {
