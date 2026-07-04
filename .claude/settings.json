@@ -1,4 +1,9 @@
 {
+  "enabledPlugins": {
+    "claude-code-setup@claude-plugins-official": false,
+    "security-guidance@claude-plugins-official": false,
+    "watch@claude-video": false
+  },
   "permissions": {
     "allow": [
       "WebSearch",
