@@ -2,7 +2,7 @@
 
 The single tracker for issues **outside the active expansion pipeline**: base-game code bugs, design/UX items, and rules decisions. (Bugs in an expansion currently being built go through `/expansion-audit`, not here.)
 
-**Fix discipline:** fixes are batched on a **dedicated base-code branch, between expansions** — NOT on master or an active expansion branch. **PINNED while an expansion build is active** (currently Secret Wars Vol.1) so base work doesn't interrupt it. Confirmed items also feed the `docs/priorities.md` base-engine backlog.
+**Fix discipline:** fixes are batched on a **dedicated base-code branch, between expansions** — NOT on master or an active expansion branch. **UNPINNED and IN PROGRESS** as of 2026-07-03: Secret Wars Vol.1 is merged, no expansion build is active, so this batch is being worked now on the `base-code-fixes` branch. Confirmed items also feed the `docs/priorities.md` base-engine backlog.
 
 **Intake flow:** raw screen grabs + notes land in the `bugs/` folder (e.g. `bugs/bugs-MMDDYY.md` + `bugs/images/`). The coordinator triages each drop into this tracker (logs it, points to the image, light diagnosis) so nothing is lost. Deep diagnosis + fix happen on the base-code branch.
 
@@ -14,7 +14,7 @@ Base-bug discovery started 2026-06-22. Original screenshot source: Paul's iPad c
 
 ## Next base-code-branch batch — consolidated roll-up (assembled 2026-06-29, post-SWV1)
 
-One starting checklist for the next inter-expansion base-code fix pass. Full diagnosis + fix-direction live in each item's §2/§3 entry below — this is just the index so the scattered deferred items are in one place. **PINNED items unpin once no expansion build is active.**
+One starting checklist for the next inter-expansion base-code fix pass. Full diagnosis + fix-direction live in each item's §2/§3 entry below — this is just the index so the scattered deferred items are in one place. **This batch is now UNPINNED and being worked on the `base-code-fixes` branch (started 2026-07-03).**
 
 **SWV1-surfaced base bugs (deferred to this branch — the new additions):**
 - **B6** — `recruitXMen()` over-credits Recruit by the hero's cost (free *and* refunds). CANDIDATE. → §2.
@@ -44,7 +44,7 @@ _(Raw `bugs/` drops awaiting triage land here first. Currently empty — the 202
 
 ## 2. Base-game code bugs
 
-Pre-existing bugs in the **base game** (everything but Revelations — Core Set, Dark City, Fantastic Four, Guardians of the Galaxy, Paint the Town Red). **Fixes deferred to a dedicated base-code branch** (PINNED, per the discipline above).
+Pre-existing bugs in the **base game** (everything but Revelations — Core Set, Dark City, Fantastic Four, Guardians of the Galaxy, Paint the Town Red). **Fixes now being applied on the `base-code-fixes` branch** (unpinned 2026-07-03, per the discipline above).
 
 ### CONFIRMED
 
