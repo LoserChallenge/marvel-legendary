@@ -196,7 +196,7 @@ Driving the harness:
     // selector; `nameOf` = how to read a candidate's name for {by:'name'}. Order = priority when >1 is active.
     const SELECTION_POPUPS = [
       { name: 'card-choice',         popup: '.card-choice-popup',         confirm: 'card-choice-popup-confirm',        cards: '.popup-card',                                 nameOf: el => (el.querySelector('.popup-card-image') || {}).alt }, // alt === card.name
-      { name: 'card-choice-city-hq', popup: '.card-choice-city-hq-popup', confirm: 'card-choice-city-hq-popup-confirm', cards: '.city-hq-chosen-card-image:not(.greyed-out)', nameOf: el => el.alt },                                        // eligible HQ/city cards only
+      { name: 'card-choice-city-hq', popup: '.card-choice-city-hq-popup', confirm: 'card-choice-city-hq-popup-confirm', cards: '.city-hq-chosen-card-image:not(.greyed-out)', nameOf: el => el.alt },                                        // eligible HQ/city cards only — prefer {by:'name'} here; {by:'first'}/{by:'index'} can hit shared-popup decoy elements → timeout
       { name: 'order-choice',        popup: '.order-choice-popup',        confirm: 'order-choice-popup-confirm',        cards: 'button.order-choice-button',                  nameOf: el => el.textContent.trim() },
     ];
     const carveOut = new Set(SELECTION_POPUPS.map(p => p.confirm)); // these confirms are queue-driven, never blind-confirmed
