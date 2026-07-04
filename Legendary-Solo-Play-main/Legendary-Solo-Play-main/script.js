@@ -19144,16 +19144,22 @@ function showHeroRecruitButton(hqIndex, hero) {
       await resolvePlagueWoundOnRecruit(hqIndex);
     }
 
-    recruitHeroConfirmed(hero, hqIndex - 1); // assuming this handles replacing the HQ slot etc.
-
     container.style.display = "none";
     button.style.display = "none";
     document.removeEventListener("click", handleClickOutside);
-
     healingPossible = false;
-    setTimeout(() => {
+
+    // B1 fix: hold the recruit re-entry lock (isRecruiting) for the FULL duration of the recruit, then
+    // clear it on completion. Previously recruitHeroConfirmed ran UN-awaited and the lock cleared on a
+    // blind 500ms timer — so a recruit with a slow async branch (bystander rescue, Wall-Crawl choice)
+    // left the lock open while still mid-flight, letting a second recruit interleave and corrupt HQ.
+    // Awaiting keeps recruits serialized (the lock's original intent); try/finally guarantees the lock
+    // always clears — a thrown recruit must never freeze all future recruiting.
+    try {
+      await recruitHeroConfirmed(hero, hqIndex - 1); // moves the card + refills the HQ slot
+    } finally {
       isRecruiting = false;
-    }, 500);
+    }
     return true;
   };
 }
@@ -19610,8 +19616,16 @@ async function recruitHeroConfirmed(hero, hqIndex) {
   // Keep reserve UI in sync (caller already adjusted the values)
   updateReserveAttackAndRecruit();
 
-  // Refill HQ slot
-  const newCard = refillHQSlot(hqIndex);
+  // Refill HQ slot.
+  // B1 fix: re-derive the slot from the card's LIVE position before removing it. A concurrent recruit
+  // whose slow async branch outran the re-entry lock can splice hq[] and shift every index, making the
+  // closure-bound hqIndex stale — the old blind removal then deleted a shifted neighbour and orphaned
+  // the recruited card in hq[] (duplicated: same card in hq AND discard, with a bystanding card vanishing).
+  // indexOf(hero) removes the ACTUAL recruited card. In normal (non-interleaved) play, and in What If?
+  // (fill-in-place refill never shifts indices), liveIndex === hqIndex, so this is a no-op there.
+  // Protects every caller — the main recruit path AND the free-recruit ability paths that bypass the lock.
+  const liveIndex = hq.indexOf(hero);
+  const newCard = refillHQSlot(liveIndex !== -1 ? liveIndex : hqIndex);
 
   if (newCard) {
     onscreenConsole.log(
