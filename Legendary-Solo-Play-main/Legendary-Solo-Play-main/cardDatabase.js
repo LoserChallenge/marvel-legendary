@@ -13769,7 +13769,7 @@ const heroes = [
         color: "Yellow",
         cost: 8,
         attack: 4,
-        recruit: 0,
+        recruit: 4,
         attackIcon: true,
         recruitIcon: true,
         bonusAttack: 0,
