@@ -8,6 +8,14 @@ Extracted from CLAUDE.md on 2026-04-03 to keep the main file focused on active w
 
 All 7 phases implemented and stable (2026-03-09). Compatibility audit complete (2026-03-26). Mode flag: `gameMode` global (`'whatif'` | `'golden'`). Key functions: `goldenRefillHQ()`, `goldenHQRotate()`, bystander discard popup, Final Showdown, hero deck restructuring.
 
+## Golden Solo Rules Summary
+
+- **Setup:** Hero count follows `scheme.requiredHeroes` (no longer hardcoded to 5); villain deck = 2-player rules (2 bystanders default, 10 henchmen shuffled in); hero deck restructured (10-card starting stack on top, Rares shuffled into main deck)
+- **Each round:** Draw 6; HQ rotates (1 added right, 1 removed left — skip round 1); optional bystander spend to reduce villain draws; draw **2** villain cards; play 6 cards
+- **HQ refill:** New card always goes rightmost, others slide left — rotation, not fill-in-place
+- **"Other player" effects:** Location "each other player" triggers → self-apply (do it yourself); non-Location ones classified per-card — provisional (self-apply reveal-or-suffer vs. no-op VP-pulls). Rulings → `docs/expansion-decisions.md`
+- **Win:** 4 Mastermind defeats; **Ultimate Victory:** Final Showdown — combined recruit+attack ≥ Mastermind strength+4
+
 ## Architectural Rules
 
 **Villain draws mid-turn:** `enterCityNotDraw = true` does NOT suppress the Golden Solo block. Mid-turn card effects must call `processVillainCard()` (single draw) not `drawVillainCard()` (full round). Any new expansion card that draws a villain card mid-turn must follow this same pattern. Enforced by the anti-pattern hook and the expansion-validator subagent.
