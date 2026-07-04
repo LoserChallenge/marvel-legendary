@@ -13478,18 +13478,19 @@ async function collectDefeatOperations(villainCopy, villainCard) {
             }
             if (!negate) {
               await fightEffectFunction(villainCopy);
-            } else if (villainCard.gainAsHero || villainCard.corruptSidekick) {
-              // Q8 (rules-notes/secret-wars-vol1.md): cancelling a Secret Wars Vol.1 CONVERTER's Fight
-              // effect — "Fight: Gain this as a Hero" (Manhattan/Thor Corps, flag gainAsHero) or the
-              // Corrupt the Next Generation Sidekick-Villain's gain-to-deck (flag corruptSidekick) — via
-              // Mr. Fantastic OR Untouchable cancels ONLY the Fight effect; the DEFEAT still stands
-              // (Core p.13: defeat -> Victory Pile is a step SEPARATE from the Fight effect). Without the
-              // gain firing, the route-away flags (gainAsHero/skrulled) would make the standard
-              // post-defeat VP-push (handlePostDefeat / handleHQPostDefeat) skip the card and it would
-              // vanish (no gain, no VP). Clear them so the card lands in the Victory Pile at its printed
-              // VP, like any normally-defeated Villain. Gated on the SWV1-specific markers, NOT the shared
-              // `skrulled` flag — other skrulled mechanics (Skrull Shapeshifters unskrull, House of M
-              // gainScarletWitchAsHero) are out of Q8 scope and keep their existing cancel behavior.
+            } else if (villainCard.gainAsHero || villainCard.corruptSidekick || villainCard.skrulled) {
+              // Q8 (rules-notes/secret-wars-vol1.md): cancelling a CONVERTER's Fight effect — "Fight: Gain
+              // this as a Hero" (Manhattan/Thor Corps, flag gainAsHero), the Corrupt the Next Generation
+              // Sidekick-Villain's gain-to-deck (flag corruptSidekick), or a bare-`skrulled` converter
+              // (House of M Scarlet Witch gainScarletWitchAsHero, Secret Invasion Skrull Shapeshifters
+              // unskrull) — via Mr. Fantastic OR Untouchable cancels ONLY the Fight effect; the DEFEAT
+              // still stands (Core p.13: defeat -> Victory Pile is a step SEPARATE from the Fight effect).
+              // Without the gain firing, the route-away flag `skrulled` would make the standard post-defeat
+              // VP-push (handlePostDefeat / handleHQPostDefeat, gated on !skrulled && !gainAsHero) skip the
+              // card and it would vanish (no gain, no VP). Clear the flags so the card lands in the Victory
+              // Pile — at printed VP for gainAsHero/corruptSidekick, or worth 0 for a skrulled-only
+              // converter whose gained form has no printed VP (Paul's ruling 2026-07-04, B8-residual:
+              // path-of-least-resistance — a player would almost never nullify a gain they wanted).
               villainCard.gainAsHero = false;
               villainCard.skrulled = false;
             }
