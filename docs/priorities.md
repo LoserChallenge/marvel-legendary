@@ -9,6 +9,14 @@ Live task tracker (in-flight / deferred / ongoing / completed). **Not auto-loade
 ### Run the new pipeline on the next expansion (directional read)
 The Changes 1–3 tooling is built (see Recently completed). The remaining open loop is **efficacy**: pick the next expansion, run it through the reshaped pipeline, and record the where-caught tally vs. the frozen Revelations baseline (in the plan) as a *directional* read — n=1, not validation. Default-assume the new mechanism may NOT be helping until bug data across several expansions says it did; honor the kill criterion in the plan.
 - **Plan (baseline + kill criterion):** `docs/superpowers/plans/2026-06-20-next-expansion-process-improvements.md`
+- **Next expansion selected: Heroes of Asgard** (2026-07-03) — highest reuse (~80–85%; confirm via reuse-scan in `/analyze-expansion`).
+
+### Build-efficiency & automation initiative (2026-07-03)
+Make each build faster/leaner/cheaper without cutting verification; progressively shift green-zone work to autonomous `/goal` execution. **Full tracker + intent + autonomy ladder: `docs/efficiency-initiative.md`.**
+- **Do now (autonomous):** SW-cache auto-bump tool (fold into `/deploy`) + DB↔inventory linter (the keystone content-gate; validate on shipped expansions).
+- **Do now (supervised cc-goal):** clear the base-engine bug backlog (see Deferred) on the base-code branch (unpinned) — game-test gate per fix.
+- **Coordinator defaults to adopt:** read-orchestration (subagent/targeted-read over full-file) + model/effort tiering.
+- **Into the HoA build:** gates live; first `/goal` autonomy trial on Phase-1 scaffolding (fail-closed condition); test-fix loop for Phase-3 assertions; retro vs SWV1 at build-end.
 
 ---
 
@@ -27,12 +35,14 @@ The Changes 1–3 tooling is built (see Recently completed). The remaining open 
 
 - **Expansion pipeline (the core mission).** Bring expansions into the game one at a time. Status table: `docs/expansion-pipeline-status.md`.
   - ✅ **All 16 inventories FINALIZED through Pass 3** (2026-06-22) — every file in `docs/card-inventory/final/`; `drafts/` empty. Inventory phase complete. Next per expansion: pick one → `/analyze-expansion` → `/new-expansion`.
-  - Next expansion to *implement* not yet selected.
+  - Next expansion selected: **Heroes of Asgard** (2026-07-03); the build-efficiency plan wrapping it is under 🔜 Next up.
 - **Periodic maintenance:** `/legendary-sweep` (~per expansion), `/audit-project` + `/optimize-project` (when structure/workflow drifts), `/audit-surface` (when editing persistent reference files).
 
 ---
 
 ## ✅ Recently completed (with context worth keeping)
+
+- **2026-07-03 — Build-efficiency pass + initiative opened.** Pushed the game-test harness/automation work to origin. Token-savings: removed unused `/paul:*` + `/seed:*` command shelves (relocated to `D:\Claude Code\cc-helper\parked-slash-commands\` with restore README), trimmed CLAUDE.md (Golden Solo summary → `golden-solo-history.md`; verbose Automations prose + Session-Roles Why-tails tightened), project-scoped plugin trim in `.claude/settings.json`. Created **`docs/efficiency-initiative.md`** (living tracker: intent, the autonomy ladder, `/goal`-vs-`cc-goal` distinction, token levers, per-build retro hooks). Set the next-build plan (see 🔜 Next up) and selected Heroes of Asgard. Handoff doc tidies committed (B11 latent-only, game-test A4 caveat, automation-readiness A2/B1 superseded). All pushed to origin. *(Note: SWV1 build itself — merged 2026-06-28 — is not logged here; its record lives in `secret-wars-vol1-retrospective.md` + `-postmortem.md`.)*
 
 - **2026-06-21 — CLAUDE.md surface pass + automation gaps.** Fixed stale line-number refs (stripped volatile suffixes, kept function names as the durable anchor) and moved on-demand code gotchas out of always-on CLAUDE.md (380→289 lines) into `engine-gotchas.md` + the `/game-test` skill, leaving one-line rules + pointers. Extended the worktree-advisory hook to nudge `engine-gotchas.md`. Closed two recurring-value automation gaps: `expansion-validator` Rules 4/5 now check the recruit twin (not just attack), and `/deploy` gained a Service Worker cache-bump gate (Step 3). Independently cold-read verified — no operational facts lost.
 - **2026-06-21 — Debug `console.log` cleanup.** Removed 589 leftover debug traces from `script.js`, `cardAbilities*.js`, `expansion*.js` (pure deletion; kept `console.error`/`warn` + the console-capture harness). Verified via `node --check` all files + Playwright smoke test (game init + a turn, zero runtime errors). Resolves the prior "red flag rule vs reality" divergence. Prevention added: `/deploy` pre-push checklist now greps shipped game files for `console.log(` (baseline zero) so debug traces can't silently re-accumulate to a release.
