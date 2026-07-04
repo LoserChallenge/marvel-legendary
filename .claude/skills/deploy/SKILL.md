@@ -23,23 +23,27 @@ Expected: no output. Any hits are debug `console.log(` traces that shouldn't shi
 
 If anything looks unexpected, stop and flag it to the user before continuing.
 
-## Step 2 — Show what's being pushed
+## Step 2 — Service Worker cache sync (CRITICAL — now automated)
 
-Run `git log origin/master..HEAD --oneline` to show the user which commits will be pushed. Read the list out loud in plain English so the user can confirm they're happy with it.
+Forgetting this is the #1 cause of "changes don't show on GitHub Pages." A tool now handles it — no more hand-bumping `CACHE_NAME` or hand-adding files to `FILES_TO_CACHE`. Run:
+```
+"C:\Program Files\nodejs\node.exe" tools/sync-sw-cache.js
+```
+(Bare `node` isn't on the Bash PATH on this machine — use the full path above.)
+
+This does two things in `sw.js`: bumps `CACHE_NAME` (`legendary-vN` → `v{N+1}`) so browsers/iPads re-cache, and rebuilds `FILES_TO_CACHE` to exactly mirror every file shipped under the game root (so a new expansion JS or card-art file is never left un-cached). It prints what it added/removed.
+
+Then:
+- If `sw.js` changed, commit it: `git add Legendary-Solo-Play-main/Legendary-Solo-Play-main/sw.js && git commit -m "chore: bump SW cache"`. This commit joins the push.
+- Read the tool's ADDED/REMOVED report out loud. Additions of real shipped files are expected. If it reports a **REMOVED** path, that's a file deleted from disk but still referenced — confirm that deletion was intended before continuing.
+
+To preview without writing, run with `--check` (reports drift, exits 1 if stale, does not bump or write).
+
+## Step 3 — Show what's being pushed
+
+Run `git log origin/master..HEAD --oneline` to show the user which commits will be pushed (now including the cache-bump commit from Step 2). Read the list out loud in plain English so the user can confirm they're happy with it.
 
 If there are no commits ahead of origin/master, tell the user there is nothing to push and stop.
-
-## Step 3 — Service Worker cache gate (CRITICAL)
-
-Forgetting this is the #1 cause of "changes don't show on GitHub Pages." Check the diff being pushed:
-```
-git diff origin/master..HEAD --name-only
-```
-
-- **If any game file changed** (`script.js`, `cardAbilities*.js`, `expansion*.js`, `cardDatabase.js`, `index.html`, `styles.css`, or assets), confirm `sw.js` `CACHE_NAME` was bumped in this same range — it should appear in the diff with a changed version string (e.g. `'legendary-v7'` → `'legendary-v8'`). If it was NOT bumped, STOP: browsers will serve stale files. Offer to bump it and commit the bump before pushing.
-- **If a NEW expansion JS file was added**, also confirm its path is in the `FILES_TO_CACHE` array in `sw.js` — bumping `CACHE_NAME` alone won't serve it offline/PWA. If missing, STOP and offer to add it.
-
-Only continue to the push once the cache is correct.
 
 ## Step 4 — Push
 
