@@ -53,7 +53,7 @@ The **DB↔inventory linter is the keystone** — it converts the green zone fro
 |---|---|---|---|
 | 1 | SW-cache auto-bump tool (fold into `/deploy`) | tool, autonomous-build | ✅ BUILT 2026-07-03 (`tools/sync-sw-cache.js`, commit `e59a62d`) — cold-reviewed; first run fixed a decayed cache list (+204 files incl. 91 SWV1 art) |
 | 2 | DB↔inventory linter (the keystone content gate) | rung-1 gate, autonomous-build | ✅ BUILT 2026-07-03 (`tools/lint-card-data.js`, commit `205eb5f`) — validated on all 7 built expansions (0 false positives); caught 1 real DB bug (B22 Supernova Spear); cold-reviewed (silent-skip + team fixes applied) |
-| 3 | Clear base-bug backlog (B1/B6/B9/B11/B8-half/B19/B20/B21) | cleanup, supervised cc-goal | 🔄 IN PROGRESS 2026-07-03 (`base-code-fixes` branch) — one-liners done+verified: B6, B9, B22 fixed; B20 CLEARED (not a bug). Remaining: B1, B19, B21 + B8 rules ruling. Not merged. |
+| 3 | Clear base-bug backlog (B1/B6/B9/B11/B8-half/B19/B20/B21) | cleanup, supervised cc-goal | 🔄 IN PROGRESS (`base-code-fixes` branch) — Done+verified: B6, B9, B22 (07-03); B8-residual, B21, B19 (07-04). CLEARED (not bugs): B20, B23. **Remaining: B1 only** (recruit-race dup — needs Playwright repro, fresh session). Each fix cold-eyes-reviewed CLEAN. Not merged. |
 | 4 | Read-orchestration as coordinator default (subagent/targeted-read over full-file) | token habit (★ best-ratio lever) | proposed |
 | 4b | Cross-session relay-intel: coordinator relays receipts-form pointers (file:line + pattern + gotcha) so the worker scoped-reads its target, not the whole file | token habit — the cross-session duplication fix | proposed |
 | 4c | Tool-result scoping (`git status --short`, `grep head_limit`, `--stat` diffs) + tighter cold-subagent verify prompts (cheaper per pass, never fewer) | token free-wins (no efficacy cost) | proposed |
@@ -67,6 +67,7 @@ The **DB↔inventory linter is the keystone** — it converts the green zone fro
 
 - 2026-07-03 — Initiative opened. Autonomy ladder + `/goal`-vs-`cc-goal` distinction settled; linter identified as keystone. Full context in this session's discussion + source docs above.
 - 2026-07-03 — Improvements #1 (SW-cache tool) + #2 (keystone DB↔inventory linter) BUILT + cold-reviewed under `cc-goal` (commits `e59a62d`, `205eb5f`). **Rung-1 content gate now exists** → the green zone is lease-able to a `/goal` trial (rung 2) as planned. Linter caught B22 (Supernova Spear DB recruit 0→4) on first use — content-gate value demonstrated on day one. Next: step-3 base-bug backlog, then the HoA build with the gates live.
+- 2026-07-04 — Step-3 backlog continued under supervised `cc-goal`: B8-residual, B21, B19 fixed+verified; B23 (surfaced by B19's cold-eyes review) ruled not-a-bug by Paul (gain ≠ recruit). Pattern held from 07-03: each fix got an independent fresh-subagent cold-read (the required gate, not self-review) before commit; all CLEAN. cc-goal cadence worked — drove all technical calls, stopped only for the two genuine rules forks (B8 disposition, B23 recruit-vs-gain). Only B1 (recruit-race dup, needs Playwright repro) remains before the backlog closes.
 
 ## Retro hooks (measure at the end of each build)
 
