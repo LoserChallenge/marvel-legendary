@@ -2473,15 +2473,17 @@ function ghostRiderInfernalChains() {
       // Only execute the fight effect if not negated
       if (!negate) {
         await fightEffectFunction(villainCard);
-      } else if (villainCard.gainAsHero || villainCard.corruptSidekick) {
+      } else if (villainCard.gainAsHero || villainCard.corruptSidekick || villainCard.skrulled) {
         // Q8 converter cancel-vanish (rules-notes/secret-wars-vol1.md) — mirror of the M2 /
-        // drStrangeFightTheFuture fix. Cancelling a Secret Wars Vol.1 CONVERTER's Fight effect
-        // ("Gain this as a Hero" gainAsHero, or the Corrupt Sidekick-Villain's gain-to-deck
-        // corruptSidekick→skrulled) leaves the DEFEAT intact (Core p.13). Without firing the gain,
-        // the route-away flags would make defeatNonPlacedVillain's VP gate (`!skrulled && !gainAsHero`)
-        // skip the push and the card would VANISH (corruptSidekick loses its real printed VP). Clear
-        // the SWV1 markers so the EXISTING VP push fires. Gated on gainAsHero||corruptSidekick, NOT
-        // bare skrulled — other skrulled mechanics keep their cancel behavior.
+        // drStrangeFightTheFuture fix. Cancelling a CONVERTER's Fight effect ("Gain this as a Hero"
+        // gainAsHero, the Corrupt Sidekick-Villain's gain-to-deck corruptSidekick→skrulled, or a
+        // bare-`skrulled` converter — House of M Scarlet Witch / Secret Invasion Skrull Shapeshifters)
+        // leaves the DEFEAT intact (Core p.13). Without firing the gain, the route-away flag `skrulled`
+        // would make defeatNonPlacedVillain's VP gate (`!skrulled && !gainAsHero`) skip the push and the
+        // card would VANISH. Clear the flags so the EXISTING VP push fires — at printed VP for
+        // gainAsHero/corruptSidekick, or worth 0 for a skrulled-only converter (gained form has no
+        // printed VP). Paul's ruling 2026-07-04 (B8-residual): path-of-least-resistance, all converters
+        // fall back to the Victory Pile on cancel.
         villainCard.gainAsHero = false;
         villainCard.skrulled = false;
       }
@@ -3221,15 +3223,17 @@ async function punisherHailOfBulletsDefeat() {
       // Only execute the fight effect if not negated
       if (!negate) {
         await fightEffectFunction(topCardVillainDeck);
-      } else if (topCardVillainDeck.gainAsHero || topCardVillainDeck.corruptSidekick) {
+      } else if (topCardVillainDeck.gainAsHero || topCardVillainDeck.corruptSidekick || topCardVillainDeck.skrulled) {
         // Q8 converter cancel-vanish (rules-notes/secret-wars-vol1.md) — mirror of the M2 /
-        // drStrangeFightTheFuture fix. Cancelling a Secret Wars Vol.1 CONVERTER's Fight effect
-        // ("Gain this as a Hero" gainAsHero, or the Corrupt Sidekick-Villain's gain-to-deck
-        // corruptSidekick→skrulled) leaves the DEFEAT intact (Core p.13). Without firing the gain,
-        // the route-away flags would make defeatNonPlacedVillain's VP gate (`!skrulled && !gainAsHero`)
-        // skip the push and the card would VANISH (corruptSidekick loses its real printed VP). Clear
-        // the SWV1 markers so the EXISTING VP push fires. Gated on gainAsHero||corruptSidekick, NOT
-        // bare skrulled — other skrulled mechanics keep their cancel behavior.
+        // drStrangeFightTheFuture fix. Cancelling a CONVERTER's Fight effect ("Gain this as a Hero"
+        // gainAsHero, the Corrupt Sidekick-Villain's gain-to-deck corruptSidekick→skrulled, or a
+        // bare-`skrulled` converter — House of M Scarlet Witch / Secret Invasion Skrull Shapeshifters)
+        // leaves the DEFEAT intact (Core p.13). Without firing the gain, the route-away flag `skrulled`
+        // would make defeatNonPlacedVillain's VP gate (`!skrulled && !gainAsHero`) skip the push and the
+        // card would VANISH. Clear the flags so the EXISTING VP push fires — at printed VP for
+        // gainAsHero/corruptSidekick, or worth 0 for a skrulled-only converter (gained form has no
+        // printed VP). Paul's ruling 2026-07-04 (B8-residual): path-of-least-resistance, all converters
+        // fall back to the Victory Pile on cancel.
         topCardVillainDeck.gainAsHero = false;
         topCardVillainDeck.skrulled = false;
       }
@@ -16802,6 +16806,15 @@ async function instantDefeatAttack(cityIndex) {
 }
 
 async function professorXMindControlGainVillain(villainCard) {
+  // B9: villain->hero converters already turn the defeated villain INTO a Hero via their own fight
+  // effect (dispatched in collectDefeatOperations, BEFORE this post-defeat Mind Control gain runs).
+  // Without this guard, Mind Control gains it a SECOND time — one villain yields two Heroes. The
+  // `skrulled` flag covers Skrull Shapeshifters, Corrupt Sidekicks, Master-of-Tyrants tyrants AND
+  // Scarlet Witch (House of M) — all seed skrulled:true; `gainAsHero` covers Secret Wars converters.
+  // All six call sites pass the ORIGINAL villainCard, which retains these flags. Skip for converters.
+  if (villainCard && (villainCard.skrulled || villainCard.gainAsHero)) {
+    return false;
+  }
   return new Promise((resolve) => {
     setTimeout(() => {
       const { confirmButton, denyButton } = showHeroAbilityMayPopup(

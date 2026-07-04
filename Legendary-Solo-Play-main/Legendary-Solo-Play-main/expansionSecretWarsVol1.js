@@ -1025,16 +1025,18 @@ async function drStrangeFightTheFuture() {
         }
         if (!negate) {
           await fightEffectFunction(topCard);
-        } else if (topCard.gainAsHero || topCard.corruptSidekick) {
+        } else if (topCard.gainAsHero || topCard.corruptSidekick || topCard.skrulled) {
           // Q8 (rules-notes/secret-wars-vol1.md) — converter cancel on the deck-top path. Mirror of the
           // M2 fix in collectDefeatOperations: cancelling a converter's Fight effect ("Gain this as a
-          // Hero" — Manhattan/Thor Corps gainAsHero; or the Corrupt Sidekick-Villain's gain-to-deck,
-          // corruptSidekick→skrulled) leaves the DEFEAT intact (Core p.13: defeat→Victory Pile is a step
-          // separate from the Fight effect). Without firing the gain, the route-away flags would make
-          // defeatNonPlacedVillain's VP gate (script.js: `!skrulled && !gainAsHero`) skip the push and the
-          // card would VANISH (no gain, no VP — corruptSidekick loses real printed VP). Clear the SWV1
-          // markers so the EXISTING VP push fires. Gated on gainAsHero||corruptSidekick, NOT bare
-          // `skrulled`, so other skrulled mechanics keep their cancel behavior.
+          // Hero" — Manhattan/Thor Corps gainAsHero; the Corrupt Sidekick-Villain's gain-to-deck,
+          // corruptSidekick→skrulled; or a bare-`skrulled` converter — House of M Scarlet Witch / Secret
+          // Invasion Skrull Shapeshifters) leaves the DEFEAT intact (Core p.13: defeat→Victory Pile is a
+          // step separate from the Fight effect). Without firing the gain, the route-away flag `skrulled`
+          // would make defeatNonPlacedVillain's VP gate (script.js: `!skrulled && !gainAsHero`) skip the
+          // push and the card would VANISH (no gain, no VP). Clear the flags so the EXISTING VP push fires
+          // — at printed VP for gainAsHero/corruptSidekick, or worth 0 for a skrulled-only converter
+          // (gained form has no printed VP). Paul's ruling 2026-07-04 (B8-residual): path-of-least-
+          // resistance, all converters fall back to the Victory Pile on cancel.
           topCard.gainAsHero = false;
           topCard.skrulled = false;
         }

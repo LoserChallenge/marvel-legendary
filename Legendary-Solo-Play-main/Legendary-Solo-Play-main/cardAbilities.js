@@ -6718,6 +6718,13 @@ function showEligibleVillainsOptions(eligibleVillains, shieldCount) {
 
       // Handle fight effect if the villain has one
       let fightEffectPromise = Promise.resolve();
+      // B9: capture converter status BEFORE the fight effect runs. Unlike the main defeat path (which
+      // runs the fight effect on a COPY), freeTelepathicVillainDefeat runs it on the ORIGINAL
+      // villainCard and clears skrulled in place — so the guard inside professorXMindControlGainVillain
+      // would read false below. Gate the Mind Control call on the pre-fight status to stop the
+      // converter double-gain on this instant/free-defeat path.
+      const villainWasConverter =
+        villainCard && (villainCard.skrulled || villainCard.gainAsHero);
       if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
         const fightEffectFunction = window[villainCard.fightEffect];
         if (typeof fightEffectFunction === "function") {
@@ -6747,7 +6754,7 @@ function showEligibleVillainsOptions(eligibleVillains, shieldCount) {
           updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
         });
 
-      if (hasProfessorXMindControl) {
+      if (hasProfessorXMindControl && !villainWasConverter) {
         await professorXMindControlGainVillain(villainCard);
       }
 
@@ -6781,8 +6788,9 @@ function NickFuryRecruitShieldOfficerByKO() {
       return;
     }
 
-    // Check if there are any SHIELD Officers left to recruit
-    if (shieldOfficers.length === 0) {
+    // Check if there are any SHIELD Officers left to recruit (B21: read the live `shieldDeck`, not
+    // the master template `shieldOfficers` — this gate precedes moveShieldOfficerToHand's live pop).
+    if (shieldDeck.length === 0) {
       onscreenConsole.log(
         `No <span class="console-highlights">S.H.I.E.L.D. Officers</span> left to gain.`,
       );
@@ -7086,8 +7094,9 @@ function NickFuryRecruitShieldOfficerByKO() {
 }
 
 function moveShieldOfficerToHand() {
-  if (shieldOfficers.length > 0) {
-    const shieldOfficer = shieldOfficers.pop();
+  // B21: pop the live `shieldDeck`, not the master template `shieldOfficers` (see drawSHIELDOfficer).
+  if (shieldDeck.length > 0) {
+    const shieldOfficer = shieldDeck.pop();
     playerHand.push(shieldOfficer);
     extraCardsDrawnThisTurn++;
   } else {
@@ -11107,14 +11116,21 @@ function doomHeroRecruit() {
       setTimeout(() => {
         const hero = hq[selectedHQIndex];
 
+        // B19 — Loner: block this free recruit if Loner's provisional +2 has been spent and can no
+        // longer be reclaimed (mirrors the normal-path gate; see isLonerRecruitBlocked in script.js).
+        if (isLonerRecruitBlocked(hero)) {
+          closeHQCityCardChoicePopup();
+          resolve(false);
+          return;
+        }
+
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
-
-        if (!negativeZoneAttackAndRecruit) {
-          totalRecruitPoints += hero.cost;
-        } else {
-          totalAttackPoints += hero.cost;
-        }
+        // B6: no refund here. recruitHeroConfirmed no longer deducts the recruit cost (the caller
+        // pays via spendRecruitCost), so a "recruit for free" effect is ALREADY free. The old
+        // "+= hero.cost" was a refund for that removed deduction and is now a pure over-credit —
+        // it handed the player Recruit (or Attack, in the Negative Zone) equal to the hero's cost
+        // on top of the free recruit. Removed for both doomHeroRecruit and recruitXMen.
 
         onscreenConsole.log(
           `You have recruited <span class="console-highlights">${hero.name}</span> for free.`,
@@ -12901,14 +12917,21 @@ function recruitXMen() {
       setTimeout(() => {
         const hero = hq[selectedHQIndex];
 
+        // B19 — Loner: block this free recruit if Loner's provisional +2 has been spent and can no
+        // longer be reclaimed (mirrors the normal-path gate; see isLonerRecruitBlocked in script.js).
+        if (isLonerRecruitBlocked(hero)) {
+          closeHQCityCardChoicePopup();
+          resolve(false);
+          return;
+        }
+
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
-
-        if (!negativeZoneAttackAndRecruit) {
-          totalRecruitPoints += hero.cost;
-        } else {
-          totalAttackPoints += hero.cost;
-        }
+        // B6: no refund here. recruitHeroConfirmed no longer deducts the recruit cost (the caller
+        // pays via spendRecruitCost), so a "recruit for free" effect is ALREADY free. The old
+        // "+= hero.cost" was a refund for that removed deduction and is now a pure over-credit —
+        // it handed the player Recruit (or Attack, in the Negative Zone) equal to the hero's cost
+        // on top of the free recruit. Removed for both doomHeroRecruit and recruitXMen.
 
         onscreenConsole.log(
           `You have recruited <span class="console-highlights">${hero.name}</span> for free.`,
@@ -15794,6 +15817,13 @@ function freeHeroGain() {
         const hero = hq[selectedHQIndex];
         closeHQCityCardChoicePopup();
 
+        // B19 — Loner: block this free gain if Loner's provisional +2 has been spent and can no longer
+        // be reclaimed (mirrors the normal-path gate; see isLonerRecruitBlocked in script.js).
+        if (isLonerRecruitBlocked(hero)) {
+          resolve();
+          return;
+        }
+
         // Recruit the hero using the original function
         recruitHeroConfirmed(hero, selectedHQIndex);
 
@@ -15866,8 +15896,12 @@ function chooseToGainSHIELDOfficer() {
 }
 
 function drawSHIELDOfficer() {
-  if (shieldOfficers.length > 0) {
-    const shieldOfficer = shieldOfficers.pop();
+  // B21: pop the live per-game stack `shieldDeck` (reset from the template each game at
+  // script.js:5071), NOT the master template `shieldOfficers` (cardDatabase.js) — draining the
+  // template disagrees with recruit-driven gains and permanently shortens the pool for later
+  // same-session games.
+  if (shieldDeck.length > 0) {
+    const shieldOfficer = shieldDeck.pop();
     playerDiscardPile.push(shieldOfficer);
     updateGameBoard();
   } else {

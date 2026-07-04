@@ -13478,18 +13478,19 @@ async function collectDefeatOperations(villainCopy, villainCard) {
             }
             if (!negate) {
               await fightEffectFunction(villainCopy);
-            } else if (villainCard.gainAsHero || villainCard.corruptSidekick) {
-              // Q8 (rules-notes/secret-wars-vol1.md): cancelling a Secret Wars Vol.1 CONVERTER's Fight
-              // effect — "Fight: Gain this as a Hero" (Manhattan/Thor Corps, flag gainAsHero) or the
-              // Corrupt the Next Generation Sidekick-Villain's gain-to-deck (flag corruptSidekick) — via
-              // Mr. Fantastic OR Untouchable cancels ONLY the Fight effect; the DEFEAT still stands
-              // (Core p.13: defeat -> Victory Pile is a step SEPARATE from the Fight effect). Without the
-              // gain firing, the route-away flags (gainAsHero/skrulled) would make the standard
-              // post-defeat VP-push (handlePostDefeat / handleHQPostDefeat) skip the card and it would
-              // vanish (no gain, no VP). Clear them so the card lands in the Victory Pile at its printed
-              // VP, like any normally-defeated Villain. Gated on the SWV1-specific markers, NOT the shared
-              // `skrulled` flag — other skrulled mechanics (Skrull Shapeshifters unskrull, House of M
-              // gainScarletWitchAsHero) are out of Q8 scope and keep their existing cancel behavior.
+            } else if (villainCard.gainAsHero || villainCard.corruptSidekick || villainCard.skrulled) {
+              // Q8 (rules-notes/secret-wars-vol1.md): cancelling a CONVERTER's Fight effect — "Fight: Gain
+              // this as a Hero" (Manhattan/Thor Corps, flag gainAsHero), the Corrupt the Next Generation
+              // Sidekick-Villain's gain-to-deck (flag corruptSidekick), or a bare-`skrulled` converter
+              // (House of M Scarlet Witch gainScarletWitchAsHero, Secret Invasion Skrull Shapeshifters
+              // unskrull) — via Mr. Fantastic OR Untouchable cancels ONLY the Fight effect; the DEFEAT
+              // still stands (Core p.13: defeat -> Victory Pile is a step SEPARATE from the Fight effect).
+              // Without the gain firing, the route-away flag `skrulled` would make the standard post-defeat
+              // VP-push (handlePostDefeat / handleHQPostDefeat, gated on !skrulled && !gainAsHero) skip the
+              // card and it would vanish (no gain, no VP). Clear the flags so the card lands in the Victory
+              // Pile — at printed VP for gainAsHero/corruptSidekick, or worth 0 for a skrulled-only
+              // converter whose gained form has no printed VP (Paul's ruling 2026-07-04, B8-residual:
+              // path-of-least-resistance — a player would almost never nullify a gain they wanted).
               villainCard.gainAsHero = false;
               villainCard.skrulled = false;
             }
@@ -19028,6 +19029,35 @@ document
   .getElementById("shield-deck-card-back")
   .addEventListener("click", showSHIELDRecruitButton);
 
+// Secret Wars Vol.1 — Loner (Old Man Logan) shared recruit guard. "If you don't recruit any Heroes this
+// turn, +2 Attack." The +2 (lonerAttackApplied, accumulated across multiple Loners) is granted
+// provisionally on play and clawed back by recruitHeroConfirmed when a Hero is recruited — but the
+// clawback floors at 0, so once the +2 has been (partly) SPENT on Attack it can no longer be reclaimed,
+// and recruiting a Hero then would let the player keep BOTH the spent bonus and the recruit. Returns true
+// (and logs) when a Hero recruit must be BLOCKED for exactly that reason (bonus applied AND no longer
+// fully present in the current Attack total). When it's still fully present (total >= applied) the
+// clawback works cleanly, so the recruit is allowed. Type-guarded to Hero: Bystander rescues (Save
+// Humanity) and other non-Hero gains must never be blocked — mirrors recruitHeroConfirmed's clawback type
+// guard. Used by the normal recruit path (showHeroRecruitButton, before the button shows) AND the four
+// free-recruit ABILITY paths that call recruitHeroConfirmed directly and bypass that gate (doomHeroRecruit,
+// recruitXMen, freeHeroGain, Spider-Woman's Arachno-recruit) — B19.
+function isLonerRecruitBlocked(hero) {
+  if (
+    !(
+      hero &&
+      hero.type === "Hero" &&
+      lonerAttackApplied > 0 &&
+      totalAttackPoints < lonerAttackApplied
+    )
+  ) {
+    return false;
+  }
+  onscreenConsole.log(
+    `You've already spent <span class="console-highlights">Loner</span><span class="bold-spans">'s</span> +${lonerAttackApplied}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> bonus this turn — recruiting a Hero would forfeit it, but it can no longer be reclaimed. You can't recruit a Hero this turn.`,
+  );
+  return true;
+}
+
 function showHeroRecruitButton(hqIndex, hero) {
   const container = document.querySelector(
     `#hq${hqIndex}-recruit-button-container`,
@@ -19063,24 +19093,9 @@ function showHeroRecruitButton(hqIndex, hero) {
     return;
   }
 
-  // Secret Wars Vol.1 — Loner (Old Man Logan): "If you don't recruit any Heroes this turn, +2 Attack."
-  // The +2 is granted provisionally and clawed back by recruitHeroConfirmed when a Hero is recruited.
-  // But once that +2 has been (partially) SPENT on Attack, the floor-at-0 clawback can no longer reclaim
-  // it — recruiting a Hero then would let the player keep BOTH the spent bonus and the recruit. Block the
-  // Hero recruit in exactly that unreclaimable case (bonus applied AND no longer fully present in the
-  // current Attack total). When it is still fully present (total >= applied), allow the recruit —
-  // recruitHeroConfirmed claws it back cleanly (this also covers "gained more Attack later": the clawback
-  // stays correct whenever total >= applied). lonerAttackApplied is the ACCUMULATED value (multiple Loners
-  // stack). Type-guarded to Hero only: Bystander rescues (Save Humanity) route through this same function
-  // and must NOT be blocked — mirrors recruitHeroConfirmed's clawback type guard.
-  if (
-    hero.type === "Hero" &&
-    lonerAttackApplied > 0 &&
-    totalAttackPoints < lonerAttackApplied
-  ) {
-    onscreenConsole.log(
-      `You've already spent <span class="console-highlights">Loner</span><span class="bold-spans">'s</span> +${lonerAttackApplied}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> bonus this turn — recruiting a Hero would forfeit it, but it can no longer be reclaimed. You can't recruit a Hero this turn.`,
-    );
+  // Secret Wars Vol.1 — Loner: block the Hero recruit when Loner's provisional +2 has been spent and can
+  // no longer be reclaimed by recruitHeroConfirmed's clawback (full rationale in isLonerRecruitBlocked).
+  if (isLonerRecruitBlocked(hero)) {
     return;
   }
 
@@ -19129,16 +19144,22 @@ function showHeroRecruitButton(hqIndex, hero) {
       await resolvePlagueWoundOnRecruit(hqIndex);
     }
 
-    recruitHeroConfirmed(hero, hqIndex - 1); // assuming this handles replacing the HQ slot etc.
-
     container.style.display = "none";
     button.style.display = "none";
     document.removeEventListener("click", handleClickOutside);
-
     healingPossible = false;
-    setTimeout(() => {
+
+    // B1 fix: hold the recruit re-entry lock (isRecruiting) for the FULL duration of the recruit, then
+    // clear it on completion. Previously recruitHeroConfirmed ran UN-awaited and the lock cleared on a
+    // blind 500ms timer — so a recruit with a slow async branch (bystander rescue, Wall-Crawl choice)
+    // left the lock open while still mid-flight, letting a second recruit interleave and corrupt HQ.
+    // Awaiting keeps recruits serialized (the lock's original intent); try/finally guarantees the lock
+    // always clears — a thrown recruit must never freeze all future recruiting.
+    try {
+      await recruitHeroConfirmed(hero, hqIndex - 1); // moves the card + refills the HQ slot
+    } finally {
       isRecruiting = false;
-    }, 500);
+    }
     return true;
   };
 }
@@ -19595,8 +19616,16 @@ async function recruitHeroConfirmed(hero, hqIndex) {
   // Keep reserve UI in sync (caller already adjusted the values)
   updateReserveAttackAndRecruit();
 
-  // Refill HQ slot
-  const newCard = refillHQSlot(hqIndex);
+  // Refill HQ slot.
+  // B1 fix: re-derive the slot from the card's LIVE position before removing it. A concurrent recruit
+  // whose slow async branch outran the re-entry lock can splice hq[] and shift every index, making the
+  // closure-bound hqIndex stale — the old blind removal then deleted a shifted neighbour and orphaned
+  // the recruited card in hq[] (duplicated: same card in hq AND discard, with a bystanding card vanishing).
+  // indexOf(hero) removes the ACTUAL recruited card. In normal (non-interleaved) play, and in What If?
+  // (fill-in-place refill never shifts indices), liveIndex === hqIndex, so this is a no-op there.
+  // Protects every caller — the main recruit path AND the free-recruit ability paths that bypass the lock.
+  const liveIndex = hq.indexOf(hero);
+  const newCard = refillHQSlot(liveIndex !== -1 ? liveIndex : hqIndex);
 
   if (newCard) {
     onscreenConsole.log(
