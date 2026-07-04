@@ -49,6 +49,9 @@ function loadDB() {
 
 // --- Normalizers --------------------------------------------------------------------------------
 const norm = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+// Match key: normalized + lowercased, so a card title casing variance ("Leap From Above" vs
+// "Leap from Above") matches instead of reading as a MISSING card. Display always uses norm().
+const k = (s) => norm(s).toLowerCase();
 
 // Inventory class terminology -> DB class strings. The big one: inventory "Ranged" is DB "Range".
 const CLASS_MAP = { Ranged: 'Range', Range: 'Range', Strength: 'Strength', Instinct: 'Instinct', Covert: 'Covert', Tech: 'Tech' };
@@ -74,21 +77,19 @@ function classifyCell(cell) {
   return n === 0 ? { kind: 'zero', val: 0 } : { kind: 'positive', val: n };
 }
 
-// Compare one icon-bearing field (attack/recruit). Hard MISMATCH only on RELIABLE signals:
-//   - inventory positive value but DB has no icon  -> card grants nothing it should (real bug)
-//   - inventory positive value, DB icon, wrong number -> value bug (this is the Supernova case)
-//   - inventory 0-ish but DB carries a NONZERO value -> value bug
-// Ambiguous icon-presence differences on zero-ish / "—" cells -> REVIEW (advisory, non-failing).
+// Compare one icon-bearing field (attack/recruit). The engine applies card.attack / card.recruit
+// DIRECTLY and never reads attackIcon / recruitIcon for value application (those flags are display-
+// only) — so the VALUE is what matters for correctness, and icon-presence is cosmetic. Thus:
+//   - inventory positive N   -> DB value must equal N        (Supernova case: inv 4 vs db 0 = bug)
+//   - inventory "—" / 0-ish  -> DB value must equal 0        (a nonzero DB value = card grants
+//                                points the card shouldn't, regardless of the icon flag)
+// The icon boolean itself is not gated (a value-correct card with a stray icon flag is a display
+// nit the engine ignores). This keeps the check on the field the engine actually uses.
 function checkIconField(who, field, cell, dbVal, dbIcon) {
   const { kind, val } = classifyCell(cell);
-  if (kind === 'positive') {
-    if (!dbIcon) report('MISMATCH', `${who}: ${field} inventory shows ${val} (icon) but DB ${field}Icon=false — card grants no ${field}`);
-    else if (Number(dbVal) !== val) report('MISMATCH', `${who}: ${field} inv=${val} db=${dbVal}`);
-  } else if (kind === 'zero') {
-    if (dbIcon && Number(dbVal) !== 0) report('MISMATCH', `${who}: ${field} inv=0 db=${dbVal}`);
-  } else { // 'none' — inventory shows no icon
-    if (dbIcon) report('REVIEW', `${who}: ${field} inventory shows "—" (no icon) but DB ${field}Icon=true (val ${dbVal}) — verify against the card`);
-  }
+  const expected = kind === 'positive' ? val : 0;
+  if (Number(dbVal) !== expected)
+    report('MISMATCH', `${who}: ${field} inv=${kind === 'none' ? '—(0)' : expected} db=${dbVal}`);
 }
 
 // Fight Value cell ("6", "10*", "7+", "11+") -> base number the DB stores in `attack`. * and + are
@@ -219,19 +220,18 @@ function checkHeroes(inv, db) {
   for (const h of db.heroes) {
     for (const c of (h.cards || [])) {
       const title = heroCardTitle(h.name, c);
-      dbIndex.set(norm(h.name) + ' :: ' + norm(title), c);
-      if (!coveredHeroTitles.has(norm(h.name))) coveredHeroTitles.set(norm(h.name), new Set());
-      coveredHeroTitles.get(norm(h.name)).add(norm(title));
+      dbIndex.set(k(h.name) + ' :: ' + k(title), c);
+      if (!coveredHeroTitles.has(k(h.name))) coveredHeroTitles.set(k(h.name), new Set());
+      coveredHeroTitles.get(k(h.name)).add(k(title));
     }
   }
   const invTitles = new Map(); // heroName -> Set (to detect DB extras like transform cards)
   for (const r of rows) {
     const hero = norm(r['hero']);
     const title = norm(r['card title']);
-    if (!invTitles.has(hero)) invTitles.set(hero, new Set());
-    invTitles.get(hero).add(title);
-    const key = hero + ' :: ' + title;
-    const card = dbIndex.get(key);
+    if (!invTitles.has(k(hero))) invTitles.set(k(hero), new Set());
+    invTitles.get(k(hero)).add(k(title));
+    const card = dbIndex.get(k(hero) + ' :: ' + k(title));
     if (!card) { report('MISSING', `Hero card not found in DB: "${hero} - ${title}"`); continue; }
     // cost
     const invCost = parseNum(r['cost']);
@@ -262,17 +262,20 @@ function checkVillainLike(inv, dbGroups, requiredCols, label, sectionName) {
   const { rows, status } = locateRows(inv, sectionName, requiredCols, true);
   recordStatus(label === 'Henchman' ? 'Henchmen' : label + 's', status, rows.length);
   if (!rows.length) return;
-  const dbIndex = new Map(); // card name -> card
+  const dbIndex = new Map(); // match name -> card
   // Villains nest cards under group.cards[]; henchmen are flat (each entry IS the card). Handle both.
-  for (const g of dbGroups) for (const c of (Array.isArray(g.cards) ? g.cards : [g])) dbIndex.set(norm(c.name), c);
+  for (const g of dbGroups) for (const c of (Array.isArray(g.cards) ? g.cards : [g])) dbIndex.set(k(c.name), c);
   for (const r of rows) {
-    const name = norm(r['card name']);
-    if (!name) continue;
+    const cardName = norm(r['card name']);
+    const group = norm(r['group']);
+    if (!cardName && !group) continue;
     // Location cards (e.g. Revelations "(Location)") are catalogued in the villain table but are a
     // distinct card type stored outside the villains array — not stat-linted here.
-    if (/\(location\)/i.test(name)) { report('info', `${label} row is a Location card (distinct type, not stat-linted): "${name}"`); continue; }
-    const card = dbIndex.get(name);
-    if (!card) { report('MISSING', `${label} not found in DB: "${name}" (group ${norm(r['group'])})`); continue; }
+    if (/\(location\)/i.test(cardName)) { report('info', `${label} row is a Location card (distinct type, not stat-linted): "${cardName}"`); continue; }
+    // Match by Card Name first (villains + multi-card henchmen like Mandarin's Rings), then fall back
+    // to Group (standard single-card henchmen named by their group in the DB, e.g. "Doombot Legion").
+    const card = dbIndex.get(k(cardName)) || dbIndex.get(k(group));
+    if (!card) { report('MISSING', `${label} not found in DB: "${cardName || group}" (group ${group})`); continue; }
     const fv = parseNum(r['fight value']);
     if (fv !== null && Number(card.attack) !== fv)
       report('MISMATCH', `${label} ${name}: fight/attack inv=${fv} db=${card.attack}`);
@@ -287,11 +290,11 @@ function checkMasterminds(inv, db) {
   recordStatus('Masterminds', status, rows.length);
   if (!rows.length) return;
   const dbIndex = new Map();
-  for (const m of db.masterminds) dbIndex.set(norm(m.name), m);
+  for (const m of db.masterminds) dbIndex.set(k(m.name), m);
   for (const r of rows) {
     const name = norm(r['name']);
     if (!name) continue;
-    const m = dbIndex.get(name);
+    const m = dbIndex.get(k(name));
     if (!m) { report('MISSING', `Mastermind not found in DB: "${name}"`); continue; }
     const fv = parseNum(r['fight value']);
     if (fv !== null && Number(m.attack) !== fv)
@@ -307,11 +310,11 @@ function checkBystanders(inv, db) {
   recordStatus('Bystanders', status, rows.length);
   if (!rows.length) return;
   const dbIndex = new Map();
-  for (const b of db.bystanders) dbIndex.set(norm(b.name), b);
+  for (const b of db.bystanders) dbIndex.set(k(b.name), b);
   for (const r of rows) {
     const name = norm(r['card name']);
-    if (!name || !dbIndex.has(name)) continue; // bystanders table also matches sidekicks-ish; only check known ones
-    const b = dbIndex.get(name);
+    if (!name || !dbIndex.has(k(name))) continue; // bystanders table also matches sidekicks-ish; only check known ones
+    const b = dbIndex.get(k(name));
     const vp = parseNum(r['vp']);
     if (vp !== null && b.victoryPoints !== undefined && Number(b.victoryPoints) !== vp)
       report('MISMATCH', `Bystander ${name}: VP inv=${vp} db=${b.victoryPoints}`);
