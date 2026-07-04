@@ -215,6 +215,10 @@ Setup, per-round flow, HQ rotation, "other player" handling, win/Ultimate-Victor
 **References:**
 - `docs/card-inventory/final/` — per-expansion finalized card data and effect text; source of truth for audits.
 
+**Dev tools (`tools/`, plain Node — bare `node` is NOT on the Bash PATH; use `"C:\Program Files\nodejs\node.exe"`):**
+- `tools/sync-sw-cache.js` — bumps `sw.js` `CACHE_NAME` + rebuilds `FILES_TO_CACHE` to mirror every file under the game root. Run by `/deploy` Step 2 (no manual cache-bump). `--check` = dry-run.
+- `tools/lint-card-data.js <slug>` — DB↔inventory stat content-gate: compares `cardDatabase.js` against `docs/card-inventory/final/<slug>.md` (cost/class/team/attack/recruit/fight/VP). Exit 1 on any mismatch / missing card / unchecked type. **Run it green as the Phase-1 content gate in `/new-expansion`** before trusting card-data scaffolding. `--all` lints every inventory. Value-first (icons are display-only — see `engine-gotchas.md`).
+
 **Other:**
 - Git worktrees: `.worktrees/` is gitignored; feature branches at `.worktrees/<branch-name>`
 - **Branch strategy for expansions:** One long-lived branch per expansion (e.g., `revelations`), accumulating all work. Merge to master only when the expansion is fully complete. Do NOT create separate branches per step or phase.
