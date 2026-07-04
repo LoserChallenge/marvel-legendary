@@ -55,7 +55,11 @@ The **DB↔inventory linter is the keystone** — it converts the green zone fro
 | 2 | DB↔inventory linter (the keystone content gate) | rung-1 gate, autonomous-build | proposed |
 | 3 | Clear base-bug backlog (B1/B6/B9/B11/B8-half/B19/B20/B21) | cleanup, supervised cc-goal | proposed |
 | 4 | Read-orchestration as coordinator default (subagent/targeted-read over full-file) | token habit (★ best-ratio lever) | proposed |
-| 5 | Model/effort tiering (mechanical→Sonnet/Haiku+low; judgment/verify→Opus/high) | subscription-burn lever | in cc-coordinate rec |
+| 4b | Cross-session relay-intel: coordinator relays receipts-form pointers (file:line + pattern + gotcha) so the worker scoped-reads its target, not the whole file | token habit — the cross-session duplication fix | proposed |
+| 4c | Tool-result scoping (`git status --short`, `grep head_limit`, `--stat` diffs) + tighter cold-subagent verify prompts (cheaper per pass, never fewer) | token free-wins (no efficacy cost) | proposed |
+| 5 | Model/effort tiering (mechanical→Sonnet/Haiku+low; judgment/verify→Opus/high) | subscription-burn lever (stacks with 4–4c) | in cc-coordinate rec |
+
+**Off the table (per Paul's constraint):** reducing the *number* of independent verifications, or making the worker inherit the coordinator's context. Those buy tokens by spending the exact independence that produced SWV1's near-zero defect rate.
 | 6 | First `/goal` autonomy trial: green-zone Phase-1 scaffolding on a fail-closed condition | rung-2 trial | gated on #2 |
 | 7 | Test-fix loop (`/loop` + `/goal`) for Phase-3 assertion grind | rung-2 trial | gated on gates |
 
