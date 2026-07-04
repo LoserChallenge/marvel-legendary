@@ -13,8 +13,8 @@ The Changes 1–3 tooling is built (see Recently completed). The remaining open 
 
 ### Build-efficiency & automation initiative (2026-07-03)
 Make each build faster/leaner/cheaper without cutting verification; progressively shift green-zone work to autonomous `/goal` execution. **Full tracker + intent + autonomy ladder: `docs/efficiency-initiative.md`.**
-- **Do now (autonomous):** SW-cache auto-bump tool (fold into `/deploy`) + DB↔inventory linter (the keystone content-gate; validate on shipped expansions).
-- **Do now (supervised cc-goal):** clear the base-engine bug backlog (see Deferred) on the base-code branch (unpinned) — game-test gate per fix.
+- ✅ **Done 2026-07-03 (autonomous):** SW-cache auto-bump tool (`tools/sync-sw-cache.js`, folded into `/deploy`) + DB↔inventory linter (`tools/lint-card-data.js`, the keystone content-gate). Validated on all 7 built expansions (0 false positives); linter caught B22. Both cold-reviewed. Committed local (not pushed). See Recently completed.
+- **Next (supervised cc-goal) — handed to a fresh session:** clear the base-engine bug backlog (see Deferred + `known-issues.md`) on a base-code branch (unpinned) — game-test + review gate per fix. Handoff: `C:\Users\Paul\AppData\Local\Temp\handoff-2026-07-03-step3-basebugs.md`. Includes B22 (Supernova Spear recruit 0→4) and the B8 rules fork for Paul.
 - **Coordinator defaults to adopt:** read-orchestration (subagent/targeted-read over full-file) + model/effort tiering.
 - **Into the HoA build:** gates live; first `/goal` autonomy trial on Phase-1 scaffolding (fail-closed condition); test-fix loop for Phase-3 assertions; retro vs SWV1 at build-end.
 
@@ -41,6 +41,8 @@ Make each build faster/leaner/cheaper without cutting verification; progressivel
 ---
 
 ## ✅ Recently completed (with context worth keeping)
+
+- **2026-07-03 — Efficiency tools #1 + #2 built (the two gate tools).** Under `cc-goal`: (1) `tools/sync-sw-cache.js` — auto-bumps `CACHE_NAME` + rebuilds `FILES_TO_CACHE` to mirror the game root, folded into `/deploy` Step 2; first run fixed a decayed cache list (+204 files incl. 91 shipped SWV1 art files). (2) `tools/lint-card-data.js` — the keystone DB↔inventory stat content-gate (cost/class/team/attack/recruit/fight/VP); inventory-driven, name-matched, survives count-shape traps; loud coverage so no type is silently skipped. Validated on all 7 built expansions = 0 false positives; caught **B22** (Proxima "Supernova Spear" recruit 0→4, confirmed vs BGG reference — logged in `known-issues.md`). Both cold-reviewed by independent subagents (each caught a real defect since fixed). 4 commits local on master (`e59a62d`→`96e9752`), **not pushed** (Paul's `/deploy` call). Step 3 (base-bug backlog) handed to a fresh session.
 
 - **2026-07-03 — Build-efficiency pass + initiative opened.** Pushed the game-test harness/automation work to origin. Token-savings: removed unused `/paul:*` + `/seed:*` command shelves (relocated to `D:\Claude Code\cc-helper\parked-slash-commands\` with restore README), trimmed CLAUDE.md (Golden Solo summary → `golden-solo-history.md`; verbose Automations prose + Session-Roles Why-tails tightened), project-scoped plugin trim in `.claude/settings.json`. Created **`docs/efficiency-initiative.md`** (living tracker: intent, the autonomy ladder, `/goal`-vs-`cc-goal` distinction, token levers, per-build retro hooks). Set the next-build plan (see 🔜 Next up) and selected Heroes of Asgard. Handoff doc tidies committed (B11 latent-only, game-test A4 caveat, automation-readiness A2/B1 superseded). All pushed to origin. *(Note: SWV1 build itself — merged 2026-06-28 — is not logged here; its record lives in `secret-wars-vol1-retrospective.md` + `-postmortem.md`.)*
 
