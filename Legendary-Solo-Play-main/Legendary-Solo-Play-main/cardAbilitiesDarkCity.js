@@ -16802,6 +16802,15 @@ async function instantDefeatAttack(cityIndex) {
 }
 
 async function professorXMindControlGainVillain(villainCard) {
+  // B9: villain->hero converters already turn the defeated villain INTO a Hero via their own fight
+  // effect (dispatched in collectDefeatOperations, BEFORE this post-defeat Mind Control gain runs).
+  // Without this guard, Mind Control gains it a SECOND time — one villain yields two Heroes. The
+  // `skrulled` flag covers Skrull Shapeshifters, Corrupt Sidekicks, Master-of-Tyrants tyrants AND
+  // Scarlet Witch (House of M) — all seed skrulled:true; `gainAsHero` covers Secret Wars converters.
+  // All six call sites pass the ORIGINAL villainCard, which retains these flags. Skip for converters.
+  if (villainCard && (villainCard.skrulled || villainCard.gainAsHero)) {
+    return false;
+  }
   return new Promise((resolve) => {
     setTimeout(() => {
       const { confirmButton, denyButton } = showHeroAbilityMayPopup(
