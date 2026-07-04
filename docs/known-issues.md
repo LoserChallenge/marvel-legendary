@@ -24,6 +24,7 @@ One starting checklist for the next inter-expansion base-code fix pass. Full dia
 - **B19 (residual)** — Old Man Logan "Loner" +2 retained across the **4 free-recruit ability-path** instances (floor-clawback exploit). The normal HQ-recruit path was FIXED on the SW branch (`682dd8b`); these 4 remain. CANDIDATE. → §2.
 - **B10 / audit-M4** — `cityPermBuff[-1]` NaN base edge; guarded *locally* in SWV1 Fight the Future, but the deeper one-line base fix is a base-branch candidate. → §2.
 - **Pan-Dimensional Plague central async fix** — the recruit-instant Wound choice fires only via `showHeroRecruitButton`; ability-driven free-recruit-from-HQ paths skip the optional choice. SHIPPED as-is (fix-effort gate); the central async fix is logged to this backlog. Same free-recruit-ability theme as B19. → progress doc `secret-wars-vol1.md`.
+- **B22** — Proxima Midnight "Supernova Spear" (SWV1 Rare) has `recruit: 0` in `cardDatabase.js` but should be `4`. CONFIRMED (data bug). → §2.
 
 **Pre-existing, also in this batch:**
 - **B1** — Golden Solo recruit-flow race duplicates a unique card (HQ + discard). CONFIRMED, root cause diagnosed, **highest priority**. → §2.
@@ -186,6 +187,13 @@ When all 5 HQ slots are heroes, the post-loop refill reads the shortened `hq.len
 - **Scope — base/core:** `shieldDeck`/`shieldOfficers` are core engine, initialized every game regardless of which expansion is loaded. Affects any card routing an officer gain through `drawSHIELDOfficer`/`moveShieldOfficerToHand` (base + Revelations HYDRA + any future S.H.I.E.L.D. expansion). Pre-existing; surfaced by the 2026-07-03 reuse survey while scoping the (unbuilt) S.H.I.E.L.D. expansion.
 - **Fix direction (base branch, NOT applied):** route ALL officer gains through the single canonical live stack `shieldDeck` (make `drawSHIELDOfficer`/`moveShieldOfficerToHand` pop `shieldDeck`, not `shieldOfficers`); confirm `shieldDeck` is rebuilt from `shieldOfficers` at game init and the template is never popped. Verify no caller relies on the template-pop behaviour.
 - **Status:** CANDIDATE (code-traced; flagged independently by 2 reuse-survey scouts, not reproduced live). Line numbers scout-cited — verify at fix time. Deferred to the dedicated base-code branch per the discipline above.
+
+#### B22 — Proxima Midnight "Supernova Spear" recruit value wrong in DB (found via the DB↔inventory linter, 2026-07-03)
+- **Symptom (data):** the SWV1 Rare "Supernova Spear" has `recruit: 0` / `recruitIcon: true` in `cardDatabase.js`, but its printed base is **4 Recruit** (and 4 Attack). `attack: 4` is correct; only `recruit` is wrong.
+- **Authority:** confirmed against BGG reference (`expansions/secret-wars-vol1/secret-wars-vol1-reference.md`: "4+ Recruit / 4+ Attack" + [COVERT]: +4 Recruit and +4 Attack) AND the finalized inventory (`docs/card-inventory/final/secret-wars-vol1.md` row: Attack 4+, Recruit 4+). DB disagrees with both → per CLAUDE.md reference-first rule, the DB is wrong.
+- **Impact:** the card grants 4 less base Recruit than it should — a real (player-unfavourable) gameplay error in shipped/merged SWV1 content.
+- **Fix direction (base branch):** set `recruit: 4` on the `Proxima Midnight - Supernova Spear` card def. One-liner. Verify no ability code compensates for the 0 (grep the card's ability fns); game-test that playing it yields +4 Recruit base.
+- **Status:** CONFIRMED (linter + BGG reference + inventory agree). Not patched — deferred to the base-code branch. First bug surfaced by the new `tools/lint-card-data.js` content gate.
 
 ### CLEARED (investigated, not a bug)
 
