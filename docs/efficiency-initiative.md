@@ -54,14 +54,14 @@ The **DB↔inventory linter is the keystone** — it converts the green zone fro
 | 1 | SW-cache auto-bump tool (fold into `/deploy`) | tool, autonomous-build | ✅ BUILT 2026-07-03 (`tools/sync-sw-cache.js`, commit `e59a62d`) — cold-reviewed; first run fixed a decayed cache list (+204 files incl. 91 SWV1 art) |
 | 2 | DB↔inventory linter (the keystone content gate) | rung-1 gate, autonomous-build | ✅ BUILT 2026-07-03 (`tools/lint-card-data.js`, commit `205eb5f`) — validated on all 7 built expansions (0 false positives); caught 1 real DB bug (B22 Supernova Spear); cold-reviewed (silent-skip + team fixes applied) |
 | 3 | Clear base-bug backlog (B1/B6/B8/B9/B19/B20/B21/B22/B23) | cleanup, supervised cc-goal | ✅ DONE + MERGED to master 2026-07-04 (`1f08065`) — Fixed: B6, B9, B22 (07-03); B8-residual, B21, B19, B1 (07-04). CLEARED (not bugs): B20, B23. Each fix independently cold-eyes-reviewed CLEAN; B1 also had a deterministic Playwright repro. Still-open base bugs (B10/B11/B13–B15) roll to the next pass. |
-| 4 | Read-orchestration as coordinator default (subagent/targeted-read over full-file) | token habit (★ best-ratio lever) | proposed |
-| 4b | Cross-session relay-intel: coordinator relays receipts-form pointers (file:line + pattern + gotcha) so the worker scoped-reads its target, not the whole file | token habit — the cross-session duplication fix | proposed |
-| 4c | Tool-result scoping (`git status --short`, `grep head_limit`, `--stat` diffs) + tighter cold-subagent verify prompts (cheaper per pass, never fewer) | token free-wins (no efficacy cost) | proposed |
-| 5 | Model/effort tiering (mechanical→Sonnet/Haiku+low; judgment/verify→Opus/high) | subscription-burn lever (stacks with 4–4c) | in cc-coordinate rec |
+| 4 | Read-orchestration as coordinator default (subagent/targeted-read over full-file) | token habit (★ best-ratio lever) | ACTIVE — standing lever (see Per-build protocol) |
+| 4b | Cross-session relay-intel: coordinator relays receipts-form pointers (file:line + pattern + gotcha) so the worker scoped-reads its target, not the whole file | token habit — the cross-session duplication fix | ACTIVE — standing lever (Per-build protocol) |
+| 4c | Tool-result scoping (`git status --short`, `grep head_limit`, `--stat` diffs) + tighter cold-subagent verify prompts (cheaper per pass, never fewer) | token free-wins (no efficacy cost) | ACTIVE — standing lever (Per-build protocol) |
+| 5 | Model/effort tiering (mechanical→Sonnet/Haiku+low; judgment/verify→Opus/high) | subscription-burn lever (stacks with 4–4c) | ACTIVE — standing lever (Per-build protocol) |
+| 6 | First `/goal` autonomy trial: green-zone Phase-1 scaffolding on a fail-closed condition | rung-2 trial | DEFERRED to the build AFTER HoA (decided 2026-07-04). HoA runs Phase 1 under supervised cc-goal and shadow-measures whether the linter gate ALONE would have caught what the human/independent review caught (Build ledger). The `/goal` trial fires next build only if HoA's ledger shows no gate misses. |
+| 7 | Test-fix loop (`/loop` + `/goal`) for Phase-3 assertion grind | rung-2 trial | deferred; after #6 proves out |
 
 **Off the table (per Paul's constraint):** reducing the *number* of independent verifications, or making the worker inherit the coordinator's context. Those buy tokens by spending the exact independence that produced SWV1's near-zero defect rate.
-| 6 | First `/goal` autonomy trial: green-zone Phase-1 scaffolding on a fail-closed condition | rung-2 trial | gated on #2 |
-| 7 | Test-fix loop (`/loop` + `/goal`) for Phase-3 assertion grind | rung-2 trial | gated on gates |
 
 ## Idea log (append as they surface — date + mark handled in place)
 
@@ -77,3 +77,47 @@ The **DB↔inventory linter is the keystone** — it converts the green zone fro
 - Behavioral bugs caught at the Phase-4d gate vs leaked to playtest (the SWV1 open efficacy question).
 - Did read-orchestration + model tiering cut cost without adding defects?
 - **Verdict:** ready to widen `/goal` autonomy to more of the green zone next build?
+
+---
+
+## Per-build protocol (THE INGRAINING — run every expansion build)
+
+Purpose: turn this tracker from a passive doc into a step the build actually executes, so lever-application and autonomy-readiness get **measured, not guessed**. **Structural trigger:** the `/new-expansion` skill's "Efficiency protocol" section gates every phase-boundary checkpoint on filling this doc's Build ledger — a phase isn't ✅ until its ledger row is filled. (The CLAUDE.md coordinator-habit bullet is a backup pointer, not the primary trigger — a prose habit alone would be a memory dependency.)
+
+**At build START (before Phase 0):**
+1. Open a Build ledger entry below (copy the template block; stamp expansion + date + driver).
+2. From the Active-improvements table, confirm which levers apply this build (levers 4–5 are standing/always-on; note any Skip + why).
+
+**At EACH phase boundary (0 → 1 → 2 → 2.5 → 3 → 4):**
+1. **APPLY** the levers that fit the phase entered:
+   - **Phase 1 (green/mechanical):** DB↔inventory linter (content gate) · read-orchestration + relay-intel (relay file:line, worker scoped-reads — never full-file re-scan) · tool-result scoping · model-tiering (mechanical subagents → cheaper tier).
+   - **Phase 2.5 / 3 (red/judgment):** reserve top-tier model + high effort · spec-first · reuse-first per the mechanics-doc verdict.
+   - **Phase 4 (gates):** audit pipeline + dual-mode game-test + independent cold-read review.
+2. **MEASURE** — record in the ledger for that phase:
+   - **Gate-vs-human (the autonomy signal, the number that matters):** what the AUTOMATED gate flagged, and — separately — what the INDEPENDENT/human review caught that the automated gate **missed**.
+   - **Independent review run? (Y/N) — the false-empty guard.** An empty "missed" cell counts as autonomy-evidence *only when review = Y*. Empty-with-no-review is **INCONCLUSIVE, not a pass** — otherwise a skipped review reads identically to a perfect gate and fakes a green light. Autonomy-ready for a phase = "missed" empty across builds **AND** review = Y each of those builds. A non-empty "missed" cell ⇒ the gate has a hole; fix the gate before granting autonomy there.
+   - **Effort note:** rough round-trips / notable token sinks (relative signal only — no hard instrumentation).
+   - **Levers applied** this phase.
+
+**At build END (merge):**
+1. Roll the ledger into a one-line verdict per phase: did the automated gate ALONE suffice (would a hands-off run have been safe)?
+2. Update Retro hooks + the autonomy-ladder rung call for the NEXT build.
+
+**Status of this protocol:** provisional — a new *process* mechanism, which is a known overconfidence zone. Its own success test: after this build, does the ledger yield a **sharper** autonomy call than a guess would? If the data comes out vague or unusable, the protocol failed its job — revise it, don't trust it.
+
+---
+
+## Build ledger (one entry per expansion build — longitudinal autonomy-readiness data)
+
+The autonomy signal is the "review MISSED" column read together with "Review run? (Y/N)": persistently empty-missed **with review = Y** ⇒ safe to automate that phase. Fill rows in full only for the phase that is this build's live autonomy question; for the rest, log the gate result only if notable (no obligation to fill prose a decision won't consume — least machinery).
+
+### Heroes of Asgard — started 2026-07-04 · driver: cc-goal (supervised) · /goal trial: NO (deferred to next build)
+Standing levers this build: linter (Ph1 gate) · read-orchestration + relay-intel · tool-result scoping · model-tiering · spec-first · reuse-first · audit + dual-mode game-test.
+**This build's live autonomy question — Phase 1 only:** *would Phase-1 (card data → DB) have been safe to run hands-off next build?* — i.e., did the linter alone catch every card-data error the independent review caught? (Phases 2–4 log gate results only if notable; their autonomy calls aren't on the table yet.)
+
+| Phase | Levers applied | Gate flagged | Review run? (Y/N) | Review caught that gate MISSED | Effort note |
+|---|---|---|---|---|---|
+| 1 card data → DB **(the measured row)** | | linter result | | empty **+ review=Y** ⇒ autonomy-ready | |
+| 0 / 2 / 2.5 / 3 / 4 | log only if notable | | | | |
+
+**End-of-build verdict:** _(fill at merge)_ — was Phase-1's linter gate sufficient (empty-missed with review=Y)? Widen `/goal` to Phase 1 next build? Y/N + why.

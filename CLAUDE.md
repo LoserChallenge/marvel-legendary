@@ -134,7 +134,7 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 
 ## Reference Files
 
-- `rules/` — PDF rulesheets for all expansions. Read tool PDF support works when VS Code is launched with the full user PATH (so `pdftoppm` is accessible). It's intermittent: try `Read` first; if it fails with a pdftoppm error, **stop and tell the user** to fully close and reopen VS Code (not just reload window), then retry. Do not use pdftotext or any other workaround.
+- `rules/` — PDF rulesheets for all expansions. `pdftoppm` is installed at `/c/Users/Paul/bin/pdftoppm`, but the Read tool's PDF renderer usually lacks that dir on its PATH and fails with `pdftoppm is not installed`. Reliable method: render the needed pages via Bash to the scratchpad, then `Read` the PNG(s): `/c/Users/Paul/bin/pdftoppm -png -r 150 -f <first> -l <last> "<pdf>" "<scratchpad>/out"`. Rules sheets are short (often 1–2 pages). Do not use pdftotext.
 - `docs/card-inventory/final/` — finalized card inventory files; source of truth for audits.
 - `docs/card-inventory/card-reading-rules.md` — card image reading rules, DB authority, inventory template notes, expansion-specific card types
 - `docs/expansion-asset-pipeline.md` — staging structure, naming conventions, import mapping, inventory process, visual reference setup
@@ -145,7 +145,7 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `docs/mode-divergence-checklist.md` — authoritative gate for dual-mode testing: the mechanics that behave differently in Golden vs What If? Solo. Consulted in `/analyze-expansion` (flag mechanics) and `/new-expansion` Phase 4c (force dual-mode `/game-test`)
 - `docs/priorities.md` — live task tracker (in-flight / deferred / ongoing / completed); consult on direction
 - `docs/suggestion-box.md` — persistent cross-expansion log of process-improvement ideas (faster/more efficient/better); **log improvement opportunities here whenever they surface** (any session, any phase), mark in place when handled. Not a per-expansion initiative.
-- `docs/efficiency-initiative.md` — living tracker for the build-efficiency + automation initiative (token-cost reduction + autonomy via `/goal`/loop without sacrificing verification); intent, the autonomy ladder, active improvements, idea log, per-build retro hooks.
+- `docs/efficiency-initiative.md` — living tracker for the build-efficiency + automation initiative (token-cost reduction + autonomy via `/goal`/loop without sacrificing verification); intent, the autonomy ladder, active improvements, idea log, retro hooks, **the Per-build protocol (run at every `/new-expansion` phase boundary) + the Build ledger (per-build gate-vs-human autonomy data)**.
 - `docs/known-issues.md` — single tracker for issues **outside the active expansion pipeline** (base-game code bugs, design/UX, rules decisions); raw bug drops land in `bugs/`, coordinator triages them here. Fixes batched on a base-code branch between expansions (pinned only while an expansion build is active).
 - `docs/golden-solo-history.md` — Golden Solo implementation history, architectural rules, testing checklist
 - `docs/engine-gotchas.md` — cross-expansion code traps & reusable patterns (twin-function parity, attack/defeat pipelines, Location plumbing, scheme-transform reads, state lifecycle). **Consult before expansion code work and during `/expansion-audit`.** On-demand (not auto-loaded); CLAUDE.md keeps only the highest-frequency rules inline.
@@ -267,6 +267,7 @@ During an expansion build the same doc can exist in both the master folder and t
 | `docs/expansion-mechanics/<exp>.md` | **Master until the branch is cut, then Branch** (see note) | `/analyze-expansion` on master → Worker on branch |
 | `docs/rules-notes/<exp>.md` | Branch | Worker — coordinator relays the rules-oracle finding (rule 10) |
 | `CLAUDE.md` | Worktree live; master canonical for "Session Roles" | per rule 5 |
+| `docs/efficiency-initiative.md` (incl. the Build ledger) | **Master** | Coordinator only — the worker reports each phase's efficiency data (levers applied, gate-vs-human result, independent-review Y/N) in its checkpoint reply; the coordinator records it to the master ledger. Workers never edit the branch copy. |
 
 Branch-canonical docs flow to master at merge. Master-canonical docs: the branch copy is intentionally stale — never edit it on the branch, so the merge stays conflict-free and master's content wins.
 
@@ -275,6 +276,7 @@ Branch-canonical docs flow to master at merge. Master-canonical docs: the branch
 Coordinator habits:
 - Verify a shared doc by reading the **branch** version (`git show <branch>:<path>`); the master working copy can lag the branch.
 - A coordinator-dispatched subagent that *writes* targets the canonical side. For branch artifacts, relay and let the worker write (rules-oracle is the exception — it writes master scratch, then relay → worker per rule 10).
+- **Run the efficiency protocol every build.** At each `/new-expansion` phase boundary, execute the Per-build protocol in `docs/efficiency-initiative.md`: apply the phase's levers AND record the gate-vs-human autonomy signal in that doc's Build ledger. Not optional — it is how autonomy-readiness gets measured instead of guessed. Skipping it silently discards the evidence the next `/goal` decision depends on.
 
 ## Scheme Hero Requirements Infrastructure
 

@@ -17,6 +17,15 @@ The user wants to be involved in decisions about **gameplay** but not the code i
 
 ---
 
+## Efficiency protocol (standing — gates every phase checkpoint)
+
+This build participates in the efficiency & automation initiative. `docs/efficiency-initiative.md` holds the **Per-build protocol** + **Build ledger**; this section is its structural trigger inside the build ritual (the CLAUDE.md habit-bullet is a backup, not the primary trigger).
+
+- **Phase 0 (build start):** the coordinator opens this build's Build ledger entry in `docs/efficiency-initiative.md` (master-canonical — see the CLAUDE.md shared-doc table; the worker reports data, the coordinator records it).
+- **Each phase-boundary checkpoint below ("Update progress file: Phase X ✅") is NOT complete until its efficiency data is reported:** (a) the levers applied this phase; (b) the gate-vs-human autonomy signal — what the automated gate flagged, and *separately* what the independent/human review caught that the gate **MISSED**; and (c) **whether an independent review was actually run this phase (Y/N)**. The worker reports these in the checkpoint; the coordinator records them to the master ledger. An empty "missed" cell counts as autonomy-evidence only when review = **Y** — empty-with-no-review is *inconclusive*, not a green light. A checkpoint shown as ✅ without this data is incomplete.
+
+---
+
 ## Phase 0: Pre-flight Check
 
 Before any work, verify ALL prerequisites exist:
