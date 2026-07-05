@@ -2,7 +2,7 @@
 
 The single tracker for issues **outside the active expansion pipeline**: base-game code bugs, design/UX items, and rules decisions. (Bugs in an expansion currently being built go through `/expansion-audit`, not here.)
 
-**Fix discipline:** fixes are batched on a **dedicated base-code branch, between expansions** — NOT on master or an active expansion branch. **UNPINNED and IN PROGRESS** as of 2026-07-03: Secret Wars Vol.1 is merged, no expansion build is active, so this batch is being worked now on the `base-code-fixes` branch. Confirmed items also feed the `docs/priorities.md` base-engine backlog.
+**Fix discipline:** fixes are batched on a **dedicated base-code branch, between expansions** — NOT on master or an active expansion branch. **MERGED to master 2026-07-04** (`1f08065`): the `base-code-fixes` batch (B1/B6/B8/B9/B19/B21/B22 fixed; B20/B23 cleared) is merged; no expansion build is active. Remaining CANDIDATE/deferred base bugs roll to the next inter-expansion pass. Confirmed items also feed the `docs/priorities.md` base-engine backlog.
 
 **Intake flow:** raw screen grabs + notes land in the `bugs/` folder (e.g. `bugs/bugs-MMDDYY.md` + `bugs/images/`). The coordinator triages each drop into this tracker (logs it, points to the image, light diagnosis) so nothing is lost. Deep diagnosis + fix happen on the base-code branch.
 
@@ -12,9 +12,9 @@ Base-bug discovery started 2026-06-22. Original screenshot source: Paul's iPad c
 
 ---
 
-## Next base-code-branch batch — consolidated roll-up (assembled 2026-06-29, post-SWV1)
+## Base-code batch — ✅ MERGED to master 2026-07-04 (assembled 2026-06-29 post-SWV1)
 
-One starting checklist for the next inter-expansion base-code fix pass. Full diagnosis + fix-direction live in each item's §2/§3 entry below — this is just the index so the scattered deferred items are in one place. **This batch is now UNPINNED and being worked on the `base-code-fixes` branch (started 2026-07-03).**
+One starting checklist for the next inter-expansion base-code fix pass. Full diagnosis + fix-direction live in each item's §2/§3 entry below — this is just the index so the scattered deferred items are in one place. **This batch MERGED to master 2026-07-04** (`1f08065`). Items below marked FIXED/CLEARED are done; the remaining CANDIDATE/deferred items (B2/B3/B4/B5/B10/B11/B13/B14/B15) roll to the next inter-expansion pass.
 
 **SWV1-surfaced base bugs (deferred to this branch — the new additions):**
 - **B6** — `recruitXMen()` over-credits Recruit by the hero's cost (free *and* refunds). ✅ **FIXED** (`15f25e2`) — also fixed the identical over-credit in `doomHeroRecruit`. → §2.
@@ -44,7 +44,7 @@ _(Raw `bugs/` drops awaiting triage land here first. Currently empty — the 202
 
 ## 2. Base-game code bugs
 
-Pre-existing bugs in the **base game** (everything but Revelations — Core Set, Dark City, Fantastic Four, Guardians of the Galaxy, Paint the Town Red). **Fixes now being applied on the `base-code-fixes` branch** (unpinned 2026-07-03, per the discipline above).
+Pre-existing bugs in the **base game** (everything but Revelations — Core Set, Dark City, Fantastic Four, Guardians of the Galaxy, Paint the Town Red). **The base-code-fixes batch merged to master 2026-07-04** (per the discipline above); items still marked CANDIDATE below await the next inter-expansion pass.
 
 ### CONFIRMED
 
@@ -59,7 +59,7 @@ Pre-existing bugs in the **base game** (everything but Revelations — Core Set,
 - **Open caveat (root cause NOT locked):** the recruit-race cleanly explains a *pairwise* duplication (HQ + discard = 2). The observed **3 instances** (1 HQ + 2 discard) need either the race firing twice or a compounding interaction not yet traced. The user's "Nega-Bomb scheme involved" recollection is *consistent* with the race (Nega-Bomb is bystander-heavy → the `await rescueBystanderAbility` recruit branch is exactly the >500ms window that trips it), i.e. the scheme likely supplies the timing rather than duplicating in its own code. Confirm the full mechanism via repro before treating the root cause as settled.
 - **Root cause CONFIRMED + reproduced (2026-07-04):** the diagnosis held, with one refinement — the enabling factor is that the recruit onclick called `recruitHeroConfirmed` **un-awaited** (`script.js` ~19147) while clearing `isRecruiting` on the blind 500ms timer, so the lock opened mid-flight. Deterministic repro (Golden Solo, via Playwright): suspend a HIGHER-slot recruit through a controllable gate in the Wall-Crawl branch, complete a LOWER-slot recruit (Golden `hq.splice` compacts → indices shift), resume the first → its stale higher-index splice removed a shifted neighbour and orphaned the recruited card in `hq[]` while it already sat in `playerDiscardPile[]` (duplicated); the wrongly-spliced neighbour vanished. Live result: recruited card `C_total_copies: 2`, a bystanding card gone. (The original 3-copy sighting is this same race in a compounding sequence; the 1-card-in-2-places invariant break is the bug.)
 - **Fix (both applied):** (a) recruit onclick (~19147) now `await`s `recruitHeroConfirmed` inside `try/finally` clearing `isRecruiting` on completion (500ms `setTimeout` removed) — holds the lock for the whole recruit, closing the interleave window (the lock's original intent). (b) inside `recruitHeroConfirmed` (~19620) the slot is re-derived by identity right before removal: `const liveIndex = hq.indexOf(hero); refillHQSlot(liveIndex !== -1 ? liveIndex : hqIndex)` — removes the ACTUAL recruited card even after a shift; protects all 5 call sites (main + the 4 free-recruit ability paths that bypass the lock). No-op in normal play and in What If? (fill-in-place refill never shifts indices). `refillHQSlot`/`goldenRefillHQ` signatures untouched — other ~15 callers unaffected.
-- **Verified:** same repro flips GREEN (no dup, nothing vanishes); Fix (a) lock-hold confirmed via the real onclick path (lock held across suspend, second recruit gated, cleared after); What If? normal recruit clean (fill-in-place intact; same-name copies distinguished by object identity); console clean in normal play. Two independent fresh-subagent cold-eyes reviews CLEAN. **Not merged** — awaiting Paul's full pre-merge pass + merge/deploy call.
+- **Verified:** same repro flips GREEN (no dup, nothing vanishes); Fix (a) lock-hold confirmed via the real onclick path (lock held across suspend, second recruit gated, cleared after); What If? normal recruit clean (fill-in-place intact; same-name copies distinguished by object identity); console clean in normal play. Two independent fresh-subagent cold-eyes reviews CLEAN. **Merged to master 2026-07-04** as part of the base-code-fixes batch (`1f08065`).
 
 ### CANDIDATE (observed, symptom not yet pinned)
 

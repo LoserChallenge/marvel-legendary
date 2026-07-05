@@ -34,6 +34,7 @@ Enhance the existing Legendary Solo Play web app. Golden Solo Mode is complete. 
 | `expansionGuardiansOfTheGalaxy.js` | Guardians of the Galaxy expansion |
 | `expansionPaintTheTownRed.js` | Paint the Town Red expansion |
 | `expansionRevelations.js` | Revelations expansion |
+| `expansionSecretWarsVol1.js` | Secret Wars Vol. 1 expansion |
 | `updatesContent.js` | Patch notes |
 | `sw.js` | Service Worker — caches all game files for offline/PWA support |
 
@@ -145,7 +146,7 @@ Detailed rules for reading card data from images, DB authority hierarchy, invent
 - `docs/priorities.md` — live task tracker (in-flight / deferred / ongoing / completed); consult on direction
 - `docs/suggestion-box.md` — persistent cross-expansion log of process-improvement ideas (faster/more efficient/better); **log improvement opportunities here whenever they surface** (any session, any phase), mark in place when handled. Not a per-expansion initiative.
 - `docs/efficiency-initiative.md` — living tracker for the build-efficiency + automation initiative (token-cost reduction + autonomy via `/goal`/loop without sacrificing verification); intent, the autonomy ladder, active improvements, idea log, per-build retro hooks.
-- `docs/known-issues.md` — single tracker for issues **outside the active expansion pipeline** (base-game code bugs, design/UX, rules decisions); raw bug drops land in `bugs/`, coordinator triages them here. Fixes batched on a base-code branch between expansions (PINNED during an active build).
+- `docs/known-issues.md` — single tracker for issues **outside the active expansion pipeline** (base-game code bugs, design/UX, rules decisions); raw bug drops land in `bugs/`, coordinator triages them here. Fixes batched on a base-code branch between expansions (pinned only while an expansion build is active).
 - `docs/golden-solo-history.md` — Golden Solo implementation history, architectural rules, testing checklist
 - `docs/engine-gotchas.md` — cross-expansion code traps & reusable patterns (twin-function parity, attack/defeat pipelines, Location plumbing, scheme-transform reads, state lifecycle). **Consult before expansion code work and during `/expansion-audit`.** On-demand (not auto-loaded); CLAUDE.md keeps only the highest-frequency rules inline.
 - `docs/expansion-decisions.md` — cross-expansion design & rules-interpretation precedents (the "we chose X, here's why" layer). **Consult during `/analyze-expansion` and before building a new mechanic.**
