@@ -174,6 +174,7 @@ Conventions: `script.js` line numbers drift — treat them as hints, grep to con
 - **`defeatVillain()` reads the DOM city cell for its animation** — call `updateGameBoard()` first in a test harness or it throws "City cell not found".
 - **To confirm an expansion file is loaded:** expansion JS is injected via `createElement('script')` in index.html, not a static `<script src>` — `grep 'createElement.*script'`, not a static-tag scan (WebFetch/HTML-summarizers miss it).
 - **Confirm mode-independence by grep:** before claiming a function behaves identically in `golden` and `whatif`, grep it for `gameMode` refs; zero refs justifies full verification in one mode + a spot-check in the other.
+- **State-injection for tests must go through a vetted setter — never a bare `window.<name> = value`.** Most game globals are top-level `let` bindings in `script.js`, NOT on `window`: `selectedScheme`, `citySize`, `cityReserveAttack`, `gameMode`, `totalAttackPoints`, `cumulativeAttackPoints`, `totalRecruitPoints`, `cumulativeRecruitPoints`. Assigning `window.selectedScheme = X` silently creates a masking shadow property while the real lexical variable is untouched — the injection reads back fine but never reaches game state, producing a FALSE PASS (the literal cause of a prior `transformScheme()` diagnostic false-pass). Any `/game-test` state injection must assign the real binding (via a strict-mode setter/accessor like `getSelectedScheme()`'s companion), not `window`.
 
 ## DOM / setup screen / build
 
@@ -192,6 +193,7 @@ Conventions: `script.js` line numbers drift — treat them as hints, grep to con
 
 - **Making an ability `async` requires `await` at ALL its call sites.** Callers in `cardAbilities.js` and expansion files are often sync and will silently fire-and-forget otherwise (missed for `heroSkrulled` callers in health-check phase 2, caught by code review).
 - **`placeLocation()` is `async`** — any expansion function calling it must `await placeLocation(...)` and be declared `async`; missing `await` races when the city is full (overflow popup fires and forgets before the player chooses).
+- **A "busy" lock (e.g. `isRecruiting`) must be held across the FULL `await` in try/finally — never released on a blind `setTimeout`.** A slow path that opens a popup (recruit → Wall-Crawl choice / bystander rescue) outlives a fixed timer, so a second action interleaves mid-flight and the first action then splices an array by a now-stale numeric index → one card duplicated (lands in two zones) while a shifted neighbour vanishes. Fix: `try { await theAsyncAction() } finally { lock = false }`, and remove from the array by object identity (`arr.indexOf(obj)`), not a closure-captured index. Root cause of the B1 Golden-Solo recruit-race card duplication (2026-07-04). Pairs with the "select by object identity, not index" rule under Misc helpers.
 
 ## cardDatabase.js scripting
 

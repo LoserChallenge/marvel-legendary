@@ -1,5 +1,5 @@
 {
-  "last_sweep": "2026-06-29",
+  "last_sweep": "2026-07-04",
   "swept_sessions": [
     "31a4bd89-f376-4689-9a0f-082398bd114e",
     "bc9ccbd4-752d-4c3c-9fee-5c528f4f92fa",
@@ -72,7 +72,18 @@
     "7df347c5-bc95-4ece-881a-d2107a7a77cb",
     "bc03558e-71a6-4944-9e34-b99af460d35f",
     "83eb3fe5-b1ac-403a-b859-ff8e589a0a4d",
-    "1fa07a6c-acd7-4f4c-a163-4a19038f01d9"
+    "1fa07a6c-acd7-4f4c-a163-4a19038f01d9",
+    "0114d87b-a88d-47d2-ba4c-8a69fe1139a0",
+    "0b31917d-8943-424b-a21d-36db388cb170",
+    "812e1aba-674f-4977-96e6-03c8df30c773",
+    "8bf07b9d-5bf1-4f40-ab19-fe4a00889e79",
+    "a875ea9e-2ff9-48f8-8630-264126a8e74b",
+    "bd582673-1359-44c6-8636-13ec8470af4e",
+    "d52e0888-3573-47d0-9c48-d9f1beee5532",
+    "dd254b12-5f94-4af3-b5c4-71d47a6532e8",
+    "ac609216-6c8d-49fb-9b5b-8e12ad5f9297",
+    "2cf1fe68-9f13-4e40-a3ed-9f4ab2e83fa5",
+    "368fa5bc-1f4d-41b9-8113-07ea20228113"
   ],
-  "_note": "2026-06-29 Pass A (second run, same day) swept 1 additional transcript: the SWV1 post-merge-review session (1fa07a6c). Extraction yielded 1 candidate (requiredHeroes:3 sentinel collision in getEffectiveHeroCount) that was ALREADY fully covered -- the mechanic by existing inbox line (2026-06-27 #gotcha) and the ruling by known-issues B18 CLOSED -- so ZERO net-new inbox lines appended (de-dup). Prior same-day run swept 27 SWV1 build transcripts and captured ~80 de-duped items into docs/sweep-inbox.md. Pass B DRAINED 2026-06-29: all 80 items resolved -- promoted to engine-gotchas.md (~49 traps), expansion-decisions.md (8 precedents), rules-notes/secret-wars-vol1.md (1), known-issues.md (B20), expansion-asset-pipeline.md (1); pruned as already-canonical or merged; 5 CC/workflow-meta items routed out to cc-helper. Inbox empty by design (see docs/sweep-inbox.md DRAINED breadcrumb). Ledger covers Revelations + SWV1 builds + the post-merge review; future runs incremental."
+  "_note": "2026-07-04 run: swept 11 new transcripts (9 main-dir 07-03/04 efficiency-initiative + reuse-scout + linter-build + game-test-readiness sessions; 2 base-code-fixes worktree 07-04 B1/B6/B8/B23 fix sessions). Current live session (b18cd997) excluded. Extraction fanned out over 3 Sonnet batches (~60 raw candidates). THIN net yield by design: the 07-03/07-04 sessions documented as they went, so ~all SWV1 decisions + B6/B11/B20/B21/B22/B23 + skrulled-shared-flag + villain-attack-slots + transform-and-defer-VP + splice-by-identity + 0+ notation were ALREADY in canonical homes -- verified in-doc, pruned. Pass B PROMOTED 3 (Paul-approved, #3 skipped per his call to keep edge-case rulings per-case): engine-gotchas.md += busy-lock-across-await (B1 async discipline) + state-injection-vetted-setter (window.x no-ops on let bindings, false-pass trap); card-reading-rules.md += inventory-verify-vs-DB-linter-are-different-links (B22). ROUTED OUT to cc-helper (CC/workflow-meta, out of this sweep's scope; cc-helper's learning-sweep reads the same transcripts): game-test silent-pass verdict-holes, popup-visibility detection, validate-tool-against-shipped-data, /goal-vs-cc-goal autonomy methodology; efficiency-initiative items (startup-trim-pennies, cc-coordinate-worth-it, autonomy-ladder) have their own project home in docs/efficiency-initiative.md. SKIPPED optional reuse-scout prior-art pointers (Artifact-zone-generic, bystander-attach-lifecycle -- pattern-reuse-scout re-derives at /analyze-expansion) + isConverterVillain extract-someday note. B20 confirmed already CLEARED-not-a-bug in known-issues.md (no contradiction). Inbox empty by design. Ledger covers Revelations + SWV1 builds + base-code-fixes batch + retrospective/efficiency sessions; future runs incremental."
 }
