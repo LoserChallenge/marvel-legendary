@@ -1,4 +1,4 @@
-const CACHE_NAME = 'legendary-v8'; // bump this version number with every push to force iPad to re-cache
+const CACHE_NAME = 'legendary-v9'; // bump this version number with every push to force iPad to re-cache
 
 const FILES_TO_CACHE = [
   '/marvel-legendary/',
@@ -869,7 +869,15 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      // Only delete THIS app's own old caches ('legendary-v*'). Do NOT touch the
+      // HoA preview app's 'legendary-hoa-preview-*' cache — both apps share this
+      // origin's cache storage, so an unscoped cleanup would wipe the preview's
+      // offline mode. 'legendary-v' excludes 'legendary-hoa-preview' (starts with -h).
+      Promise.all(
+        keys
+          .filter(k => k.startsWith('legendary-v') && k !== CACHE_NAME)
+          .map(k => caches.delete(k))
+      )
     )
   );
   self.clients.claim();
